@@ -32,18 +32,8 @@ else:
 
 trace_path = "/app/traces/"
 
-traces = [("bc", "bc.sift"),
-          ("bfs", "bfs.sift"),
-          ("cc", "cc.sift"),
-          ("tc", "tc.sift"),
-          ("gc", "gc.sift"),
-          ("pr", "pr.sift"),
-          ("sssp", "sssp.sift"),
-          ("rnd", "rnd.sift"),
-          ("xs", "xs.sift"),
-          ("dlrm", "dlrm.sift"),
-          ("gen", "gen.sift")
-          ]
+traces = [("bfs", "bfs.sift"),
+          ("cc", "cc.sift")]
 
 
 # Docker command to run the binary inside the container
@@ -132,7 +122,7 @@ with open("/app/jobfile", "w") as jobfile:
             elif (native):
                 command = docker_command + " " + sniper_parameters + " " + output_command+" " + \
                     configuration_string+" "+trace_command + \
-                    " > ./results/"+config_name+"_"+trace_name+".out  &"
+                    " > ./results/"+config_name+"_"+trace_name+".out"
             # command = docker_command + " " + sniper_parameters + " " + output_command+" "+configuration_string+" "+trace_command
 
             jobfile.write(command)

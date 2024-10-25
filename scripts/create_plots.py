@@ -63,30 +63,12 @@ print(orca_art)
 
 
 desired_order_labels = [
-    "bc",
     "bfs",
-    "cc",
-    "dlrm",
-    "gen",
-    "gc",
-    "pr",
-    "rnd",
-    "sssp",
-    "tc",
-    "xs"
+    "cc"
 ]
 desired_order_labels_gmean = [
-    "BC",
     "BFS",
     "CC",
-    "DLRM",
-    "GEN",
-    "GC",
-    "PR",
-    "RND",
-    "SSSP",
-    "TC",
-    "XS",
     "GMEAN"
 ]
 
