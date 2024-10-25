@@ -1,0 +1,50 @@
+\doxysection{spin\+\_\+loop\+\_\+detector.\+h}
+\label{spin__loop__detector_8h_source}\index{common/misc/spin\_loop\_detector.h@{common/misc/spin\_loop\_detector.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SPIN\_LOOP\_DETECTOR\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SPIN\_LOOP\_DETECTOR\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <deque>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }SpinLoopDetector}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ SDT\_MAX\_SIZE\ =\ 16;}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ uint16\_t\ reg\_t;\ \textcolor{comment}{//\ Pin's\ REG\ enum}}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::pair<uint64\_t,\ uint16\_t>\ RubEntry;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<reg\_t,\ RubEntry>\ Rub;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }SdtEntry}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ SdtEntry(uint64\_t\ \_eip,\ uint8\_t\ \_id,\ uint64\_t\ \_icount,\ SubsecondTime\ \_tcount)\ :\ eip(\_eip),\ id(\_id),\ icount(\_icount),\ tcount(\_tcount)\ \{\}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ uint64\_t\ eip;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ uint8\_t\ id;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ uint64\_t\ icount;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ SubsecondTime\ tcount;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::deque<SdtEntry>\ Sdt;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Thread\ *m\_thread;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ Rub\ m\_rub;\ \textcolor{comment}{//\ Register\ Update\ Buffer}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ Sdt\ m\_sdt;\ \textcolor{comment}{//\ Spin\ Detection\ Table}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ uint16\_t\ m\_sdt\_bitmask;\ \textcolor{comment}{//\ Bitmask\ of\ all\ valid\ SDT\ entries}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ uint8\_t\ m\_sdt\_nextid;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ SpinLoopDetector(Thread\ *thread)\ :\ m\_thread(thread),\ m\_rub(),\ m\_sdt(),\ m\_sdt\_bitmask(0),\ m\_sdt\_nextid(0)\ \{\}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ commitBCT(uint64\_t\ eip);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ commitNonSilentStore();}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ commitRegisterWrite(reg\_t\ reg,\ uint64\_t\ old\_value,\ uint64\_t\ value);}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inCandidateSpin()\ \{\ \textcolor{keywordflow}{return}\ !m\_sdt.empty();\ \}}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_SPIN\_LOOP\_DETECTOR\_H}}
+
+\end{DoxyCode}

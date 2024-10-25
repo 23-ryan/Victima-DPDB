@@ -1,0 +1,244 @@
+\doxysection{scheduler\+\_\+sequential.\+cc}
+\label{scheduler__sequential_8cc_source}\index{common/scheduler/scheduler\_sequential.cc@{common/scheduler/scheduler\_sequential.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*************************************************************************************************/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{/*\ \ SCHEDULER\ SEQUENTIAL\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00003\ \textcolor{comment}{/*\ \ ====================\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00004\ \textcolor{comment}{/*\ \ This\ scheduler\ can\ allocate\ sequentially\ sets\ of\ threads\ in\ one\ or\ more\ than\ one\ cores.\ \ \ \ \ \ */}}
+\DoxyCodeLine{00005\ \textcolor{comment}{/*\ \ considering\ every\ thread\ of\ a\ set,\ sequential\ chunks\ of\ the\ same\ process.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00006\ \textcolor{comment}{/*\ \ Every\ process\ is\ allocated\ on\ a\ different\ core\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00007\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00008\ \textcolor{comment}{/*\ \ It\ has\ been\ developed\ thinking\ in\ pinballs\ and\ the\ way\ that\ Sniper\ consider\ every\ pinball\ as\ */}}
+\DoxyCodeLine{00009\ \textcolor{comment}{/*\ \ a\ different\ application.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00010\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00011\ \textcolor{comment}{/*\ \ To\ set-\/up\ the\ pinballs\ sets\ that\ conforms\ an\ entire\ process\ and\ for\ gather\ the\ outputs\ it\ \ \ \ */}}
+\DoxyCodeLine{00012\ \textcolor{comment}{/*\ \ was\ added\ new\ parameters.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00013\ \textcolor{comment}{/*\ \ \ \ -\/\ scheduler/sequential/sequence\ :\ To\ indicate\ the\ sets\ of\ pinballs/threads\ that\ belongs\ \ \ \ */}}
+\DoxyCodeLine{00014\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ to\ the\ same\ process.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00015\ \textcolor{comment}{/*\ \ \ \ -\/\ scheduler/sequential/sequence\_file\ :\ If\ it\ is\ not\ setted,\ the\ gathered\ data\ will\ be\ \ \ \ \ \ */}}
+\DoxyCodeLine{00016\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ showed\ on\ the\ standard\ output.\ In\ the\ indicated\ file\ aversely.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00017\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00018\ \textcolor{comment}{/*\ \ Example:\ We\ have\ 3\ processes\ and\ split\ every\ one\ in\ 2\ pinballs.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00019\ \textcolor{comment}{/*\ \ \ \ \ \ ./run-\/sniper\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00020\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ -\/-\/pinballs=pb1,pb2,pb3,pb4,pb5,pb6\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00021\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ -\/g\ -\/-\/scheduler/type=sequential\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00022\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ -\/g\ -\/-\/scheduler/sequential/sequence="{}2|2|2"{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00023\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ -\/g\ -\/-\/scheduler/sequential/sequence\_file="{}FILE.OUT"{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00024\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ -\/-\/sim-\/end=last\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00025\ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ -\/n\ 3\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00026\ \textcolor{comment}{/*************************************************************************************************/}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}scheduler\_sequential.h"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <thread.h>}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <core\_manager.h>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <dvfs\_manager.h>}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <trace\_manager.h>}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <unistd.h>}\ \textcolor{comment}{//\ sleep}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string.hpp>}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ SchedulerSequential::SchedulerSequential(ThreadManager\ *thread\_manager)}
+\DoxyCodeLine{00047\ \ \ \ \ :\ SchedulerPinnedBase(thread\_manager,\ SubsecondTime::NS(10000000000))\ \textcolor{comment}{//\ quantum,\ change\ to\ max\ value}}
+\DoxyCodeLine{00048\ \ \ \ \ ,\ period(Sim()-\/>getDvfsManager()-\/>getGlobalDomain()-\/>getPeriod())\ \textcolor{comment}{//\ not\ valid\ if\ f\ change\ dynamically}}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_SIM\_END,\ hook\_sim\_end,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_ACTION);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ String\ sequence;}
+\DoxyCodeLine{00053\ \ \ \ \ std::vector<String>\ aux\_seqs;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ sequence\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}scheduler/sequential/sequence"{}});}
+\DoxyCodeLine{00056\ \ \ \ \ verbose\ =\ Sim()-\/>getCfg()-\/>hasKey(\textcolor{stringliteral}{"{}scheduler/sequential/verbose"{}});}
+\DoxyCodeLine{00057\ \ \ \ \ outfile\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}scheduler/sequential/sequence\_file"{}});}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ boost::split(aux\_seqs,\ sequence,\ boost::is\_any\_of(\textcolor{stringliteral}{"{}|"{}}));}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i=0;\ i<aux\_seqs.size();\ ++i\ )}
+\DoxyCodeLine{00061\ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ seqs.push\_back(atoi(aux\_seqs.at(i).c\_str()));}
+\DoxyCodeLine{00063\ \ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ LOG\_ASSERT\_ERROR(Sim()-\/>getConfig()-\/>getApplicationCores()\ >=\ seqs.size(),}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ enought\ cores.\ Every\ pinballs\ set\ must\ be\ executed\ on\ a\ different\ core."{}});}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ core\_waiting\_threads.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ Setting\ the\ first\ Thread\ of\ every\ core}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{int}\ next\_tte\ =\ 0;}
+\DoxyCodeLine{00072\ \ \ \ \ next\_thread\_to\_execute.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i=0;\ i\ <\ next\_thread\_to\_execute.size();\ ++i)}
+\DoxyCodeLine{00075\ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ next\_thread\_to\_execute.at(i)\ =\ next\_tte;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ next\_tte\ +=\ seqs.at(i);}
+\DoxyCodeLine{00078\ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ current\_pinball\_set\ =\ 0;}
+\DoxyCodeLine{00081\ \ \ \ \ total\_pinballs\ =\ 0;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ Adding\ stats\ for\ cache\ counters}}
+\DoxyCodeLine{00084\ \ \ \ \ l1d\_load\_miss\_stat\ \ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l1d\_load\_miss"{}},\ \textcolor{stringliteral}{"{}L1-\/D"{}},\ \textcolor{stringliteral}{"{}load-\/misses"{}});}
+\DoxyCodeLine{00085\ \ \ \ \ l1d\_store\_miss\_stat\ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l1d\_store\_miss"{}},\ \textcolor{stringliteral}{"{}L1-\/D"{}},\ \textcolor{stringliteral}{"{}store-\/misses"{}});}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ l1i\_load\_miss\_stat\ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l1i\_load\_miss"{}},\ \textcolor{stringliteral}{"{}L1-\/I"{}},\ \textcolor{stringliteral}{"{}load-\/misses"{}});}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//l1i\_store\_miss\_stat\ =\ ThreadStatNamedStat::registerStat("{}l1i\_store\_miss"{},\ "{}L1-\/I"{},\ "{}store-\/misses"{});}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ l2\_load\_miss\_stat\ \ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l2\_load\_miss"{}},\ \textcolor{stringliteral}{"{}L2"{}},\ \textcolor{stringliteral}{"{}load-\/misses"{}});}
+\DoxyCodeLine{00091\ \ \ \ \ l2\_store\_miss\_stat\ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l2\_store\_miss"{}},\ \textcolor{stringliteral}{"{}L2"{}},\ \textcolor{stringliteral}{"{}store-\/misses"{}});}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ l3\_load\_miss\_stat\ \ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l3\_load\_miss"{}},\ \textcolor{stringliteral}{"{}L3"{}},\ \textcolor{stringliteral}{"{}load-\/misses"{}});}
+\DoxyCodeLine{00094\ \ \ \ \ l3\_store\_miss\_stat\ =\ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l3\_store\_miss"{}},\ \textcolor{stringliteral}{"{}L3"{}},\ \textcolor{stringliteral}{"{}store-\/misses"{}});}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ assert(l1d\_load\_miss\_stat\ !=\ ThreadStatsManager::INVALID);}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keywordtype}{void}\ SchedulerSequential::threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00100\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ total\_pinballs++;}
+\DoxyCodeLine{00102\ \ \ \ \ core\_id\_t\ core\_id\ =\ (core\_id\_t)atoi(}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ m\_thread\_info[thread\_id].getAffinityString().c\_str()\ );}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{comment}{/*m\_core\_thread\_running[core\_id]\ ==\ INVALID\_THREAD\_ID\ \&\&\ */}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*thread\_id\ ==\ next\_thread\_to\_execute.at(core\_id)*/}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ m\_core\_thread\_running[core\_id]\ ==\ thread\_id)}
+\DoxyCodeLine{00108\ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ the\ first\ thread\ of\ every\ core\ execute\ this}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ next\_thread\_to\_execute.at(core\_id)++;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Seems\ that\ the\ first\ thread\ of\ every\ core\ has\ been\ allocated,}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ then\ rescheduler\ is\ not\ needed.}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{comment}{//reschedule(time,\ core\_id,\ false);}}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_core\_thread\_running[core\_id]\ !=\ thread\_id)}
+\DoxyCodeLine{00116\ \ \ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ aux\_mm\ <<\ \textcolor{stringliteral}{"{}Pushed\ to\ core\ queue\ "{}}\ <<\ core\_id;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ print\_message(thread\_id,\ aux\_mm.str().c\_str());}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ aux\_mm.str(\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ m\_threads\_runnable[thread\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ core\_waiting\_threads[core\_id].push(thread\_id);}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keywordtype}{void}\ SchedulerSequential::threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00127\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ print\_message(thread\_id,\ \textcolor{stringliteral}{"{}Finnish\ it's\ job."{}});}
+\DoxyCodeLine{00129\ \ \ \ \ m\_threads\_runnable[thread\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ core\_id\_t\ current\_core\_id\ =\ (core\_id\_t)atoi(\ m\_thread\_info[thread\_id].getAffinityString().c\_str()\ );}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ Updating\ info,\ ended\ thread}}
+\DoxyCodeLine{00134\ \ \ \ \ Sim()-\/>getThreadStatsManager()-\/>update(thread\_id,\ time);}
+\DoxyCodeLine{00135\ \ \ \ \ m\_thread\_info[thread\_id].setLastScheduledOut(time);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ Alocating\ next\ thread\ on\ queue}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !core\_waiting\_threads[current\_core\_id].empty()\ )}
+\DoxyCodeLine{00139\ \ \ \ \ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ thread\_id\_t\ next\_thread\ =\ core\_waiting\_threads[current\_core\_id].top();}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ I\ am\ not\ sure\ if\ the\ first\ thread\ can\ end\ its\ job\ while\ the\ initialization}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ of\ the\ other\ threads\ is\ executing\ and\ if\ the\ initialization\ of\ threads\ could}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ be\ in\ a\ disordered\ way\ respect\ the\ -\/-\/pinballs\ option\ as\ well}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ next\_thread\ !=\ next\_thread\_to\_execute.at(current\_core\_id)\ )}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ core\_waiting\_threads[current\_core\_id].pop();}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ m\_threads\_runnable[next\_thread]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ next\_thread\_to\_execute.at(current\_core\_id)++;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Sim()-\/>getThreadStatsManager()-\/>update(next\_thread,\ time);}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ reschedule(time,\ current\_core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ print\_message(next\_thread,\ \textcolor{stringliteral}{"{}Scheduled."{}});}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \textcolor{keywordtype}{void}\ SchedulerSequential::threadSetInitialAffinity\ (\ thread\_id\_t\ thread\_id\ )}
+\DoxyCodeLine{00159\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ core\_id\_t\ core\ =\ (core\_id\_t)current\_pinball\_set;}
+\DoxyCodeLine{00161\ \ \ \ \ m\_thread\_info[thread\_id].setAffinitySingle(core);}
+\DoxyCodeLine{00162\ \ \ \ \ m\_thread\_info[thread\_id].setExplicitAffinity();}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ seqs[current\_pinball\_set]-\/-\/;}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ seqs[current\_pinball\_set]\ ==\ 0\ )}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ current\_pinball\_set++;}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{keywordtype}{void}\ SchedulerSequential::\_\_sim\_end(SubsecondTime\ time)}
+\DoxyCodeLine{00170\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ outfile.length()\ ==\ 0\ )\ results\_on\_screen();}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{else}\ results\_on\_file();}
+\DoxyCodeLine{00173\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{keywordtype}{void}\ SchedulerSequential::results\_on\_screen()}
+\DoxyCodeLine{00176\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ core\_id\_t\ last\_core\ =\ 0;}
+\DoxyCodeLine{00178\ \ \ \ \ ThreadStatsManager\ *\ tsm\ =\ Sim()-\/>getThreadStatsManager();}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[REPORT]\ Sliced\ by\ threads"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00181\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[REPORT][CORE:"{}}\ <<\ last\_core\ <<\ \textcolor{stringliteral}{"{}]\ "{}}\ <<\ std::endl;}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i=0;\ i<total\_pinballs;\ ++i)}
+\DoxyCodeLine{00183\ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ core\_id\_t\ core\ =\ (core\_id\_t)atoi(\ m\_thread\_info[i].getAffinityString().c\_str()\ );}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ core\ !=\ last\_core\ )}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[REPORT][CORE:"{}}\ <<\ core\ <<\ \textcolor{stringliteral}{"{}]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ last\_core\ =\ core;}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ SubsecondTime\ time\_ss\ =\ SubsecondTime();}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ time\_ss.setInternalDataForced(tsm-\/>getThreadStatistic(i,\ ThreadStatsManager::ELAPSED\_NONIDLE\_TIME));}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ UInt64\ actual\_cycles\ =\ SubsecondTime::divideRounded(time\_ss,\ period);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[REPORT][THREAD:"{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}]\ "{}}\ <<}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ CYCLES:\ "{}}\ \ \ <<\ actual\_cycles\ \ <<}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ TIME:"{}}\ <<\ time\_ss.getNS()\ <<}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ INSTR:"{}}\ <<\ tsm-\/>getThreadStatistic(i,\ ThreadStatsManager::INSTRUCTIONS)\ <<}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ L1D-\/miss:"{}}\ <<\ tsm-\/>getThreadStatistic(i,\ l1d\_load\_miss\_stat)\ +\ tsm-\/>getThreadStatistic(i,\ l1d\_store\_miss\_stat)\ <<}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ L1I-\/miss:"{}}\ <<\ tsm-\/>getThreadStatistic(i,\ l1i\_load\_miss\_stat)\ <<}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ L2-\/miss:"{}}\ <<\ tsm-\/>getThreadStatistic(i,\ l2\_load\_miss\_stat)\ +\ tsm-\/>getThreadStatistic(i,\ l2\_store\_miss\_stat)\ <<}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ L3-\/miss:"{}}\ <<\ tsm-\/>getThreadStatistic(i,\ l3\_load\_miss\_stat)\ +\ tsm-\/>getThreadStatistic(i,\ l3\_store\_miss\_stat)\ <<}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::endl;}
+\DoxyCodeLine{00204\ \ \ \ \ \}}
+\DoxyCodeLine{00205\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{keywordtype}{void}\ SchedulerSequential::results\_on\_file()}
+\DoxyCodeLine{00208\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ ThreadStatsManager\ *\ tsm\ =\ Sim()-\/>getThreadStatsManager();}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ std::ofstream\ file;}
+\DoxyCodeLine{00212\ \ \ \ \ file.open(outfile.c\_str());}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i=0;\ i<total\_pinballs;\ ++i)}
+\DoxyCodeLine{00215\ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ SubsecondTime\ time\_ss\ =\ SubsecondTime();}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ time\_ss.setInternalDataForced(tsm-\/>getThreadStatistic(i,\ ThreadStatsManager::ELAPSED\_NONIDLE\_TIME));}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ UInt64\ actual\_cycles\ =\ SubsecondTime::divideRounded(time\_ss,\ period);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ file\ <<\ time\_ss.getNS()\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tsm-\/>getThreadStatistic(i,\ ThreadStatsManager::INSTRUCTIONS)\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_cycles\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tsm-\/>getThreadStatistic(i,\ l1d\_load\_miss\_stat)\ +\ tsm-\/>getThreadStatistic(i,\ l1d\_store\_miss\_stat)\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tsm-\/>getThreadStatistic(i,\ l2\_load\_miss\_stat)\ +\ tsm-\/>getThreadStatistic(i,\ l2\_store\_miss\_stat)\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tsm-\/>getThreadStatistic(i,\ l3\_load\_miss\_stat)\ +\ tsm-\/>getThreadStatistic(i,\ l3\_store\_miss\_stat)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ file.close();}
+\DoxyCodeLine{00229\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \textcolor{keywordtype}{void}\ SchedulerSequential::print\_message(thread\_id\_t\ thread\_id,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ message)}
+\DoxyCodeLine{00232\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ verbose\ )}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[SCHED]\ "{}}\ <<\ thread\_id\ <<\ \textcolor{stringliteral}{"{}:\ "{}}<<\ message\ <<\ std::endl;}
+\DoxyCodeLine{00235\ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ }
+
+\end{DoxyCode}

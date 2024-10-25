@@ -1,0 +1,210 @@
+\doxysection{rob\+\_\+smt\+\_\+timer.\+h}
+\label{rob__smt__timer_8h_source}\index{common/performance\_model/performance\_models/rob\_performance\_model/rob\_smt\_timer.h@{common/performance\_model/performance\_models/rob\_performance\_model/rob\_smt\_timer.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#ifndef\ RobSmtTimer\_HPP\_}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ RobSmtTimer\_HPP\_}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}interval\_timer.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}smt\_timer.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}rob\_contention.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <deque>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }RobSmtTimer\ :\ \textcolor{keyword}{public}\ SmtTimer\ \{}
+\DoxyCodeLine{00015\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keyword}{class\ }RobEntry\ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ MAX\_INLINE\_DEPENDANTS\ =\ 8;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ numInlineDependants;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ RobEntry*\ inlineDependants[MAX\_INLINE\_DEPENDANTS];}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ std::vector<RobEntry*>\ *vectorDependants;}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ MAX\_ADDRESS\_PRODUCERS\ =\ 4;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ numAddressProducers;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ uint64\_t\ addressProducers[MAX\_ADDRESS\_PRODUCERS];}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ init(DynamicMicroOp\ *uop,\ UInt64\ sequenceNumber);}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ free();}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addDependant(RobEntry*\ dep);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ uint64\_t\ getNumDependants()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ RobEntry*\ getDependant(\textcolor{keywordtype}{size\_t}\ idx)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addAddressProducer(uint64\_t\ sequenceNumber)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(numAddressProducers\ <\ MAX\_ADDRESS\_PRODUCERS,\ \textcolor{stringliteral}{"{}Too\ many\ address\ producers,\ increase\ MAX\_ADDRESS\_PRODUCERS(\%d)"{}},\ MAX\_ADDRESS\_PRODUCERS);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ addressProducers[numAddressProducers++]\ =\ sequenceNumber;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ getNumAddressProducers()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ numAddressProducers;\ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ uint64\_t\ getAddressProducer(\textcolor{keywordtype}{size\_t}\ idx)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ addressProducers[idx];\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ DynamicMicroOp\ *uop;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ SubsecondTime\ dispatched;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ SubsecondTime\ ready;\ \ \ \ \textcolor{comment}{//\ Once\ all\ dependencies\ are\ resolved,\ cycle\ number\ that\ this\ uop\ becomes\ ready\ for\ issue}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ SubsecondTime\ readyMax;\ \textcolor{comment}{//\ While\ some\ but\ not\ all\ dependencies\ are\ resolved,\ keep\ the\ time\ of\ the\ latest\ known\ resolving\ dependency}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ SubsecondTime\ addressReady;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ SubsecondTime\ addressReadyMax;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ SubsecondTime\ issued;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ SubsecondTime\ done;}
+\DoxyCodeLine{00051\ \ \ \ \};}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keyword}{typedef}\ CircularQueue<RobEntry>\ Rob;}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keyword}{class\ }RobThread\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ Core\ *core;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ SubsecondTime\ now;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ uint64\_t\ instrs;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ uint64\_t\ instrs\_returned;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ Rob\ rob;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ uint64\_t\ m\_num\_in\_rob;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ uint64\_t\ nextSequenceNumber;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ SubsecondTime\ frontend\_stalled\_until;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ in\_icache\_miss;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ SubsecondTime\ next\_event;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ RegisterDependencies*\ \textcolor{keyword}{const}\ registerDependencies;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ MemoryDependencies*\ \textcolor{keyword}{const}\ memoryDependencies;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ SubsecondTime\ *m\_cpiCurrentFrontEndStall;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ std::vector<std::vector<SubsecondTime>\ >\ m\_outstandingLoads;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_outstandingLoadsAll;}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ UInt64\ m\_uop\_type\_count[MicroOp::UOP\_SUBTYPE\_SIZE];}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ UInt64\ m\_uops\_total;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ UInt64\ m\_uops\_x87;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ UInt64\ m\_uops\_pause;}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ CPI\ stacks}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_cpiBase;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_cpiSMT;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_cpiIdle;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_cpiBranchPredictor;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_cpiSerialization;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_cpiRSFull;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_cpiInstructionCache;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_cpiDataCache;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_outstandingLongLatencyInsns;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_outstandingLongLatencyCycles;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_lastAccountedMemoryCycle;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ uint64\_t\ m\_loads\_count;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_loads\_latency;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ uint64\_t\ m\_stores\_count;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_stores\_latency;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ uint64\_t\ m\_totalProducerInsDistance;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ uint64\_t\ m\_totalConsumers;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ std::vector<uint64\_t>\ m\_producerInsDistance;}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ RobThread(Core\ *core,\ \textcolor{keywordtype}{int}\ window\_size);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \string~RobThread();}
+\DoxyCodeLine{00110\ \ \ \ \};}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ dispatchWidth;}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ commitWidth;}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ windowSize;\ \ \ \ \textcolor{comment}{//\ total\ ROB\ size}}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ rsEntries;}
+\DoxyCodeLine{00116\ \ \ \ uint64\_t\ currentWindowSize;\ \ \ \textcolor{comment}{//\ current\ per-\/thread\ window\ size}}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ misprediction\_penalty;}
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_store\_to\_load\_forwarding;}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_no\_address\_disambiguation;}
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ inorder;}
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ windowRepartition;}
+\DoxyCodeLine{00122\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ simultaneousIssue;}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ std::vector<RobThread\ *>\ m\_rob\_threads;}
+\DoxyCodeLine{00125\ \ \ \ RobContention\ *m\_rob\_contention;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ UInt8\ dispatch\_thread;}
+\DoxyCodeLine{00128\ \ \ \ UInt8\ issue\_thread;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ ComponentTime\ now;}
+\DoxyCodeLine{00131\ \ \ \ SubsecondTime\ last\_store\_done;}
+\DoxyCodeLine{00132\ \ \ \ ContentionModel\ load\_queue;}
+\DoxyCodeLine{00133\ \ \ \ ContentionModel\ store\_queue;}
+\DoxyCodeLine{00134\ \ \ \ uint64\_t\ m\_rs\_entries\_used;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordtype}{bool}\ will\_skip;}
+\DoxyCodeLine{00137\ \ \ \ SubsecondTime\ time\_skipped;}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordtype}{int}\ addressMask;}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ uint64\_t\ m\_numICacheOverlapped;}
+\DoxyCodeLine{00142\ \ \ \ uint64\_t\ m\_numBPredOverlapped;}
+\DoxyCodeLine{00143\ \ \ \ uint64\_t\ m\_numDCacheOverlapped;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ uint64\_t\ m\_numLongLatencyLoads;}
+\DoxyCodeLine{00146\ \ \ \ uint64\_t\ m\_numTotalLongLatencyLoadLatency;}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ uint64\_t\ m\_numSerializationInsns;}
+\DoxyCodeLine{00149\ \ \ \ uint64\_t\ m\_totalSerializationLatency;}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ uint64\_t\ m\_totalHiddenDCacheLatency;}
+\DoxyCodeLine{00152\ \ \ \ uint64\_t\ m\_totalHiddenLongerDCacheLatency;}
+\DoxyCodeLine{00153\ \ \ \ uint64\_t\ m\_numHiddenLongerDCacheLatency;}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ PerformanceModel\ *perf;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00158\ \ \ \ FILE\ *m\_insn\_log;}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ uint64\_t\ m\_numMfenceInsns;}
+\DoxyCodeLine{00162\ \ \ \ uint64\_t\ m\_totalMfenceLatency;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_mlp\_histogram;}
+\DoxyCodeLine{00165\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ MAX\_OUTSTANDING\ =\ 32;}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordtype}{void}\ setDependencies(smtthread\_id\_t\ thread\_id,\ RobEntry\ *entry);}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordtype}{void}\ setStoreAddressProducers(smtthread\_id\_t\ thread\_id,\ RobEntry\ *entry,\ uint64\_t\ lowestValidSequenceNumber);}
+\DoxyCodeLine{00169\ \ \ \ RobEntry\ *findEntryBySequenceNumber(smtthread\_id\_t\ thread\_num,\ UInt64\ sequenceNumber);}
+\DoxyCodeLine{00170\ \ \ \ \textcolor{keywordtype}{void}\ countOutstandingMemop(smtthread\_id\_t\ thread\_num,\ SubsecondTime\ time);}
+\DoxyCodeLine{00171\ \ \ \ \textcolor{keywordtype}{void}\ printRob(smtthread\_id\_t\ thread\_num);}
+\DoxyCodeLine{00172\ \ \ \ \textcolor{keywordtype}{void}\ printRob();}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ SubsecondTime\ executeCycle();}
+\DoxyCodeLine{00175\ \ \ \ SubsecondTime\ doDispatch();}
+\DoxyCodeLine{00176\ \ \ \ SubsecondTime\ doIssue();}
+\DoxyCodeLine{00177\ \ \ \ SubsecondTime\ doCommit();}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \textcolor{keywordtype}{bool}\ canExecute(smtthread\_id\_t\ thread\_num);}
+\DoxyCodeLine{00180\ \ \ \ \textcolor{keywordtype}{bool}\ canExecute();}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{keywordtype}{bool}\ tryDispatch(smtthread\_id\_t\ thread\_num,\ SubsecondTime\ \&next\_event);}
+\DoxyCodeLine{00182\ \ \ \ SubsecondTime*\ findCpiComponent(smtthread\_id\_t\ thread\_num);}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordtype}{bool}\ tryIssue(smtthread\_id\_t\ thread\_num,\ SubsecondTime\ \&next\_event,\ \textcolor{keywordtype}{bool}\ would\_have\_skipped\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00184\ \ \ \ \textcolor{keywordtype}{void}\ issueInstruction(smtthread\_id\_t\ thread\_num,\ uint64\_t\ idx,\ SubsecondTime\ \&next\_event);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \textcolor{keywordtype}{void}\ computeCurrentWindowsize();}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00189\ \ \ \ RobSmtTimer(\textcolor{keywordtype}{int}\ num\_threads,\ Core\ *core,\ PerformanceModel\ *perf,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ \textcolor{keywordtype}{int}\ misprediction\_penalty,\ \textcolor{keywordtype}{int}\ dispatch\_width,\ \textcolor{keywordtype}{int}\ window\_size);}
+\DoxyCodeLine{00190\ \ \ \ \textcolor{keyword}{virtual}\ \string~RobSmtTimer();}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ initializeThread(smtthread\_id\_t\ thread\_num);}
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keyword}{virtual}\ uint64\_t\ threadNumSurplusInstructions(smtthread\_id\_t\ thread\_num);}
+\DoxyCodeLine{00194\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ threadHasEnoughInstructions(smtthread\_id\_t\ thread\_num);}
+\DoxyCodeLine{00195\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ pushInstructions(smtthread\_id\_t\ thread\_id,\ \textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts);}
+\DoxyCodeLine{00198\ \ \ \ \textcolor{keyword}{virtual}\ boost::tuple<uint64\_t,SubsecondTime>\ returnLatency(smtthread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ execute();}
+\DoxyCodeLine{00201\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ synchronize(smtthread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00202\ \};}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ RobSmtTimer\_H\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

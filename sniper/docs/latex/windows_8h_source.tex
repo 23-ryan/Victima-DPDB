@@ -1,0 +1,202 @@
+\doxysection{windows.\+h}
+\label{windows_8h_source}\index{common/performance\_model/performance\_models/interval\_performance\_model/windows.h@{common/performance\_model/performance\_models/interval\_performance\_model/windows.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#ifndef\ WINDOWS\_HPP\_}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ WINDOWS\_HPP\_}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}register\_dependencies.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}memory\_dependencies.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }IntervalContention;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{enum}\ CpContrType\ \{}
+\DoxyCodeLine{00016\ \ \ \ CPCONTR\_TYPE\_FP\_ADDSUB,}
+\DoxyCodeLine{00017\ \ \ \ CPCONTR\_TYPE\_FP\_MULDIV,}
+\DoxyCodeLine{00018\ \ \ \ CPCONTR\_TYPE\_LOAD\_L1,}
+\DoxyCodeLine{00019\ \ \ \ CPCONTR\_TYPE\_LOAD\_L2,}
+\DoxyCodeLine{00020\ \ \ \ CPCONTR\_TYPE\_LOAD\_L3,}
+\DoxyCodeLine{00021\ \ \ \ CPCONTR\_TYPE\_LOAD\_LX,}
+\DoxyCodeLine{00022\ \ \ \ CPCONTR\_TYPE\_STORE,}
+\DoxyCodeLine{00023\ \ \ \ CPCONTR\_TYPE\_GENERIC,}
+\DoxyCodeLine{00024\ \ \ \ CPCONTR\_TYPE\_BRANCH,}
+\DoxyCodeLine{00025\ \ \ \ CPCONTR\_TYPE\_SIZE,}
+\DoxyCodeLine{00026\ \};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{class\ }Windows\ \{}
+\DoxyCodeLine{00029\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keyword}{struct\ }WindowEntry}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ initialize(DynamicMicroOp*\ micro\_op);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ uint32\_t\ windowIndex;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ DynamicMicroOp\ *uop;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ uint64\_t\ execTime;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ uint64\_t\ dispatchTime;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ uint64\_t\ fetchTime;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ uint64\_t\ cpContr;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{ICACHE\_OVERLAP\ =\ 1,\ BPRED\_OVERLAP\ =\ 2,\ DCACHE\_OVERLAP\ =\ 4\};}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ uint32\_t\ overlapFlags;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{NO\_DEP\ =\ 0,\ DATA\_DEP\ =\ 1,\ INDEP\_MISS\ =\ 2\};}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ uint32\_t\ dependent;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ uint64\_t\ cphead;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ uint64\_t\ cptail;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ uint64\_t\ maxProducer;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ uint32\_t\ getWindowIndex()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>windowIndex;\ \}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setWindowIndex(uint32\_t\ index)\ \{\ this-\/>windowIndex\ =\ index;\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ DynamicMicroOp*\ getDynMicroOp()\ \{\ \textcolor{keywordflow}{return}\ this-\/>uop;\ \}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keyword}{const}\ DynamicMicroOp*\ getDynMicroOp()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>uop;\ \}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{comment}{/*\ Some\ proxy\ functions\ */}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MicroOp*\ getMicroOp()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>getDynMicroOp()-\/>getMicroOp();\ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ uint64\_t\ getSequenceNumber()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>getDynMicroOp()-\/>getSequenceNumber();\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ uint64\_t\ getExecTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>execTime;\ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setExecTime(uint64\_t\ time)\ \{\ this-\/>execTime\ =\ time;\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ uint64\_t\ getDispatchTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>dispatchTime;\ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setDispatchTime(uint64\_t\ time)\ \{\ this-\/>dispatchTime\ =\ time;\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ uint64\_t\ getFetchTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>fetchTime;\ \}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setFetchTime(uint64\_t\ time)\ \{\ this-\/>fetchTime\ =\ time;\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ uint64\_t\ getCpContr()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>cpContr;\ \}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setCpContr(uint64\_t\ cpContr)\ \{\ this-\/>cpContr\ =\ cpContr;\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addOverlapFlag(uint32\_t\ flag)\ \{\ this-\/>overlapFlags\ |=\ flag;\ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasOverlapFlag(uint32\_t\ flag)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>overlapFlags\ \&\ flag;\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clearDependent()\ \{\ this-\/>dependent\ =\ NO\_DEP;\ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isDependent()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>dependent\ ==\ DATA\_DEP;\ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isIndependent()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>dependent\ ==\ INDEP\_MISS;\ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setDataDependent()\ \{\ this-\/>dependent\ =\ DATA\_DEP;\ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setIndependentMiss()\ \{\ this-\/>dependent\ =\ INDEP\_MISS;\ \}}
+\DoxyCodeLine{00092\ \ \ \ \};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordtype}{int}\ windowIndex(\textcolor{keywordtype}{int}\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00095\ \ \ \textcolor{keywordtype}{int}\ incrementIndex(\textcolor{keywordtype}{int}\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordtype}{int}\ decrementIndex(\textcolor{keywordtype}{int}\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ Windows(\textcolor{keywordtype}{int}\ windowSize,\ \textcolor{keywordtype}{bool}\ doFunctionalUnitContention,\ Core\ *core,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \string~Windows();}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordtype}{void}\ clear();}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \textcolor{keywordtype}{bool}\ wIsFull()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \textcolor{keywordtype}{bool}\ wIsEmpty()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00111\ \ \ \textcolor{keywordtype}{void}\ add(DynamicMicroOp*\ microOp);}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ WindowEntry\&\ getInstruction(uint64\_t\ sequenceNumber)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ WindowEntry\&\ getLastAdded()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ WindowEntry\&\ getInstructionToDispatch()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ WindowEntry\&\ getOldestInstruction()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \textcolor{keywordtype}{void}\ dispatchInstruction();}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \textcolor{keywordtype}{void}\ clearOldWindow(uint64\_t\ newCpHead);}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordtype}{bool}\ windowContains(uint64\_t\ sequenceNumber)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \textcolor{keywordtype}{bool}\ oldWindowContains(uint64\_t\ sequenceNumber)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordtype}{int}\ getOldWindowLength()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ uint64\_t\ getCriticalPathHead()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ uint64\_t\ getCriticalPathTail()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordtype}{int}\ getCriticalPathLength()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ uint64\_t\ longLatencyOperationLatency(WindowEntry\&\ uop);}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ uint64\_t\ updateCriticalPathTail(WindowEntry\&\ uop);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \textcolor{keywordtype}{int}\ getMinimalFlushLatency(\textcolor{keywordtype}{int}\ width)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ uint64\_t\ getCpContrFraction(CpContrType\ type,\ uint64\_t\ effective\_cp\_length)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{class\ }Iterator\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ index;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ stop;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Windows*\ \textcolor{keyword}{const}\ windows;}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ Iterator(\textcolor{keyword}{const}\ Windows*\ \textcolor{keyword}{const}\ windows,\ \textcolor{keywordtype}{int}\ start,\ \textcolor{keywordtype}{int}\ stop);}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasNext();}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ WindowEntry\&\ next();}
+\DoxyCodeLine{00154\ \ \ \};}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ Iterator\ getWindowIterator()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00157\ \ \ Iterator\ getOldWindowIterator()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \textcolor{keywordtype}{int}\ calculateBranchResolutionLatency();}
+\DoxyCodeLine{00160\ \ \ uint64\_t\ getEffectiveCriticalPathLength(uint64\_t\ critical\_path\_length,\ \textcolor{keywordtype}{bool}\ update\_reason);}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ String\ toString();}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00165\ \ \ \textcolor{keyword}{const}\ CoreModel\ *m\_core\_model;}
+\DoxyCodeLine{00166\ \ \ IntervalContention\ *m\_interval\_contention;}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \textcolor{keywordtype}{int}\ m\_window\_size;}
+\DoxyCodeLine{00169\ \ \ \textcolor{keywordtype}{int}\ m\_double\_window\_size;}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ WindowEntry*\ \textcolor{keyword}{const}\ m\_double\_window;}
+\DoxyCodeLine{00172\ \ \ uint32\_t*\ \textcolor{keyword}{const}\ m\_exec\_time\_map;\ \textcolor{comment}{//\ Used\ to\ store\ the\ execution\ time\ of\ the\ producers\ when\ calculating\ the\ branch\ resolution\ time.}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \textcolor{keywordtype}{bool}\ m\_do\_functional\_unit\_contention;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ uint64\_t\ m\_next\_sequence\_number;}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ RegisterDependencies*\ \textcolor{keyword}{const}\ m\_register\_dependencies;}
+\DoxyCodeLine{00179\ \ \ MemoryDependencies*\ \textcolor{keyword}{const}\ m\_memory\_dependencies;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \textcolor{keywordtype}{int}\ m\_window\_head\_\_old\_window\_tail;}
+\DoxyCodeLine{00182\ \ \ \textcolor{keywordtype}{int}\ m\_window\_tail;}
+\DoxyCodeLine{00183\ \ \ \textcolor{keywordtype}{int}\ m\_old\_window\_head;}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \textcolor{keywordtype}{int}\ m\_window\_length;}
+\DoxyCodeLine{00186\ \ \ \textcolor{keywordtype}{int}\ m\_old\_window\_length;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ uint64\_t\ m\_critical\_path\_head;}
+\DoxyCodeLine{00189\ \ \ uint64\_t\ m\_critical\_path\_tail;}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ uint64\_t\ m\_cpcontr\_bytype[CPCONTR\_TYPE\_SIZE];}
+\DoxyCodeLine{00192\ \ \ uint64\_t\ m\_cpcontr\_total;}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ WindowEntry\&\ getInstructionByIndex(\textcolor{keywordtype}{int}\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \textcolor{keywordtype}{void}\ addFunctionalUnitStats(\textcolor{keyword}{const}\ WindowEntry\ \&uop);}
+\DoxyCodeLine{00197\ \ \ \textcolor{keywordtype}{void}\ removeFunctionalUnitStats(\textcolor{keyword}{const}\ WindowEntry\ \&uop);}
+\DoxyCodeLine{00198\ \ \ \textcolor{keywordtype}{void}\ clearFunctionalUnitStats();}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }RegisterDependencies;}
+\DoxyCodeLine{00201\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }MemoryDependencies;}
+\DoxyCodeLine{00202\ \};}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ CpContrType\ getCpContrType(\textcolor{keyword}{const}\ Windows::WindowEntry\&\ uop);}
+\DoxyCodeLine{00205\ String\ CpContrTypeString(CpContrType\ r);}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ WINDOWS\_HPP\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

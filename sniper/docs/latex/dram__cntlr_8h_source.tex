@@ -1,0 +1,58 @@
+\doxysection{dram\+\_\+cntlr.\+h}
+\label{dram__cntlr_8h_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_cntlr.h@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_cntlr.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Define\ to\ re-\/enable\ DramAccessCount}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\#define\ ENABLE\_DRAM\_ACCESS\_COUNT}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}shmem\_msg.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}dram\_cntlr\_interface.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }FaultInjector;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }PrL1PrL2DramDirectoryMSI}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{class\ }DramCntlr\ :\ \textcolor{keyword}{public}\ DramCntlrInterface}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ std::unordered\_map<IntPtr,\ Byte*>\ m\_data\_map;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ DramPerfModel*\ m\_dram\_perf\_model;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ FaultInjector*\ m\_fault\_injector;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ address\_home\_lookup;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,UInt64>\ AccessCountMap;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ AccessCountMap*\ m\_dram\_access\_count;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ UInt64\ m\_reads,\ m\_writes;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ ShmemPerf\ m\_dummy\_shmem\_perf;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ SubsecondTime\ runDramPerfModel(core\_id\_t\ requester,\ SubsecondTime\ time,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\ \textcolor{keywordtype}{bool}\ is\_metadata);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addToDramAccessCount(IntPtr\ address,\ access\_t\ access\_type);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ printDramAccessCount(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ DramCntlr(MemoryManagerBase*\ memory\_manager,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ cache\_block\_size,AddressHomeLookup*\ address\_home\_lookup);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \string~DramCntlr();}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ DramPerfModel*\ getDramPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_dram\_perf\_model;\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Run\ DRAM\ performance\ model.\ Pass\ in\ begin\ time,\ returns\ latency}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ getDataFromDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_matadata);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ putDataToDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\textcolor{keywordtype}{bool}\ is\_matadata);}
+\DoxyCodeLine{00051\ \ \ \ \};}
+\DoxyCodeLine{00052\ \}}
+
+\end{DoxyCode}

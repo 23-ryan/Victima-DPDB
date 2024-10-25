@@ -1,0 +1,161 @@
+\doxysection{performance\+\_\+model.\+h}
+\label{performance__model_8h_source}\index{common/performance\_model/performance\_model.h@{common/performance\_model/performance\_model.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PERFORMANCE\_MODEL\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PERFORMANCE\_MODEL\_H}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ This\ class\ represents\ the\ actual\ performance\ model\ for\ a\ given\ core}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}mt\_circular\_queue.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}hit\_where.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ Forward\ Decls}}
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }BranchPredictor;}
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }FastforwardPerformanceModel;}
+\DoxyCodeLine{00019\ \textcolor{keyword}{class\ }Instruction;}
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }PseudoInstruction;}
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }DynamicInstruction;}
+\DoxyCodeLine{00022\ \textcolor{keyword}{class\ }Allocator;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{class\ }PerformanceModel}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ PerformanceModel(Core*\ core);}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keyword}{virtual}\ \string~PerformanceModel();}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordtype}{void}\ queueInstruction(DynamicInstruction\ *i);}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordtype}{void}\ queuePseudoInstruction(PseudoInstruction\ *i);}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordtype}{void}\ handleIdleInstruction(PseudoInstruction\ *i);}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordtype}{void}\ iterate();}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ synchronize();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ UInt64\ getInstructionCount()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_instruction\_count;\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ SubsecondTime\ getElapsedTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_elapsed\_time.getElapsedTime();\ \}}
+\DoxyCodeLine{00039\ \ \ \ SubsecondTime\ getNonIdleElapsedTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getElapsedTime()\ -\/\ m\_idle\_elapsed\_time.getElapsedTime();\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordtype}{void}\ countInstructions(IntPtr\ address,\ UInt32\ count);}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordtype}{void}\ handleMemoryLatency(SubsecondTime\ latency,\ HitWhere::where\_t\ hit\_where);}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordtype}{void}\ handleBranchMispredict();}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keyword}{static}\ PerformanceModel\ *create(Core*\ core);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ BranchPredictor\ *getBranchPredictor()\ \{\ \textcolor{keywordflow}{return}\ m\_bp;\ \}}
+\DoxyCodeLine{00048\ \ \ \ BranchPredictor\ \textcolor{keyword}{const}*\ getConstBranchPredictor()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_bp;\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ FastforwardPerformanceModel\ *getFastforwardPerformanceModel()\ \{\ \textcolor{keywordflow}{return}\ m\_fastforward\_model;\ \}}
+\DoxyCodeLine{00051\ \ \ \ FastforwardPerformanceModel\ \textcolor{keyword}{const}*\ getFastforwardPerformanceModel()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_fastforward\_model;\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ DynamicInstruction*\ createDynamicInstruction(Instruction\ *ins,\ IntPtr\ eip);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordtype}{void}\ traceInstruction(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop,\ InstructionTracer::uop\_times\_t\ *times)}
+\DoxyCodeLine{00056\ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_instruction\_tracer)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ m\_instruction\_tracer-\/>traceInstruction(uop,\ times);}
+\DoxyCodeLine{00059\ \ \ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ barrierEnter()\ \{\ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ barrierExit()\ \{\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keywordtype}{void}\ disable();}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordtype}{void}\ enable();}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordtype}{bool}\ isEnabled()\ \{\ \textcolor{keywordflow}{return}\ m\_enabled;\ \}}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordtype}{void}\ setHold(\textcolor{keywordtype}{bool}\ hold)\ \{\ m\_hold\ =\ hold;\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordtype}{bool}\ isFastForward()\ \{\ \textcolor{keywordflow}{return}\ m\_fastforward;\ \}}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keywordtype}{void}\ setFastForward(\textcolor{keywordtype}{bool}\ fastforward,\ \textcolor{keywordtype}{bool}\ detailed\_sync\ =\ \textcolor{keyword}{true})}
+\DoxyCodeLine{00071\ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\ ==\ fastforward)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ m\_fastforward\ =\ fastforward;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ m\_detailed\_sync\ =\ detailed\_sync;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{comment}{//\ Fastforward\ performance\ model\ has\ controlled\ time\ for\ a\ while,\ now\ let\ the\ detailed\ model\ know\ time\ has\ advanced}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fastforward\ ==\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ enableDetailedModel();}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ notifyElapsedTimeUpdate();}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ disableDetailedModel();}
+\DoxyCodeLine{00084\ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00087\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }SpawnInstruction;}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }FastforwardPerformanceModel;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordtype}{void}\ setElapsedTime(SubsecondTime\ time);}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordtype}{void}\ incrementElapsedTime(SubsecondTime\ time)\ \{\ m\_elapsed\_time.addLatency(time);\ \}}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keywordtype}{void}\ incrementIdleElapsedTime(SubsecondTime\ time);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ MTCircularQueue<DynamicInstruction*>\ InstructionQueue;}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ CircularQueue<DynamicInstruction*>\ InstructionQueue;}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ Core*\ getCore()\ \{\ \textcolor{keywordflow}{return}\ m\_core;\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \textcolor{comment}{//\ Simulate\ a\ single\ instruction}}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ handleInstruction(DynamicInstruction\ *instruction)\ =\ 0;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \textcolor{comment}{//\ When\ time\ is\ jumped\ ahead\ outside\ of\ control\ of\ the\ performance\ model\ (synchronization\ instructions,\ etc.)}}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{comment}{//\ notify\ it\ here.\ This\ may\ be\ used\ to\ synchronize\ internal\ time\ or\ to\ flush\ various\ instruction\ queues}}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ notifyElapsedTimeUpdate()\ \{\}}
+\DoxyCodeLine{00110\ \ \ \ \textcolor{comment}{//\ Called\ when\ the\ detailed\ model\ is\ enabled/disabled.\ Used\ to\ release\ threads\ from\ the\ SMT\ barrier.}}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ enableDetailedModel()\ \{\}}
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ disableDetailedModel()\ \{\}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ Core*\ m\_core;}
+\DoxyCodeLine{00115\ \ \ \ Allocator\ *m\_dynins\_alloc;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordtype}{bool}\ m\_enabled;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keywordtype}{bool}\ m\_fastforward;}
+\DoxyCodeLine{00120\ \ \ \ FastforwardPerformanceModel*\ m\_fastforward\_model;}
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordtype}{bool}\ m\_detailed\_sync;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \textcolor{keywordtype}{bool}\ m\_hold;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00126\ \ \ \ UInt64\ m\_instruction\_count;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ ComponentTime\ m\_elapsed\_time;}
+\DoxyCodeLine{00129\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00130\ \ \ \ ComponentTime\ m\_idle\_elapsed\_time;}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ SubsecondTime\ m\_cpiStartTime;}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{comment}{//\ CPI\ components\ for\ Sync\ and\ Recv\ instructions}}
+\DoxyCodeLine{00134\ \ \ \ SubsecondTime\ m\_cpiSyncFutex;}
+\DoxyCodeLine{00135\ \ \ \ SubsecondTime\ m\_cpiSyncPthreadMutex;}
+\DoxyCodeLine{00136\ \ \ \ SubsecondTime\ m\_cpiSyncPthreadCond;}
+\DoxyCodeLine{00137\ \ \ \ SubsecondTime\ m\_cpiSyncPthreadBarrier;}
+\DoxyCodeLine{00138\ \ \ \ SubsecondTime\ m\_cpiSyncJoin;}
+\DoxyCodeLine{00139\ \ \ \ SubsecondTime\ m\_cpiSyncPause;}
+\DoxyCodeLine{00140\ \ \ \ SubsecondTime\ m\_cpiSyncSleep;}
+\DoxyCodeLine{00141\ \ \ \ SubsecondTime\ m\_cpiSyncSyscall;}
+\DoxyCodeLine{00142\ \ \ \ SubsecondTime\ m\_cpiSyncUnscheduled;}
+\DoxyCodeLine{00143\ \ \ \ SubsecondTime\ m\_cpiSyncDvfsTransition;}
+\DoxyCodeLine{00144\ \ \ \ SubsecondTime\ m\_cpiRecv;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ InstructionQueue\ m\_instruction\_queue;}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ UInt32\ m\_current\_ins\_index;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ BranchPredictor\ *m\_bp;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ InstructionTracer\ *m\_instruction\_tracer;}
+\DoxyCodeLine{00153\ \};}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

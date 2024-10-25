@@ -1,0 +1,64 @@
+\doxysection{register\+\_\+dependencies.\+cc}
+\label{register__dependencies_8cc_source}\index{common/performance\_model/performance\_models/micro\_op/register\_dependencies.cc@{common/performance\_model/performance\_models/micro\_op/register\_dependencies.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}register\_dependencies.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ RegisterDependencies::RegisterDependencies()}
+\DoxyCodeLine{00005\ \{}
+\DoxyCodeLine{00006\ \ \ \ clear();}
+\DoxyCodeLine{00007\ \}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keywordtype}{void}\ RegisterDependencies::setDependencies(DynamicMicroOp\&\ microOp,\ uint64\_t\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{comment}{//\ Create\ the\ dependencies\ for\ the\ microOp}}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ microOp.getMicroOp()-\/>getSourceRegistersLength();\ i++)}
+\DoxyCodeLine{00013\ \ \ \ \{}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ dl::Decoder::decoder\_reg\ sourceRegister\ =\ microOp.getMicroOp()-\/>getSourceRegister(i);}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ uint64\_t\ producerSequenceNumber;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(sourceRegister\ <\ Sim()-\/>getDecoder()-\/>last\_reg(),\ \textcolor{stringliteral}{"{}Source\ register\ src[\%u]=\%u\ is\ invalid"{}},\ i,\ sourceRegister);}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((producerSequenceNumber\ =\ producers[sourceRegister])\ !=\ INVALID\_SEQNR)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (producerSequenceNumber\ >=\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ microOp.addDependency(producerSequenceNumber);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ producers[sourceRegister]\ =\ INVALID\_SEQNR;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00028\ \ \ \ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{comment}{//\ Update\ the\ producers}}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ microOp.getMicroOp()-\/>getDestinationRegistersLength();\ i++)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ uint32\_t\ destinationRegister\ =\ microOp.getMicroOp()-\/>getDestinationRegister(i);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(destinationRegister\ <\ Sim()-\/>getDecoder()-\/>last\_reg(),\ \textcolor{stringliteral}{"{}Destination\ register\ dst[\%u]\ =\ \%u\ is\ invalid"{}},\ i,\ destinationRegister);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ producers[destinationRegister]\ =\ microOp.getSequenceNumber();}
+\DoxyCodeLine{00036\ \ \ \ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ uint64\_t\ RegisterDependencies::peekProducer(dl::Decoder::decoder\_reg\ reg,\ uint64\_t\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (reg\ ==\ dl::Decoder::DL\_REG\_INVALID)}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SEQNR;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ uint64\_t\ producerSequenceNumber\ =\ producers[reg];}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordflow}{if}\ (producerSequenceNumber\ ==\ INVALID\_SEQNR\ ||\ producerSequenceNumber\ <\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SEQNR;}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{return}\ producerSequenceNumber;}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{void}\ RegisterDependencies::clear()}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ Sim()-\/>getDecoder()-\/>last\_reg();\ i++)}
+\DoxyCodeLine{00055\ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ producers[i]\ =\ INVALID\_SEQNR;}
+\DoxyCodeLine{00057\ \ \ \ \}}
+\DoxyCodeLine{00058\ \}}
+
+\end{DoxyCode}

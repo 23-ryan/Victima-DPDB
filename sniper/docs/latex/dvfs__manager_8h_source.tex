@@ -1,0 +1,42 @@
+\doxysection{dvfs\+\_\+manager.\+h}
+\label{dvfs__manager_8h_source}\index{common/system/dvfs\_manager.h@{common/system/dvfs\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DVFS\_MANAGER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DVFS\_MANAGER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Each\ process\ has\ a\ copy\ of\ all\ global\ frequencies,\ and\ of\ the\ core\ frequencies\ local\ to\ that\ process}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ In\ addition,\ process\ 0\ has\ a\ copy\ of\ all\ core\ frequencies\ so\ as\ to\ quickly\ fulfill\ queries\ from\ the\ MCP/scripts}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }DvfsManager}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{enum}\ DvfsGlobalDomain\ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ DOMAIN\_GLOBAL\_DEFAULT,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ wanted\ separate\ domains\ for\ e.g.\ DRAM,\ add\ them\ here\ and\ initialize\ them\ in\ DvfsManager::DvfsManager()}}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ DOMAIN\_GLOBAL\_MAX}
+\DoxyCodeLine{00018\ \ \ \ \};}
+\DoxyCodeLine{00019\ \ \ \ DvfsManager();}
+\DoxyCodeLine{00020\ \ \ \ UInt32\ getCoreDomainId(UInt32\ core\_id);}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod*\ getCoreDomain(UInt32\ core\_id);}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod*\ getGlobalDomain(DvfsGlobalDomain\ domain\_id\ =\ DOMAIN\_GLOBAL\_DEFAULT);}
+\DoxyCodeLine{00023\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{comment}{//\ Make\ sure\ all\ frequency\ updates\ pass\ through\ the\ correct\ path}}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordtype}{void}\ setCoreDomain(UInt32\ core\_id,\ ComponentPeriod\ new\_freq);}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }MagicServer;}
+\DoxyCodeLine{00027\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00028\ \ \ \ UInt32\ m\_cores\_per\_socket;}
+\DoxyCodeLine{00029\ \ \ \ SubsecondTime\ m\_transition\_latency;}
+\DoxyCodeLine{00030\ \ \ \ UInt32\ m\_num\_proc\_domains;}
+\DoxyCodeLine{00031\ \ \ \ UInt32\ m\_num\_app\_cores;}
+\DoxyCodeLine{00032\ \ \ \ std::vector<ComponentPeriod>\ app\_proc\_domains;}
+\DoxyCodeLine{00033\ \ \ \ std::vector<ComponentPeriod>\ global\_domains;}
+\DoxyCodeLine{00034\ \};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_DVFS\_MANAGER\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

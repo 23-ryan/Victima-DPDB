@@ -1,0 +1,368 @@
+\doxysection{pagetable\+\_\+walker\+\_\+hdc.\+cc}
+\label{pagetable__walker__hdc_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_hdc.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_hdc.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <time.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker\_hdc.h"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ PageTableHashDontCache::PageTableHashDontCache(\textcolor{keywordtype}{int}\ \_table\_size\_in\_bits,\textcolor{keywordtype}{int}\ \_small\_page\_size\_in\_bits,\textcolor{keywordtype}{int}\ \_large\_page\_size\_in\_bits,\textcolor{keywordtype}{int}\ \_small\_page\_percentage,}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ Core*\ \_core,ShmemPerfModel*\ \_m\_shmem\_perf\_model,PWC*\ pwc,\ \textcolor{keywordtype}{bool}\ pwc\_enabled)}
+\DoxyCodeLine{00020\ \ \ \ \ :PageTableWalker(\_core-\/>getId(),\ 0,\ \_m\_shmem\_perf\_model,\ pwc,\ pwc\_enabled)\{}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ this-\/>table\_size\_in\_bits=\_table\_size\_in\_bits;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ this-\/>small\_page\_size\_in\_bits=\_small\_page\_size\_in\_bits;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ this-\/>large\_page\_size\_in\_bits=\_large\_page\_size\_in\_bits;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ this-\/>small\_page\_percentage=\_small\_page\_percentage;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ this-\/>core=\_core;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ this-\/>m\_shmem\_perf\_model=\_m\_shmem\_perf\_model;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ this-\/>small\_page\_table=(entry\ *)malloc((UInt64)pow(2,table\_size\_in\_bits)*\textcolor{keyword}{sizeof}(entry));}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ this-\/>pagefaults\_4KB\ =\ 0;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ this-\/>pagefaults\_2MB\ =\ 0;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ this-\/>chain\_per\_entry\_4KB\ =\ 0;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ this-\/>chain\_per\_entry\_2MB\ =\ 0;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ this-\/>num\_accesses\_4KB\ =\ 0;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ this-\/>num\_accesses\_2MB\ =\ 0;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ total\_latency\_4KB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ total\_latency\_2MB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Allocating\ "{}}\ <<\ (UInt64)pow(2,table\_size\_in\_bits)\ <<\ \textcolor{stringliteral}{"{}\ entries"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt64\ i\ =\ 0;\ i\ <\ (UInt64)pow(2,table\_size\_in\_bits);\ i++)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].empty=\textcolor{keyword}{true};}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].vpn=0;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].ptes[0]=0;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].ptes[1]=0;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].ptes[2]=0;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].ptes[3]=0;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ this-\/>large\_page\_table=(entry\ *)malloc((UInt64)pow(2,table\_size\_in\_bits)*\textcolor{keyword}{sizeof}(entry));}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt64\ i\ =\ 0;\ i\ <\ (UInt64)pow(2,table\_size\_in\_bits);\ i++)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].empty=\textcolor{keyword}{true};}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].vpn=0;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].ptes[0]=0;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].ptes[1]=0;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].ptes[2]=0;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].ptes[3]=0;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}page\_table\_walks"{}},\ \&page\_table\_walks);}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}page\_faults\_4KB"{}},\ \&pagefaults\_4KB);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}page\_faults\_2MB"{}},\ \&pagefaults\_2MB);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}conflicts\_4KB"{}},\ \&chain\_per\_entry\_4KB);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}conflicts\_2MB"{}},\ \&chain\_per\_entry\_2MB);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}accesses\_4KB"{}},\ \&num\_accesses\_4KB);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}accesses\_2MB"{}},\ \&num\_accesses\_2MB);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total\_latency\_4KB"{}},\ \&total\_latency\_4KB);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total\_latency\_2MB"{}},\ \&total\_latency\_2MB);}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total\_latency\_page\_fault"{}},\ \&total\_latency\_page\_fault);}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ }
+\DoxyCodeLine{00077\ \ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableHashDontCache::hash\_function(IntPtr\ address)\{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ uint64\ mask=0;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=0\ ;i<table\_size\_in\_bits;i++)\{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ mask+=(int)pow(2,i);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ \ new\_address\ =\ (\textcolor{keywordtype}{char}*)\ address;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ uint64\ result=CityHash64((\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)\&address,8)\ \&\ (mask);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ SubsecondTime\ PageTableHashDontCache::access\_cache(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00090\ \ \ \ \ CacheCntlr\ *cache,\ Core::lock\_signal\_t\ lock\_signal,\ Byte*\ data\_buf,\ }
+\DoxyCodeLine{00091\ \ \ \ \ UInt32\ data\_length,\ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(address))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf,\ data\_length,}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ modeled,}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count,\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ SubsecondTime\ t\_end\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ mem\_manager-\/>tagCachesBlockType(address,CacheBlockInfo::block\_type\_t::PAGE\_TABLE);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_end-\/t\_start;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableHashDontCache::handle\_page\_fault(IntPtr\ address,\ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB,\ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB)\{}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ random\_number=rand()\%100;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ entry*\ page\_table\_entry;}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\_in\_bits;}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ allocated\_size;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ allocated\_2MB=\textcolor{keyword}{false};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ allocated\_4KB=\textcolor{keyword}{false};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(random\_number\ <\ small\_page\_percentage)\{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ allocated\_4KB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ pagefaults\_4KB++;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ page\_table\_entry\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ page\_size\_in\_bits=small\_page\_size\_in\_bits;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ allocated\_2MB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ pagefaults\_2MB++;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ page\_table\_entry\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ page\_size\_in\_bits=large\_page\_size\_in\_bits;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ entry*\ current\_entry\ =\ page\_table\_entry;}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{\ \ \ \ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry-\/>empty)\ )\{}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(allocated\_4KB)\{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chain\_per\_entry\_4KB++;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_4KB++;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_table\_entry\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chain\_per\_entry\_2MB++;}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_2MB++;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_table\_entry\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (current\_entry-\/>empty)\{}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry-\/>empty=\textcolor{keyword}{false};}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry-\/>vpn\ =\ address\ >>\ page\_size\_in\_bits;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ page\_size\_in\_bits;}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \}}
+\DoxyCodeLine{00168\ \ \ \ \ }
+\DoxyCodeLine{00169\ \ \ \ \ SubsecondTime\ PageTableHashDontCache::init\_walk(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00170\ \ \ \ \ CacheCntlr\ *cache,\ Core::lock\_signal\_t\ lock\_signal,\ Byte*\ data\_buf,\ }
+\DoxyCodeLine{00171\ \ \ \ \ UInt32\ data\_length,\ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ page\_table\_walks++;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB\ =\ hash\_function(address\ >>\ small\_page\_size\_in\_bits);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB\ =\ hash\_function(address\ >>\ large\_page\_size\_in\_bits);}
+\DoxyCodeLine{00178\ \ \ \ \ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ initial\_hash\_function\_result\_4KB\ =\ hash\_function\_result\_4KB;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ initial\_hash\_function\_result\_2MB\ =\ hash\_function\_result\_2MB;}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_4KB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_2MB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ SubsecondTime\ delay\_4KB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ SubsecondTime\ delay\_2MB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Walk\ address:\ "{}\ <<\ address\ <<\ std::endl;}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}4KB\ walk"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ delay\_4KB+=\ access\_cache(eip,address,shadow\_cache,cache,lock\_signal,data\_buf,data\_length,modeled,count);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ num\_accesses\_4KB++;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>empty)\{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}4KB\ page\ fault"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_small-\/>vpn\ ==\ (address\ >>\ small\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}4KB\ found\ it"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_4KB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}4KB\ chain"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_4KB++;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ delay\_2MB+=\ access\_cache(eip,address,shadow\_cache,cache,lock\_signal,data\_buf,data\_length,modeled,count);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ num\_accesses\_2MB++;}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>empty)\{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_large-\/>vpn\ ==\ (address\ >>\ large\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_2MB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_2MB++;}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(found\_it\_4KB)\{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\_4KB+=delay\_4KB;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ delay\_4KB;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(found\_it\_2MB)\{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\_2MB+=delay\_2MB;}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ delay\_2MB;}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ handle\_page\_fault(address,initial\_hash\_function\_result\_4KB,initial\_hash\_function\_result\_2MB);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\_page\_fault\ =\ std::max(delay\_4KB,delay\_2MB);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::max(delay\_4KB,delay\_2MB);}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00251\ \ \ \ \ \}}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordtype}{bool}\ PageTableHashDontCache::isPageFault(IntPtr\ address)\{}
+\DoxyCodeLine{00253\ \ \ \ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB\ =\ hash\_function(address\ >>\ small\_page\_size\_in\_bits);}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB\ =\ hash\_function(address\ >>\ large\_page\_size\_in\_bits);}
+\DoxyCodeLine{00256\ \ \ \ \ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_4KB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_2MB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>empty)\{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_small-\/>vpn\ ==\ (address\ >>\ small\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_4KB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_4KB++;}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>empty)\{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_large-\/>vpn\ ==\ (address\ >>\ large\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_2MB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_2MB++;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (found\_it\_4KB)\{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (found\_it\_2MB)\{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableHashDontCache::init\_walk\_functional(IntPtr\ address)\{}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB\ =\ hash\_function(address\ >>\ small\_page\_size\_in\_bits);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB\ =\ hash\_function(address\ >>\ large\_page\_size\_in\_bits);}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ initial\_hash\_function\_result\_4KB\ =\ hash\_function\_result\_4KB;}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ initial\_hash\_function\_result\_2MB\ =\ hash\_function\_result\_2MB;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ entry\ *current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ entry\ *current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_4KB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_2MB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>empty)\{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_small-\/>vpn\ ==\ (address\ >>\ small\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_4KB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_4KB++;}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>empty)\{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_large-\/>vpn\ ==\ (address\ >>\ large\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_2MB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function\_result\_2MB++;}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00349\ \ \ \ \ }
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (found\_it\_4KB)\{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ small\_page\_size\_in\_bits;}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (found\_it\_2MB)\{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ large\_page\_size\_in\_bits;}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ handle\_page\_fault(address,\ initial\_hash\_function\_result\_4KB,initial\_hash\_function\_result\_2MB);}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00360\ \ \ \ \ \}\ \ \ }
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,72 @@
+\doxysection{setlock.\+cc}
+\label{setlock_8cc_source}\index{common/misc/setlock.cc@{common/misc/setlock.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}setlock.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \_SetLock::\_SetLock(UInt32\ core\_offset,\ UInt32\ num\_sharers)}
+\DoxyCodeLine{00005\ \ \ \ :\ m\_locks(num\_sharers)}
+\DoxyCodeLine{00006\ \ \ \ ,\ m\_core\_offset(core\_offset)}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00009\ \ \ \ \_timer\ =\ TotalTimer::getTimerByStacktrace(\textcolor{stringliteral}{"{}setlock@"{}}\ +\ itostr(\textcolor{keyword}{this}));}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Acquire\ exclusive\ access}}
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00015\ \_SetLock::acquire\_exclusive(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00018\ \ \ \ ScopedTimer\ tt(*\_timer);}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{for}(std::vector<PersetLock>::iterator\ it\ =\ m\_locks.begin();\ it\ !=\ m\_locks.end();\ ++it)}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ (*it).acquire();}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ Release\ exclusive\ access}}
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00027\ \_SetLock::release\_exclusive(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{for}(std::vector<PersetLock>::iterator\ it\ =\ m\_locks.begin();\ it\ !=\ m\_locks.end();\ ++it)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ (*it).release();}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Acquire\ shared\ access}}
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00035\ \_SetLock::acquire\_shared(UInt32\ core\_id)}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00038\ \ \ \ ScopedTimer\ tt(*\_timer);}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ assert(core\_id\ >=\ m\_core\_offset);}
+\DoxyCodeLine{00042\ \ \ \ assert(core\_id\ <\ m\_core\_offset\ +\ m\_locks.size());}
+\DoxyCodeLine{00043\ \ \ \ m\_locks.at(core\_id\ -\/\ m\_core\_offset).acquire();}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ Release\ shared\ access}}
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00048\ \_SetLock::release\_shared(UInt32\ core\_id)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ m\_locks.at(core\_id\ -\/\ m\_core\_offset).release();}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00054\ \_SetLock::upgrade(UInt32\ core\_id)}
+\DoxyCodeLine{00055\ \{}
+\DoxyCodeLine{00056\ \ \ \ release\_shared(core\_id);}
+\DoxyCodeLine{00057\ \ \ \ acquire\_exclusive();}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00061\ \_SetLock::downgrade(UInt32\ core\_id)}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_locks.size();\ ++i)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ (core\_id\ -\/\ m\_core\_offset))}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ m\_locks.at(i).release();}
+\DoxyCodeLine{00066\ \}}
+
+\end{DoxyCode}

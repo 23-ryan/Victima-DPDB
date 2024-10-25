@@ -1,0 +1,529 @@
+\doxysection{pin\+\_\+sim.\+cc}
+\label{pin__sim_8cc_source}\index{pin/pin\_sim.cc@{pin/pin\_sim.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Harshad\ Kasture,\ Jason\ Miller,\ Chris\ Celio,\ Charles\ Gruenwald,}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Nathan\ Beckmann,\ George\ Kurian,\ David\ Wentzlaff,\ James\ Psota}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ 10.12.08}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Carbon\ Computer\ Simulator}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ simulator\ models\ future\ multi-\/core\ computers\ with\ thousands\ of\ cores.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ It\ runs\ on\ today's\ x86\ multicores\ and\ will\ scale\ as\ more\ and\ more\ cores}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ and\ better\ inter-\/core\ communications\ mechanisms\ become\ available.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ The\ simulator\ provides\ a\ platform\ for\ research\ in\ processor\ architecture,}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ compilers,\ network\ interconnect\ topologies,\ and\ some\ OS.}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ The\ simulator\ runs\ on\ top\ of\ Intel's\ Pin\ dynamic\ binary\ instrumention\ engine.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ Application\ code\ in\ the\ absence\ of\ instrumentation\ runs\ more\ or\ less}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ natively\ and\ is\ thus\ high\ performance.\ When\ instrumentation\ is\ used,\ models}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ can\ be\ hot-\/swapped\ or\ dynamically\ enabled\ and\ disabled\ as\ desired\ so\ that}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ performance\ tracks\ the\ level\ of\ simulation\ detail\ needed.}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ FIXME:\ This\ list\ could\ probably\ be\ trimmed\ down\ a\ lot.}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}trace\_manager.h"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}config\_file.hpp"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ "{}handle\_args.h"{}}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}instruction\_modeling.h"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}magic\_client.h"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}sampling\_manager.h"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}sampling\_provider.h"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}logmem.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}codecache\_trace.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}toolreg.h"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}pin\_exceptions.h"{}}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}trace\_rtn.h"{}}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ lite\ directories}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ "{}lite/routine\_replace.h"{}}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ "{}lite/handle\_syscalls.h"{}}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ "{}pin.H"{}}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ "{}inst\_mode\_macros.h"{}}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#ifdef\ PINPLAY\_SUPPORTED}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#\ include\ "{}pinplay.H"{}}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#include\ <signal.h>}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ <typeinfo>}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ FIXME:}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ There\ should\ be\ a\ better\ place\ to\ keep\ these\ globals}}
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ -\/-\/\ a\ PinSimulator\ class\ or\ smthg}}
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{bool}\ done\_app\_initialization\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00076\ config::ConfigFile\ *cfg;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ clone\ stuff}}
+\DoxyCodeLine{00079\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ *parent\_tidptr;}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#ifdef\ TARGET\_IA32}}
+\DoxyCodeLine{00081\ \textcolor{keyword}{extern}\ \textcolor{keyword}{struct\ }user\_desc\ *newtls;}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{int}\ *child\_tidptr;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{bool}\ forkedInChild\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ map\ <ADDRINT,\ string>\ rtn\_map;}
+\DoxyCodeLine{00090\ PIN\_LOCK\ rtn\_map\_lock;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#ifdef\ PINPLAY\_SUPPORTED}}
+\DoxyCodeLine{00093\ PINPLAY\_ENGINE\ pinplay\_engine;}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keywordtype}{void}\ applicationMemCopy(\textcolor{keywordtype}{void}\ *dest,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src,\ \textcolor{keywordtype}{size\_t}\ n)}
+\DoxyCodeLine{00097\ \{}
+\DoxyCodeLine{00098\ \ \ \ PIN\_SafeCopy(dest,\ src,\ n);}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keywordtype}{void}\ printRtn\ (ADDRINT\ rtn\_addr,\ \textcolor{keywordtype}{bool}\ enter)}
+\DoxyCodeLine{00102\ \{}
+\DoxyCodeLine{00103\ \ \ \ PIN\_GetLock\ (\&rtn\_map\_lock,\ 1);}
+\DoxyCodeLine{00104\ \ \ \ map<ADDRINT,\ string>::iterator\ it\ =\ rtn\_map.find\ (rtn\_addr);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordtype}{string}\ point\ =\ enter\ ?\ \textcolor{stringliteral}{"{}Enter"{}}\ :\ \textcolor{stringliteral}{"{}Exit"{}};}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{keywordflow}{if}\ (it\ !=\ rtn\_map.end())}
+\DoxyCodeLine{00108\ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ LOG\_PRINT\ (\textcolor{stringliteral}{"{}Stack\ trace\ :\ \%s\ \%s"{}},\ point.c\_str(),\ (it-\/>second).c\_str());}
+\DoxyCodeLine{00110\ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00112\ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ LOG\_PRINT\ (\textcolor{stringliteral}{"{}Stack\ trace\ :\ \%s\ UNKNOWN"{}},\ point.c\_str());}
+\DoxyCodeLine{00114\ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ PIN\_ReleaseLock\ (\&rtn\_map\_lock);}
+\DoxyCodeLine{00117\ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ VOID\ printInsInfo(CONTEXT*\ ctxt)}
+\DoxyCodeLine{00120\ \{}
+\DoxyCodeLine{00121\ \ \ \ \_\_attribute\_\_((\_\_unused\_\_))\ ADDRINT\ reg\_inst\_ptr\ =\ PIN\_GetContextReg(ctxt,\ REG\_INST\_PTR);}
+\DoxyCodeLine{00122\ \ \ \ \_\_attribute\_\_((\_\_unused\_\_))\ ADDRINT\ reg\_stack\_ptr\ =\ PIN\_GetContextReg(ctxt,\ REG\_STACK\_PTR);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}eip\ =\ \%\#llx,\ esp\ =\ \%\#llx"{}},\ reg\_inst\_ptr,\ reg\_stack\_ptr);}
+\DoxyCodeLine{00125\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{keywordtype}{void}\ showInstructionInfo(INS\ ins)}
+\DoxyCodeLine{00128\ \{}
+\DoxyCodeLine{00129\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)t"{}});}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsMemoryRead(ins)\ ||\ INS\_IsMemoryWrite(ins))}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}*\ "{}});}
+\DoxyCodeLine{00132\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \ "{}});}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ \ \ printf("{}\%d\ -\/\ \%s\ "{},\ INS\_Category(ins),\ CATEGORY\_StringShort(INS\_Category(ins)).c\_str());}}
+\DoxyCodeLine{00135\ \ \ \ printf(\textcolor{stringliteral}{"{}\%x\ -\/\ \%s\ "{}},\ INS\_Opcode(ins),\ OPCODE\_StringShort(INS\_Opcode(ins)).c\_str());}
+\DoxyCodeLine{00136\ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%s\ "{}},\ INS\_Disassemble(ins).c\_str());}
+\DoxyCodeLine{00137\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ VOID\ instructionCallback(TRACE\ trace,\ INS\ ins,\ InstMode::inst\_mode\_t\ inst\_mode)}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{comment}{//\ Debugging\ Functions}}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ showInstructionInfo(ins);}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{if}\ (Log::getSingleton()-\/>isLoggingEnabled())}
+\DoxyCodeLine{00145\ \ \ \ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(printInsInfo),}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_CALL\_ORDER,\ CALL\_ORDER\_FIRST,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_CONTEXT,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00151\ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \textcolor{comment}{//\ Core\ Performance\ Modeling}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{keywordtype}{void}\ handleCheckScheduled(THREADID\ threadIndex)}
+\DoxyCodeLine{00158\ \{}
+\DoxyCodeLine{00159\ \ \ \ Thread*\ thread\ =\ localStore[threadIndex].thread;}
+\DoxyCodeLine{00160\ \ \ \ Core*\ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \textcolor{keywordflow}{if}\ (core\ ==\ NULL)}
+\DoxyCodeLine{00163\ \ \ \ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ thread\ isn't\ scheduled.\ Normally\ it\ shouldn't\ execute\ any\ code,}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \textcolor{comment}{//\ but\ just\ after\ thread\ start\ we\ do\ get\ here.}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ here\ until\ we're\ scheduled\ on\ one\ of\ the\ cores.}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ SubsecondTime\ time\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ thread-\/>reschedule(time,\ core);}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ should\ be\ on\ a\ core\ now,\ set\ its\ performance\ model\ to\ our\ local\ time}}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ core\ already\ has\ a\ later\ time,\ we\ have\ to\ wait}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ time\ =\ std::max(time,\ core-\/>getPerformanceModel()-\/>getElapsedTime());}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SpawnInstruction(time));}
+\DoxyCodeLine{00175\ \ \ \ \}}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ VOID\ addCheckScheduled(TRACE\ trace,\ INS\ ins\_head)}
+\DoxyCodeLine{00179\ \{}
+\DoxyCodeLine{00180\ \ \ \ INS\_InsertCall(ins\_head,\ IPOINT\_BEFORE,\ AFUNPTR(handleCheckScheduled),\ IARG\_THREAD\_ID,\ IARG\_END);}
+\DoxyCodeLine{00181\ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ getInstMode()}
+\DoxyCodeLine{00184\ \{}
+\DoxyCodeLine{00185\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getInstrumentationMode();}
+\DoxyCodeLine{00186\ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ VOID\ traceCallback(TRACE\ trace,\ \textcolor{keywordtype}{void}\ *v)}
+\DoxyCodeLine{00189\ \{}
+\DoxyCodeLine{00190\ \ \ \ InstMode::inst\_mode\_t\ inst\_mode\ =\ INSTR\_GET\_MODE(trace);}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ BBL\ bbl\_head\ =\ TRACE\_BblHead(trace);}
+\DoxyCodeLine{00193\ \ \ \ INS\ ins\_head\ =\ BBL\_InsHead(bbl\_head);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ \ \#ifdef\ PINPLAY\_SUPPORTED}}
+\DoxyCodeLine{00196\ \ \ \ \textcolor{comment}{//\ Make\ sure\ all\ version\ switches\ happen\ before\ any\ PinPlay\ instrumentation,\ to\ avoid\ PinPlay\ seeing\ some\ instructions\ twice}}
+\DoxyCodeLine{00197\ \ \ \ CALL\_ORDER\ call\_order\ =\ (CALL\_ORDER)(pinplay\_engine.PinPlayFirstBeforeCallOrder()\ -\/\ 1);}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00199\ \ \ \ CALL\_ORDER\ call\_order\ =\ CALL\_ORDER\_DEFAULT;}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \textcolor{comment}{//\ Write\ the\ resulting\ mode\ to\ REG\_INST\_Gx\ for\ use\ by\ INS\_InsertVersionCase}}
+\DoxyCodeLine{00203\ \ \ \ INS\_InsertCall(ins\_head,\ IPOINT\_BEFORE,\ (AFUNPTR)getInstMode,\ IARG\_RETURN\_REGS,\ g\_toolregs[TOOLREG\_TEMP],\ IARG\_CALL\_ORDER,\ call\_order,\ IARG\_END);}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \textcolor{comment}{//\ Add\ version\ switch\ cases\ for\ all\ possible\ target\ versions\ (no\ test\ to\ switch\ to\ self)}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \ \#define\ SWITCH\_VERSION(v)\ if\ (inst\_mode\ !=\ (v))\ INS\_InsertVersionCase(ins\_head,\ g\_toolregs[TOOLREG\_TEMP],\ v,\ v,\ IARG\_CALL\_ORDER,\ call\_order,\ IARG\_END);}}
+\DoxyCodeLine{00207\ \ \ \ SWITCH\_VERSION(InstMode::DETAILED)}
+\DoxyCodeLine{00208\ \ \ \ SWITCH\_VERSION(InstMode::CACHE\_ONLY)}
+\DoxyCodeLine{00209\ \ \ \ SWITCH\_VERSION(InstMode::FAST\_FORWARD)}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \textcolor{comment}{//\ Version\ 0\ is\ only\ for\ startup\ /\ amnesia,\ don't\ do\ anything\ else\ there}}
+\DoxyCodeLine{00212\ \ \ \ \textcolor{keywordflow}{if}\ (TRACE\_Version(trace)\ ==\ 0)}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ addCheckScheduled(trace,\ ins\_head);}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ addRtnTracer(trace);}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \textcolor{comment}{//\ Routine\ replacement}}
+\DoxyCodeLine{00220\ \ \ \ RTN\ rtn\ =\ TRACE\_Rtn(trace);}
+\DoxyCodeLine{00221\ \ \ \ \textcolor{keywordflow}{if}\ (RTN\_Valid(rtn)}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \&\&\ RTN\_Address(rtn)\ ==\ TRACE\_Address(trace))}
+\DoxyCodeLine{00223\ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ lite::routineStartCallback(rtn,\ ins\_head);}
+\DoxyCodeLine{00225\ \ \ \ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \textcolor{comment}{//\ Select\ per-\/basicblock\ instrumentation\ level.}}
+\DoxyCodeLine{00228\ \ \ \ \textcolor{comment}{//\ In\ fast-\/forward\ mode,\ this\ is\ the\ only\ instrumentation\ (except\ for\ some\ rare\ stuff\ like\ magic,\ syscall),}}
+\DoxyCodeLine{00229\ \ \ \ \textcolor{comment}{//\ \ \ so\ using\ a\ lighter\ version\ here\ significantly\ speeds\ up\ simulation}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ InstrumentLevel::Level\ instr\_level;}
+\DoxyCodeLine{00232\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getBBVsEnabled())\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{comment}{//\ Someone\ (a\ Python\ script)\ has\ requested\ BBVs\ to\ be\ enabled.}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ instr\_level\ =\ InstrumentLevel::INSTR\_WITH\_BBVS;}
+\DoxyCodeLine{00235\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getSamplingManager()-\/>getSamplingProvider())\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{comment}{//\ Ask\ the\ sampling\ provider\ what\ mode\ they\ need}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ instr\_level\ =\ Sim()-\/>getSamplingManager()-\/>getSamplingProvider()-\/>requestedInstrumentation();}
+\DoxyCodeLine{00238\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ instr\_level\ =\ InstrumentLevel::INSTR;}
+\DoxyCodeLine{00240\ \ \ \ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \textcolor{keywordflow}{for}\ (BBL\ bbl\ =\ bbl\_head;\ BBL\_Valid(bbl);\ bbl\ =\ BBL\_Next(bbl))}
+\DoxyCodeLine{00243\ \ \ \ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (instr\_level)\ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ (InstrumentLevel::INSTR):}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ (InstrumentLevel::INSTR\_WITH\_BBVS):}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ BBL\_InsertCall(bbl,\ IPOINT\_ANYWHERE,\ (AFUNPTR)InstructionModeling::countInstructions,\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ BBL\_Address(bbl),\ IARG\_UINT32,\ BBL\_NumIns(bbl),\ IARG\_END);}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ (InstrumentLevel::NONE):}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unexpected\ enum\ value\ '\%d'"{}},\ instr\_level);}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \textcolor{comment}{//\ I-\/cache\ modeling\ during\ warmup}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableICacheModeling())\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ BBL\_InsHead(bbl),\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(InstructionModeling::accessInstructionCacheWarmup),}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ BBL\_Address(bbl),}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ BBL\_Size(bbl),}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ UINT32\ icount\ =\ 0;}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(INS\ ins\ =\ BBL\_InsHead(bbl);\ ;\ ins\ =\ INS\_Next(ins))}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Instruction\ modelling}}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ InstructionModeling::addInstructionModeling(trace,\ ins,\ inst\_mode);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ ++icount;}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ins\ ==\ BBL\_InsTail(bbl)\ ||\ icount\ >=\ 32\ ||\ INS\_HasRealRep(ins))}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_HasFallThrough(ins))}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(INSTR\_IF\_DETAILED(inst\_mode),\ trace,\ ins,\ IPOINT\_AFTER,\ AFUNPTR(InstructionModeling::handleBasicBlock),\ IARG\_THREAD\_ID,\ IARG\_END);}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsBranch(ins))}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(INSTR\_IF\_DETAILED(inst\_mode),\ trace,\ ins,\ IPOINT\_TAKEN\_BRANCH,\ AFUNPTR(InstructionModeling::handleBasicBlock),\ IARG\_THREAD\_ID,\ IARG\_END);}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ icount\ =\ 0;}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ins\ ==\ BBL\_InsTail(bbl))}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \ \ \ \}}
+\DoxyCodeLine{00289\ \}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ VOID\ traceInvalidate(ADDRINT\ orig\_pc,\ ADDRINT\ cache\_pc,\ BOOL\ success)}
+\DoxyCodeLine{00292\ \{}
+\DoxyCodeLine{00293\ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>getConfig()-\/>getEnableSMCSupport())}
+\DoxyCodeLine{00294\ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \textcolor{comment}{//\ It\ should\ be\ safe\ to\ turn\ on\ SMC\ support\ at\ runtime}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \textcolor{comment}{//\ (which\ means:\ stop\ using\ caches\ for\ basic\ blocks\ and\ decoded\ instruction\ from\ now\ on).}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \textcolor{comment}{//\ Just\ in\ case\ enabling\ this\ half-\/way\ through\ isn't\ reliable,\ keep\ the\ warning\ for\ now.}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}Trace\ invalidation\ orig\_pc(\%p)\ cache\_pc(\%p)\ success(\%d)\(\backslash\)n\(\backslash\)n"{}}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Self-\/modifying\ code\ (SMC)\ support\ now\ enabled.\(\backslash\)n"{}}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Use\ general/enable\_smc\_support=true\ to\ enable\ manually.\(\backslash\)n"{}},\ orig\_pc,\ cache\_pc,\ success);}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ Sim()-\/>getConfig()-\/>forceEnableSMCSupport();}
+\DoxyCodeLine{00302\ \ \ \ \}}
+\DoxyCodeLine{00303\ \}}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \textcolor{keywordtype}{void}\ ApplicationStart()}
+\DoxyCodeLine{00306\ \{}
+\DoxyCodeLine{00307\ \}}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \textcolor{keywordtype}{void}\ ApplicationExit(\textcolor{keywordtype}{int},\ \textcolor{keywordtype}{void}*)}
+\DoxyCodeLine{00310\ \{}
+\DoxyCodeLine{00311\ \ \ \ \textcolor{keywordflow}{if}\ (forkedInChild)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Application\ exit."{}});}
+\DoxyCodeLine{00315\ \ \ \ Simulator::release();}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \textcolor{keyword}{delete}\ cfg;}
+\DoxyCodeLine{00318\ \}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \textcolor{keywordtype}{void}\ ApplicationDetach(\textcolor{keywordtype}{void}*)}
+\DoxyCodeLine{00321\ \{}
+\DoxyCodeLine{00322\ \ \ \ ApplicationExit(0,\ NULL);}
+\DoxyCodeLine{00323\ \}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \textcolor{keywordtype}{void}\ PinDetach(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00326\ \{}
+\DoxyCodeLine{00327\ \ \ \ \textcolor{comment}{//PIN\_Detach();}}
+\DoxyCodeLine{00328\ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ VOID\ threadStartCallback(THREADID\ threadIndex,\ CONTEXT\ *ctxt,\ INT32\ flags,\ VOID\ *v)}
+\DoxyCodeLine{00331\ \{}
+\DoxyCodeLine{00332\ \ \ \ \textcolor{keywordflow}{if}\ (!\ done\_app\_initialization)}
+\DoxyCodeLine{00333\ \ \ \ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \textcolor{comment}{//\ Spawn\ the\ main()\ thread}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>spawnThread(INVALID\_THREAD\_ID,\ 0);}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \textcolor{comment}{//\ Start\ the\ trace\ manager,\ if\ any}}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getTraceManager())}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ Sim()-\/>getTraceManager()-\/>start();}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \textcolor{comment}{//\ All\ the\ real\ initialization\ is\ done\ in}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \textcolor{comment}{//\ replacement\_start\ at\ the\ moment}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ done\_app\_initialization\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00344\ \ \ \ \}}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ SubsecondTime\ time;}
+\DoxyCodeLine{00347\ \ \ \ thread\_id\_t\ thread\_id\ =\ Sim()-\/>getThreadManager()-\/>getThreadToSpawn(time);}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \textcolor{comment}{//\ Set\ thread\ name\ for\ Sniper-\/in-\/Sniper\ simulations}}
+\DoxyCodeLine{00350\ \ \ \ String\ threadName\ =\ String(\textcolor{stringliteral}{"{}app-\/"{}})\ +\ itostr(thread\_id);}
+\DoxyCodeLine{00351\ \ \ \ SimSetThreadName(threadName.c\_str());}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ Sim()-\/>getThreadManager()-\/>onThreadStart(thread\_id,\ time);}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \textcolor{comment}{//\ Don't\ resize\ this\ vector\ at\ runtime\ as\ it's\ shared\ and\ we\ don't\ want\ it\ to\ be\ reallocated\ while\ someone\ uses\ it}}
+\DoxyCodeLine{00356\ \ \ \ LOG\_ASSERT\_ERROR(localStore.size()\ >\ threadIndex,\ \textcolor{stringliteral}{"{}Ran\ out\ of\ thread\_id\ slots,\ increase\ MAX\_PIN\_THREADS"{}});}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ memset(\&localStore[threadIndex],\ 0,\ \textcolor{keyword}{sizeof}(localStore[threadIndex]));}
+\DoxyCodeLine{00359\ \ \ \ localStore[threadIndex].thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id);}
+\DoxyCodeLine{00360\ \ \ \ localStore[threadIndex].thread-\/>m\_os\_info.tid\ =\ syscall(\_\_NR\_gettid);}
+\DoxyCodeLine{00361\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableSpinLoopDetection())}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ localStore[threadIndex].sld.sld\ =\ \textcolor{keyword}{new}\ SpinLoopDetector(localStore[threadIndex].thread);}
+\DoxyCodeLine{00363\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\ =\ 0;\ idx\ <\ ThreadLocalStorage::NUM\_SCRATCHPADS;\ ++idx)}
+\DoxyCodeLine{00364\ \ \ \ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ status\ =\ posix\_memalign((\textcolor{keywordtype}{void}**)\ \&localStore[threadIndex].scratch[idx],\ 4\ *\ \textcolor{keyword}{sizeof}\ (\textcolor{keywordtype}{void}*),\ ThreadLocalStorage::SCRATCHPAD\_SIZE);}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ assert(status\ ==\ 0);}
+\DoxyCodeLine{00367\ \ \ \ \}}
+\DoxyCodeLine{00368\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ VOID\ threadFiniCallback(THREADID\ threadIndex,\ \textcolor{keyword}{const}\ CONTEXT\ *ctxt,\ INT32\ flags,\ VOID\ *v)}
+\DoxyCodeLine{00371\ \{}
+\DoxyCodeLine{00372\ \ \ \ \textcolor{keywordflow}{if}\ (forkedInChild)}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ Sim()-\/>getThreadManager()-\/>onThreadExit(localStore[threadIndex].thread-\/>getId());}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \textcolor{keywordflow}{if}\ (localStore[threadIndex].thread-\/>getId()\ ==\ 0)}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getTraceManager())}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ Sim()-\/>getTraceManager()-\/>stop();}
+\DoxyCodeLine{00380\ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \textcolor{keywordtype}{bool}\ handleSigUsr1(THREADID\ threadIndex,\ INT32\ signal,\ CONTEXT\ *ctx,\ BOOL\ hasHandler,\ \textcolor{keyword}{const}\ EXCEPTION\_INFO\ *pExceptInfo,\ \textcolor{keywordtype}{void}*\ v)}
+\DoxyCodeLine{00383\ \{}
+\DoxyCodeLine{00384\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_SIGUSR1,\ 0);}
+\DoxyCodeLine{00385\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00386\ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ VOID\ forkAfterChild(THREADID\ threadid,\ \textcolor{keyword}{const}\ CONTEXT\ *ctxt,\ VOID\ *v)}
+\DoxyCodeLine{00389\ \{}
+\DoxyCodeLine{00390\ \ \ \ \textcolor{comment}{//\ Application\ has\ fork()ed.\ We\ don't\ want\ to\ track\ child\ processes,\ but\ Pin\ will\ attempt\ to\ do\ cleanups.}}
+\DoxyCodeLine{00391\ \ \ \ \textcolor{comment}{//\ Make\ sure\ that\ these\ don't\ trigger\ any\ simulator\ code.}}
+\DoxyCodeLine{00392\ \ \ \ forkedInChild\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00393\ \}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \textcolor{keywordtype}{int}\ main(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}\ *argv[])}
+\DoxyCodeLine{00396\ \{}
+\DoxyCodeLine{00397\ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00398\ \ \ \ \textcolor{comment}{//\ FIXME:}}
+\DoxyCodeLine{00399\ \ \ \ PIN\_InitLock\ (\&rtn\_map\_lock);}
+\DoxyCodeLine{00400\ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \textcolor{comment}{//\ Global\ initialization}}
+\DoxyCodeLine{00403\ \ \ \ PIN\_InitSymbols();}
+\DoxyCodeLine{00404\ \ \ \ PIN\_Init(argc,argv);}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ initToolregs();}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \textcolor{comment}{//\ To\ make\ sure\ output\ shows\ up\ immediately,\ make\ stdout\ and\ stderr\ line\ buffered}}
+\DoxyCodeLine{00409\ \ \ \ \textcolor{comment}{//\ (if\ we're\ writing\ into\ a\ pipe\ to\ run-\/graphite,\ or\ redirected\ to\ a\ file\ by\ the\ job\ runner,\ the\ default\ will\ be\ block\ buffered)}}
+\DoxyCodeLine{00410\ \ \ \ setvbuf(stdout,\ NULL,\ \_IOLBF,\ 0);}
+\DoxyCodeLine{00411\ \ \ \ setvbuf(stderr,\ NULL,\ \_IOLBF,\ 0);}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *ld\_orig\ =\ getenv(\textcolor{stringliteral}{"{}SNIPER\_SCRIPT\_LD\_LIBRARY\_PATH"{}});}
+\DoxyCodeLine{00414\ \ \ \ \textcolor{keywordflow}{if}\ (ld\_orig)}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ setenv(\textcolor{stringliteral}{"{}LD\_LIBRARY\_PATH"{}},\ ld\_orig,\ 1);}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ string\_vec\ args;}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \textcolor{comment}{//\ Set\ the\ default\ config\ path\ if\ it\ isn't}}
+\DoxyCodeLine{00420\ \ \ \ \textcolor{comment}{//\ overwritten\ on\ the\ command\ line.}}
+\DoxyCodeLine{00421\ \ \ \ String\ config\_path\ =\ \textcolor{stringliteral}{"{}carbon\_sim.cfg"{}};}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \ parse\_args(args,\ config\_path,\ argc,\ argv);}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ cfg\ =\ \textcolor{keyword}{new}\ config::ConfigFile();}
+\DoxyCodeLine{00426\ \ \ \ cfg-\/>load(config\_path);}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ handle\_args(args,\ *cfg);}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ Simulator::setConfig(cfg,\ Config::PINTOOL);}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}PIN\ SIM\ TOOL"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ Simulator::allocate();}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ Sim()-\/>start();}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \ \textcolor{comment}{//\ If\ -\/appdebug\_enable\ is\ used,\ write\ out\ the\ port\ to\ connect\ GDB\ to}}
+\DoxyCodeLine{00439\ \ \ \ \textcolor{keywordflow}{if}(PIN\_GetDebugStatus()\ !=\ DEBUG\_STATUS\_DISABLED)\ \{}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ DEBUG\_CONNECTION\_INFO\ info;}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (PIN\_GetDebugConnectionInfo(\&info)\ \&\&\ info.\_type\ ==\ DEBUG\_CONNECTION\_TYPE\_TCP\_SERVER)\ \{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ FILE*\ fp\ =\ fopen(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}appdebug\_port.out"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%d\ \%d"{}},\ PIN\_GetPid(),\ info.\_tcpServer.\_tcpPort);}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ fclose(fp);}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ String\ scheme\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}clock\_skew\_minimization/scheme"{}});}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(scheme\ ==\ \textcolor{stringliteral}{"{}none"{}}\ ||\ scheme\ ==\ \textcolor{stringliteral}{"{}barrier"{}}))\ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)n[WARNING]\ Application\ debugging\ is\ not\ compatible\ with\ \%s\ synchronization.\(\backslash\)n"{}},\ scheme.c\_str());}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ Consider\ adding\ -\/g\ -\/-\/clock\_skew\_minimization/scheme=\{none|barrier\}\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \ \}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \textcolor{comment}{//\ Instrumentation}}
+\DoxyCodeLine{00454\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Start\ of\ instrumentation."{}});}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ \ PIN\_AddThreadStartFunction\ (threadStartCallback,\ 0);}
+\DoxyCodeLine{00457\ \ \ \ PIN\_AddThreadFiniFunction\ (threadFiniCallback,\ 0);}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableSyscallEmulation())}
+\DoxyCodeLine{00460\ \ \ \ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ PIN\_AddSyscallEntryFunction(lite::syscallEnterRunModel,\ 0);}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ PIN\_AddSyscallExitFunction(lite::syscallExitRunModel,\ 0);}
+\DoxyCodeLine{00463\ \ \ \ \}}
+\DoxyCodeLine{00464\ \ \ \ \textcolor{keywordtype}{bool}\ enable\_signals\ =\ cfg-\/>getBool(\textcolor{stringliteral}{"{}general/enable\_signals"{}});}
+\DoxyCodeLine{00465\ \ \ \ \textcolor{keywordflow}{if}\ (!enable\_signals)\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ PIN\_InterceptSignal(SIGILL,\ lite::interceptSignal,\ NULL);}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ PIN\_InterceptSignal(SIGFPE,\ lite::interceptSignal,\ NULL);}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ PIN\_InterceptSignal(SIGSEGV,\ lite::interceptSignal,\ NULL);}
+\DoxyCodeLine{00469\ \ \ \ \}}
+\DoxyCodeLine{00470\ \ \ \ PIN\_InterceptSignal(SIGUSR1,\ handleSigUsr1,\ NULL);}
+\DoxyCodeLine{00471\ \ \ \ PIN\_AddInternalExceptionHandler(exceptionHandler,\ NULL);}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \ \ \ RTN\_AddInstrumentFunction(lite::routineCallback,\ 0);}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ \ TRACE\_AddInstrumentFunction(traceCallback,\ 0);}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>getConfig()-\/>getEnableSMCSupport())}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ CODECACHE\_AddTraceInvalidatedFunction(traceInvalidate,\ 0);}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ PIN\_AddDetachFunction(ApplicationDetach,\ 0);}
+\DoxyCodeLine{00481\ \ \ \ PIN\_AddFiniUnlockedFunction(ApplicationExit,\ 0);}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ PIN\_AddForkFunction(FPOINT\_AFTER\_IN\_CHILD,\ forkAfterChild,\ 0);}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \textcolor{keywordflow}{if}\ (cfg-\/>getBool(\textcolor{stringliteral}{"{}log/pin\_codecache\_trace"{}}))}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ initCodeCacheTracing();}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ String\ syntax\ =\ cfg-\/>getString(\textcolor{stringliteral}{"{}general/syntax"{}});}
+\DoxyCodeLine{00489\ \ \ \ \textcolor{keywordflow}{if}\ (syntax\ ==\ \textcolor{stringliteral}{"{}intel"{}})}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ PIN\_SetSyntaxIntel();}
+\DoxyCodeLine{00491\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (syntax\ ==\ \textcolor{stringliteral}{"{}att"{}})}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ PIN\_SetSyntaxATT();}
+\DoxyCodeLine{00493\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (syntax\ ==\ \textcolor{stringliteral}{"{}xed"{}})}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ PIN\_SetSyntaxXED();}
+\DoxyCodeLine{00495\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ assembly\ syntax\ \%s,\ should\ be\ intel,\ att\ or\ xed."{}},\ syntax.c\_str());}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \textcolor{comment}{//\ Just\ in\ case\ ...\ might\ not\ be\ strictly\ necessary}}
+\DoxyCodeLine{00499\ \textcolor{comment}{//\ PIN\_SpawnInternalThread\ doesn't\ schedule\ its\ threads\ until\ after\ PIN\_StartProgram}}
+\DoxyCodeLine{00500\ \textcolor{comment}{//\ \ \ Transport::getSingleton()-\/>barrier();}}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \textcolor{preprocessor}{\#ifdef\ PINPLAY\_SUPPORTED}}
+\DoxyCodeLine{00503\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnablePinPlay())}
+\DoxyCodeLine{00504\ \ \ \ \{}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ pinplay\_engine.Activate(argc,\ argv,\ \textcolor{keyword}{false}\ \textcolor{comment}{/*logger*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*replayer*/});}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(Sim()-\/>getConfig()-\/>getEnableSyscallEmulation()\ ==\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}System\ call\ emulation\ must\ be\ disabled\ when\ using\ PinPlay."{}});}
+\DoxyCodeLine{00508\ \ \ \ \}}
+\DoxyCodeLine{00509\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00510\ \ \ \ LOG\_ASSERT\_ERROR(Sim()-\/>getConfig()-\/>getEnablePinPlay()\ ==\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}PinPlay\ support\ not\ compiled\ in.\ Please\ use\ a\ compatible\ pin\ kit\ when\ compiling."{}});}
+\DoxyCodeLine{00512\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ \textcolor{comment}{//\ config::Config\ shouldn't\ be\ called\ outside\ of\ init/fini}}
+\DoxyCodeLine{00515\ \ \ \ \textcolor{comment}{//\ With\ Sim()-\/>hideCfg(),\ we\ let\ Simulator\ know\ to\ complain\ when\ someone\ does\ call\ Sim()-\/>getCfg()}}
+\DoxyCodeLine{00516\ \ \ \ Sim()-\/>hideCfg();}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \textcolor{comment}{//\ Never\ returns}}
+\DoxyCodeLine{00519\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Running\ program..."{}});}
+\DoxyCodeLine{00520\ \ \ \ PIN\_StartProgram();}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00523\ \}}
+
+\end{DoxyCode}

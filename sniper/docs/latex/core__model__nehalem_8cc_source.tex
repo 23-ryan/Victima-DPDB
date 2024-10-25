@@ -1,0 +1,198 @@
+\doxysection{core\+\_\+model\+\_\+nehalem.\+cc}
+\label{core__model__nehalem_8cc_source}\index{common/performance\_model/performance\_models/core\_model/core\_model\_nehalem.cc@{common/performance\_model/performance\_models/core\_model/core\_model\_nehalem.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core\_model\_nehalem.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}interval\_contention\_nehalem.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}rob\_contention\_nehalem.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op\_nehalem.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ instructionLatencies[XED\_ICLASS\_LAST];}
+\DoxyCodeLine{00010\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ bypassLatencies[DynamicMicroOpNehalem::UOP\_BYPASS\_SIZE];}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ Intel\ Nehalem\ Latencies}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ http://www.agner.org/optimize}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ CoreModelNehalem::CoreModelNehalem()}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{comment}{//\ Default\ instruction\ latency\ is\ one\ cycle}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ XED\_ICLASS\_LAST\ ;\ i++)}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ instructionLatencies[i]\ =\ 1;}
+\DoxyCodeLine{00021\ \ \ \ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ instructionLatencies[XED\_ICLASS\_MUL]\ =\ 3;}
+\DoxyCodeLine{00024\ \ \ \ instructionLatencies[XED\_ICLASS\_IMUL]\ =\ 3;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ instructionLatencies[XED\_ICLASS\_DIV]\ =\ 28;\ \textcolor{comment}{//\ 32-\/bit:\ 17-\/28,\ 64-\/bit:\ 28-\/90}}
+\DoxyCodeLine{00027\ \ \ \ instructionLatencies[XED\_ICLASS\_IDIV]\ =\ 28;\ \textcolor{comment}{//\ 32-\/bit:\ 17-\/28,\ 64-\/bit:\ 28-\/90}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ instructionLatencies[XED\_ICLASS\_ADDPS]\ =\ 3;}
+\DoxyCodeLine{00031\ \ \ \ instructionLatencies[XED\_ICLASS\_ADDSS]\ =\ 3;}
+\DoxyCodeLine{00032\ \ \ \ instructionLatencies[XED\_ICLASS\_ADDSUBPS]\ =\ 3;}
+\DoxyCodeLine{00033\ \ \ \ instructionLatencies[XED\_ICLASS\_SUBPS]\ =\ 3;}
+\DoxyCodeLine{00034\ \ \ \ instructionLatencies[XED\_ICLASS\_SUBSS]\ =\ 3;}
+\DoxyCodeLine{00035\ \ \ \ instructionLatencies[XED\_ICLASS\_VADDPS]\ =\ 3;}
+\DoxyCodeLine{00036\ \ \ \ instructionLatencies[XED\_ICLASS\_VADDSS]\ =\ 3;}
+\DoxyCodeLine{00037\ \ \ \ instructionLatencies[XED\_ICLASS\_VADDSUBPS]\ =\ 3;}
+\DoxyCodeLine{00038\ \ \ \ instructionLatencies[XED\_ICLASS\_VSUBPS]\ =\ 3;}
+\DoxyCodeLine{00039\ \ \ \ instructionLatencies[XED\_ICLASS\_VSUBSS]\ =\ 3;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ instructionLatencies[XED\_ICLASS\_ADDPD]\ =\ 3;}
+\DoxyCodeLine{00042\ \ \ \ instructionLatencies[XED\_ICLASS\_ADDSD]\ =\ 3;}
+\DoxyCodeLine{00043\ \ \ \ instructionLatencies[XED\_ICLASS\_ADDSUBPD]\ =\ 3;}
+\DoxyCodeLine{00044\ \ \ \ instructionLatencies[XED\_ICLASS\_SUBPD]\ =\ 3;}
+\DoxyCodeLine{00045\ \ \ \ instructionLatencies[XED\_ICLASS\_SUBSD]\ =\ 3;}
+\DoxyCodeLine{00046\ \ \ \ instructionLatencies[XED\_ICLASS\_VADDPD]\ =\ 3;}
+\DoxyCodeLine{00047\ \ \ \ instructionLatencies[XED\_ICLASS\_VADDSD]\ =\ 3;}
+\DoxyCodeLine{00048\ \ \ \ instructionLatencies[XED\_ICLASS\_VADDSUBPD]\ =\ 3;}
+\DoxyCodeLine{00049\ \ \ \ instructionLatencies[XED\_ICLASS\_VSUBPD]\ =\ 3;}
+\DoxyCodeLine{00050\ \ \ \ instructionLatencies[XED\_ICLASS\_VSUBSD]\ =\ 3;}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ instructionLatencies[XED\_ICLASS\_MAXSS]\ =\ 3;}
+\DoxyCodeLine{00053\ \ \ \ instructionLatencies[XED\_ICLASS\_MAXSD]\ =\ 3;}
+\DoxyCodeLine{00054\ \ \ \ instructionLatencies[XED\_ICLASS\_MAXPS]\ =\ 3;}
+\DoxyCodeLine{00055\ \ \ \ instructionLatencies[XED\_ICLASS\_MAXPD]\ =\ 3;}
+\DoxyCodeLine{00056\ \ \ \ instructionLatencies[XED\_ICLASS\_MINSS]\ =\ 3;}
+\DoxyCodeLine{00057\ \ \ \ instructionLatencies[XED\_ICLASS\_MINSD]\ =\ 3;}
+\DoxyCodeLine{00058\ \ \ \ instructionLatencies[XED\_ICLASS\_MINPS]\ =\ 3;}
+\DoxyCodeLine{00059\ \ \ \ instructionLatencies[XED\_ICLASS\_MINPD]\ =\ 3;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ instructionLatencies[XED\_ICLASS\_MULSS]\ =\ 4;}
+\DoxyCodeLine{00062\ \ \ \ instructionLatencies[XED\_ICLASS\_MULPS]\ =\ 4;}
+\DoxyCodeLine{00063\ \ \ \ instructionLatencies[XED\_ICLASS\_VMULSS]\ =\ 4;}
+\DoxyCodeLine{00064\ \ \ \ instructionLatencies[XED\_ICLASS\_VMULPS]\ =\ 4;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ instructionLatencies[XED\_ICLASS\_MULSD]\ =\ 5;}
+\DoxyCodeLine{00067\ \ \ \ instructionLatencies[XED\_ICLASS\_MULPD]\ =\ 5;}
+\DoxyCodeLine{00068\ \ \ \ instructionLatencies[XED\_ICLASS\_VMULSD]\ =\ 5;}
+\DoxyCodeLine{00069\ \ \ \ instructionLatencies[XED\_ICLASS\_VMULPD]\ =\ 5;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ instructionLatencies[XED\_ICLASS\_DIVSS]\ =\ 11;\ \ \ \textcolor{comment}{//\ 7-\/14\ (data\ dependent)\ according\ to\ agner.org}}
+\DoxyCodeLine{00072\ \ \ \ instructionLatencies[XED\_ICLASS\_DIVPS]\ =\ 11;}
+\DoxyCodeLine{00073\ \ \ \ instructionLatencies[XED\_ICLASS\_VDIVSS]\ =\ 11;}
+\DoxyCodeLine{00074\ \ \ \ instructionLatencies[XED\_ICLASS\_VDIVPS]\ =\ 11;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ instructionLatencies[XED\_ICLASS\_DIVSD]\ =\ 17;\ \ \ \textcolor{comment}{//\ 7-\/22\ (data\ dependent)\ according\ to\ agner.org}}
+\DoxyCodeLine{00077\ \ \ \ instructionLatencies[XED\_ICLASS\_DIVPD]\ =\ 17;}
+\DoxyCodeLine{00078\ \ \ \ instructionLatencies[XED\_ICLASS\_VDIVSD]\ =\ 17;}
+\DoxyCodeLine{00079\ \ \ \ instructionLatencies[XED\_ICLASS\_VDIVPD]\ =\ 17;}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ instructionLatencies[XED\_ICLASS\_SQRTSS]\ =\ 18;\ \ \ \textcolor{comment}{//\ 7-\/18\ (data\ dependent)\ according\ to\ agner.org}}
+\DoxyCodeLine{00082\ \ \ \ instructionLatencies[XED\_ICLASS\_SQRTPS]\ =\ 18;}
+\DoxyCodeLine{00083\ \ \ \ instructionLatencies[XED\_ICLASS\_VSQRTSS]\ =\ 18;}
+\DoxyCodeLine{00084\ \ \ \ instructionLatencies[XED\_ICLASS\_VSQRTPS]\ =\ 18;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ instructionLatencies[XED\_ICLASS\_SQRTSD]\ =\ 32;\ \ \ \textcolor{comment}{//\ 7-\/32\ (data\ dependent)\ according\ to\ agner.org}}
+\DoxyCodeLine{00087\ \ \ \ instructionLatencies[XED\_ICLASS\_SQRTPD]\ =\ 32;}
+\DoxyCodeLine{00088\ \ \ \ instructionLatencies[XED\_ICLASS\_VSQRTSD]\ =\ 32;}
+\DoxyCodeLine{00089\ \ \ \ instructionLatencies[XED\_ICLASS\_VSQRTPD]\ =\ 32;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ instructionLatencies[XED\_ICLASS\_RSQRTSS]\ =\ 3;}
+\DoxyCodeLine{00092\ \ \ \ instructionLatencies[XED\_ICLASS\_RSQRTPS]\ =\ 3;}
+\DoxyCodeLine{00093\ \ \ \ instructionLatencies[XED\_ICLASS\_VRSQRTSS]\ =\ 3;}
+\DoxyCodeLine{00094\ \ \ \ instructionLatencies[XED\_ICLASS\_VRSQRTPS]\ =\ 3;}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ instructionLatencies[XED\_ICLASS\_FLDENV]\ =\ 110;\ \textcolor{comment}{//\ As\ on\ X5660\ (Westmere)}}
+\DoxyCodeLine{00098\ \ \ \ instructionLatencies[XED\_ICLASS\_FNSTENV]\ =\ 75;\ \textcolor{comment}{//\ As\ on\ X5660\ (Westmere)}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPD2PS]\ \ =\ 4;\ \textcolor{comment}{//\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00101\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTSD2SS]\ \ =\ 4;\ \textcolor{comment}{//\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00102\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPS2PD]\ \ =\ 2;\ \textcolor{comment}{//\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00103\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTSS2SD]\ \ =\ 1;}
+\DoxyCodeLine{00104\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTDQ2PS]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00105\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPS2DQ]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00106\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTTPS2DQ]\ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00107\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTDQ2PD]\ \ =\ 6;\ \textcolor{comment}{//\ 4\ +\ 2\ bypass\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00108\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPD2DQ]\ \ =\ 6;\ \textcolor{comment}{//\ 4\ +\ 2\ bypass\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00109\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTTPD2DQ]\ =\ 6;\ \textcolor{comment}{//\ 4\ +\ 2\ bypass\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00110\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPI2PS]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00111\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPS2PI]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00112\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTTPS2PI]\ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00113\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPI2PD]\ \ =\ 6;\ \textcolor{comment}{//\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00114\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTPD2PI]\ \ =\ 6;\ \textcolor{comment}{//\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00115\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTTPD2PI]\ =\ 6;}
+\DoxyCodeLine{00116\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTSI2SS]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00117\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTSS2SI]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00118\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTTSS2SI]\ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00119\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTSI2SD]\ \ =\ 6;\ \textcolor{comment}{//\ 4\ +\ 2\ bypass\ (should\ be\ 2\ uops)}}
+\DoxyCodeLine{00120\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTSD2SI]\ \ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00121\ \ \ \ instructionLatencies[XED\_ICLASS\_CVTTSD2SI]\ =\ 5;\ \textcolor{comment}{//\ 3\ +\ 2\ bypass}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ instructionLatencies[XED\_ICLASS\_COMISS]\ =\ 3;\ \textcolor{comment}{//\ 1\ +\ 2\ eflags\ bypass}}
+\DoxyCodeLine{00124\ \ \ \ instructionLatencies[XED\_ICLASS\_COMISD]\ =\ 3;\ \textcolor{comment}{//\ 1\ +\ 2\ eflags\ bypass}}
+\DoxyCodeLine{00125\ \ \ \ instructionLatencies[XED\_ICLASS\_UCOMISS]\ =\ 3;\ \textcolor{comment}{//\ 1\ +\ 2\ eflags\ bypass}}
+\DoxyCodeLine{00126\ \ \ \ instructionLatencies[XED\_ICLASS\_UCOMISD]\ =\ 3;\ \textcolor{comment}{//\ 1\ +\ 2\ eflags\ bypass}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \textcolor{comment}{/*\ bypass\ latencies\ */}}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{comment}{/*\ http://www.agner.org/optimize/microarchitecture.pdf\ page\ 86-\/87\ */}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ bypassLatencies[DynamicMicroOpNehalem::UOP\_BYPASS\_NONE]\ =\ 0;}
+\DoxyCodeLine{00133\ \ \ \ bypassLatencies[DynamicMicroOpNehalem::UOP\_BYPASS\_LOAD\_FP]\ =\ 2;}
+\DoxyCodeLine{00134\ \ \ \ bypassLatencies[DynamicMicroOpNehalem::UOP\_BYPASS\_FP\_STORE]\ =\ 1;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ m\_lll\_cutoff\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/lll\_cutoff"{}});}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelNehalem::getInstructionLatency(\textcolor{keyword}{const}\ MicroOp\ *uop)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00141\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00142\ \ \ \ xed\_iclass\_enum\_t\ instruction\_type\ =\ (xed\_iclass\_enum\_t)\ uop-\/>getInstructionOpcode();}
+\DoxyCodeLine{00143\ \ \ \ LOG\_ASSERT\_ERROR(instruction\_type\ >=\ 0\ \&\&\ instruction\_type\ <\ XED\_ICLASS\_LAST,\ \textcolor{stringliteral}{"{}Invalid\ instruction\ type\ \%d"{}},\ instruction\_type);}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{return}\ instructionLatencies[instruction\_type];}
+\DoxyCodeLine{00145\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelNehalem::getAluLatency(\textcolor{keyword}{const}\ MicroOp\ *uop)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00148\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getInstructionOpcode())\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIV:}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_IDIV:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>getOperandSize()\ >\ 32)}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 28;\ \textcolor{comment}{//\ Approximate,\ data-\/dependent}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 9;\ \ \textcolor{comment}{//\ Approximate,\ data-\/dependent}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getInstructionLatency(uop);}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//LOG\_PRINT\_ERROR("{}Don't\ know\ the\ ALU\ latency\ for\ this\ MicroOp."{});}}
+\DoxyCodeLine{00159\ \ \ \ \}}
+\DoxyCodeLine{00160\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelNehalem::getBypassLatency(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00163\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00164\ \ \ \ \textcolor{keyword}{const}\ DynamicMicroOpNehalem\ *info\ =\ uop-\/>getCoreSpecificInfo<DynamicMicroOpNehalem>();}
+\DoxyCodeLine{00165\ \ \ \ DynamicMicroOpNehalem::uop\_bypass\_t\ bypass\_type\ =\ info-\/>getBypassType();}
+\DoxyCodeLine{00166\ \ \ \ LOG\_ASSERT\_ERROR(bypass\_type\ >=0\ \&\&\ bypass\_type\ <\ DynamicMicroOpNehalem::UOP\_BYPASS\_SIZE,\ \textcolor{stringliteral}{"{}Invalid\ bypass\ type\ \%d"{}},\ bypass\_type);}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordflow}{return}\ bypassLatencies[bypass\_type];}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelNehalem::getLongestLatency()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00171\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00172\ \ \ \ \textcolor{keywordflow}{return}\ 60;}
+\DoxyCodeLine{00173\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ IntervalContention*\ CoreModelNehalem::createIntervalContentionModel(\textcolor{keyword}{const}\ Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00176\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00177\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ IntervalContentionNehalem(core,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ RobContention*\ CoreModelNehalem::createRobContentionModel(\textcolor{keyword}{const}\ Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00181\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ RobContentionNehalem(core,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ DynamicMicroOp*\ CoreModelNehalem::createDynamicMicroOp(Allocator\ *alloc,\ \textcolor{keyword}{const}\ MicroOp\ *uop,\ ComponentPeriod\ period)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00186\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00187\ \ \ \ DynamicMicroOpNehalem\ *info\ =\ DynamicMicroOp::alloc<DynamicMicroOpNehalem>(alloc,\ uop,\ \textcolor{keyword}{this},\ period);}
+\DoxyCodeLine{00188\ \ \ \ info-\/>uop\_port\ =\ DynamicMicroOpNehalem::getPort(uop);}
+\DoxyCodeLine{00189\ \ \ \ info-\/>uop\_bypass\ =\ DynamicMicroOpNehalem::getBypassType(uop);}
+\DoxyCodeLine{00190\ \ \ \ info-\/>uop\_alu\ =\ DynamicMicroOpNehalem::getAlu(uop);}
+\DoxyCodeLine{00191\ \ \ \ \textcolor{keywordflow}{return}\ info;}
+\DoxyCodeLine{00192\ \}}
+
+\end{DoxyCode}

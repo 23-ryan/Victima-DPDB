@@ -1,0 +1,46 @@
+\doxysection{cheetah\+\_\+model.\+cc}
+\label{cheetah__model_8cc_source}\index{common/core/memory\_subsystem/cheetah/cheetah\_model.cc@{common/core/memory\_subsystem/cheetah/cheetah\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cheetah\_model.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ CheetahModel::CheetahModel(\textcolor{keywordtype}{bool}\ locked,\ \textcolor{keywordtype}{unsigned}\ min\_size\_bits,\ \textcolor{keywordtype}{unsigned}\ max\_size\_bits)}
+\DoxyCodeLine{00004\ \ \ \ :\ m\_min\_sets\_log2(min\_size\_bits\ -\/\ associativity\_log2\ -\/\ line\_size\_log2)}
+\DoxyCodeLine{00005\ \ \ \ ,\ m\_max\_sets\_log2(max\_size\_bits\ -\/\ associativity\_log2\ -\/\ line\_size\_log2)}
+\DoxyCodeLine{00006\ \ \ \ ,\ cheetah(associativity\_log2,\ m\_max\_sets\_log2,\ m\_min\_sets\_log2,\ line\_size\_log2)}
+\DoxyCodeLine{00007\ \ \ \ ,\ m\_locked(locked)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ CheetahModel::\string~CheetahModel()}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keywordtype}{void}\ CheetahModel::updateStats(std::vector<UInt64>\ \&stats)}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ sets\_log2\ =\ m\_min\_sets\_log2;\ sets\_log2\ <=\ m\_max\_sets\_log2;\ ++sets\_log2)}
+\DoxyCodeLine{00018\ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ uint64\_t\ size\_bits\ =\ associativity\_log2\ +\ sets\_log2\ +\ line\_size\_log2;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ stats[size\_bits]\ +=\ cheetah.hits(sets\_log2,\ 1\ <<\ associativity\_log2);}
+\DoxyCodeLine{00021\ \ \ \ \}}
+\DoxyCodeLine{00022\ \ \ \ stats[0]\ +=\ cheetah.numentries();}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ CheetahModel::accesses(IntPtr\ *addrs,\ \textcolor{keywordtype}{int}\ count)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{if}\ (m\_locked)}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ count;\ ++i)}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ access(addrs[i]);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ (m\_locked)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keywordtype}{void}\ CheetahModel::access(IntPtr\ address)}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \ cheetah.sacnmul\_woarr(address);}
+\DoxyCodeLine{00040\ \}}
+
+\end{DoxyCode}

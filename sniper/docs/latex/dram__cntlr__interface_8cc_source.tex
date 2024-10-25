@@ -1,0 +1,59 @@
+\doxysection{dram\+\_\+cntlr\+\_\+interface.\+cc}
+\label{dram__cntlr__interface_8cc_source}\index{common/core/memory\_subsystem/dram/dram\_cntlr\_interface.cc@{common/core/memory\_subsystem/dram/dram\_cntlr\_interface.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dram\_cntlr\_interface.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}shmem\_msg.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keywordtype}{void}\ DramCntlrInterface::handleMsgFromTagDirectory(core\_id\_t\ sender,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ shmem\_msg\_type\ =\ shmem\_msg-\/>getMsgType();}
+\DoxyCodeLine{00010\ \ \ \ SubsecondTime\ msg\_time\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00011\ \ \ \ shmem\_msg-\/>getPerf()-\/>updateTime(msg\_time);}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{switch}\ (shmem\_msg\_type)}
+\DoxyCodeLine{00014\ \ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PrL1PrL2DramDirectoryMSI::ShmemMsg::DRAM\_READ\_REQ:}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ Byte\ data\_buf[getCacheBlockSize()];}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ SubsecondTime\ dram\_latency;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ HitWhere::where\_t\ hit\_where;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ boost::tie(dram\_latency,\ hit\_where)\ =\ getDataFromDram(address,\ shmem\_msg-\/>getRequester(),\ data\_buf,\ msg\_time,\ shmem\_msg-\/>getPerf(),shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>incrElapsedTime(dram\_latency,\ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ shmem\_msg-\/>getPerf()-\/>updateTime(getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD),}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ hit\_where\ ==\ HitWhere::DRAM\_CACHE\ ?\ ShmemPerf::DRAM\_CACHE\ :\ ShmemPerf::DRAM);}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ shmem\_msg-\/>getBlockType();}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::DRAM\_READ\_REP,}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::DRAM,\ MemComponent::TAG\_DIR,}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ shmem\_msg-\/>getRequester()\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sender\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf,\ getCacheBlockSize(),}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hit\_where,\ shmem\_msg-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,block\_type);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PrL1PrL2DramDirectoryMSI::ShmemMsg::DRAM\_WRITE\_REQ:}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ putDataToDram(shmem\_msg-\/>getAddress(),\ shmem\_msg-\/>getRequester(),\ shmem\_msg-\/>getDataBuf(),\ msg\_time,\ shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ DRAM\ latency\ is\ ignored\ on\ write}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Shmem\ Msg\ Type:\ \%u"{}},\ shmem\_msg\_type);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00052\ \ \ \ \}}
+\DoxyCodeLine{00053\ \}}
+
+\end{DoxyCode}

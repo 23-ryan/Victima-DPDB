@@ -1,0 +1,78 @@
+\doxysection{config\+\_\+file.\+hpp}
+\label{config__file_8hpp_source}\index{common/config/config\_file.hpp@{common/config/config\_file.hpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CONFIG\_FILE\_HPP}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CONFIG\_FILE\_HPP}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}config\_file\_grammar.hpp"{}}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \#define\ BOOST\_SPIRIT\_DEBUG\ \ \ \ \ \ \ \ //\ define\ this\ for\ debug\ output}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#if\ (BOOST\_VERSION==103500)}}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keyword}{using\ namespace\ }boost::spirit;}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keyword}{using\ namespace\ }boost::spirit::classic;}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{class\ }ConfigFile\ :\ \textcolor{keyword}{public}\ config::Config}
+\DoxyCodeLine{00054\ \ \ \ \ \{}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_parse\_info<config\_parser::iterator\_t,\ config\_parser::factory\_t>\ parse\_info\_t;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_match<config\_parser::iterator\_t,\ config\_parser::factory\_t>\ tree\_match\_t;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_match\_t::node\_t\ node\_t;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_match\_t::const\_tree\_iterator\ tree\_iter\_t;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ ConfigFile(\textcolor{keywordtype}{bool}\ case\_sensitive\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ ConfigFile(\textcolor{keyword}{const}\ Section\ \&\ root,\ \textcolor{keywordtype}{bool}\ case\_sensitive\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \string~ConfigFile()\{\}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ saveAs(\textcolor{keyword}{const}\ String\ \&path);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ loadConfigFromString(\textcolor{keyword}{const}\ String\ \&\ cfg);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ SaveTreeAs(std::ofstream\ \&out,\ \textcolor{keyword}{const}\ Section\ \&current);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ loadConfig();}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ loadFileToString(String\ \&s,\ \textcolor{keyword}{const}\ String\ \&filename);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ parse(\textcolor{keyword}{const}\ String\ \&source,\ Section\ \&\ current);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ evalTree(Section\ \&\ current,\ tree\_iter\_t\ \textcolor{keyword}{const}\&\ node,\ \textcolor{keywordtype}{int}\ depth\ =\ 0);}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ showParseTree(tree\_iter\_t\ \textcolor{keyword}{const}\&\ node,\ \textcolor{keywordtype}{int}\ depth\ =\ 0);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ function\ is\ used\ to\ turn\ \(\backslash\)"{}\ into\ "{}\ and\ \(\backslash\)\(\backslash\)\ into\ \(\backslash\)\ \ and\ the\ like}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ unEscapeText(\textcolor{keyword}{const}\ String\ \&\ source,\ String\ \&\ dest);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ escapeText(\textcolor{keyword}{const}\ String\ \&\ source,\ String\ \&\ dest);}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ String\ getNodeValue(tree\_iter\_t\ \textcolor{keyword}{const}\&\ node);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ RuleID\ getNodeID(tree\_iter\_t\ \textcolor{keyword}{const}\&\ node);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Hooks\ for\ creating\ appropriate\ objects\ when\ they\ are\ parse}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createStringKey(Section\ \&\ current,\ \textcolor{keyword}{const}\ String\ key\_name,\ \textcolor{keyword}{const}\ String\ \&\ value);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createIntKey(Section\ \&\ current,\ \textcolor{keyword}{const}\ String\ key\_name,\ SInt64\ value);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createFloatKey(Section\ \&\ current,\ \textcolor{keyword}{const}\ String\ key\_name,\ \textcolor{keywordtype}{double}\ value);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//The\ following\ code\ is\ commented\ out\ until\ full\ thread\ protection\ is\ provided}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//in\ the\ get/set\ functions\ as\ well\ as\ block\ writing,\ preferably\ through\ a\ shared}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//mutex.}}
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ boost::mutex\ m\_fileWriterMux;}}
+\DoxyCodeLine{00105\ \ \ \ \ \};}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00109\ }
+
+\end{DoxyCode}

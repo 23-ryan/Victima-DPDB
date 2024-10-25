@@ -1,0 +1,708 @@
+\doxysection{pin/pin\+\_\+sim.cc File Reference}
+\label{pin__sim_8cc}\index{pin/pin\_sim.cc@{pin/pin\_sim.cc}}
+{\ttfamily \#include "{}simulator.\+h"{}}\newline
+{\ttfamily \#include "{}core\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}config.\+h"{}}\newline
+{\ttfamily \#include "{}core.\+h"{}}\newline
+{\ttfamily \#include "{}thread.\+h"{}}\newline
+{\ttfamily \#include "{}syscall\+\_\+model.\+h"{}}\newline
+{\ttfamily \#include "{}thread\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}hooks\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}trace\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}config\+\_\+file.\+hpp"{}}\newline
+{\ttfamily \#include "{}handle\+\_\+args.\+h"{}}\newline
+{\ttfamily \#include "{}log.\+h"{}}\newline
+{\ttfamily \#include "{}instruction\+\_\+modeling.\+h"{}}\newline
+{\ttfamily \#include "{}instruction.\+h"{}}\newline
+{\ttfamily \#include "{}magic\+\_\+client.\+h"{}}\newline
+{\ttfamily \#include "{}sampling\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}sampling\+\_\+provider.\+h"{}}\newline
+{\ttfamily \#include "{}performance\+\_\+model.\+h"{}}\newline
+{\ttfamily \#include "{}timer.\+h"{}}\newline
+{\ttfamily \#include "{}logmem.\+h"{}}\newline
+{\ttfamily \#include "{}circular\+\_\+log.\+h"{}}\newline
+{\ttfamily \#include "{}codecache\+\_\+trace.\+h"{}}\newline
+{\ttfamily \#include "{}local\+\_\+storage.\+h"{}}\newline
+{\ttfamily \#include "{}toolreg.\+h"{}}\newline
+{\ttfamily \#include "{}pin\+\_\+exceptions.\+h"{}}\newline
+{\ttfamily \#include "{}trace\+\_\+rtn.\+h"{}}\newline
+{\ttfamily \#include "{}lite/routine\+\_\+replace.\+h"{}}\newline
+{\ttfamily \#include "{}lite/handle\+\_\+syscalls.\+h"{}}\newline
+{\ttfamily \#include "{}sim\+\_\+api.\+h"{}}\newline
+{\ttfamily \#include "{}pin.\+H"{}}\newline
+{\ttfamily \#include "{}inst\+\_\+mode\+\_\+macros.\+h"{}}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$assert.\+h$>$}\newline
+{\ttfamily \#include $<$set$>$}\newline
+{\ttfamily \#include $<$sys/syscall.\+h$>$}\newline
+{\ttfamily \#include $<$unistd.\+h$>$}\newline
+{\ttfamily \#include $<$signal.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$typeinfo$>$}\newline
+Include dependency graph for pin\+\_\+sim.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ SWITCH\+\_\+\+VERSION}(v)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ application\+Mem\+Copy} (void $\ast$dest, const void $\ast$\textbf{ src}, size\+\_\+t \textbf{ n})
+\item 
+void \textbf{ print\+Rtn} (ADDRINT rtn\+\_\+addr, bool enter)
+\item 
+VOID \textbf{ print\+Ins\+Info} (CONTEXT $\ast$ctxt)
+\item 
+void \textbf{ show\+Instruction\+Info} (INS ins)
+\item 
+VOID \textbf{ instruction\+Callback} (TRACE trace, INS ins, \textbf{ Inst\+Mode\+::inst\+\_\+mode\+\_\+t} inst\+\_\+mode)
+\item 
+void \textbf{ handle\+Check\+Scheduled} (THREADID thread\+Index)
+\item 
+VOID \textbf{ add\+Check\+Scheduled} (TRACE trace, INS ins\+\_\+head)
+\item 
+static int \textbf{ get\+Inst\+Mode} ()
+\item 
+VOID \textbf{ trace\+Callback} (TRACE trace, void $\ast$v)
+\item 
+VOID \textbf{ trace\+Invalidate} (ADDRINT orig\+\_\+pc, ADDRINT cache\+\_\+pc, BOOL success)
+\item 
+void \textbf{ Application\+Start} ()
+\item 
+void \textbf{ Application\+Exit} (int, void $\ast$)
+\item 
+void \textbf{ Application\+Detach} (void $\ast$)
+\item 
+void \textbf{ Pin\+Detach} (void)
+\item 
+VOID \textbf{ thread\+Start\+Callback} (THREADID thread\+Index, CONTEXT $\ast$ctxt, INT32 flags, VOID $\ast$v)
+\item 
+VOID \textbf{ thread\+Fini\+Callback} (THREADID thread\+Index, const CONTEXT $\ast$ctxt, INT32 flags, VOID $\ast$v)
+\item 
+bool \textbf{ handle\+Sig\+Usr1} (THREADID thread\+Index, INT32 signal, CONTEXT $\ast$ctx, BOOL has\+Handler, const EXCEPTION\+\_\+\+INFO $\ast$p\+Except\+Info, void $\ast$v)
+\item 
+VOID \textbf{ fork\+After\+Child} (THREADID threadid, const CONTEXT $\ast$ctxt, VOID $\ast$v)
+\item 
+int \textbf{ main} (int argc, char $\ast$argv[$\,$])
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+bool \textbf{ done\+\_\+app\+\_\+initialization} = false
+\item 
+\textbf{ config\+::\+Config\+File} $\ast$ \textbf{ cfg}
+\item 
+int $\ast$ \textbf{ parent\+\_\+tidptr}
+\item 
+int $\ast$ \textbf{ child\+\_\+tidptr}
+\item 
+bool \textbf{ forked\+In\+Child} = false
+\item 
+map$<$ ADDRINT, string $>$ \textbf{ rtn\+\_\+map}
+\item 
+PIN\+\_\+\+LOCK \textbf{ rtn\+\_\+map\+\_\+lock}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{pin\_sim.cc@{pin\_sim.cc}!SWITCH\_VERSION@{SWITCH\_VERSION}}
+\index{SWITCH\_VERSION@{SWITCH\_VERSION}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{SWITCH\_VERSION}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a49dac4ba53f736fc0b134a64c8f97d06} 
+\#define SWITCH\+\_\+\+VERSION(\begin{DoxyParamCaption}\item[{}]{v}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{if}\ (inst\_mode\ !=\ (v))\ INS\_InsertVersionCase(ins\_head,\ g\_toolregs[TOOLREG\_TEMP],\ v,\ v,\ IARG\_CALL\_ORDER,\ call\_order,\ IARG\_END);}
+
+\end{DoxyCode}
+
+
+Referenced by \textbf{ trace\+Callback()}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{pin\_sim.cc@{pin\_sim.cc}!addCheckScheduled@{addCheckScheduled}}
+\index{addCheckScheduled@{addCheckScheduled}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{addCheckScheduled()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a0085827a16eec06dc4ae61763c70141a} 
+VOID add\+Check\+Scheduled (\begin{DoxyParamCaption}\item[{TRACE}]{trace}{, }\item[{INS}]{ins\+\_\+head}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 178} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ handle\+Check\+Scheduled()}.
+
+
+
+Referenced by \textbf{ trace\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a0085827a16eec06dc4ae61763c70141a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=334pt]{pin__sim_8cc_a0085827a16eec06dc4ae61763c70141a_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!ApplicationDetach@{ApplicationDetach}}
+\index{ApplicationDetach@{ApplicationDetach}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{ApplicationDetach()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a96bf49b109560914aa10b6980c9828eb} 
+void Application\+Detach (\begin{DoxyParamCaption}\item[{void $\ast$}]{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 320} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ Application\+Exit()}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a96bf49b109560914aa10b6980c9828eb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=212pt]{pin__sim_8cc_a96bf49b109560914aa10b6980c9828eb_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!ApplicationExit@{ApplicationExit}}
+\index{ApplicationExit@{ApplicationExit}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{ApplicationExit()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a9e08bf90db572bd7a7c6b2d95c74d10c} 
+void Application\+Exit (\begin{DoxyParamCaption}\item[{int}]{}{, }\item[{void $\ast$}]{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 309} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ cfg}, \textbf{ forked\+In\+Child}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ Simulator\+::release()}.
+
+
+
+Referenced by \textbf{ Application\+Detach()}, and \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{pin__sim_8cc_a9e08bf90db572bd7a7c6b2d95c74d10c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=328pt]{pin__sim_8cc_a9e08bf90db572bd7a7c6b2d95c74d10c_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!applicationMemCopy@{applicationMemCopy}}
+\index{applicationMemCopy@{applicationMemCopy}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{applicationMemCopy()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a79fd7090b93a32208b16d89af42c09b1} 
+void application\+Mem\+Copy (\begin{DoxyParamCaption}\item[{void $\ast$}]{dest}{, }\item[{const void $\ast$}]{src}{, }\item[{size\+\_\+t}]{n}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 96} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ n}, and \textbf{ src}.
+
+
+
+Referenced by \textbf{ Core\+::native\+Mem\+Op()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a79fd7090b93a32208b16d89af42c09b1_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!ApplicationStart@{ApplicationStart}}
+\index{ApplicationStart@{ApplicationStart}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{ApplicationStart()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a8865e62f3c1823945fb0dbf639dbecf9} 
+void Application\+Start (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 305} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!forkAfterChild@{forkAfterChild}}
+\index{forkAfterChild@{forkAfterChild}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{forkAfterChild()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a53265be7bd1a32d7f8898bc31c717be3} 
+VOID fork\+After\+Child (\begin{DoxyParamCaption}\item[{THREADID}]{threadid}{, }\item[{const CONTEXT $\ast$}]{ctxt}{, }\item[{VOID $\ast$}]{v}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 388} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ forked\+In\+Child}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=192pt]{pin__sim_8cc_a53265be7bd1a32d7f8898bc31c717be3_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!getInstMode@{getInstMode}}
+\index{getInstMode@{getInstMode}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{getInstMode()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_ab269b1ba52092d912f7eee7d66065fd6} 
+static int get\+Inst\+Mode (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 183} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ trace\+Callback()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{pin__sim_8cc_ab269b1ba52092d912f7eee7d66065fd6_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!handleCheckScheduled@{handleCheckScheduled}}
+\index{handleCheckScheduled@{handleCheckScheduled}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{handleCheckScheduled()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a6a661793f3c132b9aa6b48b7a922586a} 
+void handle\+Check\+Scheduled (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+Index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 157} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ local\+Store}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Thread\+::reschedule()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ add\+Check\+Scheduled()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a6a661793f3c132b9aa6b48b7a922586a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a6a661793f3c132b9aa6b48b7a922586a_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!handleSigUsr1@{handleSigUsr1}}
+\index{handleSigUsr1@{handleSigUsr1}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{handleSigUsr1()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_ad49e612e6bb82a396f83ef93215aaa98} 
+bool handle\+Sig\+Usr1 (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+Index}{, }\item[{INT32}]{signal}{, }\item[{CONTEXT $\ast$}]{ctx}{, }\item[{BOOL}]{has\+Handler}{, }\item[{const EXCEPTION\+\_\+\+INFO $\ast$}]{p\+Except\+Info}{, }\item[{void $\ast$}]{v}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 382} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+SIGUSR1}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=197pt]{pin__sim_8cc_ad49e612e6bb82a396f83ef93215aaa98_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!instructionCallback@{instructionCallback}}
+\index{instructionCallback@{instructionCallback}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{instructionCallback()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a89ecd2242214fc6a93363ea61c2688e0} 
+VOID instruction\+Callback (\begin{DoxyParamCaption}\item[{TRACE}]{trace}{, }\item[{INS}]{ins}{, }\item[{\textbf{ Inst\+Mode\+::inst\+\_\+mode\+\_\+t}}]{inst\+\_\+mode}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 140} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ Log\+::get\+Singleton()}, and \textbf{ print\+Ins\+Info()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a89ecd2242214fc6a93363ea61c2688e0_cgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!main@{main}}
+\index{main@{main}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{main()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a0ddf1224851353fc92bfbff6f499fa97} 
+int main (\begin{DoxyParamCaption}\item[{int}]{argc}{, }\item[{char $\ast$}]{argv}{[$\,$]}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 395} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ Simulator\+::allocate()}, \textbf{ Application\+Detach()}, \textbf{ Application\+Exit()}, \textbf{ cfg}, \textbf{ exception\+Handler()}, \textbf{ fork\+After\+Child()}, \textbf{ config\+::\+Config\+::get\+Bool()}, \textbf{ config\+::\+Config\+::get\+String()}, \textbf{ handle\+\_\+args()}, \textbf{ handle\+Sig\+Usr1()}, \textbf{ init\+Code\+Cache\+Tracing()}, \textbf{ init\+Toolregs()}, \textbf{ lite\+::intercept\+Signal()}, \textbf{ config\+::\+Config\+::load()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ parse\+\_\+args()}, \textbf{ Config\+::\+PINTOOL}, \textbf{ lite\+::routine\+Callback()}, \textbf{ rtn\+\_\+map\+\_\+lock}, \textbf{ Simulator\+::set\+Config()}, \textbf{ lite\+::syscall\+Enter\+Run\+Model()}, \textbf{ lite\+::syscall\+Exit\+Run\+Model()}, \textbf{ thread\+Fini\+Callback()}, \textbf{ thread\+Start\+Callback()}, \textbf{ trace\+Callback()}, and \textbf{ trace\+Invalidate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{pin__sim_8cc_a0ddf1224851353fc92bfbff6f499fa97_cgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!PinDetach@{PinDetach}}
+\index{PinDetach@{PinDetach}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{PinDetach()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a0cd65018b221763e408c9ea176c633b7} 
+void Pin\+Detach (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 325} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ Magic\+Server\+::disable\+Performance()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a0cd65018b221763e408c9ea176c633b7_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!printInsInfo@{printInsInfo}}
+\index{printInsInfo@{printInsInfo}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{printInsInfo()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_ab4bbf4bbfc87ce7a92cdec263682a033} 
+VOID print\+Ins\+Info (\begin{DoxyParamCaption}\item[{CONTEXT $\ast$}]{ctxt}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ \+\_\+\+\_\+attribute\+\_\+\+\_\+()}, and \textbf{ LOG\+\_\+\+PRINT}.
+
+
+
+Referenced by \textbf{ instruction\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=217pt]{pin__sim_8cc_ab4bbf4bbfc87ce7a92cdec263682a033_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=243pt]{pin__sim_8cc_ab4bbf4bbfc87ce7a92cdec263682a033_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!printRtn@{printRtn}}
+\index{printRtn@{printRtn}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{printRtn()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a1c6b49b8798a5652657b09002cc07bb4} 
+void print\+Rtn (\begin{DoxyParamCaption}\item[{ADDRINT}]{rtn\+\_\+addr}{, }\item[{bool}]{enter}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 101} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+PRINT}, \textbf{ rtn\+\_\+map}, and \textbf{ rtn\+\_\+map\+\_\+lock}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!showInstructionInfo@{showInstructionInfo}}
+\index{showInstructionInfo@{showInstructionInfo}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{showInstructionInfo()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_aca1edf5b37fc9ae5d7f21e03cf408329} 
+void show\+Instruction\+Info (\begin{DoxyParamCaption}\item[{INS}]{ins}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!threadFiniCallback@{threadFiniCallback}}
+\index{threadFiniCallback@{threadFiniCallback}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{threadFiniCallback()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a5e0be41ee6f77e1bb88f34c420901359} 
+VOID thread\+Fini\+Callback (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+Index}{, }\item[{const CONTEXT $\ast$}]{ctxt}{, }\item[{INT32}]{flags}{, }\item[{VOID $\ast$}]{v}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 370} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ forked\+In\+Child}, and \textbf{ local\+Store}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=213pt]{pin__sim_8cc_a5e0be41ee6f77e1bb88f34c420901359_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!threadStartCallback@{threadStartCallback}}
+\index{threadStartCallback@{threadStartCallback}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{threadStartCallback()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a8dd76290885bbb69d37082afa06dd025} 
+VOID thread\+Start\+Callback (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+Index}{, }\item[{CONTEXT $\ast$}]{ctxt}{, }\item[{INT32}]{flags}{, }\item[{VOID $\ast$}]{v}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 330} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ done\+\_\+app\+\_\+initialization}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ itostr()}, \textbf{ local\+Store}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Thread\+Local\+Storage\+::\+NUM\+\_\+\+SCRATCHPADS}, and \textbf{ Thread\+Local\+Storage\+::\+SCRATCHPAD\+\_\+\+SIZE}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=219pt]{pin__sim_8cc_a8dd76290885bbb69d37082afa06dd025_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=219pt]{pin__sim_8cc_a8dd76290885bbb69d37082afa06dd025_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!traceCallback@{traceCallback}}
+\index{traceCallback@{traceCallback}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{traceCallback()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a39f6f78e96cd5063563b8b2f68a70c92} 
+VOID trace\+Callback (\begin{DoxyParamCaption}\item[{TRACE}]{trace}{, }\item[{void $\ast$}]{v}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 188} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ Instruction\+Modeling\+::access\+Instruction\+Cache\+Warmup()}, \textbf{ add\+Check\+Scheduled()}, \textbf{ Instruction\+Modeling\+::add\+Instruction\+Modeling()}, \textbf{ add\+Rtn\+Tracer()}, \textbf{ Inst\+Mode\+::\+CACHE\+\_\+\+ONLY}, \textbf{ Instruction\+Modeling\+::count\+Instructions()}, \textbf{ Inst\+Mode\+::\+DETAILED}, \textbf{ Inst\+Mode\+::\+FAST\+\_\+\+FORWARD}, \textbf{ g\+\_\+toolregs}, \textbf{ get\+Inst\+Mode()}, \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ Instrument\+Level\+::\+INSTR}, \textbf{ INSTR\+\_\+\+GET\+\_\+\+MODE}, \textbf{ INSTR\+\_\+\+IF\+\_\+\+CACHEONLY}, \textbf{ INSTR\+\_\+\+IF\+\_\+\+DETAILED}, \textbf{ Instrument\+Level\+::\+INSTR\+\_\+\+WITH\+\_\+\+BBVS}, \textbf{ INSTRUMENT}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ Instrument\+Level\+::\+NONE}, \textbf{ lite\+::routine\+Start\+Callback()}, \textbf{ SWITCH\+\_\+\+VERSION}, and \textbf{ TOOLREG\+\_\+\+TEMP}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{pin__sim_8cc_a39f6f78e96cd5063563b8b2f68a70c92_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=192pt]{pin__sim_8cc_a39f6f78e96cd5063563b8b2f68a70c92_icgraph}
+\end{center}
+\end{figure}
+\index{pin\_sim.cc@{pin\_sim.cc}!traceInvalidate@{traceInvalidate}}
+\index{traceInvalidate@{traceInvalidate}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{traceInvalidate()}
+{\footnotesize\ttfamily \label{pin__sim_8cc_abb0a96741faf6409febb8765575408bf} 
+VOID trace\+Invalidate (\begin{DoxyParamCaption}\item[{ADDRINT}]{orig\+\_\+pc}{, }\item[{ADDRINT}]{cache\+\_\+pc}{, }\item[{BOOL}]{success}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 291} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING\+\_\+\+ONCE}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=197pt]{pin__sim_8cc_abb0a96741faf6409febb8765575408bf_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{pin\_sim.cc@{pin\_sim.cc}!cfg@{cfg}}
+\index{cfg@{cfg}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{cfg}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a034bcb3c67c8add1b4ace51e8e2735af} 
+\textbf{ config\+::\+Config\+File}$\ast$ cfg}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ Application\+Exit()}, \textbf{ Branch\+Predictor\+::create()}, \textbf{ Memory\+Manager\+Base\+::get\+Core\+List\+With\+Memory\+Controllers()}, \textbf{ Config\+::get\+Nearest\+Acceptable\+Core\+Count()}, \textbf{ Config\+::get\+Network\+Models()}, \textbf{ handle\+\_\+args()}, \textbf{ handle\+\_\+generic\+\_\+arg()}, \textbf{ config\+::\+Config\+File\+::load\+Config\+From\+String()}, \textbf{ main()}, and \textbf{ Simulator\+::set\+Config()}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!child\_tidptr@{child\_tidptr}}
+\index{child\_tidptr@{child\_tidptr}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{child\_tidptr}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a2d5c29ad538257524b5307d8833184d5} 
+int$\ast$ child\+\_\+tidptr\hspace{0.3cm}{\ttfamily [extern]}}
+
+\index{pin\_sim.cc@{pin\_sim.cc}!done\_app\_initialization@{done\_app\_initialization}}
+\index{done\_app\_initialization@{done\_app\_initialization}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{done\_app\_initialization}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a6696c28a9f9a702f3a1d50ef5985974c} 
+bool done\+\_\+app\+\_\+initialization = false}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ thread\+Start\+Callback()}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!forkedInChild@{forkedInChild}}
+\index{forkedInChild@{forkedInChild}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{forkedInChild}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a042267a512019c9840a761cb7e6c0b4f} 
+bool forked\+In\+Child = false}
+
+
+
+Definition at line \textbf{ 85} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ Application\+Exit()}, \textbf{ fork\+After\+Child()}, and \textbf{ thread\+Fini\+Callback()}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!parent\_tidptr@{parent\_tidptr}}
+\index{parent\_tidptr@{parent\_tidptr}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{parent\_tidptr}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a8dc2da437007d8339ba683b368428135} 
+int$\ast$ parent\+\_\+tidptr\hspace{0.3cm}{\ttfamily [extern]}}
+
+\index{pin\_sim.cc@{pin\_sim.cc}!rtn\_map@{rtn\_map}}
+\index{rtn\_map@{rtn\_map}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{rtn\_map}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a800b8b7aa0ca4734bf434c21cea65934} 
+map$<$ADDRINT, string$>$ rtn\+\_\+map}
+
+
+
+Definition at line \textbf{ 89} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ print\+Rtn()}.
+
+\index{pin\_sim.cc@{pin\_sim.cc}!rtn\_map\_lock@{rtn\_map\_lock}}
+\index{rtn\_map\_lock@{rtn\_map\_lock}!pin\_sim.cc@{pin\_sim.cc}}
+\doxysubsubsection{rtn\_map\_lock}
+{\footnotesize\ttfamily \label{pin__sim_8cc_a219bb66bdf22c6b38df3615f70697a7b} 
+PIN\+\_\+\+LOCK rtn\+\_\+map\+\_\+lock}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ pin\+\_\+sim.\+cc}.
+
+
+
+Referenced by \textbf{ main()}, and \textbf{ print\+Rtn()}.
+

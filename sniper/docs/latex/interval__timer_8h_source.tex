@@ -1,0 +1,140 @@
+\doxysection{interval\+\_\+timer.\+h}
+\label{interval__timer_8h_source}\index{common/performance\_model/performance\_models/interval\_performance\_model/interval\_timer.h@{common/performance\_model/performance\_models/interval\_performance\_model/interval\_timer.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#ifndef\ INTERVALTIMER\_HPP\_}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ INTERVALTIMER\_HPP\_}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}fixed\_point.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}windows.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}boost/tuple/tuple.hpp"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}contention\_model.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#define\ DEBUG\_IT\_INSN\_PRINT\ 0}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{enum}\ StopDispatchReason\ \{}
+\DoxyCodeLine{00020\ \ \ \ STOP\_DISPATCH\_NO\_REASON\ =\ 0,}
+\DoxyCodeLine{00021\ \ \ \ STOP\_DISPATCH\_WINDOW\_EMPTY\ =\ 1,}
+\DoxyCodeLine{00022\ \ \ \ STOP\_DISPATCH\_DISPATCH\_WIDTH\ =\ 2,}
+\DoxyCodeLine{00023\ \ \ \ STOP\_DISPATCH\_DISPATCH\_RATE\ =\ 4,}
+\DoxyCodeLine{00024\ \ \ \ STOP\_DISPATCH\_ICACHE\_MISS\ =\ 8,}
+\DoxyCodeLine{00025\ \ \ \ STOP\_DISPATCH\_BRANCH\_MISPREDICT\ =\ 16,}
+\DoxyCodeLine{00026\ \ \ \ STOP\_DISPATCH\_SIZE\ =\ 32,}
+\DoxyCodeLine{00027\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ ADD\_STOP\_DISPATCH\_REASON(\_new\_reason,\ \_original\_reasons)\ ((StopDispatchReason)(((int)\_new\_reason)\ |\ (int)(\_original\_reasons)))}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ String\ StopDispatchReasonStringHelper(StopDispatchReason\ r);}
+\DoxyCodeLine{00032\ String\ StopDispatchReasonString(StopDispatchReason\ r);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }CoreModel;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }IntervalTimer\ \{}
+\DoxyCodeLine{00037\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ IntervalTimer(Core\ *core,\ PerformanceModel\ *perf,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ \textcolor{keywordtype}{int}\ misprediction\_penalty,\ \textcolor{keywordtype}{int}\ dispatch\_width,\ \textcolor{keywordtype}{int}\ window\_size,\ \textcolor{keywordtype}{bool}\ do\_functional\_unit\_contention);}
+\DoxyCodeLine{00040\ \ \ \ \string~IntervalTimer();}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordtype}{void}\ free();\ \textcolor{comment}{//\ Early-\/delete\ of\ members}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \textcolor{comment}{//\ simulate()\ returns\ (instructions\_executed,\ latency)}}
+\DoxyCodeLine{00044\ \ \ \ boost::tuple<uint64\_t,uint64\_t>\ simulate(\textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \textcolor{comment}{//\ Update\ internal\ time\ after\ syncronization\ event}}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//\ Since\ interval\_timer\ currently\ has\ no\ notion\ of\ outside\ time,\ no\ need\ to\ do\ anything\ for\ now}}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{comment}{//\ NOTE:\ These\ events\ are\ supposed\ to\ be\ long-\/latency,\ so\ we\ may\ want\ to\ flush\ the\ windows\ here\ as\ well}}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordtype}{void}\ synchronize(uint64\_t\ time)\ \{\}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{comment}{//\ dispatchWindow()\ returns\ (instructions\_executed,\ latency)}}
+\DoxyCodeLine{00054\ \ \ \ boost::tuple<uint64\_t,uint64\_t>\ dispatchWindow();}
+\DoxyCodeLine{00055\ \ \ \ uint32\_t\ calculateCurrentDispatchRate();}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordtype}{void}\ issueMemOp(Windows::WindowEntry\&\ micro\_op);}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{comment}{//\ dispatchInstruction()\ returns\ instruction\_latency}}
+\DoxyCodeLine{00058\ \ \ \ uint64\_t\ dispatchInstruction(Windows::WindowEntry\&\ instruction,\ StopDispatchReason\&\ continueDispatching);}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordtype}{void}\ updateCriticalPath(Windows::WindowEntry\&\ microOp,\ uint64\_t\&\ latency);}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordtype}{void}\ blockWindow();}
+\DoxyCodeLine{00061\ \ \ \ uint64\_t\ getMaxProducerExecTime(Windows::WindowEntry\&\ instruction);}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ Core\ *m\_core;}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keyword}{const}\ CoreModel\ *m\_core\_model;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{comment}{//\ Interval\ model\ parameters}}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ m\_dispatch\_width;}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ m\_branch\_misprediction\_penalty;}
+\DoxyCodeLine{00071\ \ \ \ UInt64\ m\_mem\_dep\_mask;\ \textcolor{comment}{//\ Memory\ access\ dependency\ granularity}}
+\DoxyCodeLine{00072\ \ \ \ UInt64\ m\_lll\_dep\_mask;\ \textcolor{comment}{//\ Memory\ access\ dependency\ granularity\ for\ long-\/latency\ loads}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \textcolor{comment}{//\ State\ of\ previous\ cycle}}
+\DoxyCodeLine{00075\ \ \ \ FixedPoint\ m\_remaining\_dispatch\_bandwidth;}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{comment}{//\ For\ LOCKed\ instructions,\ we\ need\ to\ determine\ the\ latency\ of\ all\ loads\ and\ stores}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{comment}{//\ (even\ independent\ ones),\ as\ strong\ ordering\ requires\ that\ we\ complete\ them}}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{comment}{//\ before\ executing\ the\ instruction\ itself.}}
+\DoxyCodeLine{00080\ \ \ \ uint64\_t\ m\_max\_store\_completion\_time;}
+\DoxyCodeLine{00081\ \ \ \ uint64\_t\ m\_max\_load\_completion\_time;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ ContentionModel\ m\_loadstore\_contention;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \textcolor{comment}{//\ Window\ and\ old\ window\ data\ structure}}
+\DoxyCodeLine{00086\ \ \ \ Windows\ *m\_windows;}
+\DoxyCodeLine{00087\ \ \ \ PerformanceModel\ *m\_perf\_model;}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *m\_frequency\_domain;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00091\ \ \ \ FILE\ *m\_insn\_log;}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \textcolor{comment}{//\ Core\ statistics}}
+\DoxyCodeLine{00095\ \ \ \ UInt64\ m\_uop\_type\_count[MicroOp::UOP\_SUBTYPE\_SIZE];}
+\DoxyCodeLine{00096\ \ \ \ UInt64\ m\_uops\_total;}
+\DoxyCodeLine{00097\ \ \ \ UInt64\ m\_uops\_x87;}
+\DoxyCodeLine{00098\ \ \ \ UInt64\ m\_uops\_pause;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ uint64\_t\ m\_numICacheOverlapped;}
+\DoxyCodeLine{00101\ \ \ \ uint64\_t\ m\_numBPredOverlapped;}
+\DoxyCodeLine{00102\ \ \ \ uint64\_t\ m\_numDCacheOverlapped;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ uint64\_t\ m\_numLongLatencyLoads;}
+\DoxyCodeLine{00105\ \ \ \ uint64\_t\ m\_numTotalLongLatencyLoadLatency;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ uint64\_t\ m\_numSerializationInsns;}
+\DoxyCodeLine{00108\ \ \ \ uint64\_t\ m\_totalSerializationLatency;}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ uint64\_t\ m\_totalHiddenDCacheLatency;}
+\DoxyCodeLine{00111\ \ \ \ uint64\_t\ m\_totalHiddenLongerDCacheLatency;}
+\DoxyCodeLine{00112\ \ \ \ uint64\_t\ m\_numHiddenLongerDCacheLatency;}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ uint64\_t\ m\_outstandingLongLatencyInsns;}
+\DoxyCodeLine{00115\ \ \ \ uint64\_t\ m\_outstandingLongLatencyCycles;}
+\DoxyCodeLine{00116\ \ \ \ uint64\_t\ m\_lastAccountedMemoryCycle;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ uint64\_t\ m\_numMfenceInsns;}
+\DoxyCodeLine{00119\ \ \ \ uint64\_t\ m\_totalMfenceLatency;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{comment}{//\ CPI\ stack\ data}}
+\DoxyCodeLine{00122\ \ \ \ SubsecondTime\ m\_cpiBase;}
+\DoxyCodeLine{00123\ \ \ \ SubsecondTime\ m\_cpiBranchPredictor;}
+\DoxyCodeLine{00124\ \ \ \ SubsecondTime\ m\_cpiSerialization;}
+\DoxyCodeLine{00125\ \ \ \ SubsecondTime\ m\_cpiLongLatency;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ std::vector<SubsecondTime>\ m\_cpiInstructionCache;}
+\DoxyCodeLine{00128\ \ \ \ std::vector<SubsecondTime>\ m\_cpiDataCache;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ uint64\_t\ m\_cpiBaseStopDispatch[STOP\_DISPATCH\_SIZE];}
+\DoxyCodeLine{00131\ \ \ \ uint64\_t\ m\_cpContrByType[CPCONTR\_TYPE\_SIZE];}
+\DoxyCodeLine{00132\ \};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ INTERVALTIMER\_HPP\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

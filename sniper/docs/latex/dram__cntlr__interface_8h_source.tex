@@ -1,0 +1,53 @@
+\doxysection{dram\+\_\+cntlr\+\_\+interface.\+h}
+\label{dram__cntlr__interface_8h_source}\index{common/core/memory\_subsystem/dram/dram\_cntlr\_interface.h@{common/core/memory\_subsystem/dram/dram\_cntlr\_interface.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DRAM\_CNTLR\_INTERFACE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DRAM\_CNTLR\_INTERFACE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}hit\_where.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}shmem\_msg.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}boost/tuple/tuple.hpp"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }MemoryManagerBase;}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }ShmemPerfModel;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }ShmemPerf;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }DramCntlrInterface}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ MemoryManagerBase*\ m\_memory\_manager;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ UInt32\ getCacheBlockSize()\ \{\ \textcolor{keywordflow}{return}\ m\_cache\_block\_size;\ \}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ MemoryManagerBase*\ getMemoryManager()\ \{\ \textcolor{keywordflow}{return}\ m\_memory\_manager;\ \}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ READ\ =\ 0,}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ WRITE,}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ NUM\_ACCESS\_TYPES}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \}\ access\_t;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ DramCntlrInterface(MemoryManagerBase*\ memory\_manager,\ ShmemPerfModel*\ shmem\_perf\_model,\ UInt32\ cache\_block\_size)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ :\ m\_memory\_manager(memory\_manager)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ ,\ m\_shmem\_perf\_model(shmem\_perf\_model)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ ,\ m\_cache\_block\_size(cache\_block\_size)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~DramCntlrInterface()\ \{\}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ getDataFromDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_matadata)\ =\ 0;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ putDataToDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\textcolor{keywordtype}{bool}\ is\_matadata)\ =\ 0;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMsgFromTagDirectory(core\_id\_t\ sender,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_DRAM\_CNTLR\_INTERFACE\_H}}
+
+\end{DoxyCode}

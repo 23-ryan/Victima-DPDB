@@ -1,0 +1,94 @@
+\doxysection{rob\+\_\+smt\+\_\+performance\+\_\+model.\+cc}
+\label{rob__smt__performance__model_8cc_source}\index{common/performance\_model/performance\_models/rob\_smt\_performance\_model.cc@{common/performance\_model/performance\_models/rob\_smt\_performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}rob\_smt\_performance\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ std::unordered\_map<core\_id\_t,\ RobSmtTimer*>\ RobSmtPerformanceModel::s\_rob\_timers;}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ RobSmtTimer*\ RobSmtPerformanceModel::getRobTimer(Core\ *core,\ RobSmtPerformanceModel\ *perf,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model)}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ uint32\_t\ smt\_threads\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/logical\_cpus"{}},\ core-\/>getId());}
+\DoxyCodeLine{00009\ \ \ \ core\_id\_t\ core\_id\_master\ =\ core-\/>getId()\ -\/\ (core-\/>getId()\ \%\ smt\_threads);}
+\DoxyCodeLine{00010\ \ \ \ Sim()-\/>getStatsManager()-\/>logTopology(\textcolor{stringliteral}{"{}smt"{}},\ core-\/>getId(),\ core\_id\_master);}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \textcolor{comment}{//\ Non-\/application\ threads\ do\ not\ share\ a\ core\ with\ anyone\ else}}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{if}\ (core-\/>getId()\ >=\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ smt\_threads\ =\ 1;}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordflow}{if}\ (s\_rob\_timers.count(core\_id\_master)\ ==\ 0)}
+\DoxyCodeLine{00017\ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ s\_rob\_timers[core\_id\_master]\ =\ \textcolor{keyword}{new}\ RobSmtTimer(}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ smt\_threads,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ core,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ perf,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ core\_model,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/mispredict\_penalty"{}},\ core-\/>getId()),}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/dispatch\_width"{}},\ core-\/>getId()),}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/window\_size"{}},\ core-\/>getId())}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00027\ \ \ \ \}}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ master\ core\_id\ is\ used\ to\ synchronize,\ siblings\ are\ synchronized\ by\ us}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ Sim()-\/>getClockSkewMinimizationServer()-\/>setGroup(core-\/>getId(),\ core\_id\_master);}
+\DoxyCodeLine{00032\ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{return}\ s\_rob\_timers[core\_id\_master];}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ RobSmtPerformanceModel::RobSmtPerformanceModel(Core\ *core)}
+\DoxyCodeLine{00037\ \ \ \ \ :\ MicroOpPerformanceModel(core,\ !Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/issue\_memops\_at\_issue"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00038\ \ \ \ \ ,\ m\_rob\_timer(getRobTimer(core,\ this,\ m\_core\_model))}
+\DoxyCodeLine{00039\ \ \ \ \ ,\ m\_enabled(true)}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ m\_thread\_id\ =\ m\_rob\_timer-\/>registerThread(core,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ RobSmtPerformanceModel::\string~RobSmtPerformanceModel()}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{comment}{//\ Each\ master\ thread\ destructs\ its\ group's\ RobTimer}}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{if}\ (s\_rob\_timers.count(getCore()-\/>getId()))}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ s\_rob\_timers[getCore()-\/>getId()];}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ boost::tuple<uint64\_t,uint64\_t>\ RobSmtPerformanceModel::simulate(\textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ ScopedLock\ sl(m\_rob\_timer-\/>m\_lock);}
+\DoxyCodeLine{00054\ \ \ \ m\_rob\_timer-\/>pushInstructions(m\_thread\_id,\ insts);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \textcolor{comment}{//\ Don't\ simulate\ here,\ this\ is\ done\ at\ a\ safe\ point\ in\ synchronize()}}
+\DoxyCodeLine{00057\ \ \ \ uint64\_t\ ins;\ SubsecondTime\ latency;}
+\DoxyCodeLine{00058\ \ \ \ boost::tie(ins,\ latency)\ =\ m\_rob\_timer-\/>returnLatency(m\_thread\_id);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<uint64\_t,uint64\_t>(ins,\ SubsecondTime::divideRounded(latency,\ m\_elapsed\_time.getPeriod()));}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{void}\ RobSmtPerformanceModel::synchronize()}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ ScopedLock\ sl(m\_rob\_timer-\/>m\_lock);}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{comment}{//\ simulate()\ calls\ the\ barrier,\ and\ also\ does\ the\ actual\ simulation}}
+\DoxyCodeLine{00067\ \ \ \ m\_rob\_timer-\/>simulate(m\_thread\_id);}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keywordtype}{void}\ RobSmtPerformanceModel::notifyElapsedTimeUpdate()}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ ScopedLock\ sl(m\_rob\_timer-\/>m\_lock);}
+\DoxyCodeLine{00073\ \ \ \ m\_rob\_timer-\/>synchronize(m\_thread\_id,\ m\_elapsed\_time.getElapsedTime());}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{void}\ RobSmtPerformanceModel::enableDetailedModel()}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ m\_enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00079\ \ \ \ ScopedLock\ sl(m\_rob\_timer-\/>m\_lock);}
+\DoxyCodeLine{00080\ \ \ \ m\_rob\_timer-\/>enable();}
+\DoxyCodeLine{00081\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keywordtype}{void}\ RobSmtPerformanceModel::disableDetailedModel()}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ m\_enabled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00086\ \ \ \ ScopedLock\ sl(m\_rob\_timer-\/>m\_lock);}
+\DoxyCodeLine{00087\ \ \ \ m\_rob\_timer-\/>disable();}
+\DoxyCodeLine{00088\ \}}
+
+\end{DoxyCode}

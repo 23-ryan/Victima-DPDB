@@ -1,0 +1,407 @@
+\doxysection{syscall\+\_\+model.\+cc}
+\label{syscall__model_8cc_source}\index{common/core/syscall\_model.cc@{common/core/syscall\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}syscall\_server.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}pthread\_emu.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}scheduler.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}syscall\_strings.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <errno.h>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <linux/futex.h>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}os\_compat.h"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string.hpp>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *SyscallMdl::futex\_names[]\ =}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{stringliteral}{"{}FUTEX\_WAIT"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAKE"{}},\ \textcolor{stringliteral}{"{}FUTEX\_FD"{}},\ \textcolor{stringliteral}{"{}FUTEX\_REQUEUE"{}},}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{stringliteral}{"{}FUTEX\_CMP\_REQUEUE"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAKE\_OP"{}},\ \textcolor{stringliteral}{"{}FUTEX\_LOCK\_PI"{}},\ \textcolor{stringliteral}{"{}FUTEX\_UNLOCK\_PI"{}},}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{stringliteral}{"{}FUTEX\_TRYLOCK\_PI"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAIT\_BITSET"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAKE\_BITSET"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAIT\_REQUEUE\_PI"{}},}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{stringliteral}{"{}FUTEX\_CMP\_REQUEUE\_PI"{}}}
+\DoxyCodeLine{00032\ \};}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ SyscallMdl::SyscallMdl(Thread\ *thread)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ :\ m\_thread(thread)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ ,\ m\_emulated(false)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ ,\ m\_stalled(false)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ ,\ m\_ret\_val(0)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ ,\ m\_stdout\_bytes(0)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ ,\ m\_stderr\_bytes(0)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ UInt32\ futex\_counters\_size\ =\ \textcolor{keyword}{sizeof}(\textcolor{keyword}{struct\ }futex\_counters\_t);}
+\DoxyCodeLine{00043\ \ \ \ \_\_attribute\_\_((unused))\ \textcolor{keywordtype}{int}\ rc\ =\ posix\_memalign((\textcolor{keywordtype}{void}**)\&futex\_counters,\ 64,\ futex\_counters\_size);\ \textcolor{comment}{//\ Align\ by\ cache\ line\ size\ to\ prevent\ thread\ contention}}
+\DoxyCodeLine{00044\ \ \ \ LOG\_ASSERT\_ERROR\ (rc\ ==\ 0,\ \textcolor{stringliteral}{"{}posix\_memalign\ failed\ to\ allocate\ memory"{}});}
+\DoxyCodeLine{00045\ \ \ \ bzero(futex\_counters,\ futex\_counters\_size);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//\ Register\ the\ metrics}}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ e\ =\ 0;\ e\ <\ \textcolor{keyword}{sizeof}(futex\_names)\ /\ \textcolor{keyword}{sizeof}(futex\_names[0]);\ e++)}
+\DoxyCodeLine{00049\ \ \ \ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}futex"{}},\ thread-\/>getId(),\ boost::to\_lower\_copy(String(futex\_names[e])\ +\ \textcolor{stringliteral}{"{}\_count"{}}),\ \&(futex\_counters-\/>count[e]));}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}futex"{}},\ thread-\/>getId(),\ boost::to\_lower\_copy(String(futex\_names[e])\ +\ \textcolor{stringliteral}{"{}\_delay"{}}),\ \&(futex\_counters-\/>delay[e]));}
+\DoxyCodeLine{00052\ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}syscall"{}},\ thread-\/>getId(),\ \textcolor{stringliteral}{"{}stdout-\/bytes"{}},\ \&m\_stdout\_bytes);}
+\DoxyCodeLine{00055\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}syscall"{}},\ thread-\/>getId(),\ \textcolor{stringliteral}{"{}stderr-\/bytes"{}},\ \&m\_stderr\_bytes);}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ SyscallMdl::\string~SyscallMdl()}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ free(futex\_counters);}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{bool}\ SyscallMdl::runEnter(IntPtr\ syscall\_number,\ syscall\_args\_t\ \&args)}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ Core\ *core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00066\ \ \ \ LOG\_ASSERT\_ERROR(core\ !=\ NULL,\ \textcolor{stringliteral}{"{}Syscall\ by\ thread\ \%d:\ core\ should\ not\ be\ null"{}},\ m\_thread-\/>getId());}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Got\ Syscall:\ \%i"{}},\ syscall\_number);}
+\DoxyCodeLine{00069\ \ \ \ CLOG(\textcolor{stringliteral}{"{}syscall"{}},\ \textcolor{stringliteral}{"{}Enter\ thread\ \%d\ core\ \%d\ syscall\ \%"{}}\ PRIdPTR,\ m\_thread-\/>getId(),\ core-\/>getId(),\ syscall\_number);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ m\_syscall\_number\ =\ syscall\_number;}
+\DoxyCodeLine{00072\ \ \ \ m\_in\_syscall\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00073\ \ \ \ m\_syscall\_args\ =\ args;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ HookSyscallEnter\ hook\_args;}
+\DoxyCodeLine{00076\ \ \ \ hook\_args.thread\_id\ =\ m\_thread-\/>getId();}
+\DoxyCodeLine{00077\ \ \ \ hook\_args.core\_id\ =\ core-\/>getId();}
+\DoxyCodeLine{00078\ \ \ \ hook\_args.time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00079\ \ \ \ hook\_args.syscall\_number\ =\ syscall\_number;}
+\DoxyCodeLine{00080\ \ \ \ hook\_args.args\ =\ args;}
+\DoxyCodeLine{00081\ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_SYSCALL\_ENTER,\ (UInt64)\&hook\_args);}
+\DoxyCodeLine{00084\ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{switch}\ (syscall\_number)}
+\DoxyCodeLine{00087\ \ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_futex:}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ handleFutexCall(args);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_clock\_gettime:}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getOSEmuClockReplace())}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ clockid\_t\ clock\ =\ (clock\_t)args.arg0;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }timespec\ *ts\ =\ (\textcolor{keyword}{struct\ }timespec\ *)args.arg1;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ time\_ns\ =\ Sim()-\/>getConfig()-\/>getOSEmuTimeStart()\ *\ 1000000000}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ m\_thread-\/>getCore()-\/>getPerformanceModel()-\/>getElapsedTime().getNS();}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(clock)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CLOCK\_REALTIME:}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CLOCK\_MONOTONIC:}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CLOCK\_MONOTONIC\_COARSE:}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CLOCK\_MONOTONIC\_RAW:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ts-\/>tv\_sec\ =\ time\_ns\ /\ 1000000000;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ts-\/>tv\_nsec\ =\ time\_ns\ \%\ 1000000000;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ 0;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}SYS\_clock\_gettime\ does\ not\ currently\ support\ clock(\%u)"{}},\ clock);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ else:\ don't\ set\ m\_emulated\ and\ the\ system\ call\ will\ be\ executed\ natively}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_nanosleep:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }timespec\ *req\ =\ (\textcolor{keyword}{struct\ }timespec\ *)args.arg0;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }timespec\ *rem\ =\ (\textcolor{keyword}{struct\ }timespec\ *)args.arg1;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ SubsecondTime\ start\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }timespec\ local\_req;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::READ,\ (IntPtr)\ req,\ (\textcolor{keywordtype}{char}*)\ \&local\_req,\ \textcolor{keyword}{sizeof}(local\_req));}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ SubsecondTime\ time\_wake\ =\ start\_time\ +\ SubsecondTime::SEC(local\_req.tv\_sec)\ +\ SubsecondTime::NS(local\_req.tv\_nsec);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ SubsecondTime\ end\_time;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ Sim()-\/>getSyscallServer()-\/>handleSleepCall(m\_thread-\/>getId(),\ time\_wake,\ start\_time,\ end\_time);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread-\/>reschedule(end\_time,\ core))}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(end\_time,\ SyncInstruction::SLEEP));}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rem)}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Interruption\ not\ supported,\ always\ return\ 0\ remaining\ time}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }timespec\ local\_rem;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ local\_rem.tv\_sec\ =\ 0;}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ local\_rem.tv\_nsec\ =\ 0;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::WRITE,\ (IntPtr)\ rem,\ (\textcolor{keywordtype}{char}*)\ \&local\_rem,\ \textcolor{keyword}{sizeof}(local\_rem));}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Always\ succeeds}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ 0;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_read:}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_pause:}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_select:}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_poll:}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_wait4:}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ System\ call\ is\ blocking,\ mark\ thread\ as\ asleep}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>stallThread\_async(m\_thread-\/>getId(),}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ syscall\_number\ ==\ SYS\_pause\ ?\ ThreadManager::STALL\_PAUSE\ :\ ThreadManager::STALL\_SYSCALL,}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_thread-\/>getCore()-\/>getPerformanceModel()-\/>getElapsedTime());}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ m\_stalled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_sched\_yield:}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>getScheduler()-\/>threadYield(m\_thread-\/>getId());}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ may\ have\ been\ rescheduled}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ SubsecondTime\ time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread-\/>reschedule(time,\ core))}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::UNSCHEDULED));}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Always\ succeeds}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ 0;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_sched\_setaffinity:}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ pid\_t\ pid\ =\ (pid\_t)args.arg0;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ cpusetsize\ =\ (size\_t)args.arg1;}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cpu\_set\_t\ *cpuset\ =\ (\textcolor{keyword}{const}\ cpu\_set\_t\ *)args.arg2;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ Thread\ *thread;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ success\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cpuset\ ==\ NULL)}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ -\/EFAULT;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pid\ ==\ 0)}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ thread\ =\ m\_thread;}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ thread\ =\ Sim()-\/>getThreadManager()-\/>findThreadByTid(pid);}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread)}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *local\_cpuset\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{char}[cpusetsize];}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::READ,\ (IntPtr)\ cpuset,\ local\_cpuset,\ cpusetsize);}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ success\ =\ Sim()-\/>getThreadManager()-\/>getScheduler()-\/>threadSetAffinity(m\_thread-\/>getId(),\ thread-\/>getId(),\ cpusetsize,\ (cpu\_set\_t\ *)local\_cpuset);}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ local\_cpuset;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ -\/ESRCH;}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ may\ have\ been\ rescheduled}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ SubsecondTime\ time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread-\/>reschedule(time,\ core))}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::UNSCHEDULED));}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ success\ ?\ 0\ :\ -\/EINVAL;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_sched\_getaffinity:}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ pid\_t\ pid\ =\ (pid\_t)args.arg0;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ cpusetsize\ =\ (size\_t)args.arg1;}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ cpu\_set\_t\ *cpuset\ =\ (cpu\_set\_t\ *)args.arg2;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ Thread\ *thread;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ success\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pid\ ==\ 0)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ thread\ =\ m\_thread;}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ thread\ =\ Sim()-\/>getThreadManager()-\/>findThreadByTid(pid);}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread)}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *local\_cpuset\ =\ cpuset\ ?\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{char}[cpusetsize]\ :\ 0;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ success\ =\ Sim()-\/>getThreadManager()-\/>getScheduler()-\/>threadGetAffinity(m\_thread-\/>getId(),\ cpusetsize,\ (cpu\_set\_t\ *)local\_cpuset);}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (success\ \&\&\ cpuset)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::WRITE,\ (IntPtr)\ cpuset,\ local\_cpuset,\ cpusetsize);}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (local\_cpuset)}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ local\_cpuset;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ else:\ success\ is\ already\ false,\ return\ EINVAL\ for\ invalid\ pid}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ On\ success:\ return\ size\ of\ affinity\ mask\ (in\ bytes)\ needed\ to\ represent\ however\ many\ cores\ we're\ modeling}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (returning\ a\ value\ that\ is\ too\ large\ can\ cause\ a\ segfault\ in\ the\ application's\ libc)}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ success\ ?\ (Sim()-\/>getConfig()-\/>getApplicationCores()+7)/8\ :\ -\/EINVAL;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SYS\_write:}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ fd\ =\ (int)args.arg0;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ count\ =\ (size\_t)args.arg2;}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((fd\ ==\ STDOUT\_FILENO\ \&\&\ Sim()-\/>getConfig()-\/>suppressStdout())\ ||\ (fd\ ==\ STDERR\_FILENO\ \&\&\ Sim()-\/>getConfig()-\/>suppressStderr()))}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ret\_val\ =\ count;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ m\_emulated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fd\ ==\ STDOUT\_FILENO)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ m\_stdout\_bytes\ +=\ count;}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fd\ ==\ STDERR\_FILENO)}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ m\_stderr\_bytes\ +=\ count;}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ -\/1:}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00296\ \ \ \ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Syscall\ finished"{}});}
+\DoxyCodeLine{00299\ \ \ \ CLOG(\textcolor{stringliteral}{"{}syscall"{}},\ \textcolor{stringliteral}{"{}Finished\ thread\ \%d"{}},\ m\_thread-\/>getId());}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \textcolor{keywordflow}{return}\ m\_stalled;}
+\DoxyCodeLine{00302\ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ IntPtr\ SyscallMdl::runExit(IntPtr\ old\_return)}
+\DoxyCodeLine{00305\ \{}
+\DoxyCodeLine{00306\ \ \ \ CLOG(\textcolor{stringliteral}{"{}syscall"{}},\ \textcolor{stringliteral}{"{}Exit\ thread\ \%d"{}},\ m\_thread-\/>getId());}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \textcolor{keywordflow}{if}\ (m\_stalled)}
+\DoxyCodeLine{00309\ \ \ \ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ SubsecondTime\ time\_wake\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime(\textcolor{keyword}{true}\ \textcolor{comment}{/*upper\_bound*/});}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ System\ call\ is\ blocking,\ mark\ thread\ as\ awake}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread\_async(m\_thread-\/>getId(),\ INVALID\_THREAD\_ID,\ time\_wake,\ NULL);}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCurrentCore();}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ m\_thread-\/>reschedule(time\_wake,\ core);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time\_wake,}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ m\_syscall\_number\ ==\ SYS\_pause\ ?\ SyncInstruction::PAUSE\ :\ SyncInstruction::SYSCALL));}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ m\_stalled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00326\ \ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_emulated)}
+\DoxyCodeLine{00329\ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ m\_ret\_val\ =\ old\_return;}
+\DoxyCodeLine{00331\ \ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ Core\ *core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00334\ \ \ \ HookSyscallExit\ hook\_args;}
+\DoxyCodeLine{00335\ \ \ \ hook\_args.thread\_id\ =\ m\_thread-\/>getId();}
+\DoxyCodeLine{00336\ \ \ \ hook\_args.core\_id\ =\ core-\/>getId();}
+\DoxyCodeLine{00337\ \ \ \ hook\_args.time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00338\ \ \ \ hook\_args.ret\_val\ =\ m\_ret\_val;}
+\DoxyCodeLine{00339\ \ \ \ hook\_args.emulated\ =\ m\_emulated;}
+\DoxyCodeLine{00340\ \ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_SYSCALL\_EXIT,\ (UInt64)\&hook\_args);}
+\DoxyCodeLine{00343\ \ \ \ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ m\_emulated\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00346\ \ \ \ m\_in\_syscall\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \textcolor{keywordflow}{return}\ m\_ret\_val;}
+\DoxyCodeLine{00349\ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \textcolor{keywordtype}{void}\ SyscallMdl::futexCount(uint32\_t\ function,\ SubsecondTime\ delay)}
+\DoxyCodeLine{00352\ \{}
+\DoxyCodeLine{00353\ \ \ \ futex\_counters-\/>count[function]++;}
+\DoxyCodeLine{00354\ \ \ \ futex\_counters-\/>delay[function]\ +=\ delay;}
+\DoxyCodeLine{00355\ \}}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ IntPtr\ SyscallMdl::handleFutexCall(syscall\_args\_t\ \&args)}
+\DoxyCodeLine{00358\ \{}
+\DoxyCodeLine{00359\ \ \ \ SyscallServer::futex\_args\_t\ fargs;}
+\DoxyCodeLine{00360\ \ \ \ fargs.uaddr\ =\ (\textcolor{keywordtype}{int}*)\ args.arg0;}
+\DoxyCodeLine{00361\ \ \ \ fargs.op\ =\ (int)\ args.arg1;}
+\DoxyCodeLine{00362\ \ \ \ fargs.val\ =\ (int)\ args.arg2;}
+\DoxyCodeLine{00363\ \ \ \ fargs.timeout\ =\ (\textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }timespec*)\ args.arg3;}
+\DoxyCodeLine{00364\ \ \ \ fargs.val2\ =\ (int)\ args.arg3;}
+\DoxyCodeLine{00365\ \ \ \ fargs.uaddr2\ =\ (\textcolor{keywordtype}{int}*)\ args.arg4;}
+\DoxyCodeLine{00366\ \ \ \ fargs.val3\ =\ (int)\ args.arg5;}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \textcolor{keywordtype}{int}\ cmd\ =\ (fargs.op\ \&\ FUTEX\_CMD\_MASK)\ \&\ \string~FUTEX\_PRIVATE\_FLAG;}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ Core\ *core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00371\ \ \ \ LOG\_ASSERT\_ERROR(core\ !=\ NULL,\ \textcolor{stringliteral}{"{}Syscall\ by\ thread\ \%d:\ core\ should\ not\ be\ null"{}},\ m\_thread-\/>getId());}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ SubsecondTime\ start\_time;}
+\DoxyCodeLine{00374\ \ \ \ SubsecondTime\ end\_time;}
+\DoxyCodeLine{00375\ \ \ \ start\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ updateState(core,\ PthreadEmu::STATE\_WAITING);}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \ \ \ IntPtr\ ret\_val\ =\ Sim()-\/>getSyscallServer()-\/>handleFutexCall(m\_thread-\/>getId(),\ fargs,\ start\_time,\ end\_time);}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread-\/>reschedule(end\_time,\ core))}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(end\_time,\ SyncInstruction::FUTEX));}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ SubsecondTime\ delay\ =\ end\_time\ -\/\ start\_time;}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ updateState(core,\ PthreadEmu::STATE\_RUNNING,\ delay);}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \textcolor{comment}{//\ Update\ the\ futex\ statistics}}
+\DoxyCodeLine{00391\ \ \ \ futexCount(cmd,\ delay);}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \textcolor{keywordflow}{return}\ ret\_val;}
+\DoxyCodeLine{00394\ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ String\ SyscallMdl::formatSyscall()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00397\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00398\ \ \ \ \textcolor{keywordflow}{return}\ String(syscall\_string(m\_syscall\_number))\ +\ \textcolor{stringliteral}{"{}["{}}\ +\ itostr(m\_syscall\_number)\ +\ \textcolor{stringliteral}{"{}]\ ("{}}}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ +\ itostr(m\_syscall\_args.arg0)\ +\ \textcolor{stringliteral}{"{},\ "{}}\ +\ itostr(m\_syscall\_args.arg1)\ +\ \textcolor{stringliteral}{"{},\ "{}}\ +\ itostr(m\_syscall\_args.arg2)\ +\ \textcolor{stringliteral}{"{},\ "{}}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ +\ itostr(m\_syscall\_args.arg3)\ +\ \textcolor{stringliteral}{"{},\ "{}}\ +\ itostr(m\_syscall\_args.arg4)\ +\ \textcolor{stringliteral}{"{},\ "{}}\ +\ itostr(m\_syscall\_args.arg5)\ +\ \textcolor{stringliteral}{"{})"{}};}
+\DoxyCodeLine{00401\ \}}
+
+\end{DoxyCode}

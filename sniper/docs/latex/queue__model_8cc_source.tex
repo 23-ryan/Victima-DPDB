@@ -1,0 +1,44 @@
+\doxysection{queue\+\_\+model.\+cc}
+\label{queue__model_8cc_source}\index{common/performance\_model/queue\_model.cc@{common/performance\_model/queue\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}queue\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_basic.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_history\_list.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_contention.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_windowed\_mg1.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ QueueModel*}
+\DoxyCodeLine{00012\ QueueModel::create(String\ name,\ UInt32\ \textcolor{keywordtype}{id},\ String\ model\_type,\ SubsecondTime\ min\_processing\_time)}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{if}\ (model\_type\ ==\ \textcolor{stringliteral}{"{}basic"{}})}
+\DoxyCodeLine{00015\ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ moving\_avg\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}queue\_model/basic/moving\_avg\_enabled"{}});}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ UInt32\ moving\_avg\_window\_size\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}queue\_model/basic/moving\_avg\_window\_size"{}});}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ String\ moving\_avg\_type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}queue\_model/basic/moving\_avg\_type"{}});}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ QueueModelBasic(name,\ \textcolor{keywordtype}{id},\ moving\_avg\_enabled,\ moving\_avg\_window\_size,\ moving\_avg\_type);}
+\DoxyCodeLine{00020\ \ \ \ \}}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (model\_type\ ==\ \textcolor{stringliteral}{"{}history\_list"{}})}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ QueueModelHistoryList(name,\ \textcolor{keywordtype}{id},\ min\_processing\_time);}
+\DoxyCodeLine{00024\ \ \ \ \}}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (model\_type\ ==\ \textcolor{stringliteral}{"{}contention"{}})}
+\DoxyCodeLine{00026\ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ QueueModelContention(name,\ \textcolor{keywordtype}{id},\ 1);}
+\DoxyCodeLine{00028\ \ \ \ \}}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (model\_type\ ==\ \textcolor{stringliteral}{"{}windowed\_mg1"{}})}
+\DoxyCodeLine{00030\ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ QueueModelWindowedMG1(name,\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00032\ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00034\ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Queue\ Model\ Type(\%s)"{}},\ model\_type.c\_str());}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (QueueModel*)\ NULL;}
+\DoxyCodeLine{00037\ \ \ \ \}}
+\DoxyCodeLine{00038\ \}}
+
+\end{DoxyCode}

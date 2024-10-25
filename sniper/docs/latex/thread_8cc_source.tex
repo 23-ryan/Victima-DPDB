@@ -1,0 +1,94 @@
+\doxysection{thread.\+cc}
+\label{thread_8cc_source}\index{common/core/thread.cc@{common/core/thread.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}sync\_client.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ Thread::Thread(thread\_id\_t\ thread\_id,\ app\_id\_t\ app\_id)}
+\DoxyCodeLine{00013\ \ \ \ :\ m\_thread\_id(thread\_id)}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_app\_id(app\_id)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_core(NULL)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_rtn\_tracer(NULL)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_va2pa\_func(NULL)}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_va2pa\_arg(0)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ m\_syscall\_model\ =\ \textcolor{keyword}{new}\ SyscallMdl(\textcolor{keyword}{this});}
+\DoxyCodeLine{00021\ \ \ \ m\_sync\_client\ =\ \textcolor{keyword}{new}\ SyncClient(\textcolor{keyword}{this});}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getRoutineTracer())}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ m\_rtn\_tracer\ =\ Sim()-\/>getRoutineTracer()-\/>getThreadHandler(\textcolor{keyword}{this});}
+\DoxyCodeLine{00024\ \ \ \ memset(\&m\_os\_info,\ 0,\ \textcolor{keyword}{sizeof}(m\_os\_info));}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ Thread::\string~Thread()}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keyword}{delete}\ m\_syscall\_model;}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keyword}{delete}\ m\_sync\_client;}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{if}\ (m\_rtn\_tracer)}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_rtn\_tracer;}
+\DoxyCodeLine{00033\ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keywordtype}{void}\ Thread::setCore(Core*\ core)}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{if}\ (m\_core)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ m\_core-\/>setThread(NULL);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ m\_core\ =\ core;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (m\_core)}
+\DoxyCodeLine{00043\ \ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(core-\/>getThread()\ ==\ NULL,\ \textcolor{stringliteral}{"{}Cannot\ move\ thread\ \%d\ to\ core\ \%d\ as\ it\ is\ already\ running\ thread\ \%d"{}},\ getId(),\ core-\/>getId(),\ core-\/>getThread()-\/>getId());}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ m\_core-\/>setThread(\textcolor{keyword}{this});}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ Thread::setVa2paFunc(va2pa\_func\_t\ va2pa\_func,\ UInt64\ va2pa\_arg)}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ m\_va2pa\_func\ =\ va2pa\_func;}
+\DoxyCodeLine{00052\ \ \ \ m\_va2pa\_arg\ =\ va2pa\_arg;}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{bool}\ Thread::reschedule(SubsecondTime\ \&time,\ Core\ *current\_core)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\ ==\ NULL\ ||\ current\_core\ !=\ m\_core)}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{comment}{//\ While\ we're\ not\ scheduled\ on\ a\ core,\ wait.}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ time\ updated\ with\ the\ time\ when\ we\ return.}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ a\ definitive\ check\ for\ m\_core,\ while\ holding\ the\ lock,\ unoptimized\ because\ another\ thread\ will\ be\ changing\ it}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{while}((\textcolor{keyword}{volatile}\ Core*)m\_core\ ==\ NULL)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ time\ =\ Sim()-\/>getThreadManager()-\/>stallThread(getId(),\ ThreadManager::STALL\_UNSCHEDULED,\ time);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ m\_core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::UNSCHEDULED));}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ updateCoreTLS();}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00071\ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{bool}\ Thread::updateCoreTLS(\textcolor{keywordtype}{int}\ threadIndex)}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCoreManager()-\/>getCurrentCore(threadIndex)\ !=\ m\_core)}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCoreManager()-\/>getCurrentCore(threadIndex))}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>terminateThread();}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>initializeThread(m\_core-\/>getId());}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00088\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,389 @@
+\doxysection{micro\+\_\+op.\+cc}
+\label{micro__op_8cc_source}\index{common/performance\_model/performance\_models/micro\_op/micro\_op.cc@{common/performance\_model/performance\_models/micro\_op/micro\_op.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//extern\ "{}C"{}\ \{}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\#include\ <xed-\/decoded-\/inst.h>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Enabling\ verification\ can\ help\ if\ there\ is\ memory\ corruption\ that\ is\ overwriting\ the\ MicroOp}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ datastructure\ and\ you\ would\ like\ to\ detect\ when\ it\ is\ happening}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\#define\ ENABLE\_VERIFICATION}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_VERIFICATION}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#\ define\ VERIFY\_MICROOP()\ verify()}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#\ define\ VERIFY\_MICROOP()\ do\ \{\}\ while\ (0)}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ MicroOp::MicroOp()}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00025\ \ \ \ :\ sourceRegisterNames(MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS)}
+\DoxyCodeLine{00026\ \ \ \ ,\ addressRegisterNames(MAXIMUM\_NUMBER\_OF\_ADDRESS\_REGISTERS)}
+\DoxyCodeLine{00027\ \ \ \ ,\ destinationRegisterNames(MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS)}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ this-\/>uop\_type\ =\ UOP\_INVALID;}
+\DoxyCodeLine{00031\ \ \ \ this-\/>instructionOpcode\ =\ dl::Decoder::DL\_OPCODE\_INVALID;}
+\DoxyCodeLine{00032\ \ \ \ this-\/>instruction\ =\ NULL;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ this-\/>first\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00035\ \ \ \ this-\/>last\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ this-\/>microOpTypeOffset\ =\ 0;}
+\DoxyCodeLine{00038\ \ \ \ this-\/>intraInstructionDependencies\ =\ 0;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ this-\/>sourceRegistersLength\ =\ 0;}
+\DoxyCodeLine{00041\ \ \ \ this-\/>addressRegistersLength\ =\ 0;}
+\DoxyCodeLine{00042\ \ \ \ this-\/>destinationRegistersLength\ =\ 0;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ this-\/>interrupt\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00045\ \ \ \ this-\/>serializing\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ this-\/>branch\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ this-\/>m\_membar\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00050\ \ \ \ this-\/>is\_x87\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00051\ \ \ \ this-\/>operand\_size\ =\ 0;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0\ ;\ i\ <\ MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS;\ i++)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ this-\/>sourceRegisters[i]\ =\ dl::Decoder::DL\_OPCODE\_INVALID;}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0\ ;\ i\ <\ MAXIMUM\_NUMBER\_OF\_ADDRESS\_REGISTERS;\ i++)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ this-\/>addressRegisters[i]\ =\ dl::Decoder::DL\_OPCODE\_INVALID;}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0\ ;\ i\ <\ MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS;\ i++)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ this-\/>destinationRegisters[i]\ =\ dl::Decoder::DL\_OPCODE\_INVALID;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00061\ \ \ \ sourceRegisterNames.clear();}
+\DoxyCodeLine{00062\ \ \ \ sourceRegisterNames.resize(MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS);}
+\DoxyCodeLine{00063\ \ \ \ destinationRegisterNames.clear();}
+\DoxyCodeLine{00064\ \ \ \ destinationRegisterNames.resize(MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS);}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#ifndef\ NDEBUG}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00069\ \ \ \ this-\/>debugInfo\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{void}\ MicroOp::makeLoad(uint32\_t\ offset,\ dl::Decoder::decoder\_opcode\ instructionOpcode,\ \textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ uint16\_t\ mem\_size)\ \{}
+\DoxyCodeLine{00075\ \ \ \ this-\/>uop\_type\ =\ UOP\_LOAD;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00076\ \ \ \ this-\/>microOpTypeOffset\ =\ offset;}
+\DoxyCodeLine{00077\ \ \ \ this-\/>memoryAccessSize\ =\ mem\_size;}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00079\ \ \ \ this-\/>instructionOpcodeName\ =\ instructionOpcodeName;}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00081\ \ \ \ this-\/>instructionOpcode\ =\ instructionOpcode;}
+\DoxyCodeLine{00082\ \ \ \ this-\/>intraInstructionDependencies\ =\ 0;}
+\DoxyCodeLine{00083\ \ \ \ this-\/>setTypes();}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keywordtype}{void}\ MicroOp::makeExecute(uint32\_t\ offset,\ uint32\_t\ num\_loads,\ dl::Decoder::decoder\_opcode\ instructionOpcode,\ \textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ \textcolor{keywordtype}{bool}\ isBranch)\ \{}
+\DoxyCodeLine{00087\ \ \ \ this-\/>uop\_type\ =\ UOP\_EXECUTE;}
+\DoxyCodeLine{00088\ \ \ \ this-\/>microOpTypeOffset\ =\ offset;}
+\DoxyCodeLine{00089\ \ \ \ this-\/>intraInstructionDependencies\ =\ num\_loads;}
+\DoxyCodeLine{00090\ \ \ \ this-\/>instructionOpcode\ =\ instructionOpcode;}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00092\ \ \ \ this-\/>instructionOpcodeName\ =\ instructionOpcodeName;}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00094\ \ \ \ this-\/>branch\ =\ isBranch;}
+\DoxyCodeLine{00095\ \ \ \ this-\/>setTypes();}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keywordtype}{void}\ MicroOp::makeStore(uint32\_t\ offset,\ uint32\_t\ num\_execute,\ dl::Decoder::decoder\_opcode\ instructionOpcode,\ \textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ uint16\_t\ mem\_size)\ \{}
+\DoxyCodeLine{00099\ \ \ \ this-\/>uop\_type\ =\ UOP\_STORE;}
+\DoxyCodeLine{00100\ \ \ \ this-\/>microOpTypeOffset\ =\ offset;}
+\DoxyCodeLine{00101\ \ \ \ this-\/>memoryAccessSize\ =\ mem\_size;}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00103\ \ \ \ this-\/>instructionOpcodeName\ =\ instructionOpcodeName;}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00105\ \ \ \ this-\/>instructionOpcode\ =\ instructionOpcode;}
+\DoxyCodeLine{00106\ \ \ \ this-\/>intraInstructionDependencies\ =\ num\_execute;}
+\DoxyCodeLine{00107\ \ \ \ this-\/>setTypes();}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keywordtype}{void}\ MicroOp::makeDynamic(\textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ uint32\_t\ execLatency)\ \{}
+\DoxyCodeLine{00111\ \ \ \ this-\/>uop\_type\ =\ UOP\_EXECUTE;}
+\DoxyCodeLine{00112\ \ \ \ this-\/>microOpTypeOffset\ =\ 0;}
+\DoxyCodeLine{00113\ \ \ \ this-\/>intraInstructionDependencies\ =\ 0;}
+\DoxyCodeLine{00114\ \ \ \ this-\/>instructionOpcode\ =\ dl::Decoder::DL\_OPCODE\_INVALID;}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00116\ \ \ \ this-\/>instructionOpcodeName\ =\ instructionOpcodeName;}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00118\ \ \ \ this-\/>branch\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00119\ \ \ \ this-\/>setTypes();}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ MicroOp::uop\_subtype\_t\ MicroOp::getSubtype\_Exec(\textcolor{keyword}{const}\ MicroOp\&\ uop)}
+\DoxyCodeLine{00124\ \{\ \ \ }
+\DoxyCodeLine{00125\ \ \ \ dl::Decoder\ *dec\ =\ Sim()-\/>getDecoder();}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \textcolor{comment}{//\ Get\ the\ uop\ subtype\ for\ the\ EXEC\ part\ of\ this\ instruction}}
+\DoxyCodeLine{00128\ \ \ \ \textcolor{comment}{//\ (ignoring\ the\ fact\ that\ this\ particular\ microop\ may\ be\ a\ load/store,}}
+\DoxyCodeLine{00129\ \ \ \ \textcolor{comment}{//\ \ used\ in\ determining\ the\ data\ type\ for\ load/store\ when\ calculating\ bypass\ delays)}}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>is\_branch\_opcode(uop.getInstructionOpcode()))}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_BRANCH;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dec-\/>is\_fpvector\_addsub\_opcode(uop.getInstructionOpcode(),\ uop.getDecodedInstruction()))}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_FP\_ADDSUB;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dec-\/>is\_fpvector\_muldiv\_opcode(uop.getInstructionOpcode(),\ uop.getDecodedInstruction()))}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_FP\_MULDIV;}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_GENERIC;}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ MicroOp::uop\_subtype\_t\ MicroOp::getSubtype(\textcolor{keyword}{const}\ MicroOp\&\ uop)}
+\DoxyCodeLine{00145\ \{}
+\DoxyCodeLine{00146\ \ \ \ \textcolor{comment}{//\ Count\ all\ of\ the\ ADD/SUB/DIV/LD/ST/BR,\ and\ if\ we\ have\ too\ many,\ break}}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{comment}{//\ Count\ all\ of\ the\ GENERIC\ insns,\ and\ if\ we\ have\ too\ many\ (3x-\/per-\/cycle),\ break}}
+\DoxyCodeLine{00148\ \ \ \ \textcolor{keywordflow}{if}\ (uop.isLoad())}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_LOAD;}
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop.isStore())}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_STORE;}
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop.isBranch())\ \textcolor{comment}{//\ conditional\ branches}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_BRANCH;}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop.isExecute())}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getSubtype\_Exec(uop);}
+\DoxyCodeLine{00156\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_SUBTYPE\_GENERIC;}
+\DoxyCodeLine{00158\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ String\ MicroOp::getSubtypeString(uop\_subtype\_t\ uop\_subtype)}
+\DoxyCodeLine{00161\ \{}
+\DoxyCodeLine{00162\ \ \ \ \textcolor{keywordflow}{switch}(uop\_subtype)\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_FP\_ADDSUB:}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}fp\_addsub"{}};}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_FP\_MULDIV:}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}fp\_muldiv"{}};}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_LOAD:}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}load"{}};}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_STORE:}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}store"{}};}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_GENERIC:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}generic"{}};}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_BRANCH:}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}branch"{}};}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Unknown\ UopType\ \%u"{}},\ uop\_subtype);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}unknown"{}};}
+\DoxyCodeLine{00178\ \ \ \ \}}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{keywordtype}{bool}\ MicroOp::isFpLoadStore()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00182\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordflow}{if}\ (isLoad()\ ||\ isStore())}
+\DoxyCodeLine{00184\ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(getSubtype\_Exec(*\textcolor{keyword}{this}))}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_FP\_ADDSUB:}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_SUBTYPE\_FP\_MULDIV:}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ ;\ \textcolor{comment}{//\ fall\ through}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(Sim()-\/>getDecoder()-\/>is\_fpvector\_ldst\_opcode(getInstructionOpcode(),\ getDecodedInstruction()))}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keywordtype}{void}\ MicroOp::verify()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00204\ \ \ \ LOG\_ASSERT\_ERROR(uop\_subtype\ ==\ MicroOp::getSubtype(*\textcolor{keyword}{this}),\ \textcolor{stringliteral}{"{}uop\_subtype\ \%u\ !=\ \%u"{}},\ uop\_subtype,\ MicroOp::getSubtype(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00205\ \ \ \ LOG\_ASSERT\_ERROR(sourceRegistersLength\ <\ MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS,\ \textcolor{stringliteral}{"{}sourceRegistersLength(\%d)\ >\ MAX(\%u)"{}},\ sourceRegistersLength,\ MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS);}
+\DoxyCodeLine{00206\ \ \ \ LOG\_ASSERT\_ERROR(destinationRegistersLength\ <\ MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS,\ \textcolor{stringliteral}{"{}destinationRegistersLength(\%u)\ >\ MAX(\%u)"{}},\ destinationRegistersLength,\ MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS);}
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0\ ;\ i\ <\ sourceRegistersLength\ ;\ i++)}
+\DoxyCodeLine{00208\ \ \ \ \ \ LOG\_ASSERT\_ERROR(sourceRegisters[i]\ <\ Sim()-\/>getDecoder()-\/>last\_reg(),\ \textcolor{stringliteral}{"{}sourceRegisters[\%u]\ >=\ DEC\_REG\_LAST"{}},\ i);}
+\DoxyCodeLine{00209\ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0\ ;\ i\ <\ destinationRegistersLength\ ;\ i++)}
+\DoxyCodeLine{00210\ \ \ \ \ \ LOG\_ASSERT\_ERROR(destinationRegisters[i]\ <\ Sim()-\/>getDecoder()-\/>last\_reg(),\ \textcolor{stringliteral}{"{}destinationRegisters[\%u]\ >=\ DEC\_REG\_LAST"{}},\ i);}
+\DoxyCodeLine{00211\ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ uint32\_t\ MicroOp::getSourceRegistersLength()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00214\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00215\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>sourceRegistersLength;}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ dl::Decoder::decoder\_reg\ MicroOp::getSourceRegister(uint32\_t\ index)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00219\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00220\ \ \ \ assert(index\ <\ this-\/>sourceRegistersLength);}
+\DoxyCodeLine{00221\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>sourceRegisters[index];}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00225\ \textcolor{keyword}{const}\ String\&\ MicroOp::getSourceRegisterName(uint32\_t\ index)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00226\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00227\ \ \ \ assert(index\ <\ this-\/>sourceRegistersLength);}
+\DoxyCodeLine{00228\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>sourceRegisterNames[index];}
+\DoxyCodeLine{00229\ \}}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keywordtype}{void}\ MicroOp::addSourceRegister(dl::Decoder::decoder\_reg\ registerId,\ \textcolor{keyword}{const}\ String\&\ registerName)\ \{}
+\DoxyCodeLine{00233\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00234\ \ \ \ assert(sourceRegistersLength\ <\ MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS);}
+\DoxyCodeLine{00235\ \textcolor{comment}{//\ assert(registerId\ >=\ 0\ \&\&\ registerId\ <\ TOTAL\_NUM\_REGISTERS);}}
+\DoxyCodeLine{00236\ \ \ \ sourceRegisters[sourceRegistersLength]\ =\ registerId;}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00238\ \ \ \ sourceRegisterNames[sourceRegistersLength]\ =\ registerName;}
+\DoxyCodeLine{00239\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00240\ \ \ \ sourceRegistersLength++;}
+\DoxyCodeLine{00241\ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ uint32\_t\ MicroOp::getAddressRegistersLength()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00244\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00245\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>addressRegistersLength;}
+\DoxyCodeLine{00246\ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ dl::Decoder::decoder\_reg\ MicroOp::getAddressRegister(uint32\_t\ index)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00249\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00250\ \ \ \ assert(index\ <\ this-\/>addressRegistersLength);}
+\DoxyCodeLine{00251\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>addressRegisters[index];}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00255\ \textcolor{keyword}{const}\ String\&\ MicroOp::getAddressRegisterName(uint32\_t\ index)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00256\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00257\ \ \ \ assert(index\ <\ this-\/>addressRegistersLength);}
+\DoxyCodeLine{00258\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>addressRegisterNames[index];}
+\DoxyCodeLine{00259\ \}}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \textcolor{keywordtype}{void}\ MicroOp::addAddressRegister(dl::Decoder::decoder\_reg\ registerId,\ \textcolor{keyword}{const}\ String\&\ registerName)\ \{}
+\DoxyCodeLine{00263\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00264\ \ \ \ assert(addressRegistersLength\ <\ MAXIMUM\_NUMBER\_OF\_ADDRESS\_REGISTERS);}
+\DoxyCodeLine{00265\ \textcolor{comment}{//\ assert(registerId\ >=\ 0\ \&\&\ registerId\ <\ TOTAL\_NUM\_REGISTERS);}}
+\DoxyCodeLine{00266\ \ \ \ addressRegisters[addressRegistersLength]\ =\ registerId;}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00268\ \ \ \ addressRegisterNames[addressRegistersLength]\ =\ registerName;}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00270\ \ \ \ addressRegistersLength++;}
+\DoxyCodeLine{00271\ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ uint32\_t\ MicroOp::getDestinationRegistersLength()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00274\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00275\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>destinationRegistersLength;}
+\DoxyCodeLine{00276\ \}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ dl::Decoder::decoder\_reg\ MicroOp::getDestinationRegister(uint32\_t\ index)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00279\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00280\ \ \ \ assert(index\ <\ this-\/>destinationRegistersLength);}
+\DoxyCodeLine{00281\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>destinationRegisters[index];}
+\DoxyCodeLine{00282\ \}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00285\ \textcolor{keyword}{const}\ String\&\ MicroOp::getDestinationRegisterName(uint32\_t\ index)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00286\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00287\ \ \ \ assert(index\ <\ this-\/>destinationRegistersLength);}
+\DoxyCodeLine{00288\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>destinationRegisterNames[index];}
+\DoxyCodeLine{00289\ \}}
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{keywordtype}{void}\ MicroOp::addDestinationRegister(dl::Decoder::decoder\_reg\ registerId,\ \textcolor{keyword}{const}\ String\&\ registerName)\ \{}
+\DoxyCodeLine{00293\ \ \ \ VERIFY\_MICROOP();}
+\DoxyCodeLine{00294\ \ \ \ assert(destinationRegistersLength\ <\ MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS);}
+\DoxyCodeLine{00295\ \textcolor{comment}{//\ assert(registerId\ >=\ 0\ \&\&\ registerId\ <\ TOTAL\_NUM\_REGISTERS);}}
+\DoxyCodeLine{00296\ \ \ \ destinationRegisters[destinationRegistersLength]\ =\ registerId;}
+\DoxyCodeLine{00297\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00298\ \ \ \ destinationRegisterNames[destinationRegistersLength]\ =\ registerName;}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00300\ \ \ \ destinationRegistersLength++;}
+\DoxyCodeLine{00301\ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ String\ MicroOp::toString()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00304\ \ \ \ std::ostringstream\ out;}
+\DoxyCodeLine{00305\ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}==============================="{}}\ <<\ std::endl;}
+\DoxyCodeLine{00306\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>isFirst())}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}FIRST\ "{}};}
+\DoxyCodeLine{00308\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>isLast())}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}LAST\ "{}};}
+\DoxyCodeLine{00310\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>uop\_type\ ==\ UOP\_LOAD)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ LOAD:\ "{}}\ <<\ \textcolor{stringliteral}{"{}\ ("{}}}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ <<\ instructionOpcodeName}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}:0x"{}}\ <<\ std::hex\ <<\ instructionOpcode\ <<\ std::dec\ <<\ \textcolor{stringliteral}{"{})"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00316\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (this-\/>uop\_type\ ==\ UOP\_STORE)}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ STORE:\ "{}}\ <<\ \textcolor{stringliteral}{"{}\ ("{}}}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ <<\ instructionOpcodeName}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}:0x"{}}\ <<\ std::hex\ <<\ instructionOpcode\ <<\ std::dec\ <<\ \textcolor{stringliteral}{"{})"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00322\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (this-\/>uop\_type\ ==\ UOP\_EXECUTE)}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ EXEC\ ("{}}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ <<\ instructionOpcodeName}
+\DoxyCodeLine{00326\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}:0x"{}}\ <<\ std::hex\ <<\ instructionOpcode\ <<\ std::dec\ <<\ \textcolor{stringliteral}{"{})"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00328\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ INVALID"{}};}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>isBranch())\ \{}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}Branch"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00333\ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>isInterrupt())\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}Interrupt\ !"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00336\ \ \ \ \}}
+\DoxyCodeLine{00337\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>isSerializing())\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}Serializing\ !"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00339\ \ \ \ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00342\ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}SREGS:\ "{}};}
+\DoxyCodeLine{00343\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ getSourceRegistersLength();\ i++)}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ out\ <<\ getSourceRegisterName(i)\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{00345\ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}DREGS:\ "{}};}
+\DoxyCodeLine{00346\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ getDestinationRegistersLength();\ i++)}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ out\ <<\ getDestinationRegisterName(i)\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{00348\ \ \ \ out\ <<\ std::endl;}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\#ifndef\ NDEBUG}}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00355\ \ \ \ out\ <<\ debugInfo\ <<\ std::endl;}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \textcolor{keywordflow}{return}\ String(out.str().c\_str());}
+\DoxyCodeLine{00360\ \}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ String\ MicroOp::toShortString(\textcolor{keywordtype}{bool}\ withDisassembly)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00363\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00364\ \ \ \ std::ostringstream\ out;}
+\DoxyCodeLine{00365\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>uop\_type\ ==\ UOP\_LOAD)}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ LOAD\ \ "{}};}
+\DoxyCodeLine{00367\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (this-\/>uop\_type\ ==\ UOP\_STORE)}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ STORE\ "{}};}
+\DoxyCodeLine{00369\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (this-\/>uop\_type\ ==\ UOP\_EXECUTE)}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ EXEC\ \ "{}};}
+\DoxyCodeLine{00371\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ INVALID"{}};}
+\DoxyCodeLine{00373\ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ ("{}}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ <<\ std::left\ <<\ std::setw(8)\ <<\ instructionOpcodeName}
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}:0x"{}}\ <<\ std::hex\ <<\ std::setw(4)\ <<\ instructionOpcode\ <<\ std::dec\ <<\ \textcolor{stringliteral}{"{})"{}};}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \ \ \ \textcolor{keywordflow}{if}\ (withDisassembly)}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}\ \ -\/-\/\ \ "{}}\ <<\ (this-\/>getInstruction()\ ?\ this-\/>getInstruction()-\/>getDisassembly()\ :\ \textcolor{stringliteral}{"{}(dynamic)"{}});}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \textcolor{keywordflow}{return}\ String(out.str().c\_str());}
+\DoxyCodeLine{00383\ \}}
+
+\end{DoxyCode}

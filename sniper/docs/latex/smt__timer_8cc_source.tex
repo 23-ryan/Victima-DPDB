@@ -1,0 +1,418 @@
+\doxysection{smt\+\_\+timer.\+cc}
+\label{smt__timer_8cc_source}\index{common/performance\_model/performance\_models/rob\_performance\_model/smt\_timer.cc@{common/performance\_model/performance\_models/rob\_performance\_model/smt\_timer.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}smt\_timer.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ SmtTimer::SmtThread::SmtThread(Core\ *core,\ PerformanceModel\ *perf)}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ :\ core(core)}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ ,\ perf(perf)}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ ,\ thread(NULL)}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ ,\ in\_wakeup(false)}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ ,\ running(false)}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ ,\ in\_barrier(false)}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ SmtTimer::SmtThread::\string~SmtThread()}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ SmtTimer::SmtTimer(uint64\_t\ num\_threads)}
+\DoxyCodeLine{00025\ \ \ \ :\ m\_num\_threads(num\_threads)}
+\DoxyCodeLine{00026\ \ \ \ ,\ in\_sync(false)}
+\DoxyCodeLine{00027\ \ \ \ ,\ enabled(true)}
+\DoxyCodeLine{00028\ \ \ \ ,\ execute\_thread(0)}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_ROI\_BEGIN,\ SmtTimer::hookRoiBegin,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00031\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_START,\ SmtTimer::hookThreadStart,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00032\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_EXIT,\ SmtTimer::hookThreadExit,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00033\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_STALL,\ SmtTimer::hookThreadStall,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00034\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_RESUME,\ SmtTimer::hookThreadResume,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00035\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_MIGRATE,\ SmtTimer::hookThreadMigrate,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ SmtTimer::\string~SmtTimer()}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{for}(std::vector<SmtThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ *it;}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ UInt8\ SmtTimer::registerThread(Core\ *core,\ PerformanceModel\ *perf)}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ smtthread\_id\_t\ thread\_num\ =\ m\_threads.size();}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ SmtThread\ *thread\ =\ \textcolor{keyword}{new}\ SmtThread(core,\ perf);}
+\DoxyCodeLine{00049\ \ \ \ m\_threads.push\_back(thread);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ initializeThread(thread\_num);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{return}\ thread\_num;}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ SmtTimer::smtthread\_id\_t\ SmtTimer::findSmtThreadFromThread(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SMTTHREAD\_ID;}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ smtthread\_id\ =\ 0;\ smtthread\_id\ <\ m\_threads.size();\ ++smtthread\_id)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_threads[smtthread\_id]-\/>thread\ \&\&\ (m\_threads[smtthread\_id]-\/>thread-\/>getId()\ ==\ thread\_id))}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ smtthread\_id;}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SMTTHREAD\_ID;}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ SmtTimer::smtthread\_id\_t\ SmtTimer::findSmtThreadFromCore(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ ==\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SMTTHREAD\_ID;}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ smtthread\_id\ =\ 0;\ smtthread\_id\ <\ m\_threads.size();\ ++smtthread\_id)}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_threads[smtthread\_id]-\/>core-\/>getId()\ ==\ core\_id)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ smtthread\_id;}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SMTTHREAD\_ID;}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{bool}\ SmtTimer::isBarrierReached()}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{comment}{//\ A\ thread\ has\ to\ give\ up\ m\_lock\ when\ calling\ the\ global\ barrier}}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{comment}{//\ When\ this\ happens,\ we\ don't\ want\ anyone\ to\ continue}}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{if}\ (in\_sync)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordtype}{bool}\ any\_in\_barrier\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ thread\_num\ =\ 0;\ thread\_num\ <\ m\_threads.size();\ ++thread\_num)}
+\DoxyCodeLine{00085\ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ SmtThread\ *thread\ =\ m\_threads[thread\_num];}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>running\ \&\&\ !thread-\/>in\_barrier)}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (thread-\/>in\_barrier)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ any\_in\_barrier\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{return}\ any\_in\_barrier;}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keywordtype}{bool}\ SmtTimer::barrierRelease(\textcolor{keywordtype}{bool}\ release\_all,\ smtthread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00102\ \{}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{keywordtype}{bool}\ release\_me\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00104\ \ \ \ execute\_thread\ =\ thread\_id;}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{comment}{//\ Release\ those\ threads\ for\ which\ we\ want\ more\ instructions}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ num\_running\ =\ 0;}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ thread\_num\ =\ 0;\ thread\_num\ <\ m\_threads.size();\ ++thread\_num)}
+\DoxyCodeLine{00110\ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ SmtThread\ *thread\ =\ m\_threads[thread\_num];}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!thread-\/>in\_barrier)}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>running)}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ ++num\_running;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ wasn't\ stalled,\ no\ need\ to\ wake\ it\ up}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (threadHasEnoughInstructions(thread\_num))}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ enough\ instructions\ for\ now,\ keep\ the\ thread\ stalled}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>running)}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ ++num\_running;}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ want\ more\ instructions\ from\ this\ thread,\ release\ it}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread\_num\ ==\ thread\_id)}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ release\_me\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ thread-\/>in\_barrier\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ thread-\/>cond.signal();}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!release\_all)}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ execute\_thread\ =\ thread\_num;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ UInt64\ limit\ =\ 1;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{while}\ (num\_running\ ==\ 0)}
+\DoxyCodeLine{00153\ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \textcolor{comment}{//\ All\ threads\ have\ enough\ instructions.\ We\ still\ need\ to\ release\ someone\ to\ make\ forward\ progress.}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{comment}{//\ Find\ the\ thread\ with\ the\ (approximately)\ lowest\ number\ of\ surplus\ instructions\ and\ release\ it}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ thread\_num\ =\ 0;\ thread\_num\ <\ m\_threads.size();\ ++thread\_num)}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ SmtThread\ *thread\ =\ m\_threads[thread\_num];}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>in\_barrier\ \&\&\ thread-\/>running\ \&\&\ threadNumSurplusInstructions(thread\_num)\ <\ limit)}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ ++num\_running;}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread\_num\ ==\ thread\_id)}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ release\_me\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ thread-\/>in\_barrier\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ thread-\/>cond.signal();}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!release\_all)}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ execute\_thread\ =\ thread\_num;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ limit\ <<=\ 1;}
+\DoxyCodeLine{00184\ \ \ \ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \textcolor{keywordflow}{return}\ release\_me;}
+\DoxyCodeLine{00187\ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \textcolor{keywordtype}{bool}\ SmtTimer::barrier(smtthread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00191\ \{}
+\DoxyCodeLine{00192\ \ \ \ \textcolor{keywordflow}{if}\ (!enabled)}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ SmtThread\ *smtthread\ =\ m\_threads[thread\_id];}
+\DoxyCodeLine{00196\ \ \ \ \textcolor{keyword}{const}\ Thread\ *thread\ =\ smtthread-\/>thread;}
+\DoxyCodeLine{00197\ \ \ \ LOG\_ASSERT\_ERROR(thread\ !=\ NULL,\ \textcolor{stringliteral}{"{}How\ can\ SMT\ barrier\ be\ called\ when\ there\ is\ not\ thread\ running?"{}});}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ smtthread-\/>in\_barrier\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00200\ \ \ \ CLOG(\textcolor{stringliteral}{"{}smtbarrier"{}},\ \textcolor{stringliteral}{"{}Entry\ core\ \%d\ thread\ \%d"{}},\ smtthread-\/>core-\/>getId(),\ thread-\/>getId());}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \textcolor{keywordflow}{if}\ (!isBarrierReached())}
+\DoxyCodeLine{00203\ \ \ \ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ smtthread-\/>cond.wait(m\_lock);}
+\DoxyCodeLine{00205\ \ \ \ \}}
+\DoxyCodeLine{00206\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00207\ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ release\_me\ =\ barrierRelease(\textcolor{keyword}{false},\ thread\_id);}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (release\_me)}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ smtthread-\/>in\_barrier\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ smtthread-\/>cond.wait(m\_lock);}
+\DoxyCodeLine{00214\ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ CLOG(\textcolor{stringliteral}{"{}smtbarrier"{}},\ \textcolor{stringliteral}{"{}Exit\ core\ \%d\ thread\ \%d\ (execute\ =\ \%s)"{}},}
+\DoxyCodeLine{00217\ \ \ \ \ \ smtthread-\/>core-\/>getId(),\ thread-\/>getId(),\ thread\_id\ ==\ execute\_thread\ ?\ \textcolor{stringliteral}{"{}true"{}}\ :\ \textcolor{stringliteral}{"{}false"{}});}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \textcolor{comment}{//\ Will\ we\ call\ execute()\ ?}}
+\DoxyCodeLine{00220\ \ \ \ \textcolor{keywordflow}{return}\ thread\_id\ ==\ execute\_thread;}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keywordtype}{void}\ SmtTimer::signalBarrier()}
+\DoxyCodeLine{00225\ \{}
+\DoxyCodeLine{00226\ \ \ \ \textcolor{keywordflow}{if}\ (isBarrierReached())}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ barrierRelease(\textcolor{keyword}{false},\ INVALID\_SMTTHREAD\_ID);}
+\DoxyCodeLine{00228\ \}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \textcolor{keywordtype}{void}\ SmtTimer::roiBegin()}
+\DoxyCodeLine{00231\ \{}
+\DoxyCodeLine{00232\ \ \ \ SubsecondTime\ time\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime();}
+\DoxyCodeLine{00233\ \ \ \ \textcolor{comment}{//\ Don't\ wait\ for\ any\ Sync/SpawnInstructions\ that\ were\ announced\ a\ while\ ago,}}
+\DoxyCodeLine{00234\ \ \ \ \textcolor{comment}{//\ they\ were\ ignored\ because\ performance\ models\ were\ disabled.}}
+\DoxyCodeLine{00235\ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ smtthread\_id\ =\ 0;\ smtthread\_id\ <\ m\_threads.size();\ ++smtthread\_id)}
+\DoxyCodeLine{00236\ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>in\_wakeup\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ synchronize(smtthread\_id,\ time);}
+\DoxyCodeLine{00239\ \ \ \ \}}
+\DoxyCodeLine{00240\ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \textcolor{keywordtype}{void}\ SmtTimer::threadStart(HooksManager::ThreadTime\ *argument)}
+\DoxyCodeLine{00243\ \{}
+\DoxyCodeLine{00244\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ smtthread\_id\_t\ smtthread\_id\ =\ findSmtThreadFromThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00247\ \ \ \ \textcolor{keywordflow}{if}\ (smtthread\_id\ !=\ INVALID\_SMTTHREAD\_ID)}
+\DoxyCodeLine{00248\ \ \ \ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>running\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00251\ \ \ \ \}}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{keywordtype}{void}\ SmtTimer::threadExit(HooksManager::ThreadTime\ *argument)}
+\DoxyCodeLine{00255\ \{}
+\DoxyCodeLine{00256\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ smtthread\_id\_t\ smtthread\_id\ =\ findSmtThreadFromThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00259\ \ \ \ \textcolor{keywordflow}{if}\ (smtthread\_id\ !=\ INVALID\_SMTTHREAD\_ID)}
+\DoxyCodeLine{00260\ \ \ \ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>running\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00263\ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \textcolor{comment}{//\ Re-\/evaluate\ whether\ the\ stalled\ thread\ can\ run\ (maybe\ it\ was\ waiting\ for\ us?)}}
+\DoxyCodeLine{00265\ \ \ \ \textcolor{comment}{//\ Note:\ HOOK\_THREAD\_EXIT\ happens\ right\ at\ the\ end,\ after\ possible\ rescheduling.}}
+\DoxyCodeLine{00266\ \ \ \ \textcolor{comment}{//\ So\ always\ call\ signalBarrier()\ even\ though\ the\ thread\ is\ not\ currently\ here,\ since\ it\ may\ have\ been\ before}}
+\DoxyCodeLine{00267\ \ \ \ signalBarrier();}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{keywordtype}{void}\ SmtTimer::threadStall(HooksManager::ThreadStall\ *argument)}
+\DoxyCodeLine{00271\ \{}
+\DoxyCodeLine{00272\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ smtthread\_id\_t\ smtthread\_id\ =\ findSmtThreadFromThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00275\ \ \ \ \textcolor{keywordflow}{if}\ (smtthread\_id\ !=\ INVALID\_SMTTHREAD\_ID)}
+\DoxyCodeLine{00276\ \ \ \ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>running\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00279\ \ \ \ \}}
+\DoxyCodeLine{00280\ \ \ \ \textcolor{comment}{//\ Re-\/evaluate\ whether\ the\ stalled\ thread\ can\ run\ (maybe\ it\ was\ waiting\ for\ us?)}}
+\DoxyCodeLine{00281\ \ \ \ \textcolor{comment}{//\ Note:\ HOOK\_THREAD\_STALL\ happens\ right\ at\ the\ end,\ after\ possible\ rescheduling.}}
+\DoxyCodeLine{00282\ \ \ \ \textcolor{comment}{//\ So\ always\ call\ signalBarrier()\ even\ though\ the\ thread\ is\ not\ currently\ here,\ since\ it\ may\ have\ been\ before}}
+\DoxyCodeLine{00283\ \ \ \ signalBarrier();}
+\DoxyCodeLine{00284\ \}}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \textcolor{keywordtype}{void}\ SmtTimer::threadResume(HooksManager::ThreadResume\ *argument)}
+\DoxyCodeLine{00287\ \{}
+\DoxyCodeLine{00288\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \textcolor{comment}{//\ When\ a\ thread\ wakes\ up,\ it\ will\ usually\ call\ simulate()\ before\ it\ processes\ the\ SYNC\_INSTRUCTION}}
+\DoxyCodeLine{00291\ \ \ \ \textcolor{comment}{//\ that\ updates\ their\ thread-\/>now\ to\ the\ wakeup\ time.\ In\ this\ intervening\ period,}}
+\DoxyCodeLine{00292\ \ \ \ \textcolor{comment}{//\ we\ should\ not\ return\ any\ latency\ from\ simulate()\ since\ that\ will\ be\ huge\ (this-\/>now\ has\ advanced,}}
+\DoxyCodeLine{00293\ \ \ \ \textcolor{comment}{//\ because\ the\ other\ threads\ have\ ran,\ leaving\ this\ thread\ who\ was\ asleep\ behind;\ but\ thread-\/>now}}
+\DoxyCodeLine{00294\ \ \ \ \textcolor{comment}{//\ is\ still\ set\ to\ the\ time\ the\ thread\ went\ to\ sleep).}}
+\DoxyCodeLine{00295\ \ \ \ \textcolor{comment}{//\ Instead,\ we\ listen\ for\ HookType::HOOK\_THREAD\_RESUME\ (called\ from\ the\ MCP,\ before\ the\ thread\ gets\ its}}
+\DoxyCodeLine{00296\ \ \ \ \textcolor{comment}{//\ wakeup\ message\ and\ way\ before\ the\ offending\ simulate()\ call)\ and\ set\ thread-\/>in\_wakeup,\ which\ signals}}
+\DoxyCodeLine{00297\ \ \ \ \textcolor{comment}{//\ simulate()\ to\ not\ return\ any\ latency\ until\ RobSmtTimer::synchronize()\ was\ called\ which\ updates}}
+\DoxyCodeLine{00298\ \ \ \ \textcolor{comment}{//\ thread-\/>now\ to\ the\ correct\ wakeup\ time.}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ smtthread\_id\_t\ smtthread\_id\ =\ findSmtThreadFromThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00301\ \ \ \ \textcolor{keywordflow}{if}\ (smtthread\_id\ !=\ INVALID\_SMTTHREAD\_ID)}
+\DoxyCodeLine{00302\ \ \ \ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>in\_wakeup\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>running\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00306\ \ \ \ \}}
+\DoxyCodeLine{00307\ \}}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \textcolor{keywordtype}{void}\ SmtTimer::threadMigrate(HooksManager::ThreadMigrate\ *argument)}
+\DoxyCodeLine{00310\ \{}
+\DoxyCodeLine{00311\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \textcolor{comment}{//\ Same\ as\ in\ wakeup\ case:\ thread\ will\ send\ a\ SpawnInstruction,\ but\ we\ don't\ want\ to\ send\ huge\ latencies}}
+\DoxyCodeLine{00314\ \ \ \ \textcolor{comment}{//\ to\ simulate()\ calls\ that\ precede\ it}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \textcolor{comment}{//\ If\ this\ thread\ was\ previously\ running\ on\ this\ core,\ mark\ it\ as\ gone}}
+\DoxyCodeLine{00317\ \ \ \ smtthread\_id\_t\ smtthread\_id\ =\ findSmtThreadFromThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00318\ \ \ \ \textcolor{keywordflow}{if}\ (smtthread\_id\ !=\ INVALID\_SMTTHREAD\_ID)}
+\DoxyCodeLine{00319\ \ \ \ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ SmtThread\ *thread\ =\ m\_threads[smtthread\_id];}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ thread-\/>running\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ thread-\/>thread\ =\ NULL;}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>in\_barrier)}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ thread-\/>in\_barrier\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ thread-\/>cond.signal();}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \textcolor{comment}{//\ If\ the\ new\ core\ is\ one\ of\ ours,\ mark\ it\ as\ running\ this\ thread}}
+\DoxyCodeLine{00332\ \ \ \ smtthread\_id\ =\ findSmtThreadFromCore(argument-\/>core\_id);}
+\DoxyCodeLine{00333\ \ \ \ \textcolor{keywordflow}{if}\ (smtthread\_id\ !=\ INVALID\_SMTTHREAD\_ID)}
+\DoxyCodeLine{00334\ \ \ \ \{}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}**\ ["{}}<<argument-\/>thread\_id<<\textcolor{stringliteral}{"{}]\ threadMigrate"{}}<<std::endl;}
+\DoxyCodeLine{00337\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>in\_wakeup\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>running\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ m\_threads[smtthread\_id]-\/>thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(argument-\/>thread\_id);}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ notifyNumActiveThreadsChange();}
+\DoxyCodeLine{00342\ \ \ \ \}}
+\DoxyCodeLine{00343\ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \textcolor{keywordtype}{void}\ SmtTimer::simulate(smtthread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00346\ \{}
+\DoxyCodeLine{00347\ \ \ \ SmtThread\ *thread\ =\ m\_threads[thread\_id];}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \textcolor{keywordflow}{if}\ (threadNumSurplusInstructions(thread\_id)\ >\ 128)}
+\DoxyCodeLine{00350\ \ \ \ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (barrier(thread\_id))}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ execute();}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ executed\ this\ cycle,\ make\ sure\ no-\/one\ else\ (potentially\ released\ through}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sync-\/>periodic-\/>reschedule-\/>migrate)\ executes\ again.}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ execute\_thread\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ ClockSkewMinimizationClient\ *client\ =\ thread-\/>core-\/>getClockSkewMinimizationClient();}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (client)}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ in\_sync\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ client-\/>synchronize();}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ in\_sync\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ barrierRelease(\textcolor{keyword}{true},\ thread\_id);}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00371\ \ \ \ \}}
+\DoxyCodeLine{00372\ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \textcolor{keywordtype}{void}\ SmtTimer::enable()}
+\DoxyCodeLine{00375\ \{}
+\DoxyCodeLine{00376\ \ \ \ enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00377\ \}}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \textcolor{keywordtype}{void}\ SmtTimer::disable()}
+\DoxyCodeLine{00380\ \{}
+\DoxyCodeLine{00381\ \ \ \ enabled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \textcolor{keywordflow}{for}(smtthread\_id\_t\ thread\_num\ =\ 0;\ thread\_num\ <\ m\_threads.size();\ ++thread\_num)}
+\DoxyCodeLine{00384\ \ \ \ \{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ SmtThread\ *thread\ =\ m\_threads[thread\_num];}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>in\_barrier)}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ thread-\/>in\_barrier\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ thread-\/>cond.signal();}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00392\ \ \ \ \}}
+\DoxyCodeLine{00393\ \}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \textcolor{keywordtype}{char}\ SmtTimer::getStateStr(smtthread\_id\_t\ thread\_num)}
+\DoxyCodeLine{00396\ \{}
+\DoxyCodeLine{00397\ \ \ \ SmtThread\ *thread\ =\ m\_threads[thread\_num];}
+\DoxyCodeLine{00398\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>running)}
+\DoxyCodeLine{00399\ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>in\_barrier)}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'B'};}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'R'};}
+\DoxyCodeLine{00404\ \ \ \ \}}
+\DoxyCodeLine{00405\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00406\ \ \ \ \{}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>in\_barrier)}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'b'};}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'\_'};}
+\DoxyCodeLine{00411\ \ \ \ \}}
+\DoxyCodeLine{00412\ \}}
+
+\end{DoxyCode}

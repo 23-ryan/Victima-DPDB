@@ -1,0 +1,81 @@
+\doxysection{semaphore.\+cc}
+\label{semaphore_8cc_source}\index{common/misc/semaphore.cc@{common/misc/semaphore.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}semaphore.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}os\_compat.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <linux/futex.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <limits.h>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ Semaphore::Semaphore(\textcolor{keywordtype}{int}\ count)}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ :\ \_count(count)}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ ,\ \_numWaiting(0)}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ ,\ \_futx(0)}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ Semaphore::Semaphore()}
+\DoxyCodeLine{00017\ \ \ \ :\ \_count(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ \_numWaiting(0)}
+\DoxyCodeLine{00019\ \ \ \ ,\ \_futx(0)}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ Semaphore::\string~Semaphore()}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keywordtype}{void}\ Semaphore::wait()}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \_lock.acquire();}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{while}\ (\_count\ <=\ 0)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \_numWaiting\ ++;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \_futx\ =\ 0;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \_lock.release();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ syscall(SYS\_futex,\ (\textcolor{keywordtype}{void}*)\ \&\_futx,\ FUTEX\_WAIT\ |\ FUTEX\_PRIVATE\_FLAG,\ 0,\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \_lock.acquire();}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \_numWaiting\ -\/-\/;}
+\DoxyCodeLine{00043\ \ \ \ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \_count\ -\/-\/;}
+\DoxyCodeLine{00046\ \ \ \ \_lock.release();}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ Semaphore::signal()}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ \_lock.acquire();}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \_count\ ++;}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{if}\ (\_numWaiting\ >\ 0)}
+\DoxyCodeLine{00055\ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \_futx\ =\ 1;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ syscall(SYS\_futex,\ (\textcolor{keywordtype}{void}*)\ \&\_futx,\ FUTEX\_WAKE\ |\ FUTEX\_PRIVATE\_FLAG,\ 1,\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00058\ \ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \_lock.release();}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{void}\ Semaphore::broadcast()}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ \_lock.acquire();}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \_count\ ++;}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{if}\ (\_numWaiting\ >\ 0)}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \_futx\ =\ 1;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ syscall(SYS\_futex,\ (\textcolor{keywordtype}{void}*)\ \&\_futx,\ FUTEX\_WAKE\ |\ FUTEX\_PRIVATE\_FLAG,\ INT\_MAX,\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00072\ \ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \_lock.release();}
+\DoxyCodeLine{00075\ \}}
+
+\end{DoxyCode}

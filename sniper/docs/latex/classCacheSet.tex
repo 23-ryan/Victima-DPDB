@@ -1,0 +1,885 @@
+\doxysection{Cache\+Set Class Reference}
+\label{classCacheSet}\index{CacheSet@{CacheSet}}
+
+
+{\ttfamily \#include $<$cache\+\_\+set.\+h$>$}
+
+
+
+Inheritance diagram for Cache\+Set\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=250pt]{classCacheSet__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Cache\+Set\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=304pt]{classCacheSet__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Cache\+Set} (\textbf{ Cache\+Base\+::cache\+\_\+t} cache\+\_\+type, \textbf{ UInt32} associativity, \textbf{ UInt32} blocksize, bool is\+\_\+tlb\+\_\+set)
+\item 
+virtual \textbf{ $\sim$\+Cache\+Set} ()
+\item 
+\textbf{ UInt32} \textbf{ get\+Block\+Size} ()
+\item 
+\textbf{ UInt32} \textbf{ get\+Associativity} ()
+\item 
+\textbf{ Lock} \& \textbf{ get\+Lock} ()
+\item 
+void \textbf{ read\+\_\+line} (\textbf{ UInt32} line\+\_\+index, \textbf{ UInt32} offset, \textbf{ Byte} $\ast$out\+\_\+buff, \textbf{ UInt32} bytes, bool update\+\_\+replacement)
+\item 
+void \textbf{ write\+\_\+line} (\textbf{ UInt32} line\+\_\+index, \textbf{ UInt32} offset, \textbf{ Byte} $\ast$in\+\_\+buff, \textbf{ UInt32} bytes, bool update\+\_\+replacement)
+\item 
+\textbf{ Cache\+Block\+Info} $\ast$ \textbf{ find} (\textbf{ Int\+Ptr} tag, \textbf{ UInt32} $\ast$line\+\_\+index=NULL)
+\item 
+bool \textbf{ invalidate} (\textbf{ Int\+Ptr} \&tag)
+\item 
+void \textbf{ insert} (\textbf{ Cache\+Block\+Info} $\ast$cache\+\_\+block\+\_\+info, \textbf{ Byte} $\ast$fill\+\_\+buff, bool $\ast$eviction, \textbf{ Cache\+Block\+Info} $\ast$evict\+\_\+block\+\_\+info, \textbf{ Byte} $\ast$evict\+\_\+buff, \textbf{ Cache\+Cntlr} $\ast$cntlr=NULL)
+\item 
+\textbf{ Cache\+Block\+Info} $\ast$ \textbf{ peek\+Block} (\textbf{ UInt32} way) const
+\item 
+char $\ast$ \textbf{ get\+Data\+Ptr} (\textbf{ UInt32} line\+\_\+index, \textbf{ UInt32} offset=0)
+\item 
+\textbf{ UInt32} \textbf{ get\+Block\+Size} (void) const
+\item 
+virtual \textbf{ UInt32} \textbf{ get\+Replacement\+Index} (\textbf{ Cache\+Cntlr} $\ast$cntlr)=0
+\item 
+virtual void \textbf{ update\+Replacement\+Index} (\textbf{ UInt32})=0
+\item 
+bool \textbf{ is\+Valid\+Replacement} (\textbf{ UInt32} index)
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ count\+Page\+Walk\+Cache\+Blocks} ()
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ count\+Security\+Cache\+Blocks} ()
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ count\+Expressive\+Cache\+Blocks} ()
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ count\+Utopia\+Cache\+Blocks} ()
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ count\+TLBCache\+Blocks} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Cache\+Set} $\ast$ \textbf{ create\+Cache\+Set} (String cfgname, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, String replacement\+\_\+policy, \textbf{ Cache\+Base\+::cache\+\_\+t} cache\+\_\+type, \textbf{ UInt32} associativity, \textbf{ UInt32} blocksize, \textbf{ Cache\+Set\+Info} $\ast$set\+\_\+info=NULL, bool is\+\_\+tlb\+\_\+set=false)
+\item 
+static \textbf{ Cache\+Set\+Info} $\ast$ \textbf{ create\+Cache\+Set\+Info} (String name, String cfgname, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, String replacement\+\_\+policy, \textbf{ UInt32} associativity)
+\item 
+static \textbf{ Cache\+Base\+::\+Replacement\+Policy} \textbf{ parse\+Policy\+Type} (String policy)
+\item 
+static \textbf{ UInt8} \textbf{ get\+Num\+QBSAttempts} (\textbf{ Cache\+Base\+::\+Replacement\+Policy}, String cfgname, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Cache\+Block\+Info} $\ast$$\ast$ \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}
+\item 
+char $\ast$ \textbf{ m\+\_\+blocks}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+associativity}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+blocksize}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+lock}
+\item 
+bool \textbf{ m\+\_\+is\+\_\+tlb\+\_\+set}
+\item 
+\textbf{ UInt32} \textbf{ inserts}
+\item 
+\textbf{ UInt32} \textbf{ evictions}
+\item 
+\textbf{ UInt32} \textbf{ invalidations}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 22} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{CacheSet@{CacheSet}!CacheSet@{CacheSet}}
+\index{CacheSet@{CacheSet}!CacheSet@{CacheSet}}
+\doxysubsubsection{CacheSet()}
+{\footnotesize\ttfamily \label{classCacheSet_a155165f3561c1ad420d9c7e4c361c912} 
+Cache\+Set\+::\+Cache\+Set (\begin{DoxyParamCaption}\item[{\textbf{ Cache\+Base\+::cache\+\_\+t}}]{cache\+\_\+type}{, }\item[{\textbf{ UInt32}}]{associativity}{, }\item[{\textbf{ UInt32}}]{blocksize}{, }\item[{bool}]{is\+\_\+tlb\+\_\+set}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 16} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ Cache\+Block\+Info\+::create()}, \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+blocks}, \textbf{ m\+\_\+blocksize}, and \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{classCacheSet_a155165f3561c1ad420d9c7e4c361c912_cgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!````~CacheSet@{$\sim$CacheSet}}
+\index{````~CacheSet@{$\sim$CacheSet}!CacheSet@{CacheSet}}
+\doxysubsubsection{$\sim$CacheSet()}
+{\footnotesize\ttfamily \label{classCacheSet_ac59a561a28702037f14539fdef38fc1d} 
+Cache\+Set\+::$\sim$\+Cache\+Set (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+blocks}, and \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{CacheSet@{CacheSet}!countExpressiveCacheBlocks@{countExpressiveCacheBlocks}}
+\index{countExpressiveCacheBlocks@{countExpressiveCacheBlocks}!CacheSet@{CacheSet}}
+\doxysubsubsection{countExpressiveCacheBlocks()}
+{\footnotesize\ttfamily \label{classCacheSet_a820e30e4eed6fac8f296c3981b025448} 
+\textbf{ uint64\+\_\+t} Cache\+Set\+::count\+Expressive\+Cache\+Blocks (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 295} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ Cache\+::measure\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a820e30e4eed6fac8f296c3981b025448_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!countPageWalkCacheBlocks@{countPageWalkCacheBlocks}}
+\index{countPageWalkCacheBlocks@{countPageWalkCacheBlocks}!CacheSet@{CacheSet}}
+\doxysubsubsection{countPageWalkCacheBlocks()}
+{\footnotesize\ttfamily \label{classCacheSet_a05bce8350c4c03b1a81a853bf59ec072} 
+\textbf{ uint64\+\_\+t} Cache\+Set\+::count\+Page\+Walk\+Cache\+Blocks (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 271} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ Cache\+::measure\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a05bce8350c4c03b1a81a853bf59ec072_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!countSecurityCacheBlocks@{countSecurityCacheBlocks}}
+\index{countSecurityCacheBlocks@{countSecurityCacheBlocks}!CacheSet@{CacheSet}}
+\doxysubsubsection{countSecurityCacheBlocks()}
+{\footnotesize\ttfamily \label{classCacheSet_a41f9b66903daf8486cfa440293e1c18f} 
+\textbf{ uint64\+\_\+t} Cache\+Set\+::count\+Security\+Cache\+Blocks (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 283} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ Cache\+::measure\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a41f9b66903daf8486cfa440293e1c18f_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!countTLBCacheBlocks@{countTLBCacheBlocks}}
+\index{countTLBCacheBlocks@{countTLBCacheBlocks}!CacheSet@{CacheSet}}
+\doxysubsubsection{countTLBCacheBlocks()}
+{\footnotesize\ttfamily \label{classCacheSet_a2dfed9ef0f3e2506fd341d1a2bcf2759} 
+\textbf{ uint64\+\_\+t} Cache\+Set\+::count\+TLBCache\+Blocks (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 322} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ Cache\+::measure\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a2dfed9ef0f3e2506fd341d1a2bcf2759_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!countUtopiaCacheBlocks@{countUtopiaCacheBlocks}}
+\index{countUtopiaCacheBlocks@{countUtopiaCacheBlocks}!CacheSet@{CacheSet}}
+\doxysubsubsection{countUtopiaCacheBlocks()}
+{\footnotesize\ttfamily \label{classCacheSet_a769ade5f4562f2d8098277f34c2fdbdb} 
+\textbf{ uint64\+\_\+t} Cache\+Set\+::count\+Utopia\+Cache\+Blocks (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 308} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ Cache\+::measure\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a769ade5f4562f2d8098277f34c2fdbdb_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!createCacheSet@{createCacheSet}}
+\index{createCacheSet@{createCacheSet}!CacheSet@{CacheSet}}
+\doxysubsubsection{createCacheSet()}
+{\footnotesize\ttfamily \label{classCacheSet_a68e8aa43596d71d7c4de1d41b133cfd6} 
+\textbf{ Cache\+Set} $\ast$ Cache\+Set\+::create\+Cache\+Set (\begin{DoxyParamCaption}\item[{String}]{cfgname}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{String}]{replacement\+\_\+policy}{, }\item[{\textbf{ Cache\+Base\+::cache\+\_\+t}}]{cache\+\_\+type}{, }\item[{\textbf{ UInt32}}]{associativity}{, }\item[{\textbf{ UInt32}}]{blocksize}{, }\item[{\textbf{ Cache\+Set\+Info} $\ast$}]{set\+\_\+info}{ = {\ttfamily NULL}, }\item[{bool}]{is\+\_\+tlb\+\_\+set}{ = {\ttfamily false}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 160} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ get\+Num\+QBSAttempts()}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ Cache\+Base\+::\+LRU}, \textbf{ Cache\+Base\+::\+LRU\+\_\+\+QBS}, \textbf{ Cache\+Base\+::\+MRU}, \textbf{ Cache\+Base\+::\+NMRU}, \textbf{ Cache\+Base\+::\+NRU}, \textbf{ parse\+Policy\+Type()}, \textbf{ Cache\+Base\+::\+PLRU}, \textbf{ Cache\+Base\+::\+RANDOM}, \textbf{ Cache\+Base\+::\+ROUND\+\_\+\+ROBIN}, \textbf{ Cache\+Base\+::\+SRRIP}, and \textbf{ Cache\+Base\+::\+SRRIP\+\_\+\+QBS}.
+
+
+
+Referenced by \textbf{ ATD\+::\+ATD()}, and \textbf{ Cache\+::\+Cache()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a68e8aa43596d71d7c4de1d41b133cfd6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{classCacheSet_a68e8aa43596d71d7c4de1d41b133cfd6_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!createCacheSetInfo@{createCacheSetInfo}}
+\index{createCacheSetInfo@{createCacheSetInfo}!CacheSet@{CacheSet}}
+\doxysubsubsection{createCacheSetInfo()}
+{\footnotesize\ttfamily \label{classCacheSet_a26769071f09e0cfcd3a37cbafb9bd625} 
+\textbf{ Cache\+Set\+Info} $\ast$ Cache\+Set\+::create\+Cache\+Set\+Info (\begin{DoxyParamCaption}\item[{String}]{name}{, }\item[{String}]{cfgname}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{String}]{replacement\+\_\+policy}{, }\item[{\textbf{ UInt32}}]{associativity}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 204} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ get\+Num\+QBSAttempts()}, \textbf{ Cache\+Base\+::\+LRU}, \textbf{ Cache\+Base\+::\+LRU\+\_\+\+QBS}, \textbf{ parse\+Policy\+Type()}, \textbf{ Cache\+Base\+::\+SRRIP}, and \textbf{ Cache\+Base\+::\+SRRIP\+\_\+\+QBS}.
+
+
+
+Referenced by \textbf{ ATD\+::\+ATD()}, and \textbf{ Cache\+::\+Cache()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a26769071f09e0cfcd3a37cbafb9bd625_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=306pt]{classCacheSet_a26769071f09e0cfcd3a37cbafb9bd625_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!find@{find}}
+\index{find@{find}!CacheSet@{CacheSet}}
+\doxysubsubsection{find()}
+{\footnotesize\ttfamily \label{classCacheSet_a72cbf9242d554e1c4571b9549a6d7fc6} 
+\textbf{ Cache\+Block\+Info} $\ast$ Cache\+Set\+::find (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{tag}{, }\item[{\textbf{ UInt32} $\ast$}]{line\+\_\+index}{ = {\ttfamily NULL}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+associativity}, and \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}.
+
+
+
+Referenced by \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ Cache\+::access\+Single\+Line\+TLB()}, \textbf{ Cache\+::insert\+Single\+Line()}, \textbf{ Cache\+::insert\+Single\+Line\+TLB()}, \textbf{ Cache\+::peek\+Single\+Line()}, and \textbf{ Cache\+::update\+Set\+Replacement()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a72cbf9242d554e1c4571b9549a6d7fc6_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!getAssociativity@{getAssociativity}}
+\index{getAssociativity@{getAssociativity}!CacheSet@{CacheSet}}
+\doxysubsubsection{getAssociativity()}
+{\footnotesize\ttfamily \label{classCacheSet_af170a07d65527e9a07123c164200d139} 
+\textbf{ UInt32} Cache\+Set\+::get\+Associativity (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+References \textbf{ m\+\_\+associativity}.
+
+
+
+Referenced by \textbf{ Cache\+::mark\+Metadata()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_af170a07d65527e9a07123c164200d139_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!getBlockSize@{getBlockSize}}
+\index{getBlockSize@{getBlockSize}!CacheSet@{CacheSet}}
+\doxysubsubsection{getBlockSize()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classCacheSet_a885940e376aab1d37acac6ab25c1cc9d} 
+\textbf{ UInt32} Cache\+Set\+::get\+Block\+Size (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+References \textbf{ m\+\_\+blocksize}.
+
+\index{CacheSet@{CacheSet}!getBlockSize@{getBlockSize}}
+\index{getBlockSize@{getBlockSize}!CacheSet@{CacheSet}}
+\doxysubsubsection{getBlockSize()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classCacheSet_a75351126965cf6170e883a8b21e79b91} 
+\textbf{ UInt32} Cache\+Set\+::get\+Block\+Size (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 63} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+References \textbf{ m\+\_\+blocksize}.
+
+\index{CacheSet@{CacheSet}!getDataPtr@{getDataPtr}}
+\index{getDataPtr@{getDataPtr}!CacheSet@{CacheSet}}
+\doxysubsubsection{getDataPtr()}
+{\footnotesize\ttfamily \label{classCacheSet_ac85b4cf796f45a902a225b0e8b136507} 
+char $\ast$ Cache\+Set\+::get\+Data\+Ptr (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{line\+\_\+index}{, }\item[{\textbf{ UInt32}}]{offset}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 154} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+blocks}, and \textbf{ m\+\_\+blocksize}.
+
+\index{CacheSet@{CacheSet}!getLock@{getLock}}
+\index{getLock@{getLock}!CacheSet@{CacheSet}}
+\doxysubsubsection{getLock()}
+{\footnotesize\ttfamily \label{classCacheSet_afaf3eee06f23798809338e3fbcece886} 
+\textbf{ Lock} \& Cache\+Set\+::get\+Lock (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+References \textbf{ m\+\_\+lock}.
+
+
+
+Referenced by \textbf{ Cache\+::get\+Set\+Lock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=277pt]{classCacheSet_afaf3eee06f23798809338e3fbcece886_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!getNumQBSAttempts@{getNumQBSAttempts}}
+\index{getNumQBSAttempts@{getNumQBSAttempts}!CacheSet@{CacheSet}}
+\doxysubsubsection{getNumQBSAttempts()}
+{\footnotesize\ttfamily \label{classCacheSet_ab12bc36f1a9f2643e1fbc6ec532a1c35} 
+\textbf{ UInt8} Cache\+Set\+::get\+Num\+QBSAttempts (\begin{DoxyParamCaption}\item[{\textbf{ Cache\+Base\+::\+Replacement\+Policy}}]{policy}{, }\item[{String}]{cfgname}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 220} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ Cache\+Base\+::\+LRU\+\_\+\+QBS}, and \textbf{ Cache\+Base\+::\+SRRIP\+\_\+\+QBS}.
+
+
+
+Referenced by \textbf{ create\+Cache\+Set()}, and \textbf{ create\+Cache\+Set\+Info()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_ab12bc36f1a9f2643e1fbc6ec532a1c35_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!getReplacementIndex@{getReplacementIndex}}
+\index{getReplacementIndex@{getReplacementIndex}!CacheSet@{CacheSet}}
+\doxysubsubsection{getReplacementIndex()}
+{\footnotesize\ttfamily \label{classCacheSet_a0e4a70fb83aaedcd181bbdf74ead9b2f} 
+virtual \textbf{ UInt32} Cache\+Set\+::get\+Replacement\+Index (\begin{DoxyParamCaption}\item[{\textbf{ Cache\+Cntlr} $\ast$}]{cntlr}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Cache\+Set\+LRU} \doxyref{}{p.}{classCacheSetLRU_a3e0178c5a16c138e0727796c47d3ad88}, \textbf{ Cache\+Set\+MRU} \doxyref{}{p.}{classCacheSetMRU_aeb496d0d09c83c35027aae0dc653d7a7}, \textbf{ Cache\+Set\+NMRU} \doxyref{}{p.}{classCacheSetNMRU_a6464e56cb463dd8414ae0e04f67b6f99}, \textbf{ Cache\+Set\+NRU} \doxyref{}{p.}{classCacheSetNRU_a545acbcf051c6bbcc7ba2946b1488927}, \textbf{ Cache\+Set\+PLRU} \doxyref{}{p.}{classCacheSetPLRU_a3d85ddf268e43177a27b9e7577fcb5a1}, \textbf{ Cache\+Set\+Random} \doxyref{}{p.}{classCacheSetRandom_acabd3488bd44bf0fa1eb875c21e90d5b}, \textbf{ Cache\+Set\+Round\+Robin} \doxyref{}{p.}{classCacheSetRoundRobin_a439e6cea6225c7c75f6efb76795d8dcd}, and \textbf{ Cache\+Set\+SRRIP} \doxyref{}{p.}{classCacheSetSRRIP_aea14f0210a0e4f6305d04477b0e10cd7}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Utopia\+Cache\+::allocate()}, and \textbf{ insert()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a0e4a70fb83aaedcd181bbdf74ead9b2f_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!insert@{insert}}
+\index{insert@{insert}!CacheSet@{CacheSet}}
+\doxysubsubsection{insert()}
+{\footnotesize\ttfamily \label{classCacheSet_af498c7494500840f1a78dd5800c7e047} 
+void Cache\+Set\+::insert (\begin{DoxyParamCaption}\item[{\textbf{ Cache\+Block\+Info} $\ast$}]{cache\+\_\+block\+\_\+info}{, }\item[{\textbf{ Byte} $\ast$}]{fill\+\_\+buff}{, }\item[{bool $\ast$}]{eviction}{, }\item[{\textbf{ Cache\+Block\+Info} $\ast$}]{evict\+\_\+block\+\_\+info}{, }\item[{\textbf{ Byte} $\ast$}]{evict\+\_\+buff}{, }\item[{\textbf{ Cache\+Cntlr} $\ast$}]{cntlr}{ = {\ttfamily NULL}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ Cache\+Block\+Info\+::clone()}, \textbf{ evictions}, \textbf{ get\+Replacement\+Index()}, \textbf{ inserts}, \textbf{ m\+\_\+associativity}, \textbf{ m\+\_\+blocks}, \textbf{ m\+\_\+blocksize}, and \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}.
+
+
+
+Referenced by \textbf{ Cache\+::insert\+Single\+Line()}, and \textbf{ Cache\+::insert\+Single\+Line\+TLB()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_af498c7494500840f1a78dd5800c7e047_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_af498c7494500840f1a78dd5800c7e047_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!invalidate@{invalidate}}
+\index{invalidate@{invalidate}!CacheSet@{CacheSet}}
+\doxysubsubsection{invalidate()}
+{\footnotesize\ttfamily \label{classCacheSet_a938fef4c8183c952607bee743fe8efb6} 
+bool Cache\+Set\+::invalidate (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr} \&}]{tag}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 85} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ Cache\+Block\+Info\+::invalidate()}, \textbf{ invalidations}, \textbf{ m\+\_\+associativity}, and \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}.
+
+
+
+Referenced by \textbf{ Cache\+::invalidate\+Single\+Line()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=315pt]{classCacheSet_a938fef4c8183c952607bee743fe8efb6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a938fef4c8183c952607bee743fe8efb6_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!isValidReplacement@{isValidReplacement}}
+\index{isValidReplacement@{isValidReplacement}!CacheSet@{CacheSet}}
+\doxysubsubsection{isValidReplacement()}
+{\footnotesize\ttfamily \label{classCacheSet_a58ec891ad57d1f270189259623c18897} 
+bool Cache\+Set\+::is\+Valid\+Replacement (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 259} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}, and \textbf{ Cache\+State\+::\+SHARED\+\_\+\+UPGRADING}.
+
+
+
+Referenced by \textbf{ Cache\+Set\+LRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+MRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+NMRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+NRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+PLRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+Random\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+Round\+Robin\+::get\+Replacement\+Index()}, and \textbf{ Cache\+Set\+SRRIP\+::get\+Replacement\+Index()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a58ec891ad57d1f270189259623c18897_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!parsePolicyType@{parsePolicyType}}
+\index{parsePolicyType@{parsePolicyType}!CacheSet@{CacheSet}}
+\doxysubsubsection{parsePolicyType()}
+{\footnotesize\ttfamily \label{classCacheSet_a8fb7a0e4af10d6decd60b89ea8c0966b} 
+\textbf{ Cache\+Base\+::\+Replacement\+Policy} Cache\+Set\+::parse\+Policy\+Type (\begin{DoxyParamCaption}\item[{String}]{policy}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 233} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ Cache\+Base\+::\+LRU}, \textbf{ Cache\+Base\+::\+LRU\+\_\+\+QBS}, \textbf{ Cache\+Base\+::\+MRU}, \textbf{ Cache\+Base\+::\+NMRU}, \textbf{ Cache\+Base\+::\+NRU}, \textbf{ Cache\+Base\+::\+PLRU}, \textbf{ Cache\+Base\+::\+RANDOM}, \textbf{ Cache\+Base\+::\+ROUND\+\_\+\+ROBIN}, \textbf{ Cache\+Base\+::\+SRRIP}, and \textbf{ Cache\+Base\+::\+SRRIP\+\_\+\+QBS}.
+
+
+
+Referenced by \textbf{ create\+Cache\+Set()}, and \textbf{ create\+Cache\+Set\+Info()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a8fb7a0e4af10d6decd60b89ea8c0966b_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!peekBlock@{peekBlock}}
+\index{peekBlock@{peekBlock}!CacheSet@{CacheSet}}
+\doxysubsubsection{peekBlock()}
+{\footnotesize\ttfamily \label{classCacheSet_a99564c436483641246c4fe17d95bad90} 
+\textbf{ Cache\+Block\+Info} $\ast$ Cache\+Set\+::peek\+Block (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{way}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+References \textbf{ m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array}.
+
+
+
+Referenced by \textbf{ Cache\+::peek\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::permission\+\_\+filter()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::track\+\_\+utilization()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a99564c436483641246c4fe17d95bad90_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!read\_line@{read\_line}}
+\index{read\_line@{read\_line}!CacheSet@{CacheSet}}
+\doxysubsubsection{read\_line()}
+{\footnotesize\ttfamily \label{classCacheSet_afdc2d603193f9f67ae6225d2356d43a5} 
+void Cache\+Set\+::read\+\_\+line (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{line\+\_\+index}{, }\item[{\textbf{ UInt32}}]{offset}{, }\item[{\textbf{ Byte} $\ast$}]{out\+\_\+buff}{, }\item[{\textbf{ UInt32}}]{bytes}{, }\item[{bool}]{update\+\_\+replacement}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 44} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+blocks}, \textbf{ m\+\_\+blocksize}, and \textbf{ update\+Replacement\+Index()}.
+
+
+
+Referenced by \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ Cache\+::access\+Single\+Line\+TLB()}, and \textbf{ Cache\+::update\+Set\+Replacement()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=332pt]{classCacheSet_afdc2d603193f9f67ae6225d2356d43a5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_afdc2d603193f9f67ae6225d2356d43a5_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!updateReplacementIndex@{updateReplacementIndex}}
+\index{updateReplacementIndex@{updateReplacementIndex}!CacheSet@{CacheSet}}
+\doxysubsubsection{updateReplacementIndex()}
+{\footnotesize\ttfamily \label{classCacheSet_ae960d800aaba97ad690f7186fe89c074} 
+virtual void Cache\+Set\+::update\+Replacement\+Index (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Cache\+Set\+LRU} \doxyref{}{p.}{classCacheSetLRU_a529643b3ad813c3d587957f5f2362052}, \textbf{ Cache\+Set\+MRU} \doxyref{}{p.}{classCacheSetMRU_adb057864d990691d4d4a7a09d0d4329e}, \textbf{ Cache\+Set\+NMRU} \doxyref{}{p.}{classCacheSetNMRU_a340c4662e2c606ecfff9241ea2895754}, \textbf{ Cache\+Set\+NRU} \doxyref{}{p.}{classCacheSetNRU_a872d8d51d8ca02e1ce8b15529bb1fb0b}, \textbf{ Cache\+Set\+PLRU} \doxyref{}{p.}{classCacheSetPLRU_abe2a7fa1c22d340a52e9df1a4cd0f5a3}, \textbf{ Cache\+Set\+Random} \doxyref{}{p.}{classCacheSetRandom_a3dcf951a7fece55cafd73f32a4f7ed70}, \textbf{ Cache\+Set\+Round\+Robin} \doxyref{}{p.}{classCacheSetRoundRobin_afad0f071bddaac7504430d637ffaca75}, and \textbf{ Cache\+Set\+SRRIP} \doxyref{}{p.}{classCacheSetSRRIP_ada15745267d6844218b6552f12cc3ae4}.
+
+
+
+Referenced by \textbf{ read\+\_\+line()}, and \textbf{ write\+\_\+line()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_ae960d800aaba97ad690f7186fe89c074_icgraph}
+\end{center}
+\end{figure}
+\index{CacheSet@{CacheSet}!write\_line@{write\_line}}
+\index{write\_line@{write\_line}!CacheSet@{CacheSet}}
+\doxysubsubsection{write\_line()}
+{\footnotesize\ttfamily \label{classCacheSet_a2a3f3ace20eee11820b749f389ecaa06} 
+void Cache\+Set\+::write\+\_\+line (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{line\+\_\+index}{, }\item[{\textbf{ UInt32}}]{offset}{, }\item[{\textbf{ Byte} $\ast$}]{in\+\_\+buff}{, }\item[{\textbf{ UInt32}}]{bytes}{, }\item[{bool}]{update\+\_\+replacement}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 57} of file \textbf{ cache\+\_\+set.\+cc}.
+
+
+
+References \textbf{ m\+\_\+blocks}, \textbf{ m\+\_\+blocksize}, and \textbf{ update\+Replacement\+Index()}.
+
+
+
+Referenced by \textbf{ Cache\+::access\+Single\+Line()}, and \textbf{ Cache\+::access\+Single\+Line\+TLB()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=334pt]{classCacheSet_a2a3f3ace20eee11820b749f389ecaa06_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheSet_a2a3f3ace20eee11820b749f389ecaa06_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{CacheSet@{CacheSet}!evictions@{evictions}}
+\index{evictions@{evictions}!CacheSet@{CacheSet}}
+\doxysubsubsection{evictions}
+{\footnotesize\ttfamily \label{classCacheSet_a7f9b53f74112b63f851acb84086c7e86} 
+\textbf{ UInt32} Cache\+Set\+::evictions\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ insert()}.
+
+\index{CacheSet@{CacheSet}!inserts@{inserts}}
+\index{inserts@{inserts}!CacheSet@{CacheSet}}
+\doxysubsubsection{inserts}
+{\footnotesize\ttfamily \label{classCacheSet_a18b050d763e62748d8f8d06f6343a2c0} 
+\textbf{ UInt32} Cache\+Set\+::inserts\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ insert()}.
+
+\index{CacheSet@{CacheSet}!invalidations@{invalidations}}
+\index{invalidations@{invalidations}!CacheSet@{CacheSet}}
+\doxysubsubsection{invalidations}
+{\footnotesize\ttfamily \label{classCacheSet_ab32ae272fb92e3707dcf1d2f70fccb75} 
+\textbf{ UInt32} Cache\+Set\+::invalidations\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ invalidate()}.
+
+\index{CacheSet@{CacheSet}!m\_associativity@{m\_associativity}}
+\index{m\_associativity@{m\_associativity}!CacheSet@{CacheSet}}
+\doxysubsubsection{m\_associativity}
+{\footnotesize\ttfamily \label{classCacheSet_ae4e35f02fb40cf11c8007a99496ed1a0} 
+\textbf{ UInt32} Cache\+Set\+::m\+\_\+associativity\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+Set()}, \textbf{ Cache\+Set\+LRU\+::\+Cache\+Set\+LRU()}, \textbf{ Cache\+Set\+MRU\+::\+Cache\+Set\+MRU()}, \textbf{ Cache\+Set\+NMRU\+::\+Cache\+Set\+NMRU()}, \textbf{ Cache\+Set\+NRU\+::\+Cache\+Set\+NRU()}, \textbf{ Cache\+Set\+Round\+Robin\+::\+Cache\+Set\+Round\+Robin()}, \textbf{ Cache\+Set\+SRRIP\+::\+Cache\+Set\+SRRIP()}, \textbf{ count\+Expressive\+Cache\+Blocks()}, \textbf{ count\+Page\+Walk\+Cache\+Blocks()}, \textbf{ count\+Security\+Cache\+Blocks()}, \textbf{ count\+TLBCache\+Blocks()}, \textbf{ count\+Utopia\+Cache\+Blocks()}, \textbf{ find()}, \textbf{ get\+Associativity()}, \textbf{ Cache\+Set\+LRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+MRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+NMRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+NRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+PLRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+Random\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+Round\+Robin\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+SRRIP\+::get\+Replacement\+Index()}, \textbf{ insert()}, \textbf{ invalidate()}, \textbf{ Cache\+Set\+LRU\+::move\+To\+MRU()}, \textbf{ Cache\+Set\+MRU\+::update\+Replacement\+Index()}, \textbf{ Cache\+Set\+NMRU\+::update\+Replacement\+Index()}, \textbf{ Cache\+Set\+NRU\+::update\+Replacement\+Index()}, \textbf{ Cache\+Set\+PLRU\+::update\+Replacement\+Index()}, and \textbf{ $\sim$\+Cache\+Set()}.
+
+\index{CacheSet@{CacheSet}!m\_blocks@{m\_blocks}}
+\index{m\_blocks@{m\_blocks}!CacheSet@{CacheSet}}
+\doxysubsubsection{m\_blocks}
+{\footnotesize\ttfamily \label{classCacheSet_a330f90fe457e723c2895987ddf84165a} 
+char$\ast$ Cache\+Set\+::m\+\_\+blocks\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+Set()}, \textbf{ get\+Data\+Ptr()}, \textbf{ insert()}, \textbf{ read\+\_\+line()}, \textbf{ write\+\_\+line()}, and \textbf{ $\sim$\+Cache\+Set()}.
+
+\index{CacheSet@{CacheSet}!m\_blocksize@{m\_blocksize}}
+\index{m\_blocksize@{m\_blocksize}!CacheSet@{CacheSet}}
+\doxysubsubsection{m\_blocksize}
+{\footnotesize\ttfamily \label{classCacheSet_ad9de846679baa661292343fd58faa144} 
+\textbf{ UInt32} Cache\+Set\+::m\+\_\+blocksize\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 36} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+Set()}, \textbf{ get\+Block\+Size()}, \textbf{ get\+Block\+Size()}, \textbf{ get\+Data\+Ptr()}, \textbf{ insert()}, \textbf{ read\+\_\+line()}, and \textbf{ write\+\_\+line()}.
+
+\index{CacheSet@{CacheSet}!m\_cache\_block\_info\_array@{m\_cache\_block\_info\_array}}
+\index{m\_cache\_block\_info\_array@{m\_cache\_block\_info\_array}!CacheSet@{CacheSet}}
+\doxysubsubsection{m\_cache\_block\_info\_array}
+{\footnotesize\ttfamily \label{classCacheSet_a5d816317c8aa17b678b7d5259d2819b5} 
+\textbf{ Cache\+Block\+Info}$\ast$$\ast$ Cache\+Set\+::m\+\_\+cache\+\_\+block\+\_\+info\+\_\+array\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+Set()}, \textbf{ count\+Expressive\+Cache\+Blocks()}, \textbf{ count\+Page\+Walk\+Cache\+Blocks()}, \textbf{ count\+Security\+Cache\+Blocks()}, \textbf{ count\+TLBCache\+Blocks()}, \textbf{ count\+Utopia\+Cache\+Blocks()}, \textbf{ find()}, \textbf{ Cache\+Set\+LRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+MRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+NMRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+NRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+PLRU\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+Random\+::get\+Replacement\+Index()}, \textbf{ Cache\+Set\+SRRIP\+::get\+Replacement\+Index()}, \textbf{ insert()}, \textbf{ invalidate()}, \textbf{ is\+Valid\+Replacement()}, \textbf{ peek\+Block()}, \textbf{ Cache\+Set\+SRRIP\+::update\+Replacement\+Index()}, and \textbf{ $\sim$\+Cache\+Set()}.
+
+\index{CacheSet@{CacheSet}!m\_is\_tlb\_set@{m\_is\_tlb\_set}}
+\index{m\_is\_tlb\_set@{m\_is\_tlb\_set}!CacheSet@{CacheSet}}
+\doxysubsubsection{m\_is\_tlb\_set}
+{\footnotesize\ttfamily \label{classCacheSet_acaa1488bfb6dba9769247c151928eb3d} 
+bool Cache\+Set\+::m\+\_\+is\+\_\+tlb\+\_\+set\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ cache\+\_\+set.\+h}.
+
+\index{CacheSet@{CacheSet}!m\_lock@{m\_lock}}
+\index{m\_lock@{m\_lock}!CacheSet@{CacheSet}}
+\doxysubsubsection{m\_lock}
+{\footnotesize\ttfamily \label{classCacheSet_a7e754dc5dc308176a8be32782a533bd9} 
+\textbf{ Lock} Cache\+Set\+::m\+\_\+lock\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ cache\+\_\+set.\+h}.
+
+
+
+Referenced by \textbf{ get\+Lock()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/cache/\textbf{ cache\+\_\+set.\+h}\item 
+common/core/memory\+\_\+subsystem/cache/\textbf{ cache\+\_\+set.\+cc}\end{DoxyCompactItemize}

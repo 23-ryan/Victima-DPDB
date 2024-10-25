@@ -1,0 +1,144 @@
+\doxysection{dynamic\+\_\+micro\+\_\+op.\+cc}
+\label{dynamic__micro__op_8cc_source}\index{common/performance\_model/performance\_models/micro\_op/dynamic\_micro\_op.cc@{common/performance\_model/performance\_models/micro\_op/dynamic\_micro\_op.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ DynamicMicroOp::DynamicMicroOp(\textcolor{keyword}{const}\ MicroOp\ *uop,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ ComponentPeriod\ period)}
+\DoxyCodeLine{00006\ \ \ \ :\ m\_uop(uop)}
+\DoxyCodeLine{00007\ \ \ \ ,\ m\_core\_model(core\_model)}
+\DoxyCodeLine{00008\ \ \ \ ,\ m\_period(period)}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ LOG\_ASSERT\_ERROR(period\ !=\ SubsecondTime::Zero(),\ \textcolor{stringliteral}{"{}MicroOp\ Period\ is\ ==\ SubsecondTime::Zero()"{}});}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ this-\/>squashed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ this-\/>branchTaken\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00015\ \ \ \ this-\/>branchMispredicted\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ this-\/>intraInstructionDependencies\ =\ uop-\/>intraInstructionDependencies;}
+\DoxyCodeLine{00018\ \ \ \ this-\/>microOpTypeOffset\ =\ uop-\/>microOpTypeOffset;}
+\DoxyCodeLine{00019\ \ \ \ this-\/>squashedCount\ =\ 0;}
+\DoxyCodeLine{00020\ \ \ \ this-\/>dependenciesLength\ =\ 0;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ this-\/>execLatency\ =\ m\_core\_model-\/>getInstructionLatency(uop);}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ this-\/>sequenceNumber\ =\ INVALID\_SEQNR;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ this-\/>dCacheHitWhere\ =\ HitWhere::UNKNOWN;}
+\DoxyCodeLine{00027\ \ \ \ this-\/>iCacheHitWhere\ =\ HitWhere::L1I;\ \textcolor{comment}{//\ Default\ to\ an\ icache\ hit}}
+\DoxyCodeLine{00028\ \ \ \ this-\/>iCacheLatency\ =\ 0;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ this-\/>m\_forceLongLatencyLoad\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0\ ;\ i\ <\ MAXIMUM\_NUMBER\_OF\_DEPENDENCIES;\ i++)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ this-\/>dependencies[i]\ =\ -\/1;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ LOG\_ASSERT\_ERROR(m\_uop\ !=\ NULL,\ \textcolor{stringliteral}{"{}uop\ is\ NULL"{}});}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ first\ =\ m\_uop-\/>isFirst();}
+\DoxyCodeLine{00038\ \ \ \ last\ =\ m\_uop-\/>isLast();}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ DynamicMicroOp::\string~DynamicMicroOp()}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}\ DynamicMicroOp::squash(std::vector<DynamicMicroOp*>*\ array)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ squashed\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{if}\ (array)}
+\DoxyCodeLine{00050\ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{comment}{//\ Fix\ up\ isFirst/isLast\ after\ possibly\ squashing\ the\ first/last\ microop\ in\ a\ list}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ index\ =\ 0;\ index\ <\ (int)array-\/>size();\ ++index)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(*array)[index]-\/>isSquashed())}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ (*array)[index]-\/>setFirst(\textcolor{keyword}{true});}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ index\ =\ array-\/>size()\ -\/\ 1;\ index\ >=\ 0;\ -\/-\/index)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(*array)[index]-\/>isSquashed())}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ (*array)[index]-\/>setLast(\textcolor{keyword}{true});}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \ \ \ \}}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ uint64\_t\ DynamicMicroOp::getDependency(uint32\_t\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{if}\ (index\ <\ this-\/>intraInstructionDependencies)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ this-\/>sequenceNumber\ -\/\ this-\/>microOpTypeOffset\ -\/\ this-\/>intraInstructionDependencies\ +\ index;}
+\DoxyCodeLine{00071\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ assert((index\ >=\ this-\/>intraInstructionDependencies)\ \&\&\ ((index\ -\/\ this-\/>intraInstructionDependencies)\ <\ this-\/>dependenciesLength));}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ this-\/>dependencies[index\ -\/\ this-\/>intraInstructionDependencies];}
+\DoxyCodeLine{00074\ \ \ \ \}}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{void}\ DynamicMicroOp::addDependency(uint64\_t\ sequenceNumber)}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{if}\ (!Tools::contains(dependencies,\ dependenciesLength,\ sequenceNumber))\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ assert(this-\/>dependenciesLength\ <\ MAXIMUM\_NUMBER\_OF\_DEPENDENCIES);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ dependencies[dependenciesLength]\ =\ sequenceNumber;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ dependenciesLength++;}
+\DoxyCodeLine{00083\ \ \ \ \}}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keywordtype}{void}\ DynamicMicroOp::removeDependency(uint64\_t\ sequenceNumber)}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keywordflow}{if}\ (sequenceNumber\ >=\ this-\/>sequenceNumber\ -\/\ this-\/>microOpTypeOffset\ -\/\ this-\/>intraInstructionDependencies)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{comment}{//\ Intra-\/instruction\ dependency}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(intraInstructionDependencies\ \&\&\ !(sequenceNumber\ ==\ this-\/>sequenceNumber\ -\/\ this-\/>microOpTypeOffset\ -\/\ this-\/>intraInstructionDependencies))\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ the\ first\ intra-\/instruction\ dependency,\ but\ since\ this\ is\ not\ the\ one\ to\ be\ removed,\ add\ it\ to\ the\ regular\ dependencies\ list}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ dependencies[dependenciesLength]\ =\ this-\/>sequenceNumber\ -\/\ this-\/>microOpTypeOffset\ -\/\ this-\/>intraInstructionDependencies;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ dependenciesLength++;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(dependenciesLength\ <\ MAXIMUM\_NUMBER\_OF\_DEPENDENCIES,\ \textcolor{stringliteral}{"{}dependenciesLength(\%u)\ >\ MAX(\%u)"{}},\ dependenciesLength,\ MAXIMUM\_NUMBER\_OF\_DEPENDENCIES);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ intraInstructionDependencies-\/-\/;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ the\ exit\ condition\ was\ that\ the\ dependency\ to\ be\ removed\ is\ now\ the\ first\ one,\ not\ that\ we\ have\ exhausted\ the\ list}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(intraInstructionDependencies\ >\ 0,\ \textcolor{stringliteral}{"{}Something\ went\ wrong\ while\ removing\ an\ intra-\/instruction\ dependency"{}});}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ the\ first\ intra-\/instruction\ dependency\ by\ decrementing\ intraInstructionDependencies}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ intraInstructionDependencies-\/-\/;}
+\DoxyCodeLine{00101\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{comment}{//\ Inter-\/instruction\ dependency}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(dependenciesLength\ >\ 0,\ \textcolor{stringliteral}{"{}Cannot\ remove\ dependency\ when\ there\ are\ none"{}});}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dependencies[dependenciesLength-\/1]\ ==\ sequenceNumber)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ ;\ \textcolor{comment}{//\ sequenceNumber\ to\ remove\ is\ already\ at\ the\ end,\ we\ can\ just\ decrement\ dependenciesLength}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ sequenceNumber\ to\ the\ end\ of\ the\ list}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ uint64\_t\ idx\ =\ Tools::index(dependencies,\ dependenciesLength,\ sequenceNumber);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(idx\ !=\ UINT64\_MAX,\ \textcolor{stringliteral}{"{}MicroOp\ dependency\ list\ does\ not\ contain\ \%ld"{}},\ sequenceNumber);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ Tools::swap(dependencies,\ idx,\ dependenciesLength-\/1);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ dependenciesLength-\/-\/;}
+\DoxyCodeLine{00113\ \ \ \ \}}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keyword}{const}\ Memory::Access\&\ DynamicMicroOp::getLoadAccess()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00117\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00118\ \ \ \ assert(this-\/>getMicroOp()-\/>isLoad());}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>address;}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{const}\ Memory::Access\&\ DynamicMicroOp::getStoreAccess()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00123\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00124\ \ \ \ assert(this-\/>getMicroOp()-\/>isStore());}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>address;}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{bool}\ DynamicMicroOp::isLongLatencyLoad()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00129\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00130\ \ \ \ LOG\_ASSERT\_ERROR(getMicroOp()-\/>isLoad(),\ \textcolor{stringliteral}{"{}Expected\ a\ load\ instruction."{}});}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ uint32\_t\ cutoff\ =\ m\_core\_model-\/>getLongLatencyCutoff();}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \textcolor{comment}{//\ If\ we\ are\ enabled,\ indicate\ that\ this\ is\ a\ long\ latency\ load\ if\ the\ latency}}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{comment}{//\ is\ above\ a\ certain\ cutoff\ value}}
+\DoxyCodeLine{00136\ \ \ \ \textcolor{comment}{//\ Also,\ honor\ the\ forceLLL\ request\ if\ indicated}}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keywordflow}{return}\ (m\_forceLongLatencyLoad\ ||\ ((cutoff\ >\ 0)\ \&\&\ (this-\/>execLatency\ >\ cutoff)));}
+\DoxyCodeLine{00138\ \}}
+
+\end{DoxyCode}

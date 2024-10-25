@@ -1,0 +1,50 @@
+\doxysection{pagetable\+\_\+walker\+\_\+cuckoo.\+h}
+\label{pagetable__walker__cuckoo_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_cuckoo.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_cuckoo.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PTWC\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PTWC\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}./cuckoo/elastic\_cuckoo\_table.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <random>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}utopia\_cache\_template.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{class\ }PageTableWalkerCuckoo:\ \textcolor{keyword}{public}\ PageTableWalker}
+\DoxyCodeLine{00018\ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ elasticCuckooTable\_t\ elasticCuckooHT\_4KB;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ elasticCuckooTable\_t\ elasticCuckooHT\_2MB;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ currentTableAddr\ =\ 0x1000000;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ migrateTableAddr\ =\ 0x900000000;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ allocation\_percentage\_2MB;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ cuckoo\_faults;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ cuckoo\_hits;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ cuckoo\_latency;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ accessTable(IntPtr\ address);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ PageTableWalkerCuckoo(\textcolor{keywordtype}{int}\ core\_id,\ \textcolor{keywordtype}{int}\ \_page\_size,\ ShmemPerfModel*\ \_m\_shmem\_perf\_model,\ PWC*\ \_pwc,\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \_page\_walk\_cache\_enabled,\ \textcolor{keywordtype}{int}\ d,\ \textcolor{keywordtype}{char}*\ hash\_func,\ \textcolor{keywordtype}{int}\ size,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ rehash\_threshold,\ uint8\_t\ scale,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ swaps,\ uint8\_t\ priority);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ init\_walk\_functional(IntPtr\ address);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isPageFault(IntPtr\ address);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ init\_walk(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,\ CacheCntlr\ *cache,\ Core::lock\_signal\_t\ lock\_signal,\ Byte*\ \_data\_buf,\ UInt32\ \_data\_length,\ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\ ;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \};}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ \ \ \ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00044\ }
+
+\end{DoxyCode}

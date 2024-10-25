@@ -1,0 +1,94 @@
+\doxysection{fastforward\+\_\+performance\+\_\+model.\+cc}
+\label{fastforward__performance__model_8cc_source}\index{common/performance\_model/fastforward\_performance\_model.cc@{common/performance\_model/fastforward\_performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}fastforward\_performance\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}fastforward\_performance\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}sampling\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ FastforwardPerformanceModel::FastforwardPerformanceModel(Core\ *core,\ PerformanceModel\ *perf)}
+\DoxyCodeLine{00011\ \ \ \ :\ m\_core(core)}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_perf(perf)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_include\_memory\_latency(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/fast\_forward/oneipc/include\_memory\_latency"{}}))}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_include\_branch\_mispredict(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/fast\_forward/oneipc/include\_branch\_misprediction"{}}))}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_branch\_misprediction\_penalty(core-\/>getDvfsDomain(),\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/mispredict\_penalty"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_cpi(SubsecondTime::Zero())}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_fastforwarded\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}fastforward\_performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}fastforwarded\_time"{}},\ \&m\_fastforwarded\_time);}
+\DoxyCodeLine{00020\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiFastforwardTime"{}},\ \&m\_fastforwarded\_time);}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}fastforward\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBase"{}},\ \&m\_cpiBase);}
+\DoxyCodeLine{00023\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}fastforward\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBranchPredictor"{}},\ \&m\_cpiBranchPredictor);}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ m\_cpiDataCache.resize(HitWhere::NUM\_HITWHERES,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpiDataCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}fastforward\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiDataCache[h]));}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \}}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00037\ FastforwardPerformanceModel::incrementElapsedTime(SubsecondTime\ latency)}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \ incrementElapsedTime(latency,\ m\_cpiBase);}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00043\ FastforwardPerformanceModel::incrementElapsedTime(SubsecondTime\ latency,\ SubsecondTime\ \&cpiComponent)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ m\_fastforwarded\_time\ +=\ latency;}
+\DoxyCodeLine{00046\ \ \ \ cpiComponent\ +=\ latency;}
+\DoxyCodeLine{00047\ \ \ \ m\_perf-\/>incrementElapsedTime(latency);}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00051\ FastforwardPerformanceModel::notifyElapsedTimeUpdate()}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{comment}{//\ After\ skipping\ ahead\ possibly\ millions\ of\ cycles,\ recalibrate\ our\ aim\ point}}
+\DoxyCodeLine{00054\ \ \ \ Sim()-\/>getSamplingManager()-\/>recalibrateInstructionsCallback(m\_core-\/>getId());}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getFastForwardPerformanceManager())}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ Sim()-\/>getFastForwardPerformanceManager()-\/>recalibrateInstructionsCallback(m\_core-\/>getId());}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00060\ FastforwardPerformanceModel::countInstructions(IntPtr\ address,\ UInt32\ count)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ incrementElapsedTime(count\ *\ m\_cpi,\ m\_cpiBase);}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00066\ FastforwardPerformanceModel::handleMemoryLatency(SubsecondTime\ latency,\ HitWhere::where\_t\ hit\_where)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{if}\ (m\_include\_memory\_latency)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ incrementElapsedTime(latency,\ m\_cpiDataCache[hit\_where]);}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00073\ FastforwardPerformanceModel::handleBranchMispredict()}
+\DoxyCodeLine{00074\ \{}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{if}\ (m\_include\_branch\_mispredict)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ incrementElapsedTime(m\_branch\_misprediction\_penalty.getLatency(),\ m\_cpiBranchPredictor);}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00080\ FastforwardPerformanceModel::queuePseudoInstruction(PseudoInstruction\ *instr)}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ \ LOG\_ASSERT\_ERROR(!instr-\/>isIdle(),\ \textcolor{stringliteral}{"{}Expected\ non-\/idle\ instruction,\ got\ \%s"{}},\ INSTRUCTION\_NAMES[instr-\/>getType()]);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ SubsecondTime\ ffwdTime\ =\ instr-\/>getCost(m\_core);}
+\DoxyCodeLine{00085\ \ \ \ incrementElapsedTime(ffwdTime);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ notifyElapsedTimeUpdate();}
+\DoxyCodeLine{00088\ \}}
+
+\end{DoxyCode}

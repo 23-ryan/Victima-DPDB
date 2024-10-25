@@ -1,0 +1,61 @@
+\doxysection{page\+\_\+table\+\_\+virtualized.\+h}
+\label{page__table__virtualized_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/page\_table\_virtualized.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/page\_table\_virtualized.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//create\ class\ that\ inherits\ from\ page\ table\ walker}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker\_radix.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}tlb.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keyword}{class\ }PageTableVirtualized\ :\ \textcolor{keyword}{public}\ PageTableWalker}
+\DoxyCodeLine{00009\ \ \ \ \{}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ PageTableWalkerRadix\ *ptw\_radix\_host;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ PageTableWalkerRadix\ *ptw\_radix\_guest;}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ TLB*\ nested\_tlb;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_nested\_tlb\_access\_latency;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l1\_cache\_access;}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l2\_cache\_access;\ }
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_nuca\_cache\_access;}
+\DoxyCodeLine{00020\ \ \ \ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ PageTableVirtualized(\textcolor{keywordtype}{int}\ number\_of\_levels,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core*\ \_core,\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ \_m\_shmem\_perf\_model,\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *level\_bit\_indices,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *level\_percentages,\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PWC*\ pwc,\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ pwc\_enabled,}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UtopiaCache*\ \_shadow\_cache);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \string~PageTableVirtualized()\{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ ptw\_radix\_guest;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ ptw\_radix\_host;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ SubsecondTime\ init\_walk(IntPtr\ eip,\ IntPtr\ address,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ CacheCntlr\ *\_cache,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ init\_walk\_functional(IntPtr\ address);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isPageFault(IntPtr\ address);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setMemoryManager(ParametricDramDirectoryMSI::MemoryManager*\ \_memory\_manager)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ ptw\_radix\_guest-\/>setMemoryManager(\_memory\_manager);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ ptw\_radix\_host-\/>setMemoryManager(\_memory\_manager);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \};}
+
+\end{DoxyCode}

@@ -1,0 +1,93 @@
+\doxysection{scheduler\+\_\+pinned\+\_\+base.\+h}
+\label{scheduler__pinned__base_8h_source}\index{common/scheduler/scheduler\_pinned\_base.h@{common/scheduler/scheduler\_pinned\_base.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SCHEDULER\_PINNED\_BASE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SCHEDULER\_PINNED\_BASE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}scheduler\_dynamic.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }SchedulerPinnedBase\ :\ \textcolor{keyword}{public}\ SchedulerDynamic}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ SchedulerPinnedBase(ThreadManager\ *thread\_manager,\ SubsecondTime\ quantum);}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ core\_id\_t\ threadCreate(thread\_id\_t);}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadYield(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ threadSetAffinity(thread\_id\_t\ calling\_thread\_id,\ thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{size\_t}\ cpusetsize,\ \textcolor{keyword}{const}\ cpu\_set\_t\ *mask);}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ threadGetAffinity(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{size\_t}\ cpusetsize,\ cpu\_set\_t\ *mask);}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ periodic(SubsecondTime\ time);}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time);}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadResume(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time);}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{class\ }ThreadInfo}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ ThreadInfo()}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_has\_affinity(false)}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_explicit\_affinity(false)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_core\_affinity(Sim()-\/>getConfig()-\/>getApplicationCores(),\ false)}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_core\_running(INVALID\_CORE\_ID)}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_last\_scheduled\_in(SubsecondTime::Zero())}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_last\_scheduled\_out(SubsecondTime::Zero())}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ affinity\ */}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clearAffinity()}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ m\_core\_affinity.begin();\ it\ !=\ m\_core\_affinity.end();\ ++it)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *it\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setAffinitySingle(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ clearAffinity();}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addAffinity(core\_id);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addAffinity(core\_id\_t\ core\_id)\ \{\ m\_core\_affinity[core\_id]\ =\ \textcolor{keyword}{true};\ m\_has\_affinity\ =\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasAffinity(core\_id\_t\ core\_id)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_core\_affinity[core\_id];\ \}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ String\ getAffinityString()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ running\ on\ core\ */}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasAffinity()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_has\_affinity;\ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasExplicitAffinity()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_explicit\_affinity;\ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setExplicitAffinity()\ \{\ m\_explicit\_affinity\ =\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setCoreRunning(core\_id\_t\ core\_id)\ \{\ m\_core\_running\ =\ core\_id;\ \}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ getCoreRunning()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_core\_running;\ \}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isRunning()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_core\_running\ !=\ INVALID\_CORE\_ID;\ \}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ last\ scheduled\ */}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setLastScheduledIn(SubsecondTime\ time)\ \{\ m\_last\_scheduled\_in\ =\ time;\ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setLastScheduledOut(SubsecondTime\ time)\ \{\ m\_last\_scheduled\_out\ =\ time;\ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ getLastScheduledIn()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_last\_scheduled\_in;\ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ getLastScheduledOut()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_last\_scheduled\_out;\ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_has\_affinity;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_explicit\_affinity;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<bool>\ m\_core\_affinity;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ m\_core\_running;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_last\_scheduled\_in;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_last\_scheduled\_out;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{comment}{//\ Configuration}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_quantum;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{comment}{//\ Global\ state}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ SubsecondTime\ m\_last\_periodic;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{comment}{//\ Keyed\ by\ thread\_id}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ std::vector<ThreadInfo>\ m\_thread\_info;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{comment}{//\ Keyed\ by\ core\_id}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ std::vector<thread\_id\_t>\ m\_core\_thread\_running;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_quantum\_left;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadSetInitialAffinity(thread\_id\_t\ thread\_id)\ =\ 0;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ core\_id\_t\ findFreeCoreForThread(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ reschedule(SubsecondTime\ time,\ core\_id\_t\ core\_id,\ \textcolor{keywordtype}{bool}\ is\_periodic);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ printState();}
+\DoxyCodeLine{00085\ \};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_SCHEDULER\_PINNED\_BASE\_H}}
+
+\end{DoxyCode}

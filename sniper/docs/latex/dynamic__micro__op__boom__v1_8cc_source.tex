@@ -1,0 +1,95 @@
+\doxysection{dynamic\+\_\+micro\+\_\+op\+\_\+boom\+\_\+v1.\+cc}
+\label{dynamic__micro__op__boom__v1_8cc_source}\index{common/performance\_model/performance\_models/core\_model/dynamic\_micro\_op\_boom\_v1.cc@{common/performance\_model/performance\_models/core\_model/dynamic\_micro\_op\_boom\_v1.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op\_boom\_v1.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <riscv\_meta.h>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ DynamicMicroOpBoomV1::getType()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00007\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}boomv1"{}};}
+\DoxyCodeLine{00009\ \}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ DynamicMicroOpBoomV1::PortTypeString(DynamicMicroOpBoomV1::uop\_port\_t\ port)}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{switch}(port)}
+\DoxyCodeLine{00014\ \ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT0:\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port0"{}};}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT1:\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port1"{}};}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT2:\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port2"{}};}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT012:\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port012"{}};}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ port\ type\ \%d"{}},\ port);}
+\DoxyCodeLine{00021\ \ \ \ \}}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ DynamicMicroOpBoomV1::uop\_port\_t\ DynamicMicroOpBoomV1::getPort(\textcolor{keyword}{const}\ MicroOp\ *uop)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(instrlist[uop-\/>getInstructionOpcode()].has\_fpu\ ||\ instrlist[uop-\/>getInstructionOpcode()].has\_fdiv\ ||\ instrlist[uop-\/>getInstructionOpcode()].has\_mul\ )\ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpBoomV1::UOP\_PORT0;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(instrlist[uop-\/>getInstructionOpcode()].has\_div\ )\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpBoomV1::UOP\_PORT1;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(instrlist[uop-\/>getInstructionOpcode()].is\_memory)\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpBoomV1::UOP\_PORT2;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpBoomV1::UOP\_PORT012;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ DynamicMicroOpBoomV1::uop\_bypass\_t\ DynamicMicroOpBoomV1::getBypassType(\textcolor{keyword}{const}\ MicroOp\ *uop)}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getSubtype())}
+\DoxyCodeLine{00040\ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_LOAD:}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>isFpLoadStore())}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_BYPASS\_LOAD\_FP;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_STORE:}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>isFpLoadStore())}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_BYPASS\_FP\_STORE;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00051\ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{return}\ UOP\_BYPASS\_NONE;}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ DynamicMicroOpBoomV1::uop\_alu\_t\ DynamicMicroOpBoomV1::getAlu(\textcolor{keyword}{const}\ MicroOp\ *uop)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>uop\_type)}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_EXECUTE:}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getInstructionOpcode())}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_div:}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divu:}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divw:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divuw:}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divd:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divud:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fdiv\_s:}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fdiv\_d:}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fdiv\_q:}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fsqrt\_s:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fsqrt\_d:}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fsqrt\_q:}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_ALU\_TRIG;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_ALU\_NONE;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_ALU\_NONE;}
+\DoxyCodeLine{00080\ \ \ \ \}}
+\DoxyCodeLine{00081\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ DynamicMicroOpBoomV1::DynamicMicroOpBoomV1(\textcolor{keyword}{const}\ MicroOp\ *uop,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ ComponentPeriod\ period)}
+\DoxyCodeLine{00084\ \ \ \ :\ DynamicMicroOp(uop,\ core\_model,\ period)}
+\DoxyCodeLine{00085\ \ \ \ ,\ uop\_port(DynamicMicroOpBoomV1::getPort(uop))}
+\DoxyCodeLine{00086\ \ \ \ ,\ uop\_alu(DynamicMicroOpBoomV1::getAlu(uop))}
+\DoxyCodeLine{00087\ \ \ \ ,\ uop\_bypass(DynamicMicroOpBoomV1::getBypassType(uop))}
+\DoxyCodeLine{00088\ \{}
+\DoxyCodeLine{00089\ \}}
+
+\end{DoxyCode}

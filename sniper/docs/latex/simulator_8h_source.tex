@@ -1,0 +1,152 @@
+\doxysection{simulator.\+h}
+\label{simulator_8h_source}\index{common/system/simulator.h@{common/system/simulator.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SIMULATOR\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SIMULATOR\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}inst\_mode.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <decoder.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }\_Thread;}
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }SyscallServer;}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }SyncServer;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }MagicServer;}
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }ClockSkewMinimizationServer;}
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }StatsManager;}
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }Transport;}
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }CoreManager;}
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00019\ \textcolor{keyword}{class\ }ThreadManager;}
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }ThreadStatsManager;}
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }SimThreadManager;}
+\DoxyCodeLine{00022\ \textcolor{keyword}{class\ }HooksManager;}
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }ClockSkewMinimizationManager;}
+\DoxyCodeLine{00024\ \textcolor{keyword}{class\ }FastForwardPerformanceManager;}
+\DoxyCodeLine{00025\ \textcolor{keyword}{class\ }TraceManager;}
+\DoxyCodeLine{00026\ \textcolor{keyword}{class\ }DvfsManager;}
+\DoxyCodeLine{00027\ \textcolor{keyword}{class\ }SamplingManager;}
+\DoxyCodeLine{00028\ \textcolor{keyword}{class\ }FaultinjectionManager;}
+\DoxyCodeLine{00029\ \textcolor{keyword}{class\ }TagsManager;}
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }RoutineTracer;}
+\DoxyCodeLine{00031\ \textcolor{keyword}{class\ }MemoryTracker;}
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\ \{\textcolor{keyword}{class\ }PhysicalMemoryAllocator;\ \}}
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\ \{\textcolor{keyword}{class\ }Utopia;\}}
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }AllocationManager;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }config\ \{\ \textcolor{keyword}{class\ }Config;\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }Simulator}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ \ \ \ Simulator();}
+\DoxyCodeLine{00042\ \ \ \ \string~Simulator();}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordtype}{void}\ start();}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keyword}{static}\ Simulator*\ getSingleton()\ \{\ \textcolor{keywordflow}{return}\ m\_singleton;\ \}}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ setConfig(config::Config\ *\ cfg,\ Config::SimulationMode\ mode);}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ allocate();}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release();}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ SyscallServer*\ getSyscallServer()\ \{\ \textcolor{keywordflow}{return}\ m\_syscall\_server;\ \}}
+\DoxyCodeLine{00052\ \ \ \ SyncServer*\ getSyncServer()\ \{\ \textcolor{keywordflow}{return}\ m\_sync\_server;\ \}}
+\DoxyCodeLine{00053\ \ \ \ MagicServer*\ getMagicServer()\ \{\ \textcolor{keywordflow}{return}\ m\_magic\_server;\ \}}
+\DoxyCodeLine{00054\ \ \ \ ClockSkewMinimizationServer*\ getClockSkewMinimizationServer()\ \{\ \textcolor{keywordflow}{return}\ m\_clock\_skew\_minimization\_server;\ \}}
+\DoxyCodeLine{00055\ \ \ \ CoreManager\ *getCoreManager()\ \{\ \textcolor{keywordflow}{return}\ m\_core\_manager;\ \}}
+\DoxyCodeLine{00056\ \ \ \ SimThreadManager\ *getSimThreadManager()\ \{\ \textcolor{keywordflow}{return}\ m\_sim\_thread\_manager;\ \}}
+\DoxyCodeLine{00057\ \ \ \ ThreadManager\ *getThreadManager()\ \{\ \textcolor{keywordflow}{return}\ m\_thread\_manager;\ \}}
+\DoxyCodeLine{00058\ \ \ \ ClockSkewMinimizationManager\ *getClockSkewMinimizationManager()\ \{\ \textcolor{keywordflow}{return}\ m\_clock\_skew\_minimization\_manager;\ \}}
+\DoxyCodeLine{00059\ \ \ \ FastForwardPerformanceManager\ *getFastForwardPerformanceManager()\ \{\ \textcolor{keywordflow}{return}\ m\_fastforward\_performance\_manager;\ \}}
+\DoxyCodeLine{00060\ \ \ \ Config\ *getConfig()\ \{\ \textcolor{keywordflow}{return}\ \&m\_config;\ \}}
+\DoxyCodeLine{00061\ \ \ \ config::Config\ *getCfg()\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{comment}{//if\ (!\ m\_config\_file\_allowed)}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ LOG\_PRINT\_ERROR("{}getCfg()\ called\ after\ init,\ this\ is\ not\ nice\(\backslash\)n"{});}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_config\_file;}
+\DoxyCodeLine{00065\ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordtype}{void}\ hideCfg()\ \{\ m\_config\_file\_allowed\ =\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00067\ \ \ \ StatsManager\ *getStatsManager()\ \{\ \textcolor{keywordflow}{return}\ m\_stats\_manager;\ \}}
+\DoxyCodeLine{00068\ \ \ \ ThreadStatsManager\ *getThreadStatsManager()\ \{\ \textcolor{keywordflow}{return}\ m\_thread\_stats\_manager;\ \}}
+\DoxyCodeLine{00069\ \ \ \ DvfsManager\ *getDvfsManager()\ \{\ \textcolor{keywordflow}{return}\ m\_dvfs\_manager;\ \}}
+\DoxyCodeLine{00070\ \ \ \ HooksManager\ *getHooksManager()\ \{\ \textcolor{keywordflow}{return}\ m\_hooks\_manager;\ \}}
+\DoxyCodeLine{00071\ \ \ \ SamplingManager\ *getSamplingManager()\ \{\ \textcolor{keywordflow}{return}\ m\_sampling\_manager;\ \}}
+\DoxyCodeLine{00072\ \ \ \ FaultinjectionManager\ *getFaultinjectionManager()\ \{\ \textcolor{keywordflow}{return}\ m\_faultinjection\_manager;\ \}}
+\DoxyCodeLine{00073\ \ \ \ TraceManager\ *getTraceManager()\ \{\ \textcolor{keywordflow}{return}\ m\_trace\_manager;\ \}}
+\DoxyCodeLine{00074\ \ \ \ TagsManager\ *getTagsManager()\ \{\ \textcolor{keywordflow}{return}\ m\_tags\_manager;\ \}}
+\DoxyCodeLine{00075\ \ \ \ RoutineTracer\ *getRoutineTracer()\ \{\ \textcolor{keywordflow}{return}\ m\_rtn\_tracer;\ \}}
+\DoxyCodeLine{00076\ \ \ \ MemoryTracker\ *getMemoryTracker()\ \{\ \textcolor{keywordflow}{return}\ m\_memory\_tracker;\ \}}
+\DoxyCodeLine{00077\ \ \ \ AllocationManager\ *getAllocationManager()\ \{\textcolor{keywordflow}{return}\ m\_allocation\_manager;\ \}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordtype}{void}\ setMemoryTracker(MemoryTracker\ *memory\_tracker)\ \{\ m\_memory\_tracker\ =\ memory\_tracker;\ \}}
+\DoxyCodeLine{00079\ \ \ \ ParametricDramDirectoryMSI::PhysicalMemoryAllocator\ *getMemoryAllocator()\ \{\ \textcolor{keywordflow}{return}\ m\_memory\_allocator;\}}
+\DoxyCodeLine{00080\ \ \ \ ParametricDramDirectoryMSI::Utopia\ *getUtopia()\ \{\ \textcolor{keywordflow}{return}\ m\_utopia;\}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordtype}{bool}\ isRunning()\ \{\ \textcolor{keywordflow}{return}\ m\_running;\ \}}
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ enablePerformanceModels();}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ disablePerformanceModels();}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordtype}{void}\ setInstrumentationMode(InstMode::inst\_mode\_t\ new\_mode,\ \textcolor{keywordtype}{bool}\ update\_barrier);}
+\DoxyCodeLine{00087\ \ \ \ InstMode::inst\_mode\_t\ getInstrumentationMode()\ \{\ \textcolor{keywordflow}{return}\ InstMode::inst\_mode;\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \textcolor{comment}{//\ Access\ to\ the\ Decoder\ library\ for\ the\ simulator\ run}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordtype}{void}\ createDecoder();}
+\DoxyCodeLine{00091\ \ \ \ dl::Decoder\ *getDecoder();}
+\DoxyCodeLine{00092\ \ \ \ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00094\ \ \ \ Config\ m\_config;}
+\DoxyCodeLine{00095\ \ \ \ Log\ m\_log;}
+\DoxyCodeLine{00096\ \ \ \ TagsManager\ *m\_tags\_manager;}
+\DoxyCodeLine{00097\ \ \ \ SyscallServer\ *m\_syscall\_server;}
+\DoxyCodeLine{00098\ \ \ \ SyncServer\ *m\_sync\_server;}
+\DoxyCodeLine{00099\ \ \ \ MagicServer\ *m\_magic\_server;}
+\DoxyCodeLine{00100\ \ \ \ ClockSkewMinimizationServer\ *m\_clock\_skew\_minimization\_server;}
+\DoxyCodeLine{00101\ \ \ \ StatsManager\ *m\_stats\_manager;}
+\DoxyCodeLine{00102\ \ \ \ Transport\ *m\_transport;}
+\DoxyCodeLine{00103\ \ \ \ CoreManager\ *m\_core\_manager;}
+\DoxyCodeLine{00104\ \ \ \ ThreadManager\ *m\_thread\_manager;}
+\DoxyCodeLine{00105\ \ \ \ ThreadStatsManager\ *m\_thread\_stats\_manager;}
+\DoxyCodeLine{00106\ \ \ \ SimThreadManager\ *m\_sim\_thread\_manager;}
+\DoxyCodeLine{00107\ \ \ \ ClockSkewMinimizationManager\ *m\_clock\_skew\_minimization\_manager;}
+\DoxyCodeLine{00108\ \ \ \ FastForwardPerformanceManager\ *m\_fastforward\_performance\_manager;}
+\DoxyCodeLine{00109\ \ \ \ TraceManager\ *m\_trace\_manager;}
+\DoxyCodeLine{00110\ \ \ \ DvfsManager\ *m\_dvfs\_manager;}
+\DoxyCodeLine{00111\ \ \ \ HooksManager\ *m\_hooks\_manager;}
+\DoxyCodeLine{00112\ \ \ \ SamplingManager\ *m\_sampling\_manager;}
+\DoxyCodeLine{00113\ \ \ \ FaultinjectionManager\ *m\_faultinjection\_manager;}
+\DoxyCodeLine{00114\ \ \ \ RoutineTracer\ *m\_rtn\_tracer;}
+\DoxyCodeLine{00115\ \ \ \ MemoryTracker\ *m\_memory\_tracker;}
+\DoxyCodeLine{00116\ \ \ \ ParametricDramDirectoryMSI::PhysicalMemoryAllocator\ *m\_memory\_allocator;}
+\DoxyCodeLine{00117\ \ \ \ AllocationManager\ *m\_allocation\_manager;}
+\DoxyCodeLine{00118\ \ \ \ ParametricDramDirectoryMSI::Utopia\ *m\_utopia;}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \textcolor{comment}{//\ std::unordered\_map<int,\ UInt32>\ eviction\_cnt;\ }}
+\DoxyCodeLine{00121\ \ \ \ \textcolor{comment}{//\ std::unordered\_map<int,\ bool>\ megapage\_skip\_translation;\ //\ Global\ skip\ translation\ vector}}
+\DoxyCodeLine{00122\ \ \ \ \textcolor{comment}{//\ std::unordered\_map<UInt64,\ UInt64>\ virtual\_position\_megapage;\ }}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \textcolor{keywordtype}{bool}\ m\_running;}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordtype}{bool}\ m\_inst\_mode\_output;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keyword}{static}\ Simulator\ *m\_singleton;}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \textcolor{keyword}{static}\ config::Config\ *m\_config\_file;}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_config\_file\_allowed;}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keyword}{static}\ Config::SimulationMode\ m\_mode;}
+\DoxyCodeLine{00132\ \ \ \ }
+\DoxyCodeLine{00133\ \ \ \ \textcolor{comment}{//\ Object\ to\ access\ the\ decoder\ library\ with\ the\ correct\ configuration}}
+\DoxyCodeLine{00134\ \ \ \ \textcolor{keyword}{static}\ dl::Decoder\ *m\_decoder;}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{comment}{//\ Surrogate\ to\ create\ a\ Decoder\ object\ for\ a\ specific\ architecture}}
+\DoxyCodeLine{00136\ \ \ \ dl::DecoderFactory\ *m\_factory;}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \textcolor{keywordtype}{void}\ printInstModeSummary();}
+\DoxyCodeLine{00139\ \};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \_\_attribute\_\_((unused))\ \textcolor{keyword}{static}\ Simulator\ *Sim()}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{keywordflow}{return}\ Simulator::getSingleton();}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ SIMULATOR\_H}}
+
+\end{DoxyCode}

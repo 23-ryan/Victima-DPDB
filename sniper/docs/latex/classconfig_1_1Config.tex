@@ -1,0 +1,1258 @@
+\doxysection{config\+::Config Class Reference}
+\label{classconfig_1_1Config}\index{config::Config@{config::Config}}
+
+
+\doxyref{Config}{p.}{classconfig_1_1Config}\+: A class for managing the interface to persistent configuration entries defined at runtime. This class is used to manage a configuration interface. It is the base class for which different back ends will derive from.  
+
+
+
+
+{\ttfamily \#include $<$config.\+hpp$>$}
+
+
+
+Inheritance diagram for config\+::Config\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=133pt]{classconfig_1_1Config__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for config\+::Config\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=184pt]{classconfig_1_1Config__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Config} (bool case\+\_\+sensitive=false)
+\item 
+\textbf{ Config} (const \textbf{ Section} \&root, bool case\+\_\+sensitive=false)
+\item 
+virtual \textbf{ $\sim$\+Config} ()
+\item 
+virtual void \textbf{ save\+As} (const String \&path)
+\begin{DoxyCompactList}\small\item\em A function for saving the entire configuration tree to the specified path. This function is responsible for walking through the entire configuration tree (starting at the root) and outputing an appropriate text representation than can then be re-\/read by an appropriate configuration class. Note\+: In the case of a write-\/through situation (as is the case with the windows registry), this function is unnecessary. \end{DoxyCompactList}\item 
+void \textbf{ load} (const String \&path)
+\begin{DoxyCompactList}\small\item\em A function to convert from external representation to in-\/memory representation This function sets the member variable m\+\_\+path and then calls the \doxyref{load\+Config()}{p.}{classconfig_1_1Config_ad8546bc4b29a5e743d5bdb578f5ea7b5} function which must be implemented by the derived back-\/end implementation. \end{DoxyCompactList}\item 
+void \textbf{ Save} ()
+\begin{DoxyCompactList}\small\item\em A function which will save the in-\/memory representation to the external representation that was specified with the \doxyref{load()}{p.}{classconfig_1_1Config_aa195a5a3faf6564d9e1216a9bbd067e7} function. \end{DoxyCompactList}\item 
+void \textbf{ clear} ()
+\item 
+bool \textbf{ has\+Key} (const String \&path, \textbf{ UInt64} index=UINT64\+\_\+\+MAX)
+\item 
+virtual void \textbf{ set} (const String \&path, const String \&new\+\_\+value)
+\begin{DoxyCompactList}\small\item\em A function that will save a given value to key at the specified path. \end{DoxyCompactList}\item 
+virtual void \textbf{ set} (const String \&path, \textbf{ SInt64} new\+\_\+value)
+\item 
+virtual void \textbf{ set} (const String \&path, double new\+\_\+value)
+\item 
+const \textbf{ Section} \& \textbf{ get\+Section} (const String \&path)
+\begin{DoxyCompactList}\small\item\em Returns a reference to the section at the given path. \end{DoxyCompactList}\item 
+const \textbf{ Section} \& \textbf{ get\+Root} ()
+\begin{DoxyCompactList}\small\item\em Returns a reference to the root section of the configuration tree. \end{DoxyCompactList}\item 
+const \textbf{ Section} \& \textbf{ add\+Section} (const String \&path)
+\begin{DoxyCompactList}\small\item\em \doxyref{add\+Section()}{p.}{classconfig_1_1Config_ab9e35d9b1af9ee493a3452f9539cfbd0} adds the specified path as a new section, creating each entry in the path along the way. \end{DoxyCompactList}\item 
+bool \textbf{ get\+Bool} (const String \&path)
+\begin{DoxyCompactList}\small\item\em Look up the key at the given path, and return the value of that key as a bool. \end{DoxyCompactList}\item 
+bool \textbf{ get\+Bool\+Array} (const String \&path, \textbf{ UInt64} index)
+\item 
+bool \textbf{ get\+Bool\+Default} (const String \&path, bool default\+Value)
+\item 
+\textbf{ SInt64} \textbf{ get\+Int} (const String \&path)
+\begin{DoxyCompactList}\small\item\em Look up the key at the given path, and return the value of that key as a bool. \end{DoxyCompactList}\item 
+\textbf{ SInt64} \textbf{ get\+Int\+Array} (const String \&path, \textbf{ UInt64} index)
+\item 
+const String \textbf{ get\+String} (const String \&path)
+\begin{DoxyCompactList}\small\item\em Look up the key at the given path, and return the value of that key as a bool. \end{DoxyCompactList}\item 
+const String \textbf{ get\+String\+Array} (const String \&path, \textbf{ UInt64} index)
+\item 
+const String \textbf{ get} (const String \&path)
+\begin{DoxyCompactList}\small\item\em Same as \doxyref{get\+String()}{p.}{classconfig_1_1Config_abee752f9eda941f61f5f466f3553c684} \end{DoxyCompactList}\item 
+double \textbf{ get\+Float} (const String \&path)
+\begin{DoxyCompactList}\small\item\em Look up the key at the given path, and return the value of that key as a bool. \end{DoxyCompactList}\item 
+double \textbf{ get\+Float\+Array} (const String \&path, \textbf{ UInt64} index)
+\item 
+String \textbf{ show\+Tree} (const \textbf{ Section} \&current, int depth=0)
+\begin{DoxyCompactList}\small\item\em Returns a string representation of the tree starting at the specified section. \end{DoxyCompactList}\item 
+String \textbf{ show\+Full\+Tree} ()
+\begin{DoxyCompactList}\small\item\em Returns a string representation of the loaded configuration tree. \end{DoxyCompactList}\item 
+const \textbf{ Key} \& \textbf{ add\+Key} (const String \&path, const String \&new\+\_\+key, \textbf{ UInt64} index=UINT64\+\_\+\+MAX)
+\item 
+const \textbf{ Key} \& \textbf{ add\+Key} (const String \&path, const \textbf{ SInt64} new\+\_\+key, \textbf{ UInt64} index=UINT64\+\_\+\+MAX)
+\item 
+const \textbf{ Key} \& \textbf{ add\+Key} (const String \&path, const double new\+\_\+key, \textbf{ UInt64} index=UINT64\+\_\+\+MAX)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual void \textbf{ load\+Config} ()=0
+\item 
+\textbf{ Section} \& \textbf{ get\+Section\+\_\+unsafe} (String const \&path)
+\item 
+\textbf{ Section} \& \textbf{ get\+Root\+\_\+unsafe} ()
+\item 
+\textbf{ Key} \& \textbf{ get\+Key\+\_\+unsafe} (String const \&path)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+bool \textbf{ m\+\_\+case\+\_\+sensitive}
+\item 
+\textbf{ Section} \textbf{ m\+\_\+root}
+\item 
+String \textbf{ m\+\_\+path}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class V $>$ }\\const \textbf{ Key} \& \textbf{ add\+Key\+Internal} (const String \&path, const V \&new\+\_\+key, \textbf{ UInt64} index)
+\item 
+const \textbf{ Key} \& \textbf{ get\+Key} (const String \&path, \textbf{ UInt64} index)
+\item 
+{\footnotesize template$<$class V $>$ }\\const \textbf{ Key} \& \textbf{ get\+Key} (const String \&path, const V \&default\+\_\+val, \textbf{ UInt64} index)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Path\+Pair} \textbf{ split\+Path} (const String \&path)
+\item 
+static \textbf{ Path\+Pair} \textbf{ split\+Path\+Elements} (const String \&path, \textbf{ Path\+Element\+List} \&path\+\_\+elements)
+\item 
+static bool \textbf{ is\+Leaf} (const String \&path)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\doxyref{Config}{p.}{classconfig_1_1Config}\+: A class for managing the interface to persistent configuration entries defined at runtime. This class is used to manage a configuration interface. It is the base class for which different back ends will derive from. 
+
+Definition at line \textbf{ 37} of file \textbf{ config.\+hpp}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{config::Config@{config::Config}!Config@{Config}}
+\index{Config@{Config}!config::Config@{config::Config}}
+\doxysubsubsection{Config()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_aac3ffdeb050f5d295a5281dbc2297b1a} 
+config\+::\+Config\+::\+Config (\begin{DoxyParamCaption}\item[{bool}]{case\+\_\+sensitive}{ = {\ttfamily false}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ config.\+hpp}.
+
+\index{config::Config@{config::Config}!Config@{Config}}
+\index{Config@{Config}!config::Config@{config::Config}}
+\doxysubsubsection{Config()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a457841ed00045c3951ba6c37a8739aba} 
+config\+::\+Config\+::\+Config (\begin{DoxyParamCaption}\item[{const \textbf{ Section} \&}]{root}{, }\item[{bool}]{case\+\_\+sensitive}{ = {\ttfamily false}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ config.\+hpp}.
+
+\index{config::Config@{config::Config}!````~Config@{$\sim$Config}}
+\index{````~Config@{$\sim$Config}!config::Config@{config::Config}}
+\doxysubsubsection{$\sim$Config()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a8f385715b2e0ed0fc0a30ffc00a9cc9e} 
+virtual config\+::\+Config\+::$\sim$\+Config (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ config.\+hpp}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{config::Config@{config::Config}!addKey@{addKey}}
+\index{addKey@{addKey}!config::Config@{config::Config}}
+\doxysubsubsection{addKey()\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_ac130e3f0060be4d9747db5b8d20a15e4} 
+const \textbf{ Key} \& config\+::\+Config\+::add\+Key (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{const double}]{new\+\_\+key}{, }\item[{\textbf{ UInt64}}]{index}{ = {\ttfamily UINT64\+\_\+MAX}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 161} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ add\+Key\+Internal()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_ac130e3f0060be4d9747db5b8d20a15e4_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!addKey@{addKey}}
+\index{addKey@{addKey}!config::Config@{config::Config}}
+\doxysubsubsection{addKey()\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a17e52ffe69f6afd60801a442c17c68a9} 
+const \textbf{ Key} \& config\+::\+Config\+::add\+Key (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{const \textbf{ SInt64}}]{new\+\_\+key}{, }\item[{\textbf{ UInt64}}]{index}{ = {\ttfamily UINT64\+\_\+MAX}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 158} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ add\+Key\+Internal()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a17e52ffe69f6afd60801a442c17c68a9_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!addKey@{addKey}}
+\index{addKey@{addKey}!config::Config@{config::Config}}
+\doxysubsubsection{addKey()\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_ac19690ea60f953398559cc9ace79195c} 
+const \textbf{ Key} \& config\+::\+Config\+::add\+Key (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{const String \&}]{new\+\_\+key}{, }\item[{\textbf{ UInt64}}]{index}{ = {\ttfamily UINT64\+\_\+MAX}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+\doxyref{add\+Key()}{p.}{classconfig_1_1Config_ac19690ea60f953398559cc9ace79195c} Adds the specified path as a new key (with the given value), creating each entry in the path along the way. 
+\begin{DoxyParams}{Parameters}
+{\em path} & The path to the new key \\
+\hline
+{\em new\+\_\+key} & The value for the newly created key \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \textbf{ 155} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ add\+Key\+Internal()}.
+
+
+
+Referenced by \textbf{ set()}, \textbf{ set()}, and \textbf{ set()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_ac19690ea60f953398559cc9ace79195c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=281pt]{classconfig_1_1Config_ac19690ea60f953398559cc9ace79195c_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!addKeyInternal@{addKeyInternal}}
+\index{addKeyInternal@{addKeyInternal}!config::Config@{config::Config}}
+\doxysubsubsection{addKeyInternal()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_aa986b3fd8851e53df2b5aad9f2a9fc8b} 
+template$<$class V $>$ \\
+const \textbf{ Key} \& Config\+::add\+Key\+Internal (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{const V \&}]{new\+\_\+key}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 167} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Section\+::add\+Key()}, \textbf{ get\+Section\+\_\+unsafe()}, \textbf{ is\+Leaf()}, \textbf{ m\+\_\+root}, and \textbf{ split\+Path()}.
+
+
+
+Referenced by \textbf{ add\+Key()}, \textbf{ add\+Key()}, and \textbf{ add\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_aa986b3fd8851e53df2b5aad9f2a9fc8b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_aa986b3fd8851e53df2b5aad9f2a9fc8b_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!addSection@{addSection}}
+\index{addSection@{addSection}!config::Config@{config::Config}}
+\doxysubsubsection{addSection()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_ab9e35d9b1af9ee493a3452f9539cfbd0} 
+const \textbf{ Section} \& Config\+::add\+Section (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})}
+
+
+
+\doxyref{add\+Section()}{p.}{classconfig_1_1Config_ab9e35d9b1af9ee493a3452f9539cfbd0} adds the specified path as a new section, creating each entry in the path along the way. 
+
+
+
+Definition at line \textbf{ 135} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Section\+::add\+Subsection()}, \textbf{ get\+Section\+\_\+unsafe()}, and \textbf{ split\+Path()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_ab9e35d9b1af9ee493a3452f9539cfbd0_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!clear@{clear}}
+\index{clear@{clear}!config::Config@{config::Config}}
+\doxysubsubsection{clear()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a4d4698876d10131043806b0ddd690eb3} 
+void Config\+::clear (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Section\+::clear()}, and \textbf{ m\+\_\+root}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=283pt]{classconfig_1_1Config_a4d4698876d10131043806b0ddd690eb3_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!get@{get}}
+\index{get@{get}!config::Config@{config::Config}}
+\doxysubsubsection{get()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_abd0f24020600780ac58267c5c6a6f03d} 
+const String config\+::\+Config\+::get (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Same as \doxyref{get\+String()}{p.}{classconfig_1_1Config_abee752f9eda941f61f5f466f3553c684} 
+
+
+
+Definition at line \textbf{ 133} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ get\+String()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_abd0f24020600780ac58267c5c6a6f03d_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getBool@{getBool}}
+\index{getBool@{getBool}!config::Config@{config::Config}}
+\doxysubsubsection{getBool()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a892e107693cb5b9674aad6b0535776ae} 
+bool config\+::\+Config\+::get\+Bool (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Look up the key at the given path, and return the value of that key as a bool. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & -\/ Path for key to look up \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxyref{Key\+Not\+Found}{p.}{classconfig_1_1KeyNotFound}} & is thrown if the specified path doesn\textquotesingle{}t exist. \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line \textbf{ 105} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ get\+Bool\+Array()}.
+
+
+
+Referenced by \textbf{ get\+Bool\+Default()}, \textbf{ main()}, and \textbf{ Simulator\+::start()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a892e107693cb5b9674aad6b0535776ae_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=332pt]{classconfig_1_1Config_a892e107693cb5b9674aad6b0535776ae_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getBoolArray@{getBoolArray}}
+\index{getBoolArray@{getBoolArray}!config::Config@{config::Config}}
+\doxysubsubsection{getBoolArray()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a820ac07ef3bf7728f81475c1ccd68774} 
+bool Config\+::get\+Bool\+Array (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 223} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Key\+::get\+Bool()}, and \textbf{ get\+Key()}.
+
+
+
+Referenced by \textbf{ get\+Bool()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a820ac07ef3bf7728f81475c1ccd68774_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a820ac07ef3bf7728f81475c1ccd68774_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getBoolDefault@{getBoolDefault}}
+\index{getBoolDefault@{getBoolDefault}!config::Config@{config::Config}}
+\doxysubsubsection{getBoolDefault()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a38eb40a9949da318e570e5c4ac1b094d} 
+bool config\+::\+Config\+::get\+Bool\+Default (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{bool}]{default\+Value}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 110} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ get\+Bool()}, and \textbf{ has\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a38eb40a9949da318e570e5c4ac1b094d_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getFloat@{getFloat}}
+\index{getFloat@{getFloat}!config::Config@{config::Config}}
+\doxysubsubsection{getFloat()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a7ed9d0ce5b291d80d9d1ba0646438de1} 
+double config\+::\+Config\+::get\+Float (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Look up the key at the given path, and return the value of that key as a bool. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & -\/ Path for key to look up \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxyref{Key\+Not\+Found}{p.}{classconfig_1_1KeyNotFound}} & is thrown if the specified path doesn\textquotesingle{}t exist. \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line \textbf{ 139} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ get\+Float\+Array()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a7ed9d0ce5b291d80d9d1ba0646438de1_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getFloatArray@{getFloatArray}}
+\index{getFloatArray@{getFloatArray}!config::Config@{config::Config}}
+\doxysubsubsection{getFloatArray()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_af77132f07b50290e3316aa7792e34532} 
+double Config\+::get\+Float\+Array (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 238} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Key\+::get\+Float()}, and \textbf{ get\+Key()}.
+
+
+
+Referenced by \textbf{ get\+Float()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_af77132f07b50290e3316aa7792e34532_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=306pt]{classconfig_1_1Config_af77132f07b50290e3316aa7792e34532_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getInt@{getInt}}
+\index{getInt@{getInt}!config::Config@{config::Config}}
+\doxysubsubsection{getInt()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a68c85733e1004b324b68b27001342c7b} 
+\textbf{ SInt64} config\+::\+Config\+::get\+Int (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Look up the key at the given path, and return the value of that key as a bool. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & -\/ Path for key to look up \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxyref{Key\+Not\+Found}{p.}{classconfig_1_1KeyNotFound}} & is thrown if the specified path doesn\textquotesingle{}t exist. \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line \textbf{ 122} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ get\+Int\+Array()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a68c85733e1004b324b68b27001342c7b_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getIntArray@{getIntArray}}
+\index{getIntArray@{getIntArray}!config::Config@{config::Config}}
+\doxysubsubsection{getIntArray()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_abf7d2249047e4739b9344daa83272c6c} 
+\textbf{ SInt64} Config\+::get\+Int\+Array (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 228} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Key\+::get\+Int()}, and \textbf{ get\+Key()}.
+
+
+
+Referenced by \textbf{ Branch\+Predictor\+::create()}, and \textbf{ get\+Int()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_abf7d2249047e4739b9344daa83272c6c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_abf7d2249047e4739b9344daa83272c6c_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getKey@{getKey}}
+\index{getKey@{getKey}!config::Config@{config::Config}}
+\doxysubsubsection{getKey()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a4b86fc94e9317c44d68b21b07131a12f} 
+template$<$class V $>$ \\
+const \textbf{ Key} \& config\+::\+Config\+::get\+Key (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{const V \&}]{default\+\_\+val}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+\index{config::Config@{config::Config}!getKey@{getKey}}
+\index{getKey@{getKey}!config::Config@{config::Config}}
+\doxysubsubsection{getKey()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a53edb349534c5a7af05d71ba05a06d7d} 
+const \textbf{ Key} \& Config\+::get\+Key (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Error()}, \textbf{ config\+::\+Section\+::get\+Key()}, \textbf{ get\+Section\+\_\+unsafe()}, \textbf{ config\+::\+Section\+::has\+Key()}, \textbf{ is\+Leaf()}, \textbf{ m\+\_\+root}, and \textbf{ split\+Path()}.
+
+
+
+Referenced by \textbf{ get\+Bool\+Array()}, \textbf{ get\+Float\+Array()}, \textbf{ get\+Int\+Array()}, and \textbf{ get\+String\+Array()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a53edb349534c5a7af05d71ba05a06d7d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a53edb349534c5a7af05d71ba05a06d7d_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getKey\_unsafe@{getKey\_unsafe}}
+\index{getKey\_unsafe@{getKey\_unsafe}!config::Config@{config::Config}}
+\doxysubsubsection{getKey\_unsafe()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a0b97d0ee036dfa484694ad432e158000} 
+\textbf{ Key} \& config\+::\+Config\+::get\+Key\+\_\+unsafe (\begin{DoxyParamCaption}\item[{String const \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+\index{config::Config@{config::Config}!getRoot@{getRoot}}
+\index{getRoot@{getRoot}!config::Config@{config::Config}}
+\doxysubsubsection{getRoot()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a4e7ec82d71c25bb3145052af55828548} 
+const \textbf{ Section} \& config\+::\+Config\+::get\+Root (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns a reference to the root section of the configuration tree. 
+
+
+
+Definition at line \textbf{ 93} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ m\+\_\+root}.
+
+\index{config::Config@{config::Config}!getRoot\_unsafe@{getRoot\_unsafe}}
+\index{getRoot\_unsafe@{getRoot\_unsafe}!config::Config@{config::Config}}
+\doxysubsubsection{getRoot\_unsafe()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_adf2e67118235341da38ce96a5d6039a3} 
+\textbf{ Section} \& config\+::\+Config\+::get\+Root\+\_\+unsafe (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 170} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ m\+\_\+root}.
+
+\index{config::Config@{config::Config}!getSection@{getSection}}
+\index{getSection@{getSection}!config::Config@{config::Config}}
+\doxysubsubsection{getSection()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_add2b81e6c899461327f6b7e62d61ae93} 
+const \textbf{ Section} \& Config\+::get\+Section (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})}
+
+
+
+Returns a reference to the section at the given path. 
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ get\+Section\+\_\+unsafe()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_add2b81e6c899461327f6b7e62d61ae93_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getSection\_unsafe@{getSection\_unsafe}}
+\index{getSection\_unsafe@{getSection\_unsafe}!config::Config@{config::Config}}
+\doxysubsubsection{getSection\_unsafe()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_ae2f00421e5731905a0a7167a773b0152} 
+\textbf{ Section} \& Config\+::get\+Section\+\_\+unsafe (\begin{DoxyParamCaption}\item[{String const \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Section\+::add\+Subsection()}, \textbf{ config\+::\+Section\+::get\+Section\+\_\+unsafe()}, \textbf{ config\+::\+Section\+::has\+Section()}, \textbf{ is\+Leaf()}, \textbf{ m\+\_\+root}, and \textbf{ split\+Path\+Elements()}.
+
+
+
+Referenced by \textbf{ add\+Key\+Internal()}, \textbf{ add\+Section()}, \textbf{ config\+::\+Config\+File\+::eval\+Tree()}, \textbf{ get\+Key()}, \textbf{ get\+Section()}, and \textbf{ has\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_ae2f00421e5731905a0a7167a773b0152_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_ae2f00421e5731905a0a7167a773b0152_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getString@{getString}}
+\index{getString@{getString}!config::Config@{config::Config}}
+\doxysubsubsection{getString()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_abee752f9eda941f61f5f466f3553c684} 
+const String config\+::\+Config\+::get\+String (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Look up the key at the given path, and return the value of that key as a bool. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & -\/ Path for key to look up \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxyref{Key\+Not\+Found}{p.}{classconfig_1_1KeyNotFound}} & is thrown if the specified path doesn\textquotesingle{}t exist. \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line \textbf{ 129} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ get\+String\+Array()}.
+
+
+
+Referenced by \textbf{ get()}, \textbf{ Memory\+Manager\+Base\+::get\+Core\+List\+With\+Memory\+Controllers()}, \textbf{ Config\+::get\+Nearest\+Acceptable\+Core\+Count()}, \textbf{ Config\+::get\+Network\+Models()}, and \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_abee752f9eda941f61f5f466f3553c684_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_abee752f9eda941f61f5f466f3553c684_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!getStringArray@{getStringArray}}
+\index{getStringArray@{getStringArray}!config::Config@{config::Config}}
+\doxysubsubsection{getStringArray()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_aca7ed8d7291580c21939c0fdff86d4be} 
+const String Config\+::get\+String\+Array (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ UInt64}}]{index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 233} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ get\+Key()}, and \textbf{ config\+::\+Key\+::get\+String()}.
+
+
+
+Referenced by \textbf{ Branch\+Predictor\+::create()}, and \textbf{ get\+String()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_aca7ed8d7291580c21939c0fdff86d4be_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_aca7ed8d7291580c21939c0fdff86d4be_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!hasKey@{hasKey}}
+\index{hasKey@{hasKey}!config::Config@{config::Config}}
+\doxysubsubsection{hasKey()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a9463df0e023e17655bb7d74add83d193} 
+bool Config\+::has\+Key (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ UInt64}}]{index}{ = {\ttfamily UINT64\+\_\+MAX}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 81} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ get\+Section\+\_\+unsafe()}, \textbf{ config\+::\+Section\+::has\+Key()}, \textbf{ is\+Leaf()}, \textbf{ m\+\_\+root}, and \textbf{ split\+Path()}.
+
+
+
+Referenced by \textbf{ get\+Bool\+Default()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a9463df0e023e17655bb7d74add83d193_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=331pt]{classconfig_1_1Config_a9463df0e023e17655bb7d74add83d193_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!isLeaf@{isLeaf}}
+\index{isLeaf@{isLeaf}!config::Config@{config::Config}}
+\doxysubsubsection{isLeaf()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a734d4ab633d4f39d823310cb9694e646} 
+bool Config\+::is\+Leaf (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ config.\+cpp}.
+
+
+
+Referenced by \textbf{ add\+Key\+Internal()}, \textbf{ get\+Key()}, \textbf{ get\+Section\+\_\+unsafe()}, and \textbf{ has\+Key()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a734d4ab633d4f39d823310cb9694e646_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!load@{load}}
+\index{load@{load}!config::Config@{config::Config}}
+\doxysubsubsection{load()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_aa195a5a3faf6564d9e1216a9bbd067e7} 
+void Config\+::load (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})}
+
+
+
+A function to convert from external representation to in-\/memory representation This function sets the member variable m\+\_\+path and then calls the \doxyref{load\+Config()}{p.}{classconfig_1_1Config_ad8546bc4b29a5e743d5bdb578f5ea7b5} function which must be implemented by the derived back-\/end implementation. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & -\/ This is the path where we load the configuration from. This may either be a registry path for the case of the Config\+Registry interface or a file path in the case of a \doxyref{Config\+File}{p.}{classconfig_1_1ConfigFile} interface. \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxyref{File\+Not\+Found}{p.}{classconfig_1_1FileNotFound}} & -\/ This exception is thrown if the \doxyref{Config\+File}{p.}{classconfig_1_1ConfigFile} interface is instructed to load a file which does not exist. \\
+\hline
+{\em parse\+Error} & -\/ This exception is thrown on a malformed file with the \doxyref{Config\+File}{p.}{classconfig_1_1ConfigFile} interface. \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line \textbf{ 70} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ load\+Config()}, and \textbf{ m\+\_\+path}.
+
+
+
+Referenced by \textbf{ handle\+\_\+generic\+\_\+arg()}, and \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{classconfig_1_1Config_aa195a5a3faf6564d9e1216a9bbd067e7_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_aa195a5a3faf6564d9e1216a9bbd067e7_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!loadConfig@{loadConfig}}
+\index{loadConfig@{loadConfig}!config::Config@{config::Config}}
+\doxysubsubsection{loadConfig()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_ad8546bc4b29a5e743d5bdb578f5ea7b5} 
+virtual void config\+::\+Config\+::load\+Config (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ config\+::\+Config\+File} \doxyref{}{p.}{classconfig_1_1ConfigFile_a37a879c79c5f598539c158b978f660f8}.
+
+
+
+Referenced by \textbf{ load()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_ad8546bc4b29a5e743d5bdb578f5ea7b5_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!Save@{Save}}
+\index{Save@{Save}!config::Config@{config::Config}}
+\doxysubsubsection{Save()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_afe13cb1e659249f7d2adbba298640e27} 
+void config\+::\+Config\+::\+Save (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+A function which will save the in-\/memory representation to the external representation that was specified with the \doxyref{load()}{p.}{classconfig_1_1Config_aa195a5a3faf6564d9e1216a9bbd067e7} function. 
+
+
+
+Definition at line \textbf{ 69} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ m\+\_\+path}, and \textbf{ save\+As()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=291pt]{classconfig_1_1Config_afe13cb1e659249f7d2adbba298640e27_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!saveAs@{saveAs}}
+\index{saveAs@{saveAs}!config::Config@{config::Config}}
+\doxysubsubsection{saveAs()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a0f9d8ed2819b806aea1d9438636ea947} 
+virtual void config\+::\+Config\+::save\+As (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+A function for saving the entire configuration tree to the specified path. This function is responsible for walking through the entire configuration tree (starting at the root) and outputing an appropriate text representation than can then be re-\/read by an appropriate configuration class. Note\+: In the case of a write-\/through situation (as is the case with the windows registry), this function is unnecessary. 
+
+
+
+Reimplemented in \textbf{ config\+::\+Config\+File} \doxyref{}{p.}{classconfig_1_1ConfigFile_afbb5c145da36dff75134c48de83faf25}.
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ config.\+hpp}.
+
+
+
+Referenced by \textbf{ Save()}, and \textbf{ Simulator\+::start()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=291pt]{classconfig_1_1Config_a0f9d8ed2819b806aea1d9438636ea947_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!set@{set}}
+\index{set@{set}!config::Config@{config::Config}}
+\doxysubsubsection{set()\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a12527538ba6314a39a9d8f7a42448d37} 
+void Config\+::set (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{const String \&}]{new\+\_\+value}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+A function that will save a given value to key at the specified path. 
+
+
+
+Definition at line \textbf{ 207} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ add\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a12527538ba6314a39a9d8f7a42448d37_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!set@{set}}
+\index{set@{set}!config::Config@{config::Config}}
+\doxysubsubsection{set()\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a0acdabe42d67deafae960ab8b9f18b52} 
+void Config\+::set (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{double}]{new\+\_\+value}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+
+Definition at line \textbf{ 217} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ add\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a0acdabe42d67deafae960ab8b9f18b52_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!set@{set}}
+\index{set@{set}!config::Config@{config::Config}}
+\doxysubsubsection{set()\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a78dcbfbc9951ce3e0e3ac03eb9f6b328} 
+void Config\+::set (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ SInt64}}]{new\+\_\+value}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
+
+Definition at line \textbf{ 212} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ add\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a78dcbfbc9951ce3e0e3ac03eb9f6b328_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!showFullTree@{showFullTree}}
+\index{showFullTree@{showFullTree}!config::Config@{config::Config}}
+\doxysubsubsection{showFullTree()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_af4138e31abef885474bce9445d136b98} 
+String config\+::\+Config\+::show\+Full\+Tree (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns a string representation of the loaded configuration tree. 
+
+
+
+Definition at line \textbf{ 148} of file \textbf{ config.\+hpp}.
+
+
+
+References \textbf{ m\+\_\+root}, and \textbf{ show\+Tree()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_af4138e31abef885474bce9445d136b98_cgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!showTree@{showTree}}
+\index{showTree@{showTree}!config::Config@{config::Config}}
+\doxysubsubsection{showTree()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_aa8668a2b22c0a4e27fac99b969a57663} 
+String Config\+::show\+Tree (\begin{DoxyParamCaption}\item[{const \textbf{ Section} \&}]{current}{, }\item[{int}]{depth}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Returns a string representation of the tree starting at the specified section. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em current} & The root of the tree for which we are creating a string representation. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \textbf{ 179} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ config\+::\+Section\+::get\+Keys()}, \textbf{ config\+::\+Section\+::get\+Name()}, \textbf{ config\+::\+Section\+::get\+Subsections()}, and \textbf{ show\+Tree()}.
+
+
+
+Referenced by \textbf{ show\+Full\+Tree()}, and \textbf{ show\+Tree()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_aa8668a2b22c0a4e27fac99b969a57663_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{classconfig_1_1Config_aa8668a2b22c0a4e27fac99b969a57663_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!splitPath@{splitPath}}
+\index{splitPath@{splitPath}!config::Config@{config::Config}}
+\doxysubsubsection{splitPath()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_af8465cb248ed099ecba6b670e1c0b634} 
+std\+::pair$<$ String, String $>$ Config\+::split\+Path (\begin{DoxyParamCaption}\item[{const String \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 143} of file \textbf{ config.\+cpp}.
+
+
+
+References \textbf{ split\+Path\+Elements()}.
+
+
+
+Referenced by \textbf{ add\+Key\+Internal()}, \textbf{ add\+Section()}, \textbf{ get\+Key()}, and \textbf{ has\+Key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=312pt]{classconfig_1_1Config_af8465cb248ed099ecba6b670e1c0b634_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_af8465cb248ed099ecba6b670e1c0b634_icgraph}
+\end{center}
+\end{figure}
+\index{config::Config@{config::Config}!splitPathElements@{splitPathElements}}
+\index{splitPathElements@{splitPathElements}!config::Config@{config::Config}}
+\doxysubsubsection{splitPathElements()}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a26a6145f1692bdaa2046b1ec0841eba0} 
+std\+::pair$<$ String, String $>$ Config\+::split\+Path\+Elements (\begin{DoxyParamCaption}\item[{const String \&}]{path}{, }\item[{\textbf{ Path\+Element\+List} \&}]{path\+\_\+elements}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 150} of file \textbf{ config.\+cpp}.
+
+
+
+Referenced by \textbf{ get\+Section\+\_\+unsafe()}, and \textbf{ split\+Path()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classconfig_1_1Config_a26a6145f1692bdaa2046b1ec0841eba0_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{config::Config@{config::Config}!m\_case\_sensitive@{m\_case\_sensitive}}
+\index{m\_case\_sensitive@{m\_case\_sensitive}!config::Config@{config::Config}}
+\doxysubsubsection{m\_case\_sensitive}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_af8da6890f8d692039dd81902a294b310} 
+bool config\+::\+Config\+::m\+\_\+case\+\_\+sensitive\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 164} of file \textbf{ config.\+hpp}.
+
+\index{config::Config@{config::Config}!m\_path@{m\_path}}
+\index{m\_path@{m\_path}!config::Config@{config::Config}}
+\doxysubsubsection{m\_path}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_ab613f64f410a6f4cb35d5cc52b6b9d43} 
+String config\+::\+Config\+::m\+\_\+path\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 166} of file \textbf{ config.\+hpp}.
+
+
+
+Referenced by \textbf{ load()}, \textbf{ config\+::\+Config\+File\+::load\+Config()}, and \textbf{ Save()}.
+
+\index{config::Config@{config::Config}!m\_root@{m\_root}}
+\index{m\_root@{m\_root}!config::Config@{config::Config}}
+\doxysubsubsection{m\_root}
+{\footnotesize\ttfamily \label{classconfig_1_1Config_a36feba931274374a20c442fc15204809} 
+\textbf{ Section} config\+::\+Config\+::m\+\_\+root\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 165} of file \textbf{ config.\+hpp}.
+
+
+
+Referenced by \textbf{ add\+Key\+Internal()}, \textbf{ clear()}, \textbf{ get\+Key()}, \textbf{ get\+Root()}, \textbf{ get\+Root\+\_\+unsafe()}, \textbf{ get\+Section\+\_\+unsafe()}, \textbf{ has\+Key()}, \textbf{ config\+::\+Config\+File\+::load\+Config\+From\+String()}, \textbf{ config\+::\+Config\+File\+::parse()}, \textbf{ config\+::\+Config\+File\+::save\+As()}, and \textbf{ show\+Full\+Tree()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/config/\textbf{ config.\+hpp}\item 
+common/config/\textbf{ config.\+cpp}\end{DoxyCompactItemize}

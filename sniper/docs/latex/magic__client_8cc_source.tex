@@ -1,0 +1,61 @@
+\doxysection{magic\+\_\+client.\+cc}
+\label{magic__client_8cc_source}\index{common/system/magic\_client.cc@{common/system/magic\_client.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}magic\_client.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{static}\ UInt64\ handleMagic(thread\_id\_t\ thread\_id,\ UInt64\ cmd,\ UInt64\ arg0\ =\ 0,\ UInt64\ arg1\ =\ 0)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ Thread\ *thread\ =\ (thread\_id\ ==\ INVALID\_THREAD\_ID)\ ?\ NULL\ :\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id);}
+\DoxyCodeLine{00013\ \ \ \ Core\ *core\ =\ thread\ ==\ NULL\ ?\ NULL\ :\ thread-\/>getCore();}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getMagicServer()-\/>Magic(thread\_id,\ core\ ?\ core-\/>getId()\ :\ INVALID\_CORE\_ID,\ cmd,\ arg0,\ arg1);}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{void}\ setInstrumentationMode(UInt64\ opt)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ handleMagic(INVALID\_THREAD\_ID,\ SIM\_CMD\_INSTRUMENT\_MODE,\ opt);}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ UInt64\ handleMagicInstruction(thread\_id\_t\ thread\_id,\ UInt64\ cmd,\ UInt64\ arg0,\ UInt64\ arg1)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordflow}{switch}(cmd)}
+\DoxyCodeLine{00025\ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_ROI\_TOGGLE:}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_ROI\_START:}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_ROI\_END:}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MHZ\_SET:}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MARKER:}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_NAMED\_MARKER:}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_USER:}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_INSTRUMENT\_MODE:}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MHZ\_GET:}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_SET\_THREAD\_NAME:}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MALLOC:}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ handleMagic(thread\_id,\ cmd,\ arg0,\ arg1);}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_PROC\_ID:}
+\DoxyCodeLine{00039\ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCurrentCore();}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core-\/>getId();}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_THREAD\_ID:}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ thread\_id;}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_NUM\_PROCS:}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_NUM\_THREADS:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadManager()-\/>getNumThreads();}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_IN\_SIMULATOR:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}Encountered\ unknown\ magic\ instruction\ cmd(\%u)"{}},\ cmd);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00054\ \ \ \ \}}
+\DoxyCodeLine{00055\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,113 @@
+\doxysection{core\+\_\+model\+\_\+boom\+\_\+v1.\+cc}
+\label{core__model__boom__v1_8cc_source}\index{common/performance\_model/performance\_models/core\_model/core\_model\_boom\_v1.cc@{common/performance\_model/performance\_models/core\_model/core\_model\_boom\_v1.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core\_model\_boom\_v1.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}interval\_contention\_boom\_v1.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}rob\_contention\_boom\_v1.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op\_boom\_v1.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <decoder.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <riscv\_meta.h>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \#include\ <src/asm/types.h>}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \#include\ <src/asm/meta.h>}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \#include\ <src/asm/codec.h>}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \#include\ <src/asm/switch.h>}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \#include\ <src/asm/strings.h>}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \#include\ <src/asm/host-\/endian.h>}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \#include\ <src/util/fmt.h>}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \#include\ <src/util/util.h>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ using\ namespace\ riscv;}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ instructionLatencies[rv\_op\_last];\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ bypassLatencies[DynamicMicroOpBoomV1::UOP\_BYPASS\_SIZE];}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ CoreModelBoomV1::CoreModelBoomV1()}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{comment}{//\ https://github.com/ucb-\/bar/riscv-\/boom/blob/master/src/main/scala/exu/execute.scala}}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordtype}{int}\ dfmaLatency\ =\ 4;\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordtype}{int}\ imulLatency\ =\ 3;}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ rv\_op\_last\ ;\ i++)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ instructionLatencies[i]\ =\ 1;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (instrlist[i].has\_fpu\ \&\&\ instrlist[i].has\_alu)\ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ instructionLatencies[i]\ =\ dfmaLatency;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (instrlist[i].has\_alu\ \&\&\ instrlist[i].has\_mul)\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ instructionLatencies[i]\ =\ imulLatency;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (instrlist[i].has\_alu)\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ instructionLatencies[i]\ =\ 1;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ instructionLatencies[i]\ =\ 1;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ m\_lll\_cutoff\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/lll\_cutoff"{}});}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelBoomV1::getInstructionLatency(\textcolor{keyword}{const}\ MicroOp\ *uop)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ instruction\_type\ =\ (\textcolor{keywordtype}{unsigned}\ int)\ uop-\/>getInstructionOpcode();}
+\DoxyCodeLine{00054\ \ \ \ LOG\_ASSERT\_ERROR(instruction\_type\ >\ 0\ \&\&\ instruction\_type\ <\ rv\_op\_last,\ \textcolor{stringliteral}{"{}Invalid\ instruction\ type\ \%d"{}},\ instruction\_type);}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{return}\ instructionLatencies[instruction\_type];}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelBoomV1::getAluLatency(\textcolor{keyword}{const}\ MicroOp\ *uop)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getInstructionOpcode())\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_div:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divu:}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divw:}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divuw:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divd:}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_divud:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fdiv\_s:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fdiv\_d:}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ rv\_op\_fdiv\_q:}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 32;\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Latency\ of\ div\ operations\ need\ to\ be\ more\ accurately\ determined}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getInstructionLatency(uop);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//LOG\_PRINT\_ERROR("{}Don't\ know\ the\ ALU\ latency\ for\ this\ MicroOp."{});}}
+\DoxyCodeLine{00074\ \ \ \ \}}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelBoomV1::getBypassLatency(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00078\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keyword}{const}\ DynamicMicroOpBoomV1\ *info\ =\ uop-\/>getCoreSpecificInfo<DynamicMicroOpBoomV1>();}
+\DoxyCodeLine{00080\ \ \ \ DynamicMicroOpBoomV1::uop\_bypass\_t\ bypass\_type\ =\ info-\/>getBypassType();}
+\DoxyCodeLine{00081\ \ \ \ LOG\_ASSERT\_ERROR(bypass\_type\ >=0\ \&\&\ bypass\_type\ <\ DynamicMicroOpBoomV1::UOP\_BYPASS\_SIZE,\ \textcolor{stringliteral}{"{}Invalid\ bypass\ type\ \%d"{}},\ bypass\_type);}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{return}\ bypassLatencies[bypass\_type];}
+\DoxyCodeLine{00083\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ CoreModelBoomV1::getLongestLatency()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00086\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00087\ \ \ \ \textcolor{keywordflow}{return}\ 60;}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ IntervalContention*\ CoreModelBoomV1::createIntervalContentionModel(\textcolor{keyword}{const}\ Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00091\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ IntervalContentionBoomV1(core,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ RobContention*\ CoreModelBoomV1::createRobContentionModel(\textcolor{keyword}{const}\ Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00096\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00097\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ RobContentionBoomV1(core,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00098\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ DynamicMicroOp*\ CoreModelBoomV1::createDynamicMicroOp(Allocator\ *alloc,\ \textcolor{keyword}{const}\ MicroOp\ *uop,\ ComponentPeriod\ period)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00101\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00102\ \ \ \ DynamicMicroOpBoomV1\ *info\ =\ DynamicMicroOp::alloc<DynamicMicroOpBoomV1>(alloc,\ uop,\ \textcolor{keyword}{this},\ period);}
+\DoxyCodeLine{00103\ \ \ \ info-\/>uop\_port\ =\ DynamicMicroOpBoomV1::getPort(uop);}
+\DoxyCodeLine{00104\ \ \ \ info-\/>uop\_bypass\ =\ DynamicMicroOpBoomV1::getBypassType(uop);}
+\DoxyCodeLine{00105\ \ \ \ info-\/>uop\_alu\ =\ DynamicMicroOpBoomV1::getAlu(uop);}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordflow}{return}\ info;}
+\DoxyCodeLine{00107\ \}}
+
+\end{DoxyCode}

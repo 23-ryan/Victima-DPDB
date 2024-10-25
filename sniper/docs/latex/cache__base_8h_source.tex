@@ -1,0 +1,106 @@
+\doxysection{cache\+\_\+base.\+h}
+\label{cache__base_8h_source}\index{common/core/memory\_subsystem/cache/cache\_base.h@{common/core/memory\_subsystem/cache/cache\_base.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_CACHE\_BASE\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_CACHE\_BASE\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }AddressHomeLookup;}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ k\_KILO\ 1024}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ k\_MEGA\ (k\_KILO*k\_KILO)}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ k\_GIGA\ (k\_KILO*k\_MEGA)}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ Generic\ cache\ base\ class;}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ no\ allocate\ specialization,\ no\ cache\ set\ specialization}}
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }CacheBase}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{comment}{//\ types,\ constants}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ access\_t}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ INVALID\_ACCESS\_TYPE,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ MIN\_ACCESS\_TYPE,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ LOAD\ =\ MIN\_ACCESS\_TYPE,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ STORE,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ MAX\_ACCESS\_TYPE\ =\ STORE,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ NUM\_ACCESS\_TYPES\ =\ MAX\_ACCESS\_TYPE\ -\/\ MIN\_ACCESS\_TYPE\ +\ 1}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ cache\_t}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ INVALID\_CACHE\_TYPE,}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ MIN\_CACHE\_TYPE,}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ PR\_L1\_CACHE\ =\ MIN\_CACHE\_TYPE,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ PR\_L2\_CACHE,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ SHARED\_CACHE,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ MAX\_CACHE\_TYPE\ =\ SHARED\_CACHE,}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ NUM\_CACHE\_TYPES\ =\ MAX\_CACHE\_TYPE\ -\/\ MIN\_CACHE\_TYPE\ +\ 1}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ hash\_t}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ INVALID\_HASH\_TYPE,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ HASH\_MASK,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ HASH\_MOD,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ HASH\_RNG1\_MOD,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ HASH\_RNG2\_MOD,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ HASH\_PRIME\_DIS,}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ HASH\_XOR\_MOD,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ HASH\_MER\_MOD,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ ReplacementPolicy}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ ROUND\_ROBIN\ =\ 0,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ LRU,}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ LRU\_QBS,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ NRU,}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ MRU,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ NMRU,}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ PLRU,}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ SRRIP,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ SRRIP\_QBS,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ RANDOM,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ NUM\_REPLACEMENT\_POLICIES}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{comment}{//\ input\ params}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ String\ m\_name;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ UInt64\ m\_cache\_size;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ UInt32\ m\_associativity;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ UInt32\ m\_blocksize;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ CacheBase::hash\_t\ m\_hash;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ UInt32\ m\_num\_sets;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ AddressHomeLookup\ *m\_ahl;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{comment}{//\ computed\ params}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ UInt32\ m\_log\_blocksize;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ UInt32\ m\_log\_num\_sets;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{comment}{//\ constructors/destructors}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ CacheBase(String\ name,\ UInt32\ num\_sets,\ UInt32\ associativity,\ UInt32\ cache\_block\_size,\ CacheBase::hash\_t\ hash,\ AddressHomeLookup\ *ahl\ =\ NULL);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~CacheBase();}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{comment}{//\ utilities}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ splitAddress(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ splitAddressTLB(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index,\ \textcolor{keywordtype}{int}\ page\_size)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ splitAddress(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index,\ UInt32\&\ block\_offset)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ splitAddressTLB(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index,\ UInt32\&\ block\_offset,\ \textcolor{keywordtype}{int}\ page\_size)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ IntPtr\ tagToAddress(\textcolor{keyword}{const}\ IntPtr\ tag);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ IntPtr\ tagToAddressTLB(\textcolor{keyword}{const}\ IntPtr\ tag,\ \textcolor{keywordtype}{int}\ page\_size);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ String\ getName(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ m\_name;\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ UInt32\ getNumSets()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_num\_sets;\ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ UInt32\ getAssociativity()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_associativity;\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keyword}{static}\ hash\_t\ parseAddressHash(String\ hash\_name);}
+\DoxyCodeLine{00098\ \};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_CACHE\_BASE\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

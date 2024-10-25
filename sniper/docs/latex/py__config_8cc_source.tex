@@ -1,0 +1,103 @@
+\doxysection{py\+\_\+config.\+cc}
+\label{py__config_8cc_source}\index{common/scripting/py\_config.cc@{common/scripting/py\_config.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00006\ getConfigString(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *key\ =\ NULL;}
+\DoxyCodeLine{00009\ \ \ \ SInt32\ index\ =\ -\/1;}
+\DoxyCodeLine{00010\ \ \ \ String\ result\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}s|i"{}},\ \&key,\ \&index))}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keywordflow}{if}\ (index\ !=\ -\/1)}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getStringArray(key,\ index);}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getString(key);}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{return}\ PyString\_FromString(result.c\_str());}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00024\ getConfigInt(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *key\ =\ NULL;}
+\DoxyCodeLine{00027\ \ \ \ SInt32\ index\ =\ -\/1;}
+\DoxyCodeLine{00028\ \ \ \ SInt64\ result\ =\ 0;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}s|i"{}},\ \&key,\ \&index))}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ (index\ !=\ -\/1)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getIntArray(key,\ index);}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getInt(key);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{return}\ PyLong\_FromLongLong(result);}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00042\ getConfigFloat(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *key\ =\ NULL;}
+\DoxyCodeLine{00045\ \ \ \ SInt32\ index\ =\ -\/1;}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordtype}{double}\ result\ =\ 0;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}s|i"{}},\ \&key,\ \&index))}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keywordflow}{if}\ (index\ !=\ -\/1)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getFloatArray(key,\ index);}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getFloat(key);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{return}\ PyFloat\_FromDouble(result);}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00060\ getConfigBool(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *key\ =\ NULL;}
+\DoxyCodeLine{00063\ \ \ \ SInt32\ index\ =\ -\/1;}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keywordtype}{bool}\ result\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}s|i"{}},\ \&key,\ \&index))}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{if}\ (index\ !=\ -\/1)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getBoolArray(key,\ index);}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ result\ =\ Sim()-\/>getCfg()-\/>getBool(key);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{return}\ PyBool\_FromLong(result);}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{static}\ PyMethodDef\ PyConfigMethods[]\ =\ \{}
+\DoxyCodeLine{00079\ \ \ \ \{\textcolor{stringliteral}{"{}get"{}},\ \ getConfigString,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ configuration\ variable."{}}\},}
+\DoxyCodeLine{00080\ \ \ \ \{\textcolor{stringliteral}{"{}get\_int"{}},\ \ getConfigInt,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ configuration\ variable."{}}\},}
+\DoxyCodeLine{00081\ \ \ \ \{\textcolor{stringliteral}{"{}get\_float"{}},\ \ getConfigFloat,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ configuration\ variable."{}}\},}
+\DoxyCodeLine{00082\ \ \ \ \{\textcolor{stringliteral}{"{}get\_bool"{}},\ \ getConfigBool,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ configuration\ variable."{}}\},}
+\DoxyCodeLine{00083\ \ \ \ \{NULL,\ NULL,\ 0,\ NULL\}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00084\ \};}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keywordtype}{void}\ HooksPy::PyConfig::setup(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \ PyObject\ *pModule\ =\ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_config"{}},\ PyConfigMethods);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ PyObject\ *pOutputdir\ =\ PyString\_FromString(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}"{}}).c\_str());}
+\DoxyCodeLine{00091\ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}output\_dir"{}},\ pOutputdir);}
+\DoxyCodeLine{00092\ \ \ \ Py\_DECREF(pOutputdir);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ PyObject\ *pNcores\ =\ PyInt\_FromLong(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00095\ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}ncores"{}},\ pNcores);}
+\DoxyCodeLine{00096\ \ \ \ Py\_DECREF(pNcores);}
+\DoxyCodeLine{00097\ \}}
+
+\end{DoxyCode}

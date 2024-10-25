@@ -1,0 +1,103 @@
+\doxysection{py\+\_\+control.\+cc}
+\label{py__control_8cc_source}\index{common/scripting/py\_control.cc@{common/scripting/py\_control.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00007\ setROI(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keywordtype}{bool}\ inRoi\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}b"{}},\ \&inRoi))}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ Sim()-\/>getMagicServer()-\/>setPerformance(inRoi);}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00017\ \}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00020\ setInstrumentationMode(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ mode\ =\ 999;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}l"{}},\ \&mode))}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{switch}\ (mode)}
+\DoxyCodeLine{00028\ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_OPT\_INSTRUMENT\_DETAILED:}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_OPT\_INSTRUMENT\_WARMUP:}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_OPT\_INSTRUMENT\_FASTFORWARD:}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ Sim()-\/>getMagicServer()-\/>Magic\_unlocked(INVALID\_CORE\_ID,\ INVALID\_THREAD\_ID,\ SIM\_CMD\_INSTRUMENT\_MODE,\ mode,\ 0);}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unexpected\ instrumentation\ mode\ from\ python:\ \%lx."{}},\ mode);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00037\ \ \ \ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00043\ setProgress(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordtype}{float}\ progress\ =\ 0;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}f"{}},\ \&progress))}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ Sim()-\/>getMagicServer()-\/>setProgress(progress);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00056\ simulatorAbort(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{comment}{//\ Exit\ now,\ cleaning\ up\ as\ best\ as\ possible}}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{comment}{//\ For\ benchmarks\ where,\ after\ ROI,\ functionally\ simulating\ until\ the\ end\ takes\ too\ long.}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{comment}{//\ If\ we're\ still\ in\ ROI,\ make\ sure\ we\ end\ it\ properly}}
+\DoxyCodeLine{00062\ \ \ \ Sim()-\/>getMagicServer()-\/>setPerformance(\textcolor{keyword}{false});}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Application\ exit."{}});}
+\DoxyCodeLine{00065\ \ \ \ Simulator::release();}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ exit(0);}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{static}\ PyMethodDef\ PyControlMethods[]\ =\ \{}
+\DoxyCodeLine{00071\ \ \ \ \{\ \textcolor{stringliteral}{"{}set\_roi"{}},\ setROI,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Set\ whether\ or\ not\ we\ are\ in\ the\ ROI"{}}\ \},}
+\DoxyCodeLine{00072\ \ \ \ \{\ \textcolor{stringliteral}{"{}set\_instrumentation\_mode"{}},\ setInstrumentationMode,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Set\ instrumentation\ mode"{}}\ \},}
+\DoxyCodeLine{00073\ \ \ \ \{\ \textcolor{stringliteral}{"{}set\_progress"{}},\ setProgress,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Set\ simulation\ progress\ indicator\ (0..1)"{}}\ \},}
+\DoxyCodeLine{00074\ \ \ \ \{\ \textcolor{stringliteral}{"{}abort"{}},\ simulatorAbort,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Stop\ simulation\ now"{}}\ \},}
+\DoxyCodeLine{00075\ \ \ \ \{\ NULL,\ NULL,\ 0,\ NULL\ \}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keywordtype}{void}\ HooksPy::PyControl::setup(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00079\ \{}
+\DoxyCodeLine{00080\ \ \ \ PyObject\ *pModule\ =\ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_control"{}},\ PyControlMethods);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ PyObject\ *pGlobalConst\ =\ PyInt\_FromLong(SIM\_OPT\_INSTRUMENT\_DETAILED);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}DETAILED"{}},\ pGlobalConst);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ Py\_DECREF(pGlobalConst);}
+\DoxyCodeLine{00086\ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ PyObject\ *pGlobalConst\ =\ PyInt\_FromLong(SIM\_OPT\_INSTRUMENT\_WARMUP);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}WARMUP"{}},\ pGlobalConst);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ Py\_DECREF(pGlobalConst);}
+\DoxyCodeLine{00091\ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ PyObject\ *pGlobalConst\ =\ PyInt\_FromLong(SIM\_OPT\_INSTRUMENT\_FASTFORWARD);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}FASTFORWARD"{}},\ pGlobalConst);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ Py\_DECREF(pGlobalConst);}
+\DoxyCodeLine{00096\ \ \ \ \}}
+\DoxyCodeLine{00097\ \}}
+
+\end{DoxyCode}

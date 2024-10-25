@@ -1,0 +1,59 @@
+\doxysection{hooks\+\_\+manager\+\_\+init.\+cc}
+\label{hooks__manager__init_8cc_source}\index{common/system/hooks\_manager\_init.cc@{common/system/hooks\_manager\_init.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fixed\_point.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ Example\ live-\/analysis\ code:\ print\ out\ the\ IPC\ for\ core\ 0}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{void}\ hook\_print\_core0\_ipc(\textcolor{keywordtype}{void}*,\ subsecond\_time\_t\ \_time)}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ SubsecondTime\ time(\_time);}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{static}\ StatsMetricBase\ *s\_time\ =\ NULL;}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keyword}{static}\ UInt64\ l\_time\ =\ 0;}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{static}\ StatsMetricBase\ *s\_instructions\ =\ NULL;}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{static}\ UInt64\ l\_instructions\ =\ 0;}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ ComponentPeriod\ *clock\ =\ NULL;}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{if}\ (!s\_time)\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ s\_time\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(\textcolor{stringliteral}{"{}performance\_model"{}},\ 0,\ \textcolor{stringliteral}{"{}elapsed\_time"{}});}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ s\_instructions\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(\textcolor{stringliteral}{"{}performance\_model"{}},\ 0,\ \textcolor{stringliteral}{"{}instruction\_count"{}});}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ clock\ =\ Sim()-\/>getDvfsManager()-\/>getCoreDomain(0);}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(s\_time\ \&\&\ s\_instructions\ \&\&\ clock,\ \textcolor{stringliteral}{"{}Could\ not\ find\ stats\ /\ dvfs\ domain\ for\ core\ 0"{}});}
+\DoxyCodeLine{00028\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ UInt64\ d\_instructions\ =\ s\_instructions-\/>recordMetric()\ -\/\ l\_instructions;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ UInt64\ d\_time\ =\ s\_time-\/>recordMetric()\ -\/\ l\_time;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ UInt64\ d\_cycles\ =\ SubsecondTime::divideRounded(SubsecondTime::FS(d\_time),\ *clock);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (d\_cycles)\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ FixedPoint\ ipc\ =\ FixedPoint(d\_instructions)\ /\ d\_cycles;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}t\ =\ \%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ ns,\ ipKc\ =\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}},\ time.getNS(),\ FixedPoint::floor(ipc\ *\ 1000));}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00036\ \ \ \ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ l\_time\ =\ s\_time-\/>recordMetric();}
+\DoxyCodeLine{00039\ \ \ \ l\_instructions\ =\ s\_instructions-\/>recordMetric();}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ Handy\ place\ to\ instantiate\ all\ classes\ that\ need\ to\ register\ hooks\ but\ are\ otherwise\ unconnected\ to\ the\ basic\ simulator}}
+\DoxyCodeLine{00044\ \textcolor{keywordtype}{void}\ HooksManager::init(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ HooksPy::init();}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//registerHook(HookType::HOOK\_PERIODIC,\ (HookCallbackFunc)hook\_print\_core0\_ipc,\ NULL);}}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ HooksManager::fini(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ HooksPy::fini();}
+\DoxyCodeLine{00053\ \}}
+
+\end{DoxyCode}

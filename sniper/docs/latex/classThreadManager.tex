@@ -1,0 +1,993 @@
+\doxysection{Thread\+Manager Class Reference}
+\label{classThreadManager}\index{ThreadManager@{ThreadManager}}
+
+
+{\ttfamily \#include $<$thread\+\_\+manager.\+h$>$}
+
+
+
+Collaboration diagram for Thread\+Manager\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=260pt]{classThreadManager__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ Thread\+Spawn\+Request}
+\item 
+struct \textbf{ Thread\+State}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ stall\+\_\+type\+\_\+t} \{ \newline
+\textbf{ STALL\+\_\+\+UNSCHEDULED}
+, \textbf{ STALL\+\_\+\+BROKEN}
+, \textbf{ STALL\+\_\+\+JOIN}
+, \textbf{ STALL\+\_\+\+MUTEX}
+, \newline
+\textbf{ STALL\+\_\+\+COND}
+, \textbf{ STALL\+\_\+\+BARRIER}
+, \textbf{ STALL\+\_\+\+FUTEX}
+, \textbf{ STALL\+\_\+\+PAUSE}
+, \newline
+\textbf{ STALL\+\_\+\+SLEEP}
+, \textbf{ STALL\+\_\+\+SYSCALL}
+, \textbf{ STALL\+\_\+\+TYPES\+\_\+\+MAX}
+ \}
+\item 
+typedef void $\ast$($\ast$) \textbf{ thread\+\_\+func\+\_\+t}(void $\ast$)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Thread\+Manager} ()
+\item 
+\textbf{ $\sim$\+Thread\+Manager} ()
+\item 
+\textbf{ Lock} \& \textbf{ get\+Lock} ()
+\item 
+\textbf{ Scheduler} $\ast$ \textbf{ get\+Scheduler} () const
+\item 
+\textbf{ Thread} $\ast$ \textbf{ create\+Thread} (\textbf{ app\+\_\+id\+\_\+t} app\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} creator\+\_\+thread\+\_\+id)
+\item 
+\textbf{ Thread} $\ast$ \textbf{ get\+Thread\+From\+ID} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+\textbf{ Thread} $\ast$ \textbf{ get\+Current\+Thread} (int thread\+Index=-\/1)
+\item 
+\textbf{ UInt64} \textbf{ get\+Num\+Threads} () const
+\item 
+\textbf{ Core\+::\+State} \textbf{ get\+Thread\+State} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id) const
+\item 
+\textbf{ stall\+\_\+type\+\_\+t} \textbf{ get\+Thread\+Stall\+Reason} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id) const
+\item 
+\textbf{ Thread} $\ast$ \textbf{ find\+Thread\+By\+Tid} (pid\+\_\+t tid)
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ spawn\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ app\+\_\+id\+\_\+t} app\+\_\+id)
+\item 
+void \textbf{ join\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} join\+\_\+thread\+\_\+id)
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ get\+Thread\+To\+Spawn} (\textbf{ Subsecond\+Time} \&time)
+\item 
+void \textbf{ wait\+For\+Thread\+Start} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} wait\+\_\+thread\+\_\+id)
+\item 
+void \textbf{ on\+Thread\+Start} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ on\+Thread\+Exit} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ stall\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ stall\+\_\+type\+\_\+t} reason, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ stall\+Thread\+\_\+async} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ stall\+\_\+type\+\_\+t} reason, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ resume\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id\+\_\+by, \textbf{ Subsecond\+Time} time, void $\ast$msg=NULL)
+\item 
+void \textbf{ resume\+Thread\+\_\+async} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id\+\_\+by, \textbf{ Subsecond\+Time} time, void $\ast$msg=NULL)
+\item 
+bool \textbf{ is\+Thread\+Running} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+bool \textbf{ is\+Thread\+Initializing} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+bool \textbf{ any\+Thread\+Running} ()
+\item 
+void \textbf{ move\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ Subsecond\+Time} time)
+\item 
+bool \textbf{ are\+All\+Cores\+Running} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const char $\ast$ \textbf{ stall\+\_\+type\+\_\+names} [$\,$]
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Thread} $\ast$ \textbf{ create\+Thread\+\_\+unlocked} (\textbf{ app\+\_\+id\+\_\+t} app\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} creator\+\_\+thread\+\_\+id)
+\item 
+void \textbf{ wake\+Up\+Waiter} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+thread\+\_\+lock}
+\item 
+std\+::vector$<$ \textbf{ Thread\+State} $>$ \textbf{ m\+\_\+thread\+\_\+state}
+\item 
+std\+::queue$<$ \textbf{ Thread\+Spawn\+Request} $>$ \textbf{ m\+\_\+thread\+\_\+spawn\+\_\+list}
+\item 
+std\+::vector$<$ \textbf{ Thread} $\ast$ $>$ \textbf{ m\+\_\+threads}
+\item 
+\textbf{ TLS} $\ast$ \textbf{ m\+\_\+thread\+\_\+tls}
+\item 
+\textbf{ Scheduler} $\ast$ \textbf{ m\+\_\+scheduler}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 17} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{ThreadManager@{ThreadManager}!thread\_func\_t@{thread\_func\_t}}
+\index{thread\_func\_t@{thread\_func\_t}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{thread\_func\_t}
+{\footnotesize\ttfamily \label{classThreadManager_a139dfadd20c1fed526f7ce28b001b8ca} 
+void $\ast$($\ast$) Thread\+Manager\+::thread\+\_\+func\+\_\+t(void $\ast$)}
+
+
+
+Definition at line \textbf{ 20} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{ThreadManager@{ThreadManager}!stall\_type\_t@{stall\_type\_t}}
+\index{stall\_type\_t@{stall\_type\_t}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{stall\_type\_t}
+{\footnotesize\ttfamily \label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+enum \textbf{ Thread\+Manager\+::stall\+\_\+type\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_UNSCHEDULED@{STALL\_UNSCHEDULED}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_UNSCHEDULED@{STALL\_UNSCHEDULED}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+UNSCHEDULED&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_BROKEN@{STALL\_BROKEN}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_BROKEN@{STALL\_BROKEN}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+BROKEN&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_JOIN@{STALL\_JOIN}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_JOIN@{STALL\_JOIN}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+JOIN&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_MUTEX@{STALL\_MUTEX}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_MUTEX@{STALL\_MUTEX}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+MUTEX&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_COND@{STALL\_COND}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_COND@{STALL\_COND}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+COND&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_BARRIER@{STALL\_BARRIER}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_BARRIER@{STALL\_BARRIER}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+BARRIER&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_FUTEX@{STALL\_FUTEX}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_FUTEX@{STALL\_FUTEX}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+FUTEX&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_PAUSE@{STALL\_PAUSE}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_PAUSE@{STALL\_PAUSE}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+PAUSE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_SLEEP@{STALL\_SLEEP}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_SLEEP@{STALL\_SLEEP}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+SLEEP&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_SYSCALL@{STALL\_SYSCALL}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_SYSCALL@{STALL\_SYSCALL}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+SYSCALL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALL\_TYPES\_MAX@{STALL\_TYPES\_MAX}!ThreadManager@{ThreadManager}}\index{ThreadManager@{ThreadManager}!STALL\_TYPES\_MAX@{STALL\_TYPES\_MAX}}}\label{classThreadManager_a15a984536435737a874b081fe8f41258} 
+STALL\+\_\+\+TYPES\+\_\+\+MAX&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 22} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{ThreadManager@{ThreadManager}!ThreadManager@{ThreadManager}}
+\index{ThreadManager@{ThreadManager}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{ThreadManager()}
+{\footnotesize\ttfamily \label{classThreadManager_a613b13ebf45502e4d86c2f9317ec5871} 
+Thread\+Manager\+::\+Thread\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+\index{ThreadManager@{ThreadManager}!````~ThreadManager@{$\sim$ThreadManager}}
+\index{````~ThreadManager@{$\sim$ThreadManager}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{$\sim$ThreadManager()}
+{\footnotesize\ttfamily \label{classThreadManager_a18eb12d3d752075318c3672c8efffd5b} 
+Thread\+Manager\+::$\sim$\+Thread\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Core\+::\+IDLE}, \textbf{ m\+\_\+scheduler}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ m\+\_\+thread\+\_\+tls}, and \textbf{ m\+\_\+threads}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{ThreadManager@{ThreadManager}!anyThreadRunning@{anyThreadRunning}}
+\index{anyThreadRunning@{anyThreadRunning}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{anyThreadRunning()}
+{\footnotesize\ttfamily \label{classThreadManager_a794cc8f5279409f855b455be345a2d9f} 
+bool Thread\+Manager\+::any\+Thread\+Running (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 396} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ get\+Num\+Threads()}, \textbf{ is\+Thread\+Initializing()}, and \textbf{ is\+Thread\+Running()}.
+
+
+
+Referenced by \textbf{ stall\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a794cc8f5279409f855b455be345a2d9f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a794cc8f5279409f855b455be345a2d9f_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!areAllCoresRunning@{areAllCoresRunning}}
+\index{areAllCoresRunning@{areAllCoresRunning}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{areAllCoresRunning()}
+{\footnotesize\ttfamily \label{classThreadManager_a1f106958da441412e309e4f20b8ef3d0} 
+bool Thread\+Manager\+::are\+All\+Cores\+Running (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 275} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Core\+::\+IDLE}, and \textbf{ m\+\_\+thread\+\_\+state}.
+
+\index{ThreadManager@{ThreadManager}!createThread@{createThread}}
+\index{createThread@{createThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{createThread()}
+{\footnotesize\ttfamily \label{classThreadManager_aba3c9dbfe6de1ccedebbed3c0ae07286} 
+\textbf{ Thread} $\ast$ Thread\+Manager\+::create\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{creator\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ create\+Thread\+\_\+unlocked()}, and \textbf{ m\+\_\+thread\+\_\+lock}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_aba3c9dbfe6de1ccedebbed3c0ae07286_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!createThread\_unlocked@{createThread\_unlocked}}
+\index{createThread\_unlocked@{createThread\_unlocked}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{createThread\_unlocked()}
+{\footnotesize\ttfamily \label{classThreadManager_ad567c5f16e42a2c1331486bae93aaa0b} 
+\textbf{ Thread} $\ast$ Thread\+Manager\+::create\+Thread\+\_\+unlocked (\begin{DoxyParamCaption}\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{creator\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 74} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CLOG}, \textbf{ Stats\+Manager\+::\+EVENT\+\_\+\+THREAD\+\_\+\+CREATE}, \textbf{ Thread\+::get\+Id()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+CREATE}, \textbf{ Core\+::\+INITIALIZING}, \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ m\+\_\+scheduler}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Thread\+::set\+Core()}, \textbf{ Core\+::set\+State()}, and \textbf{ Scheduler\+::thread\+Create()}.
+
+
+
+Referenced by \textbf{ create\+Thread()}, and \textbf{ spawn\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_ad567c5f16e42a2c1331486bae93aaa0b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_ad567c5f16e42a2c1331486bae93aaa0b_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!findThreadByTid@{findThreadByTid}}
+\index{findThreadByTid@{findThreadByTid}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{findThreadByTid()}
+{\footnotesize\ttfamily \label{classThreadManager_af242e94e79eaa0ad140982f770b0b0f9} 
+\textbf{ Thread} $\ast$ Thread\+Manager\+::find\+Thread\+By\+Tid (\begin{DoxyParamCaption}\item[{pid\+\_\+t}]{tid}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 58} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+threads}.
+
+\index{ThreadManager@{ThreadManager}!getCurrentThread@{getCurrentThread}}
+\index{getCurrentThread@{getCurrentThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getCurrentThread()}
+{\footnotesize\ttfamily \label{classThreadManager_a0afb021232208e15d63305ab20d857dc} 
+\textbf{ Thread} $\ast$ Thread\+Manager\+::get\+Current\+Thread (\begin{DoxyParamCaption}\item[{int}]{thread\+Index}{ = {\ttfamily -\/1}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ TLS\+::get\+Ptr()}, and \textbf{ m\+\_\+thread\+\_\+tls}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a0afb021232208e15d63305ab20d857dc_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!getLock@{getLock}}
+\index{getLock@{getLock}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getLock()}
+{\footnotesize\ttfamily \label{classThreadManager_a90dbe3b9e8a9ba4c8006df67d09e7cd0} 
+\textbf{ Lock} \& Thread\+Manager\+::get\+Lock (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+lock}.
+
+
+
+Referenced by \textbf{ get\+Thread\+To\+Spawn()}, \textbf{ join\+Thread()}, \textbf{ spawn\+Thread()}, and \textbf{ wait\+For\+Thread\+Start()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a90dbe3b9e8a9ba4c8006df67d09e7cd0_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!getNumThreads@{getNumThreads}}
+\index{getNumThreads@{getNumThreads}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getNumThreads()}
+{\footnotesize\ttfamily \label{classThreadManager_a4727b1686a869d0a97f5dcd2772f5a79} 
+\textbf{ UInt64} Thread\+Manager\+::get\+Num\+Threads (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+threads}.
+
+
+
+Referenced by \textbf{ any\+Thread\+Running()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a4727b1686a869d0a97f5dcd2772f5a79_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!getScheduler@{getScheduler}}
+\index{getScheduler@{getScheduler}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getScheduler()}
+{\footnotesize\ttfamily \label{classThreadManager_ad9e3afd5adb56947ba595cecc3a3f88e} 
+\textbf{ Scheduler} $\ast$ Thread\+Manager\+::get\+Scheduler (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+scheduler}.
+
+\index{ThreadManager@{ThreadManager}!getThreadFromID@{getThreadFromID}}
+\index{getThreadFromID@{getThreadFromID}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getThreadFromID()}
+{\footnotesize\ttfamily \label{classThreadManager_ad6047d66f792595ff98546138c595ab6} 
+\textbf{ Thread} $\ast$ Thread\+Manager\+::get\+Thread\+From\+ID (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ m\+\_\+threads}.
+
+
+
+Referenced by \textbf{ join\+Thread()}, \textbf{ move\+Thread()}, \textbf{ on\+Thread\+Exit()}, \textbf{ on\+Thread\+Start()}, \textbf{ resume\+Thread()}, \textbf{ spawn\+Thread()}, \textbf{ stall\+Thread()}, and \textbf{ wait\+For\+Thread\+Start()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_ad6047d66f792595ff98546138c595ab6_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!getThreadStallReason@{getThreadStallReason}}
+\index{getThreadStallReason@{getThreadStallReason}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getThreadStallReason()}
+{\footnotesize\ttfamily \label{classThreadManager_af5be395011e1007c2dba4dfb763376b1} 
+\textbf{ stall\+\_\+type\+\_\+t} Thread\+Manager\+::get\+Thread\+Stall\+Reason (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+state}.
+
+\index{ThreadManager@{ThreadManager}!getThreadState@{getThreadState}}
+\index{getThreadState@{getThreadState}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getThreadState()}
+{\footnotesize\ttfamily \label{classThreadManager_ac082ca8601be003bd40b7597af777984} 
+\textbf{ Core\+::\+State} Thread\+Manager\+::get\+Thread\+State (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+state}.
+
+
+
+Referenced by \textbf{ move\+Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_ac082ca8601be003bd40b7597af777984_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!getThreadToSpawn@{getThreadToSpawn}}
+\index{getThreadToSpawn@{getThreadToSpawn}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{getThreadToSpawn()}
+{\footnotesize\ttfamily \label{classThreadManager_ab068206564de0d0a42b24c541fec7e31} 
+\textbf{ thread\+\_\+id\+\_\+t} Thread\+Manager\+::get\+Thread\+To\+Spawn (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time} \&}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 213} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ get\+Lock()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+thread\+\_\+spawn\+\_\+list}, \textbf{ Thread\+Manager\+::\+Thread\+Spawn\+Request\+::thread\+\_\+id}, and \textbf{ Thread\+Manager\+::\+Thread\+Spawn\+Request\+::time}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=335pt]{classThreadManager_ab068206564de0d0a42b24c541fec7e31_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!isThreadInitializing@{isThreadInitializing}}
+\index{isThreadInitializing@{isThreadInitializing}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{isThreadInitializing()}
+{\footnotesize\ttfamily \label{classThreadManager_a517a905bc24097468602dcfd08300282} 
+bool Thread\+Manager\+::is\+Thread\+Initializing (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 391} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Core\+::\+INITIALIZING}, and \textbf{ m\+\_\+thread\+\_\+state}.
+
+
+
+Referenced by \textbf{ any\+Thread\+Running()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a517a905bc24097468602dcfd08300282_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!isThreadRunning@{isThreadRunning}}
+\index{isThreadRunning@{isThreadRunning}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{isThreadRunning()}
+{\footnotesize\ttfamily \label{classThreadManager_a88eeee26992a7b5a86df4776717b9381} 
+bool Thread\+Manager\+::is\+Thread\+Running (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 386} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+state}, and \textbf{ Core\+::\+RUNNING}.
+
+
+
+Referenced by \textbf{ any\+Thread\+Running()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a88eeee26992a7b5a86df4776717b9381_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!joinThread@{joinThread}}
+\index{joinThread@{joinThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{joinThread()}
+{\footnotesize\ttfamily \label{classThreadManager_aab9a81d0ec1b4341e3bab8b500a733bf} 
+void Thread\+Manager\+::join\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{join\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 291} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ get\+Lock()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ Core\+::\+IDLE}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ Sync\+Instruction\+::\+JOIN}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Thread\+::reschedule()}, \textbf{ STALL\+\_\+\+JOIN}, and \textbf{ stall\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_aab9a81d0ec1b4341e3bab8b500a733bf_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!moveThread@{moveThread}}
+\index{moveThread@{moveThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{moveThread()}
+{\footnotesize\ttfamily \label{classThreadManager_a327ff89a383ba57fda064144837149d5} 
+void Thread\+Manager\+::move\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 241} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CLOG}, \textbf{ Thread\+::get\+Core()}, \textbf{ Core\+::get\+Id()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ get\+Thread\+State()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+MIGRATE}, \textbf{ Core\+::\+IDLE}, \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ resume\+Thread()}, \textbf{ Core\+::\+RUNNING}, \textbf{ Thread\+::set\+Core()}, \textbf{ Core\+::set\+State()}, \textbf{ STALL\+\_\+\+UNSCHEDULED}, and \textbf{ Core\+::\+STALLED}.
+
+
+
+Referenced by \textbf{ Scheduler\+Dynamic\+::move\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a327ff89a383ba57fda064144837149d5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a327ff89a383ba57fda064144837149d5_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!onThreadExit@{onThreadExit}}
+\index{onThreadExit@{onThreadExit}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{onThreadExit()}
+{\footnotesize\ttfamily \label{classThreadManager_a271962274992a0da40c6ef9502bbda41} 
+void Thread\+Manager\+::on\+Thread\+Exit (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 148} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Thread\+::clear\+\_\+tid}, \textbf{ CLOG}, \textbf{ Stats\+Manager\+::\+EVENT\+\_\+\+THREAD\+\_\+\+EXIT}, \textbf{ FUTEX\+\_\+\+BITSET\+\_\+\+MATCH\+\_\+\+ANY}, \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+EXIT}, \textbf{ Core\+::\+IDLE}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Thread\+::m\+\_\+os\+\_\+info}, \textbf{ m\+\_\+thread\+\_\+lock}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ m\+\_\+thread\+\_\+tls}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Core\+::\+NONE}, \textbf{ Core\+::\+RUNNING}, \textbf{ TLS\+::set()}, \textbf{ Thread\+::set\+Core()}, \textbf{ Core\+::set\+State()}, \textbf{ Thread\+::tid\+\_\+ptr}, \textbf{ uint32\+\_\+t}, \textbf{ Thread\+::update\+Core\+TLS()}, \textbf{ wake\+Up\+Waiter()}, and \textbf{ Core\+::\+WRITE}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a271962274992a0da40c6ef9502bbda41_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!onThreadStart@{onThreadStart}}
+\index{onThreadStart@{onThreadStart}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{onThreadStart()}
+{\footnotesize\ttfamily \label{classThreadManager_a8a2dd9c74c79a2464417cdcfe599a2fb} 
+void Thread\+Manager\+::on\+Thread\+Start (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 99} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CLOG}, \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+MIGRATE}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+START}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+thread\+\_\+lock}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ m\+\_\+thread\+\_\+tls}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Core\+::\+RUNNING}, \textbf{ TLS\+::set()}, \textbf{ Core\+::set\+State()}, \textbf{ Thread\+::signal()}, \textbf{ STALL\+\_\+\+UNSCHEDULED}, \textbf{ Core\+::\+STALLED}, and \textbf{ Thread\+::update\+Core\+TLS()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a8a2dd9c74c79a2464417cdcfe599a2fb_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!resumeThread@{resumeThread}}
+\index{resumeThread@{resumeThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{resumeThread()}
+{\footnotesize\ttfamily \label{classThreadManager_a644c2b9e25d67ead605ad9ceffebb04c} 
+void Thread\+Manager\+::resume\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id\+\_\+by}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{void $\ast$}]{msg}{ = {\ttfamily NULL}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 378} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ get\+Thread\+From\+ID()}, \textbf{ resume\+Thread\+\_\+async()}, and \textbf{ Thread\+::signal()}.
+
+
+
+Referenced by \textbf{ move\+Thread()}, and \textbf{ wake\+Up\+Waiter()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a644c2b9e25d67ead605ad9ceffebb04c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a644c2b9e25d67ead605ad9ceffebb04c_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!resumeThread\_async@{resumeThread\_async}}
+\index{resumeThread\_async@{resumeThread\_async}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{resumeThread\_async()}
+{\footnotesize\ttfamily \label{classThreadManager_a64812a3b4f063213359b65ae3b0f43ba} 
+void Thread\+Manager\+::resume\+Thread\+\_\+async (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id\+\_\+by}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{void $\ast$}]{msg}{ = {\ttfamily NULL}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 368} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CLOG}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+RESUME}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+thread\+\_\+state}, and \textbf{ Core\+::\+RUNNING}.
+
+
+
+Referenced by \textbf{ resume\+Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a64812a3b4f063213359b65ae3b0f43ba_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!spawnThread@{spawnThread}}
+\index{spawnThread@{spawnThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{spawnThread()}
+{\footnotesize\ttfamily \label{classThreadManager_a8a6114e7fe62c4606a9f3eb5b09cf2de} 
+\textbf{ thread\+\_\+id\+\_\+t} Thread\+Manager\+::spawn\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 190} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ create\+Thread\+\_\+unlocked()}, \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Thread\+::get\+Id()}, \textbf{ get\+Lock()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+thread\+\_\+spawn\+\_\+list}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a8a6114e7fe62c4606a9f3eb5b09cf2de_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!stallThread@{stallThread}}
+\index{stallThread@{stallThread}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{stallThread()}
+{\footnotesize\ttfamily \label{classThreadManager_a19f11bba815da7e1113b6c0fa0d792b8} 
+\textbf{ Subsecond\+Time} Thread\+Manager\+::stall\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ stall\+\_\+type\+\_\+t}}]{reason}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 350} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ any\+Thread\+Running()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ Thread\+::get\+Wakeup\+Time()}, \textbf{ m\+\_\+thread\+\_\+lock}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ Core\+::\+RUNNING}, \textbf{ stall\+Thread\+\_\+async()}, and \textbf{ Thread\+::wait()}.
+
+
+
+Referenced by \textbf{ join\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a19f11bba815da7e1113b6c0fa0d792b8_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=349pt]{classThreadManager_a19f11bba815da7e1113b6c0fa0d792b8_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!stallThread\_async@{stallThread\_async}}
+\index{stallThread\_async@{stallThread\_async}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{stallThread\_async()}
+{\footnotesize\ttfamily \label{classThreadManager_ab3d7e3df221c6a9ccd928736f6886b8f} 
+void Thread\+Manager\+::stall\+Thread\+\_\+async (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ stall\+\_\+type\+\_\+t}}]{reason}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 339} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CLOG}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+STALL}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+thread\+\_\+state}, \textbf{ stall\+\_\+type\+\_\+names}, and \textbf{ Core\+::\+STALLED}.
+
+
+
+Referenced by \textbf{ stall\+Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_ab3d7e3df221c6a9ccd928736f6886b8f_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!waitForThreadStart@{waitForThreadStart}}
+\index{waitForThreadStart@{waitForThreadStart}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{waitForThreadStart()}
+{\footnotesize\ttfamily \label{classThreadManager_acdc27845f9449b70e1401e5599f38e4e} 
+void Thread\+Manager\+::wait\+For\+Thread\+Start (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{wait\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 226} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ get\+Lock()}, \textbf{ get\+Thread\+From\+ID()}, \textbf{ Core\+::\+INITIALIZING}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+thread\+\_\+state}, and \textbf{ Thread\+::wait()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_acdc27845f9449b70e1401e5599f38e4e_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadManager@{ThreadManager}!wakeUpWaiter@{wakeUpWaiter}}
+\index{wakeUpWaiter@{wakeUpWaiter}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{wakeUpWaiter()}
+{\footnotesize\ttfamily \label{classThreadManager_a5611049c6493a723509c94351a66d7ab} 
+void Thread\+Manager\+::wake\+Up\+Waiter (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 325} of file \textbf{ thread\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ itostr()}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+thread\+\_\+state}, and \textbf{ resume\+Thread()}.
+
+
+
+Referenced by \textbf{ on\+Thread\+Exit()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a5611049c6493a723509c94351a66d7ab_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadManager_a5611049c6493a723509c94351a66d7ab_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{ThreadManager@{ThreadManager}!m\_scheduler@{m\_scheduler}}
+\index{m\_scheduler@{m\_scheduler}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{m\_scheduler}
+{\footnotesize\ttfamily \label{classThreadManager_a2231c3de54689a611479b1c7cd5ef368} 
+\textbf{ Scheduler}$\ast$ Thread\+Manager\+::m\+\_\+scheduler\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ create\+Thread\+\_\+unlocked()}, \textbf{ get\+Scheduler()}, and \textbf{ $\sim$\+Thread\+Manager()}.
+
+\index{ThreadManager@{ThreadManager}!m\_thread\_lock@{m\_thread\_lock}}
+\index{m\_thread\_lock@{m\_thread\_lock}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{m\_thread\_lock}
+{\footnotesize\ttfamily \label{classThreadManager_a5625f8e8e949aa6dc79593bc96b78ce8} 
+\textbf{ Lock} Thread\+Manager\+::m\+\_\+thread\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 94} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ create\+Thread()}, \textbf{ get\+Lock()}, \textbf{ on\+Thread\+Exit()}, \textbf{ on\+Thread\+Start()}, and \textbf{ stall\+Thread()}.
+
+\index{ThreadManager@{ThreadManager}!m\_thread\_spawn\_list@{m\_thread\_spawn\_list}}
+\index{m\_thread\_spawn\_list@{m\_thread\_spawn\_list}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{m\_thread\_spawn\_list}
+{\footnotesize\ttfamily \label{classThreadManager_afc53b067d8ac2bcf6275da562f44b868} 
+std\+::queue$<$\textbf{ Thread\+Spawn\+Request}$>$ Thread\+Manager\+::m\+\_\+thread\+\_\+spawn\+\_\+list\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Thread\+To\+Spawn()}, and \textbf{ spawn\+Thread()}.
+
+\index{ThreadManager@{ThreadManager}!m\_thread\_state@{m\_thread\_state}}
+\index{m\_thread\_state@{m\_thread\_state}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{m\_thread\_state}
+{\footnotesize\ttfamily \label{classThreadManager_a97e57fa55e2362f67cb23752f858a5b6} 
+std\+::vector$<$\textbf{ Thread\+State}$>$ Thread\+Manager\+::m\+\_\+thread\+\_\+state\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 96} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ are\+All\+Cores\+Running()}, \textbf{ create\+Thread\+\_\+unlocked()}, \textbf{ get\+Thread\+Stall\+Reason()}, \textbf{ get\+Thread\+State()}, \textbf{ is\+Thread\+Initializing()}, \textbf{ is\+Thread\+Running()}, \textbf{ join\+Thread()}, \textbf{ move\+Thread()}, \textbf{ on\+Thread\+Exit()}, \textbf{ on\+Thread\+Start()}, \textbf{ resume\+Thread\+\_\+async()}, \textbf{ stall\+Thread()}, \textbf{ stall\+Thread\+\_\+async()}, \textbf{ wait\+For\+Thread\+Start()}, \textbf{ wake\+Up\+Waiter()}, and \textbf{ $\sim$\+Thread\+Manager()}.
+
+\index{ThreadManager@{ThreadManager}!m\_thread\_tls@{m\_thread\_tls}}
+\index{m\_thread\_tls@{m\_thread\_tls}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{m\_thread\_tls}
+{\footnotesize\ttfamily \label{classThreadManager_a61899cc4d03fe5fcd93477a5e1855279} 
+\textbf{ TLS}$\ast$ Thread\+Manager\+::m\+\_\+thread\+\_\+tls\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Current\+Thread()}, \textbf{ on\+Thread\+Exit()}, \textbf{ on\+Thread\+Start()}, and \textbf{ $\sim$\+Thread\+Manager()}.
+
+\index{ThreadManager@{ThreadManager}!m\_threads@{m\_threads}}
+\index{m\_threads@{m\_threads}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{m\_threads}
+{\footnotesize\ttfamily \label{classThreadManager_afedbe0d875e7311b50ce43c5ac978c2d} 
+std\+::vector$<$\textbf{ Thread}$\ast$$>$ Thread\+Manager\+::m\+\_\+threads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 99} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ create\+Thread\+\_\+unlocked()}, \textbf{ find\+Thread\+By\+Tid()}, \textbf{ get\+Num\+Threads()}, \textbf{ get\+Thread\+From\+ID()}, and \textbf{ $\sim$\+Thread\+Manager()}.
+
+\index{ThreadManager@{ThreadManager}!stall\_type\_names@{stall\_type\_names}}
+\index{stall\_type\_names@{stall\_type\_names}!ThreadManager@{ThreadManager}}
+\doxysubsubsection{stall\_type\_names}
+{\footnotesize\ttfamily \label{classThreadManager_ae784ee3d6aa13d9b744e6567e4dcd63a} 
+const char $\ast$ Thread\+Manager\+::stall\+\_\+type\+\_\+names\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}unscheduled"{}},\ \textcolor{stringliteral}{"{}broken"{}},\ \textcolor{stringliteral}{"{}join"{}},\ \textcolor{stringliteral}{"{}mutex"{}},\ \textcolor{stringliteral}{"{}cond"{}},\ \textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}futex"{}},\ \textcolor{stringliteral}{"{}pause"{}},\ \textcolor{stringliteral}{"{}sleep"{}},\ \textcolor{stringliteral}{"{}syscall"{}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 21} of file \textbf{ thread\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ hook\+Callback\+Thread\+Stall\+Type()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}, and \textbf{ stall\+Thread\+\_\+async()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ thread\+\_\+manager.\+h}\item 
+common/system/\textbf{ thread\+\_\+manager.\+cc}\end{DoxyCompactItemize}

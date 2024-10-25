@@ -1,0 +1,149 @@
+\doxysection{packetize.\+h}
+\label{packetize_8h_source}\index{common/misc/packetize.h@{common/misc/packetize.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Jonathan\ Eastep}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Build\ up\ /\ consume\ unstructured\ packets\ through\ a\ simple\ interface}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#ifndef\ PACKETIZE\_H}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#define\ PACKETIZE\_H}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{//\#define\ DEBUG\_UNSTRUCTURED\_BUFFER}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }UnstructuredBuffer}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ String\ m\_chars;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ UnstructuredBuffer();}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ getBuffer();}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{void}\ clear();}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{int}\ size();}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{//\ These\ put\ /\ get\ scalars}}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{void}\ put(\textcolor{keyword}{const}\ T\ \&\ data);}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{bool}\ get(T\&\ data);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{comment}{//\ These\ put\ /\ get\ arrays}}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{comment}{//\ Note:\ these\ are\ shallow\ copy\ only}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{void}\ put(\textcolor{keyword}{const}\ T\ *\ data,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{bool}\ get(T*\ data,\ \textcolor{keywordtype}{int}\ num);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{//\ Wrappers}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00040\ \ \ \ \ UnstructuredBuffer\&\ operator<<(\textcolor{keyword}{const}\ T\ \&\ data);}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00042\ \ \ \ \ UnstructuredBuffer\&\ operator>>(T\ \&\ data);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ I>}
+\DoxyCodeLine{00045\ \ \ \ \ UnstructuredBuffer\&\ operator<<(std::pair<T*,\ I>\ buffer);}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ I>}
+\DoxyCodeLine{00047\ \ \ \ \ UnstructuredBuffer\&\ operator>>(std::pair<T*,\ I>\ buffer);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ UnstructuredBuffer\&\ operator<<(std::pair<const\ void*,\ int>\ buffer);}
+\DoxyCodeLine{00050\ \ \ \ \ UnstructuredBuffer\&\ operator>>(std::pair<void*,\ int>\ buffer);}
+\DoxyCodeLine{00051\ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{void}\ UnstructuredBuffer::put(\textcolor{keyword}{const}\ T*\ data,\ \textcolor{keywordtype}{int}\ num)}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ assert(num\ >=\ 0);}
+\DoxyCodeLine{00056\ \ \ \ \ m\_chars.append((\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *)\ data,\ num\ *\ \textcolor{keyword}{sizeof}(T));}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{bool}\ UnstructuredBuffer::get(T*\ data,\ \textcolor{keywordtype}{int}\ num)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ assert(num\ >=\ 0);}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_chars.size()\ <\ (num\ *\ \textcolor{keyword}{sizeof}(T)))}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ m\_chars.copy((\textcolor{keywordtype}{char}\ *)\ data,\ num\ *\ \textcolor{keyword}{sizeof}(T));}
+\DoxyCodeLine{00066\ \ \ \ \ m\_chars.erase(0,\ num\ *\ \textcolor{keyword}{sizeof}(T));}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{void}\ UnstructuredBuffer::put(\textcolor{keyword}{const}\ T\&\ data)}
+\DoxyCodeLine{00072\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ put<T>(\&data,\ 1);}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ UnstructuredBuffer::put(\textcolor{keyword}{const}\ SubsecondTime\&\ \_data)}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ subsecond\_time\_t\ data;}
+\DoxyCodeLine{00079\ \ \ \ \ data\ =\ \_data;}
+\DoxyCodeLine{00080\ \ \ \ \ put<subsecond\_time\_t>(\&data,\ 1);}
+\DoxyCodeLine{00081\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{bool}\ UnstructuredBuffer::get(T\&\ data)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{return}\ get<T>(\&data,\ 1);}
+\DoxyCodeLine{00086\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ UnstructuredBuffer::get(SubsecondTime\&\ \_data)}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ subsecond\_time\_t\ data;}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{bool}\ res\ =\ get<subsecond\_time\_t>(\&data,\ 1);}
+\DoxyCodeLine{00092\ \ \ \ \ \_data\ =\ data;}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00097\ UnstructuredBuffer\&\ UnstructuredBuffer::operator<<(\textcolor{keyword}{const}\ T\ \&\ data)}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ put<T>(data);}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ Specialize\ for\ SubsecondTime}}
+\DoxyCodeLine{00104\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00105\ \textcolor{keyword}{inline}\ UnstructuredBuffer\&\ UnstructuredBuffer::operator<<(\textcolor{keyword}{const}\ SubsecondTime\ \&\ \_data)}
+\DoxyCodeLine{00106\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ subsecond\_time\_t\ data\ =\ \_data;}
+\DoxyCodeLine{00108\ \ \ \ \ put<subsecond\_time\_t>(data);}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00113\ UnstructuredBuffer\&\ UnstructuredBuffer::operator>>(T\ \&\ data)}
+\DoxyCodeLine{00114\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \_\_attribute\_\_((unused))\ \textcolor{keywordtype}{bool}\ res\ =\ get<T>(data);}
+\DoxyCodeLine{00116\ \ \ \ \ assert(res);}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ Specialize\ for\ SubsecondTime}}
+\DoxyCodeLine{00121\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00122\ \textcolor{keyword}{inline}\ UnstructuredBuffer\&\ UnstructuredBuffer::operator>>(SubsecondTime\ \&\ \_data)}
+\DoxyCodeLine{00123\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ subsecond\_time\_t\ data;}
+\DoxyCodeLine{00125\ \ \ \ \ \_\_attribute\_\_((unused))\ \textcolor{keywordtype}{bool}\ res\ =\ get<subsecond\_time\_t>(data);}
+\DoxyCodeLine{00126\ \ \ \ \ assert(res);}
+\DoxyCodeLine{00127\ \ \ \ \ \_data\ =\ data;}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ I>}
+\DoxyCodeLine{00132\ UnstructuredBuffer\&\ UnstructuredBuffer::operator<<(std::pair<T*,\ I>\ buffer)}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{return}\ (*\textcolor{keyword}{this})\ <<\ std::make\_pair((\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *)\ buffer.first,\ (\textcolor{keywordtype}{int})\ buffer.second);}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ I>}
+\DoxyCodeLine{00138\ UnstructuredBuffer\&\ UnstructuredBuffer::operator>>(std::pair<T*,\ I>\ buffer)}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{return}\ (*\textcolor{keyword}{this})\ >>\ std::make\_pair((\textcolor{keywordtype}{void}*)\ buffer.first,\ (\textcolor{keywordtype}{int})\ buffer.second);}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

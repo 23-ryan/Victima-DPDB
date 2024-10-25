@@ -1,0 +1,486 @@
+\doxysection{Scheduler\+Big\+Small Class Reference}
+\label{classSchedulerBigSmall}\index{SchedulerBigSmall@{SchedulerBigSmall}}
+
+
+{\ttfamily \#include $<$scheduler\+\_\+big\+\_\+small.\+h$>$}
+
+
+
+Inheritance diagram for Scheduler\+Big\+Small\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=156pt]{classSchedulerBigSmall__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Scheduler\+Big\+Small\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Scheduler\+Big\+Small} (\textbf{ Thread\+Manager} $\ast$thread\+\_\+manager)
+\item 
+virtual void \textbf{ thread\+Set\+Initial\+Affinity} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+virtual void \textbf{ thread\+Stall} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Thread\+Manager\+::stall\+\_\+type\+\_\+t} reason, \textbf{ Subsecond\+Time} time)
+\item 
+virtual void \textbf{ thread\+Exit} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\item 
+virtual void \textbf{ periodic} (\textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \textbf{ Scheduler\+Pinned\+Base}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Scheduler\+Pinned\+Base} (\textbf{ Thread\+Manager} $\ast$thread\+\_\+manager, \textbf{ Subsecond\+Time} quantum)
+\item 
+virtual \textbf{ core\+\_\+id\+\_\+t} \textbf{ thread\+Create} (\textbf{ thread\+\_\+id\+\_\+t})
+\item 
+virtual void \textbf{ thread\+Yield} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+virtual bool \textbf{ thread\+Set\+Affinity} (\textbf{ thread\+\_\+id\+\_\+t} calling\+\_\+thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, size\+\_\+t cpusetsize, const cpu\+\_\+set\+\_\+t $\ast$mask)
+\item 
+virtual bool \textbf{ thread\+Get\+Affinity} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, size\+\_\+t cpusetsize, cpu\+\_\+set\+\_\+t $\ast$mask)
+\item 
+virtual void \textbf{ thread\+Start} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\item 
+virtual void \textbf{ thread\+Resume} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+by, \textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \textbf{ Scheduler\+Dynamic}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Scheduler\+Dynamic} (\textbf{ Thread\+Manager} $\ast$thread\+\_\+manager)
+\item 
+virtual \textbf{ $\sim$\+Scheduler\+Dynamic} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \textbf{ Scheduler}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Scheduler} (\textbf{ Thread\+Manager} $\ast$thread\+\_\+manager)
+\item 
+virtual \textbf{ $\sim$\+Scheduler} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ move\+To\+Big} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+void \textbf{ move\+To\+Small} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+void \textbf{ pick\+Big\+Thread} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const bool \textbf{ m\+\_\+debug\+\_\+output}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+num\+\_\+big\+\_\+cores}
+\item 
+cpu\+\_\+set\+\_\+t \textbf{ m\+\_\+mask\+\_\+big}
+\item 
+cpu\+\_\+set\+\_\+t \textbf{ m\+\_\+mask\+\_\+small}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+last\+\_\+reshuffle}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+rng}
+\item 
+std\+::unordered\+\_\+map$<$ \textbf{ thread\+\_\+id\+\_\+t}, bool $>$ \textbf{ m\+\_\+thread\+\_\+isbig}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Additional Inherited Members}
+\doxysubsection*{Static Public Member Functions inherited from \textbf{ Scheduler}}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Scheduler} $\ast$ \textbf{ create} (\textbf{ Thread\+Manager} $\ast$thread\+\_\+manager)
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions inherited from \textbf{ Scheduler\+Pinned\+Base}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ find\+Free\+Core\+For\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+void \textbf{ reschedule} (\textbf{ Subsecond\+Time} time, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, bool is\+\_\+periodic)
+\item 
+void \textbf{ print\+State} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions inherited from \textbf{ Scheduler\+Dynamic}}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ move\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions inherited from \textbf{ Scheduler}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ find\+First\+Free\+Core} ()
+\item 
+void \textbf{ print\+Mapping} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes inherited from \textbf{ Scheduler\+Pinned\+Base}}
+\begin{DoxyCompactItemize}
+\item 
+const \textbf{ Subsecond\+Time} \textbf{ m\+\_\+quantum}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+last\+\_\+periodic}
+\item 
+std\+::vector$<$ \textbf{ Thread\+Info} $>$ \textbf{ m\+\_\+thread\+\_\+info}
+\item 
+std\+::vector$<$ \textbf{ thread\+\_\+id\+\_\+t} $>$ \textbf{ m\+\_\+core\+\_\+thread\+\_\+running}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+quantum\+\_\+left}
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes inherited from \textbf{ Scheduler\+Dynamic}}
+\begin{DoxyCompactItemize}
+\item 
+std\+::vector$<$ bool $>$ \textbf{ m\+\_\+threads\+\_\+runnable}
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes inherited from \textbf{ Scheduler}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Thread\+Manager} $\ast$ \textbf{ m\+\_\+thread\+\_\+manager}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 8} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!SchedulerBigSmall@{SchedulerBigSmall}}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{SchedulerBigSmall()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a5eb5a9cef2c7305110379b741775bbea} 
+Scheduler\+Big\+Small\+::\+Scheduler\+Big\+Small (\begin{DoxyParamCaption}\item[{\textbf{ Thread\+Manager} $\ast$}]{thread\+\_\+manager}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ m\+\_\+mask\+\_\+big}, \textbf{ m\+\_\+mask\+\_\+small}, and \textbf{ m\+\_\+num\+\_\+big\+\_\+cores}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!moveToBig@{moveToBig}}
+\index{moveToBig@{moveToBig}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{moveToBig()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_aea85bcbd411a5bbb860e32b024d7f062} 
+void Scheduler\+Big\+Small\+::move\+To\+Big (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 132} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+mask\+\_\+big}, \textbf{ m\+\_\+thread\+\_\+isbig}, and \textbf{ Scheduler\+Pinned\+Base\+::thread\+Set\+Affinity()}.
+
+
+
+Referenced by \textbf{ pick\+Big\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_aea85bcbd411a5bbb860e32b024d7f062_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_aea85bcbd411a5bbb860e32b024d7f062_icgraph}
+\end{center}
+\end{figure}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!moveToSmall@{moveToSmall}}
+\index{moveToSmall@{moveToSmall}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{moveToSmall()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a3e926dd07e4f7ccd674ef6e0f10e13e4} 
+void Scheduler\+Big\+Small\+::move\+To\+Small (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 126} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+mask\+\_\+small}, \textbf{ m\+\_\+thread\+\_\+isbig}, and \textbf{ Scheduler\+Pinned\+Base\+::thread\+Set\+Affinity()}.
+
+
+
+Referenced by \textbf{ periodic()}, \textbf{ thread\+Set\+Initial\+Affinity()}, and \textbf{ thread\+Stall()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_a3e926dd07e4f7ccd674ef6e0f10e13e4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=293pt]{classSchedulerBigSmall_a3e926dd07e4f7ccd674ef6e0f10e13e4_icgraph}
+\end{center}
+\end{figure}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!periodic@{periodic}}
+\index{periodic@{periodic}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{periodic()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_aadbe78d6369bd3a400cb0108f5da6c3c} 
+void Scheduler\+Big\+Small\+::periodic (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reimplemented from \textbf{ Scheduler\+Pinned\+Base} \doxyref{}{p.}{classSchedulerPinnedBase_afc9023eb8fe22a0aa4800c6e09c79125}.
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ m\+\_\+debug\+\_\+output}, \textbf{ m\+\_\+last\+\_\+reshuffle}, \textbf{ m\+\_\+num\+\_\+big\+\_\+cores}, \textbf{ Scheduler\+Pinned\+Base\+::m\+\_\+quantum}, \textbf{ m\+\_\+thread\+\_\+isbig}, \textbf{ move\+To\+Small()}, \textbf{ Scheduler\+Pinned\+Base\+::periodic()}, \textbf{ pick\+Big\+Thread()}, and \textbf{ Scheduler\+Pinned\+Base\+::print\+State()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_aadbe78d6369bd3a400cb0108f5da6c3c_cgraph}
+\end{center}
+\end{figure}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!pickBigThread@{pickBigThread}}
+\index{pickBigThread@{pickBigThread}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{pickBigThread()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_aa914e5462f42000d886ea76a83d5fe8c} 
+void Scheduler\+Big\+Small\+::pick\+Big\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 138} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ m\+\_\+debug\+\_\+output}, \textbf{ m\+\_\+rng}, \textbf{ m\+\_\+thread\+\_\+isbig}, \textbf{ Scheduler\+Dynamic\+::m\+\_\+threads\+\_\+runnable}, \textbf{ move\+To\+Big()}, and \textbf{ rng\+\_\+next()}.
+
+
+
+Referenced by \textbf{ periodic()}, \textbf{ thread\+Exit()}, and \textbf{ thread\+Stall()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_aa914e5462f42000d886ea76a83d5fe8c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=286pt]{classSchedulerBigSmall_aa914e5462f42000d886ea76a83d5fe8c_icgraph}
+\end{center}
+\end{figure}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!threadExit@{threadExit}}
+\index{threadExit@{threadExit}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{threadExit()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_ab9fd265587255fcd09fc49792a8d6e43} 
+void Scheduler\+Big\+Small\+::thread\+Exit (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reimplemented from \textbf{ Scheduler\+Pinned\+Base} \doxyref{}{p.}{classSchedulerPinnedBase_a7683fd8dd3dad6355015d8accf465b20}.
+
+
+
+Definition at line \textbf{ 77} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ m\+\_\+debug\+\_\+output}, \textbf{ m\+\_\+thread\+\_\+isbig}, \textbf{ pick\+Big\+Thread()}, \textbf{ Scheduler\+Pinned\+Base\+::print\+State()}, and \textbf{ Scheduler\+Pinned\+Base\+::thread\+Exit()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_ab9fd265587255fcd09fc49792a8d6e43_cgraph}
+\end{center}
+\end{figure}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!threadSetInitialAffinity@{threadSetInitialAffinity}}
+\index{threadSetInitialAffinity@{threadSetInitialAffinity}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{threadSetInitialAffinity()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a660464930f688521360c0a76ca5031a9} 
+void Scheduler\+Big\+Small\+::thread\+Set\+Initial\+Affinity (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Scheduler\+Pinned\+Base} \doxyref{}{p.}{classSchedulerPinnedBase_a54f4bbfa07d45bfb38171ac8c2e650d1}.
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ move\+To\+Small()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_a660464930f688521360c0a76ca5031a9_cgraph}
+\end{center}
+\end{figure}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!threadStall@{threadStall}}
+\index{threadStall@{threadStall}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{threadStall()}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a11ef8aef426e3abacf1717ddab029e6e} 
+void Scheduler\+Big\+Small\+::thread\+Stall (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Thread\+Manager\+::stall\+\_\+type\+\_\+t}}]{reason}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reimplemented from \textbf{ Scheduler\+Pinned\+Base} \doxyref{}{p.}{classSchedulerPinnedBase_a894e766d4c4d81a7bc80292e3bd79805}.
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+cc}.
+
+
+
+References \textbf{ m\+\_\+debug\+\_\+output}, \textbf{ m\+\_\+thread\+\_\+isbig}, \textbf{ move\+To\+Small()}, \textbf{ pick\+Big\+Thread()}, \textbf{ Scheduler\+Pinned\+Base\+::print\+State()}, and \textbf{ Scheduler\+Pinned\+Base\+::thread\+Stall()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSchedulerBigSmall_a11ef8aef426e3abacf1717ddab029e6e_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_debug\_output@{m\_debug\_output}}
+\index{m\_debug\_output@{m\_debug\_output}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_debug\_output}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a243180584fa8c96bdb3da1ebd56167bb} 
+const bool Scheduler\+Big\+Small\+::m\+\_\+debug\+\_\+output\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 19} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ periodic()}, \textbf{ pick\+Big\+Thread()}, \textbf{ thread\+Exit()}, and \textbf{ thread\+Stall()}.
+
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_last\_reshuffle@{m\_last\_reshuffle}}
+\index{m\_last\_reshuffle@{m\_last\_reshuffle}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_last\_reshuffle}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a5be0f53f62697653cd86d936450d3743} 
+\textbf{ Subsecond\+Time} Scheduler\+Big\+Small\+::m\+\_\+last\+\_\+reshuffle\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ periodic()}.
+
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_mask\_big@{m\_mask\_big}}
+\index{m\_mask\_big@{m\_mask\_big}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_mask\_big}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a2c2f0b035d2456dcdd79ba758cf55ca9} 
+cpu\+\_\+set\+\_\+t Scheduler\+Big\+Small\+::m\+\_\+mask\+\_\+big\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 23} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ move\+To\+Big()}, and \textbf{ Scheduler\+Big\+Small()}.
+
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_mask\_small@{m\_mask\_small}}
+\index{m\_mask\_small@{m\_mask\_small}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_mask\_small}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a7707df4797ec73978859156c4195e35b} 
+cpu\+\_\+set\+\_\+t Scheduler\+Big\+Small\+::m\+\_\+mask\+\_\+small\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 24} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ move\+To\+Small()}, and \textbf{ Scheduler\+Big\+Small()}.
+
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_num\_big\_cores@{m\_num\_big\_cores}}
+\index{m\_num\_big\_cores@{m\_num\_big\_cores}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_num\_big\_cores}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a09b144a85d4de92a750869cac33f24f0} 
+\textbf{ UInt64} Scheduler\+Big\+Small\+::m\+\_\+num\+\_\+big\+\_\+cores\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ periodic()}, and \textbf{ Scheduler\+Big\+Small()}.
+
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_rng@{m\_rng}}
+\index{m\_rng@{m\_rng}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_rng}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_acc57b166a07407bd0ab5104e41802f7f} 
+\textbf{ UInt64} Scheduler\+Big\+Small\+::m\+\_\+rng\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ pick\+Big\+Thread()}.
+
+\index{SchedulerBigSmall@{SchedulerBigSmall}!m\_thread\_isbig@{m\_thread\_isbig}}
+\index{m\_thread\_isbig@{m\_thread\_isbig}!SchedulerBigSmall@{SchedulerBigSmall}}
+\doxysubsubsection{m\_thread\_isbig}
+{\footnotesize\ttfamily \label{classSchedulerBigSmall_a24246e5fcc8f2d22cd21afa97b147158} 
+std\+::unordered\+\_\+map$<$\textbf{ thread\+\_\+id\+\_\+t}, bool$>$ Scheduler\+Big\+Small\+::m\+\_\+thread\+\_\+isbig\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ scheduler\+\_\+big\+\_\+small.\+h}.
+
+
+
+Referenced by \textbf{ move\+To\+Big()}, \textbf{ move\+To\+Small()}, \textbf{ periodic()}, \textbf{ pick\+Big\+Thread()}, \textbf{ thread\+Exit()}, and \textbf{ thread\+Stall()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/scheduler/\textbf{ scheduler\+\_\+big\+\_\+small.\+h}\item 
+common/scheduler/\textbf{ scheduler\+\_\+big\+\_\+small.\+cc}\end{DoxyCompactItemize}

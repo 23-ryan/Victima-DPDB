@@ -1,0 +1,114 @@
+\doxysection{trace\+\_\+rtn.\+cc}
+\label{trace__rtn_8cc_source}\index{pin/trace\_rtn.cc@{pin/trace\_rtn.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}trace\_rtn.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keywordtype}{void}\ routineEnter(THREADID\ threadIndex,\ IntPtr\ eip,\ IntPtr\ esp)}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ localStore[threadIndex].thread-\/>getRoutineTracer()-\/>routineEnter(eip,\ esp,\ localStore[threadIndex].lastCallSite);}
+\DoxyCodeLine{00009\ \ \ \ localStore[threadIndex].lastCallSite\ =\ 0;}
+\DoxyCodeLine{00010\ \}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keywordtype}{void}\ routineExit(THREADID\ threadIndex,\ IntPtr\ eip,\ IntPtr\ esp)}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ localStore[threadIndex].thread-\/>getRoutineTracer()-\/>routineExit(eip,\ esp);}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{void}\ routineAssert(THREADID\ threadIndex,\ IntPtr\ eip,\ IntPtr\ esp)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ localStore[threadIndex].thread-\/>getRoutineTracer()-\/>routineAssert(eip,\ esp);}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{void}\ routineCallSite(THREADID\ threadIndex,\ IntPtr\ eip)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ localStore[threadIndex].lastCallSite\ =\ eip;}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keywordtype}{void}\ announceRoutine(INS\ ins)}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ ADDRINT\ eip\ =\ INS\_Address(ins);}
+\DoxyCodeLine{00030\ \ \ \ RTN\ rtn\ =\ INS\_Rtn(ins);}
+\DoxyCodeLine{00031\ \ \ \ IMG\ img\ =\ IMG\_FindByAddress(eip);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ INT32\ column\ =\ 0,\ line\ =\ 0;}
+\DoxyCodeLine{00034\ \ \ \ std::string\ filename\ =\ \textcolor{stringliteral}{"{}??"{}};}
+\DoxyCodeLine{00035\ \ \ \ PIN\_GetSourceLocation(eip,\ \&column,\ \&line,\ \&filename);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ Sim()-\/>getRoutineTracer()-\/>addRoutine(}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ RTN\_Valid(rtn)\ ?\ RTN\_Name(rtn).c\_str()\ :\ \textcolor{stringliteral}{"{}??"{}},}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ IMG\_Valid(img)\ ?\ IMG\_Name(img).c\_str()\ :\ \textcolor{stringliteral}{"{}??"{}},}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ IMG\_Valid(img)\ ?\ IMG\_LoadOffset(img)\ :\ 0,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ column,\ line,\ filename.c\_str());}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}\ announceRoutine(RTN\ rtn)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ announceRoutine(RTN\_InsHeadOnly(rtn));}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ announceInvalidRoutine()}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ Sim()-\/>getRoutineTracer()-\/>addRoutine(0,\ \textcolor{stringliteral}{"{}INVALID"{}},\ \textcolor{stringliteral}{"{}"{}},\ 0,\ 0,\ 0,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}\ addRtnTracer(RTN\ rtn)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getRoutineTracer())}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ RTN\_Open(rtn);}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ announceRoutine(rtn);}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_BEFORE,\ AFUNPTR(routineEnter),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ RTN\_Address(rtn),\ IARG\_REG\_VALUE,\ REG\_STACK\_PTR,\ IARG\_END);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_AFTER,\ \ AFUNPTR(routineExit),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ RTN\_Address(rtn),\ IARG\_REG\_VALUE,\ REG\_STACK\_PTR,\ IARG\_END);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ RTN\_Close(rtn);}
+\DoxyCodeLine{00067\ \ \ \ \}}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keywordtype}{void}\ addRtnTracer(TRACE\ trace)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getRoutineTracer())}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{comment}{//\ At\ the\ start\ of\ each\ trace,\ check\ to\ see\ if\ this\ part\ of\ the\ code\ belongs\ to\ the\ function\ we\ think\ we're\ in.}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ will\ detect\ longjmps\ and\ tail\ call\ elimination,\ and\ fix\ up\ the\ call\ stack\ appropriately.}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ RTN\ rtn\ =\ TRACE\_Rtn(trace);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (RTN\_Valid(rtn))}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>getRoutineTracer()-\/>hasRoutine(RTN\_Address(rtn)))}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ RTN\_Open(rtn);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ announceRoutine(rtn);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ RTN\_Close(rtn);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ TRACE\_InsertCall(trace,\ IPOINT\_BEFORE,\ AFUNPTR\ (routineAssert),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ RTN\_Address(rtn),\ IARG\_REG\_VALUE,\ REG\_STACK\_PTR,\ IARG\_END);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>getRoutineTracer()-\/>hasRoutine(0))}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ announceInvalidRoutine();}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ TRACE\_InsertCall(trace,\ IPOINT\_BEFORE,\ AFUNPTR\ (routineAssert),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ 0,\ IARG\_REG\_VALUE,\ REG\_STACK\_PTR,\ IARG\_END);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{comment}{//\ Call\ site\ identification}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (BBL\ bbl\ =\ TRACE\_BblHead(trace);\ BBL\_Valid(bbl);\ bbl\ =\ BBL\_Next(bbl))}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(INS\ ins\ =\ BBL\_InsHead(bbl);\ INS\_Valid(ins);\ ins\ =\ INS\_Next(ins))}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsProcedureCall(ins))}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ announceRoutine(ins);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INS\_InsertCall(ins,\ IPOINT\_BEFORE,\ AFUNPTR\ (routineCallSite),\ IARG\_THREAD\_ID,\ IARG\_INST\_PTR,\ IARG\_END);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \}}
+\DoxyCodeLine{00108\ \}}
+
+\end{DoxyCode}

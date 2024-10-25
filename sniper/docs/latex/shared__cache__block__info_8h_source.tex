@@ -1,0 +1,55 @@
+\doxysection{shared\+\_\+cache\+\_\+block\+\_\+info.\+h}
+\label{shared__cache__block__info_8h_source}\index{common/core/memory\_subsystem/cache/shared\_cache\_block\_info.h@{common/core/memory\_subsystem/cache/shared\_cache\_block\_info.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}cache\_state.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache\_block\_info.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Define\ to\ enable\ tracking\ of\ which\ previous-\/level\ caches\ share\ each\ cache\ line}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Currently\ this\ is\ only\ used\ for\ asserts\ (makeing\ sure\ no\ non-\/sharers\ send\ use\ evictions)}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ but\ it\ takes\ up\ space,\ especially\ when\ sharing\ caches\ with\ a\ lot\ of\ cores}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\#define\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <bitset>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{const}\ UInt32\ MAX\_NUM\_PREVCACHES\ =\ 8;}
+\DoxyCodeLine{00016\ \textcolor{keyword}{typedef}\ std::bitset<MAX\_NUM\_PREVCACHES>\ CacheSharersType;}
+\DoxyCodeLine{00017\ \textcolor{keyword}{typedef}\ UInt8\ PrevCacheIndex;\ \textcolor{comment}{//\ Should\ hold\ an\ integer\ up\ to\ MAX\_NUM\_PREVCACHES}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }SharedCacheBlockInfo\ :\ \textcolor{keyword}{public}\ CacheBlockInfo}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ CacheSharersType\ m\_cached\_locs;}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ SharedCacheBlockInfo(IntPtr\ tag\ =\ \string~0,}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ CacheState::cstate\_t\ cstate\ =\ CacheState::INVALID)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ :\ CacheBlockInfo(tag,\ cstate)}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ ,\ m\_cached\_locs()}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \string~SharedCacheBlockInfo()\ \{\}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ PrevCacheIndex\ getCachedLoc();}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasCachedLoc()\ \{\ \textcolor{keywordflow}{return}\ m\_cached\_locs.any();\ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setCachedLoc(PrevCacheIndex\ idx);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clearCachedLoc(PrevCacheIndex\ idx);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ CacheSharersType\ getCachedLocs()\ \{\ \textcolor{keywordflow}{return}\ m\_cached\_locs;\ \}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ invalidate();}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clone(CacheBlockInfo*\ cache\_block\_info);}
+\DoxyCodeLine{00049\ \};}
+
+\end{DoxyCode}

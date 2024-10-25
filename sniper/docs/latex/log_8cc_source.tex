@@ -1,0 +1,376 @@
+\doxysection{log.\+cc}
+\label{log_8cc_source}\index{common/misc/log.cc@{common/misc/log.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <sys/time.h>}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <stdarg.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <signal.h>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ When\ debugging,\ it\ helps\ to\ be\ able\ to\ attach\ to\ the\ thread\ you\ would\ like\ to\ investigate\ directly,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ instead\ of\ running\ the\ program\ from\ the\ beginning\ in\ GDB.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\#define\ LOG\_SIGSTOP\_ON\_ERROR}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ Log\ *Log::\_singleton;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ Log::MODULE\_LENGTH;}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{static}\ String\ formatFileName(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s)}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getConfig()-\/>formatOutputFileName(s);}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ Log::Log(Config\ \&config)}
+\DoxyCodeLine{00029\ \ \ \ :\ \_coreCount(config.getTotalCores())}
+\DoxyCodeLine{00030\ \ \ \ ,\ \_startTime(0)}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \ \ \ initFileDescriptors();}
+\DoxyCodeLine{00033\ \ \ \ getEnabledModules();}
+\DoxyCodeLine{00034\ \ \ \ getDisabledModules();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \_loggingEnabled\ =\ initIsLoggingEnabled();}
+\DoxyCodeLine{00037\ \ \ \ \_anyLoggingEnabled\ =\ (!\_enabledModules.empty())\ ||\ \_loggingEnabled;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ assert(\_singleton\ ==\ NULL);}
+\DoxyCodeLine{00040\ \ \ \ \_singleton\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getCircularLogEnabled())}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ CircularLog::init(formatFileName(\textcolor{stringliteral}{"{}sim.clog"{}}));}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ Log::\string~Log()}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ \_singleton\ =\ NULL;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ \_coreCount;\ i++)}
+\DoxyCodeLine{00051\ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_coreFiles[i])}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ fclose(\_coreFiles[i]);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_simFiles[i])}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ fclose(\_simFiles[i]);}
+\DoxyCodeLine{00056\ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keyword}{delete}\ []\ \_coreLocks;}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keyword}{delete}\ []\ \_simLocks;}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keyword}{delete}\ []\ \_coreFiles;}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keyword}{delete}\ []\ \_simFiles;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{if}\ (\_systemFile)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ fclose(\_systemFile);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ CircularLog::fini();}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ Log*\ Log::getSingleton()}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \ assert(\_singleton);}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{return}\ \_singleton;}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{bool}\ Log::isEnabled(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ module)}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{comment}{//\ either\ the\ module\ is\ specifically\ enabled,\ or\ all\ logging\ is}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{comment}{//\ enabled\ and\ this\ one\ isn't\ disabled}}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{return}\ \_anyLoggingEnabled\ \&\&}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ (\_enabledModules.find(module)\ !=\ \_enabledModules.end()}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ ||\ (\_loggingEnabled\ \&\&\ \_disabledModules.find(module)\ ==\ \_disabledModules.end())}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00083\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{void}\ Log::initFileDescriptors()}
+\DoxyCodeLine{00086\ \{}
+\DoxyCodeLine{00087\ \ \ \ \_coreFiles\ =\ \textcolor{keyword}{new}\ FILE*\ [\_coreCount];}
+\DoxyCodeLine{00088\ \ \ \ \_simFiles\ =\ \textcolor{keyword}{new}\ FILE*\ [\_coreCount];}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ \_coreCount;\ i++)}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \_coreFiles[i]\ =\ NULL;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \_simFiles[i]\ =\ NULL;}
+\DoxyCodeLine{00094\ \ \ \ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \_coreLocks\ =\ \textcolor{keyword}{new}\ Lock\ [\_coreCount];}
+\DoxyCodeLine{00097\ \ \ \ \_simLocks\ =\ \textcolor{keyword}{new}\ Lock\ [\_coreCount];}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \_systemFile\ =\ NULL;}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keywordtype}{void}\ Log::parseModules(std::set<String>\ \&mods,\ String\ list)}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \ String\ delimiters\ =\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ String::size\_type\ lastPos\ =\ list.find\_first\_not\_of(delimiters,\ 0);}
+\DoxyCodeLine{00107\ \ \ \ String::size\_type\ pos\ \ \ \ \ =\ list.find\_first\_of(delimiters,\ lastPos);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ std::set<String>\ unformatted;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{while}\ (String::npos\ !=\ pos\ ||\ String::npos\ !=\ lastPos)}
+\DoxyCodeLine{00112\ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ unformatted.insert(list.substr(lastPos,\ pos\ -\/\ lastPos));}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ lastPos\ =\ list.find\_first\_not\_of(delimiters,\ pos);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ pos\ =\ list.find\_first\_of(delimiters,\ lastPos);}
+\DoxyCodeLine{00116\ \ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keywordflow}{for}\ (std::set<String>::iterator\ it\ =\ unformatted.begin();}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ it\ !=\ unformatted.end();}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ it++)}
+\DoxyCodeLine{00121\ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ String\ formatted;}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ std::min(MODULE\_LENGTH,\ it-\/>length());\ i++)}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ formatted.push\_back((*it)[i]);}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ formatted.length();\ i\ <\ MODULE\_LENGTH;\ i++)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ formatted.push\_back(\textcolor{charliteral}{'\ '});}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ assert(formatted.length()\ ==\ MODULE\_LENGTH);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ mods.insert(formatted);}
+\DoxyCodeLine{00136\ \ \ \ \}}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{keywordtype}{void}\ Log::getDisabledModules()}
+\DoxyCodeLine{00140\ \{}
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00142\ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ String\ disabledModules\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}log/disabled\_modules"{}});}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ parseModules(\_disabledModules,\ disabledModules);}
+\DoxyCodeLine{00145\ \ \ \ \}}
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00147\ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ is\ log\ initialized\ at\ this\ point?}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Exception\ while\ reading\ disabled\ modules."{}});}
+\DoxyCodeLine{00150\ \ \ \ \}}
+\DoxyCodeLine{00151\ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{keywordtype}{void}\ Log::getEnabledModules()}
+\DoxyCodeLine{00154\ \{}
+\DoxyCodeLine{00155\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00156\ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ String\ enabledModules\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}log/enabled\_modules"{}});}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ parseModules(\_enabledModules,\ enabledModules);}
+\DoxyCodeLine{00159\ \ \ \ \}}
+\DoxyCodeLine{00160\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00161\ \ \ \ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ is\ log\ initialized\ at\ this\ point?}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Exception\ while\ reading\ enabled\ modules."{}});}
+\DoxyCodeLine{00164\ \ \ \ \}}
+\DoxyCodeLine{00165\ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{keywordtype}{bool}\ Log::initIsLoggingEnabled()}
+\DoxyCodeLine{00168\ \{}
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00170\ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}log/enabled"{}});}
+\DoxyCodeLine{00172\ \ \ \ \}}
+\DoxyCodeLine{00173\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00174\ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00177\ \ \ \ \}}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ UInt64\ Log::getTimestamp()}
+\DoxyCodeLine{00181\ \{}
+\DoxyCodeLine{00182\ \ \ \ timeval\ t;}
+\DoxyCodeLine{00183\ \ \ \ gettimeofday(\&t,\ NULL);}
+\DoxyCodeLine{00184\ \ \ \ UInt64\ time\ =\ (((UInt64)t.tv\_sec)\ *\ 1000000\ +\ t.tv\_usec);}
+\DoxyCodeLine{00185\ \ \ \ \textcolor{keywordflow}{if}\ (\_startTime\ ==\ 0)\ \_startTime\ =\ time;}
+\DoxyCodeLine{00186\ \ \ \ \textcolor{keywordflow}{return}\ time\ -\/\ \_startTime;}
+\DoxyCodeLine{00187\ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keywordtype}{void}\ Log::discoverCore(core\_id\_t\ *core\_id,\ \textcolor{keywordtype}{bool}\ *sim\_thread)}
+\DoxyCodeLine{00190\ \{}
+\DoxyCodeLine{00191\ \ \ \ CoreManager\ *core\_manager;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()\ ||\ !(core\_manager\ =\ Sim()-\/>getCoreManager()))}
+\DoxyCodeLine{00194\ \ \ \ \{}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ *core\_id\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ *sim\_thread\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00199\ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00201\ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ *core\_id\ =\ core\_manager-\/>getCurrentCoreID();}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ *sim\_thread\ =\ core\_manager-\/>amiSimThread();}
+\DoxyCodeLine{00204\ \ \ \ \}}
+\DoxyCodeLine{00205\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{keywordtype}{void}\ Log::getFile(core\_id\_t\ core\_id,\ \textcolor{keywordtype}{bool}\ sim\_thread,\ FILE\ **file,\ Lock\ **lock)}
+\DoxyCodeLine{00208\ \{}
+\DoxyCodeLine{00209\ \ \ \ \textcolor{comment}{//\ we\ use\ on-\/demand\ file\ allocation\ to\ prevent\ contention\ between}}
+\DoxyCodeLine{00210\ \ \ \ \textcolor{comment}{//\ processes\ for\ files}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ *file\ =\ NULL;}
+\DoxyCodeLine{00213\ \ \ \ *lock\ =\ NULL;}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ ==\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00216\ \ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_systemFile\ ==\ NULL)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ filename[256];}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ sprintf(filename,\ \textcolor{stringliteral}{"{}system.log"{}});}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \_systemFile\ =\ fopen(formatFileName(filename).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ assert(\_systemFile\ !=\ NULL);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ *file\ =\ \_systemFile;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ *lock\ =\ \&\_systemLock;}
+\DoxyCodeLine{00227\ \ \ \ \}}
+\DoxyCodeLine{00228\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sim\_thread)}
+\DoxyCodeLine{00229\ \ \ \ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{comment}{//\ sim\ thread\ file}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_simFiles[core\_id]\ ==\ NULL)}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ assert(core\_id\ <\ \_coreCount);}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ filename[256];}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ sprintf(filename,\ \textcolor{stringliteral}{"{}sim\_\%u.log"{}},\ core\_id);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \_simFiles[core\_id]\ =\ fopen(formatFileName(filename).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ assert(\_simFiles[core\_id]\ !=\ NULL);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \ \ *file\ =\ \_simFiles[core\_id];}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ *lock\ =\ \&\_simLocks[core\_id];}
+\DoxyCodeLine{00242\ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00244\ \ \ \ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \textcolor{comment}{//\ core\ file}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_coreFiles[core\_id]\ ==\ NULL)}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ assert(core\_id\ <\ \_coreCount);}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ filename[256];}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ sprintf(filename,\ \textcolor{stringliteral}{"{}app\_\%u.log"{}},\ core\_id);}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \_coreFiles[core\_id]\ =\ fopen(formatFileName(filename).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ assert(\_coreFiles[core\_id]\ !=\ NULL);}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \textcolor{comment}{//\ Core\ file}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ *file\ =\ \_coreFiles[core\_id];}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ *lock\ =\ \&\_coreLocks[core\_id];}
+\DoxyCodeLine{00258\ \ \ \ \}}
+\DoxyCodeLine{00259\ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ String\ Log::getModule(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00262\ \{}
+\DoxyCodeLine{00263\ \ \ \ \textcolor{comment}{//\ TODO:\ Give\ each\ thread\ a\ \_module\ map\ to\ cache\ entries.\ (Hash\ table?)}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \textcolor{comment}{//\ ScopedLock\ sl(\_modules\_lock);}}
+\DoxyCodeLine{00266\ \ \ \ \textcolor{comment}{//\ map<const\ char*,\ String>::const\_iterator\ it\ =\ \_modules.find(filename);}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \textcolor{comment}{//\ if\ (it\ !=\ \_modules.end())}}
+\DoxyCodeLine{00269\ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00270\ \ \ \ \textcolor{comment}{//\ \ \ \ return\ it-\/>second;}}
+\DoxyCodeLine{00271\ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00272\ \ \ \ \textcolor{comment}{//\ else}}
+\DoxyCodeLine{00273\ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \textcolor{comment}{//\ build\ module\ string}}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ String\ mod;}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \textcolor{comment}{//\ find\ actual\ file\ name\ ...}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *ptr\ =\ strrchr(filename,\ \textcolor{charliteral}{'/'});}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ptr\ !=\ NULL)}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ filename\ =\ ptr\ +\ 1;}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ MODULE\_LENGTH\ \&\&\ filename[i]\ !=\ \textcolor{charliteral}{'\(\backslash\)0'};\ i++)}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ mod.push\_back(filename[i]);}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (mod.length()\ <\ MODULE\_LENGTH)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ mod.push\_back(\textcolor{charliteral}{'\ '});}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \textcolor{comment}{//\ \ \ pair<const\ char*,\ String>\ p(filename,\ mod);}}
+\DoxyCodeLine{00289\ \ \ \ \textcolor{comment}{//\ \ \ \_modules.insert(p);}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ mod;}
+\DoxyCodeLine{00292\ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00293\ \}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \textcolor{keywordtype}{void}\ Log::log(ErrorState\ err,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ source\_file,\ SInt32\ source\_line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *format,\ ...)}
+\DoxyCodeLine{00296\ \{}
+\DoxyCodeLine{00297\ \ \ \ core\_id\_t\ core\_id;}
+\DoxyCodeLine{00298\ \ \ \ \textcolor{keywordtype}{bool}\ sim\_thread;}
+\DoxyCodeLine{00299\ \ \ \ discoverCore(\&core\_id,\ \&sim\_thread);}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ FILE\ *file;}
+\DoxyCodeLine{00302\ \ \ \ Lock\ *lock;}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ getFile(core\_id,\ sim\_thread,\ \&file,\ \&lock);}
+\DoxyCodeLine{00305\ \ \ \ \textcolor{keywordtype}{int}\ tid\ =\ syscall(\_\_NR\_gettid);}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \textcolor{keywordtype}{char}\ message[512];}
+\DoxyCodeLine{00309\ \ \ \ \textcolor{keywordtype}{char}\ *p\ =\ message;}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \textcolor{comment}{//\ This\ is\ ugly,\ but\ it\ just\ prints\ the\ time\ stamp,\ core\ number,\ source\ file/line}}
+\DoxyCodeLine{00312\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ !=\ INVALID\_CORE\_ID)\ \textcolor{comment}{//\ valid\ core\ id}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ p\ +=\ sprintf(p,\ \textcolor{stringliteral}{"{}\%-\/10llu\ [\%5d]\ \ [\%2i]\%s[\%s:\%4d]\ \ "{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})\ getTimestamp(),\ tid,\ core\_id,\ (sim\_thread\ ?\ \textcolor{stringliteral}{"{}*\ "{}}\ :\ \textcolor{stringliteral}{"{}\ \ "{}}),\ source\_file,\ source\_line);}
+\DoxyCodeLine{00314\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ who\ knows}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ p\ +=\ sprintf(p,\ \textcolor{stringliteral}{"{}\%-\/10llu\ [\%5d]\ \ [\ \ ]\ \ [\%s:\%4d]\ \ "{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})\ getTimestamp(),\ tid,\ source\_file,\ source\_line);}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \textcolor{keywordflow}{switch}\ (err)}
+\DoxyCodeLine{00318\ \ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \textcolor{keywordflow}{case}\ None:}
+\DoxyCodeLine{00320\ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \textcolor{keywordflow}{case}\ Warning:}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ p\ +=\ sprintf(p,\ \textcolor{stringliteral}{"{}*WARNING*\ "{}});}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \textcolor{keywordflow}{case}\ Error:}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ p\ +=\ sprintf(p,\ \textcolor{stringliteral}{"{}*ERROR*\ "{}});}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00330\ \ \ \ \};}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ va\_list\ args;}
+\DoxyCodeLine{00333\ \ \ \ va\_start(args,\ format);}
+\DoxyCodeLine{00334\ \ \ \ p\ +=\ vsprintf(p,\ format,\ args);}
+\DoxyCodeLine{00335\ \ \ \ va\_end(args);}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ p\ +=\ sprintf(p,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ lock-\/>acquire();}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ fputs(message,\ file);}
+\DoxyCodeLine{00342\ \ \ \ fflush(file);}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ lock-\/>release();}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \textcolor{keywordflow}{switch}\ (err)}
+\DoxyCodeLine{00347\ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \textcolor{keywordflow}{case}\ Error:}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ CircularLog::fini();}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ fflush(NULL);}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ fputs(message,\ stderr);}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#ifndef\ LOG\_SIGSTOP\_ON\_ERROR}}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ abort();}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (1)}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ raise(SIGSTOP);}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \ \textcolor{keywordflow}{case}\ Warning:}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ fputs(message,\ stderr);}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \textcolor{keywordflow}{case}\ None:}
+\DoxyCodeLine{00367\ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00369\ \ \ \ \}}
+\DoxyCodeLine{00370\ \}}
+
+\end{DoxyCode}

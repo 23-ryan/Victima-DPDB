@@ -1,0 +1,78 @@
+\doxysection{cond.\+cc}
+\label{cond_8cc_source}\index{common/misc/cond.cc@{common/misc/cond.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cond.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}os\_compat.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <linux/futex.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <asm/errno.h>}\ \textcolor{comment}{//\ For\ EINTR\ on\ older\ kernels}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <limits.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ ConditionVariable::ConditionVariable()}
+\DoxyCodeLine{00011\ \ \ \ :\ m\_futx(0)}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00014\ \ \ \ \_timer\ =\ TotalTimer::getTimerByStacktrace(\textcolor{stringliteral}{"{}cond@"{}}\ +\ itostr(\textcolor{keyword}{this}));}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00016\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ ConditionVariable::\string~ConditionVariable()}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{delete}\ \_timer;}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ ConditionVariable::wait(Lock\&\ lock,\ UInt64\ timeout\_ns)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{comment}{//\ Wait}}
+\DoxyCodeLine{00030\ \ \ \ m\_futx\ =\ 0;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ lock.release();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00037\ \ \ \ ScopedTimer\ tt(*\_timer);}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keyword}{struct\ }timespec\ timeout\ =\ \{\ time\_t(timeout\_ns\ /\ 1000000000),\ time\_t(timeout\_ns\ \%\ 1000000000)\ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordtype}{int}\ res;}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ res\ =\ syscall(SYS\_futex,\ (\textcolor{keywordtype}{void}*)\ \&m\_futx,\ FUTEX\_WAIT\ |\ FUTEX\_PRIVATE\_FLAG,\ 0,\ timeout\_ns\ >\ 0\ ?\ \&timeout\ :\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{comment}{//\ Restart\ futex\_wait\ if\ it\ was\ interrupted\ by\ a\ signal}}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{while}\ (res\ ==\ -\/EINTR);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ lock.acquire();}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{void}\ ConditionVariable::signal()}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ m\_futx\ =\ 1;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ syscall(SYS\_futex,\ (\textcolor{keywordtype}{void}*)\ \&m\_futx,\ FUTEX\_WAKE\ |\ FUTEX\_PRIVATE\_FLAG,\ 1,\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{void}\ ConditionVariable::broadcast()}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ m\_futx\ =\ 1;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ syscall(SYS\_futex,\ (\textcolor{keywordtype}{void}*)\ \&m\_futx,\ FUTEX\_WAKE\ |\ FUTEX\_PRIVATE\_FLAG,\ INT\_MAX,\ NULL,\ NULL,\ 0);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00072\ \}}
+
+\end{DoxyCode}

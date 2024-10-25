@@ -1,0 +1,52 @@
+\doxysection{cache\+\_\+set\+\_\+lru.\+h}
+\label{cache__set__lru_8h_source}\index{common/core/memory\_subsystem/cache/cache\_set\_lru.h@{common/core/memory\_subsystem/cache/cache\_set\_lru.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CACHE\_SET\_LRU\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CACHE\_SET\_LRU\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }CacheSetInfoLRU\ :\ \textcolor{keyword}{public}\ CacheSetInfo}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ CacheSetInfoLRU(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ UInt32\ associativity,\ UInt8\ num\_attempts);}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~CacheSetInfoLRU();}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ increment(UInt32\ index)}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(index\ <\ m\_associativity,\ \textcolor{stringliteral}{"{}Index(\%d)\ >=\ Associativity(\%d)"{}},\ index,\ m\_associativity);}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ ++m\_access[index];}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ incrementAttempt(UInt8\ attempt)}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_attempts)}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_attempts[attempt];}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(attempt\ ==\ 0,\ \textcolor{stringliteral}{"{}No\ place\ to\ store\ attempt\#\ histogram\ but\ attempt\ !=\ 0"{}});}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_associativity;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ UInt64*\ m\_access;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ UInt64*\ m\_attempts;}
+\DoxyCodeLine{00027\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{class\ }CacheSetLRU\ :\ \textcolor{keyword}{public}\ CacheSet}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ CacheSetLRU(CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ CacheSetInfoLRU*\ set\_info,\ UInt8\ num\_attempts,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~CacheSetLRU();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt32\ getReplacementIndex(CacheCntlr\ *cntlr);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateReplacementIndex(UInt32\ accessed\_index);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt8\ m\_num\_attempts;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ UInt8*\ m\_lru\_bits;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ CacheSetInfoLRU*\ m\_set\_info;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ moveToMRU(UInt32\ accessed\_index);}
+\DoxyCodeLine{00044\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CACHE\_SET\_LRU\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

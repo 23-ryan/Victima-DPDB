@@ -1,0 +1,273 @@
+\doxysection{thread\+\_\+stats\+\_\+manager.\+cc}
+\label{thread__stats__manager_8cc_source}\index{common/system/thread\_stats\_manager.cc@{common/system/thread\_stats\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}thread\_stats\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ ThreadStatsManager::ThreadStatsManager()}
+\DoxyCodeLine{00011\ \ \ \ :\ m\_threads\_stats(MAX\_THREADS)}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_thread\_stat\_types()}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_thread\_stat\_callbacks()}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_next\_dynamic\_type(DYNAMIC)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_bottlegraphs(MAX\_THREADS)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_waiting\_time\_last(SubsecondTime::Zero())}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{//\ Order\ our\ hooks\ to\ occur\ before\ possible\ reschedulings\ (which\ are\ done\ with\ ORDER\_ACTION),\ so\ the\ scheduler\ can\ use\ up-\/to-\/date\ information}}
+\DoxyCodeLine{00019\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PRE\_STAT\_WRITE,\ hook\_pre\_stat\_write,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00020\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_CREATE,\ hook\_thread\_create,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00021\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_START,\ hook\_thread\_start,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00022\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_STALL,\ hook\_thread\_stall,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00023\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_RESUME,\ hook\_thread\_resume,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00024\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_EXIT,\ hook\_thread\_exit,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ registerThreadStatMetric(INSTRUCTIONS,\ \textcolor{stringliteral}{"{}instruction\_count"{}},\ metricCallback,\ 0);}
+\DoxyCodeLine{00027\ \ \ \ registerThreadStatMetric(ELAPSED\_NONIDLE\_TIME,\ \textcolor{stringliteral}{"{}nonidle\_elapsed\_time"{}},\ metricCallback,\ 0);}
+\DoxyCodeLine{00028\ \ \ \ registerThreadStatMetric(WAITING\_COST,\ \textcolor{stringliteral}{"{}waiting\_cost"{}},\ metricCallback,\ 0);}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ ThreadStatsManager::\string~ThreadStatsManager()}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{for}(std::vector<ThreadStats*>::iterator\ it\ =\ m\_threads\_stats.begin();\ it\ !=\ m\_threads\_stats.end();\ ++it)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*it)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ *it;}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ ThreadStatsManager::ThreadStatType\ ThreadStatsManager::registerThreadStatMetric(ThreadStatType\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name,\ ThreadStatCallback\ func,\ UInt64\ user)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ DYNAMIC)}
+\DoxyCodeLine{00041\ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ type\ =\ m\_next\_dynamic\_type;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ ++m\_next\_dynamic\_type;}
+\DoxyCodeLine{00044\ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ m\_thread\_stat\_types.push\_back(type);}
+\DoxyCodeLine{00046\ \ \ \ m\_thread\_stat\_callbacks[type]\ =\ StatCallback(name,\ func,\ user);}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{return}\ type;}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ UInt64\ ThreadStatsManager::callThreadStatCallback(ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{return}\ m\_thread\_stat\_callbacks[type].call(type,\ thread\_id,\ core);}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}\ ThreadStatsManager::update(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{if}\ (time\ ==\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ time\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime();}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ calculateWaitingCosts(time);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_threads\_stats[thread\_id])}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ m\_threads\_stats[thread\_id]-\/>update(time);}
+\DoxyCodeLine{00067\ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ m\_threads\_stats[thread\_id]-\/>update(time);}
+\DoxyCodeLine{00071\ \ \ \ \}}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{void}\ ThreadStatsManager::calculateWaitingCosts(SubsecondTime\ time)}
+\DoxyCodeLine{00075\ \{}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{comment}{//\ Calculate\ a\ waiting\ cost\ for\ all\ threads.}}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{comment}{//\ For\ fully-\/subscribed\ systems,\ the\ cost\ is\ equal\ to\ each\ thread's\ waiting\ time.}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{comment}{//\ On\ over-\/subscribed\ systems,\ waiting\ is\ Ok\ as\ long\ as\ there\ are\ other\ threads\ that\ can\ execute,}}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{comment}{//\ so\ the\ cost\ becomes\ equal\ to\ the\ number\ of\ unused\ core*cycles,\ which\ is\ spread\ out\ over\ all\ waiting\ threads.}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ m\_waiting\_time\_last)}
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ SubsecondTime\ time\_delta\ =\ time\ -\/\ m\_waiting\_time\_last;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ UInt32\ n\_running\ =\ 0,\ n\_stalled\ =\ 0,\ n\_total\ =\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>isThreadRunning(thread\_id))}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ ++n\_running;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>getThreadStallReason(thread\_id)\ ==\ ThreadManager::STALL\_UNSCHEDULED)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ ++n\_stalled;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n\_stalled\ \&\&\ n\_running\ <=\ n\_total)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ SubsecondTime\ cost\ =\ (n\_total\ -\/\ n\_running)\ *\ time\_delta\ /\ n\_stalled;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>getThreadManager()-\/>isThreadRunning(thread\_id)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ Sim()-\/>getThreadManager()-\/>getThreadStallReason(thread\_id)\ !=\ ThreadManager::STALL\_UNSCHEDULED)}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_threads\_stats[thread\_id]-\/>m\_counts[WAITING\_COST]\ +=\ cost.getFS();}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ m\_waiting\_time\_last\ =\ time;}
+\DoxyCodeLine{00108\ \ \ \ \}}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ UInt64\ ThreadStatsManager::metricCallback(ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user)}
+\DoxyCodeLine{00112\ \{}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keywordflow}{switch}(type)}
+\DoxyCodeLine{00114\ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ INSTRUCTIONS:}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core-\/>getPerformanceModel()-\/>getInstructionCount();}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ELAPSED\_NONIDLE\_TIME:}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core-\/>getPerformanceModel()-\/>getNonIdleElapsedTime().getFS();}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ WAITING\_COST:}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Waiting\ cost\ is\ added\ directly\ to\ m\_counts[],\ as\ it\ needs\ to\ be\ applied\ even\ (especially!)\ when\ the\ thread\ is\ not\ on\ a\ core}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ ThreadStatType(\%d)\ for\ this\ callback"{}},\ type);}
+\DoxyCodeLine{00124\ \ \ \ \}}
+\DoxyCodeLine{00125\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{keywordtype}{void}\ ThreadStatsManager::pre\_stat\_write()}
+\DoxyCodeLine{00128\ \{}
+\DoxyCodeLine{00129\ \ \ \ SubsecondTime\ time\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime();}
+\DoxyCodeLine{00130\ \ \ \ calculateWaitingCosts(time);}
+\DoxyCodeLine{00131\ \ \ \ m\_bottlegraphs.update(time,\ INVALID\_THREAD\_ID,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00132\ \ \ \ update();}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{keywordtype}{void}\ ThreadStatsManager::threadCreate(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00136\ \{}
+\DoxyCodeLine{00137\ \ \ \ LOG\_ASSERT\_ERROR(thread\_id\ <\ MAX\_THREADS,\ \textcolor{stringliteral}{"{}Too\ many\ application\ threads,\ increase\ MAX\_THREADS"{}});}
+\DoxyCodeLine{00138\ \ \ \ m\_threads\_stats[thread\_id]\ =\ \textcolor{keyword}{new}\ ThreadStats(thread\_id);}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{keywordtype}{void}\ ThreadStatsManager::threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \ m\_threads\_stats[thread\_id]-\/>update(time,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00144\ \ \ \ m\_bottlegraphs.threadStart(thread\_id);}
+\DoxyCodeLine{00145\ \ \ \ m\_bottlegraphs.update(time,\ thread\_id,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keywordtype}{void}\ ThreadStatsManager::threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time)}
+\DoxyCodeLine{00149\ \{}
+\DoxyCodeLine{00150\ \ \ \ calculateWaitingCosts(time);}
+\DoxyCodeLine{00151\ \ \ \ m\_threads\_stats[thread\_id]-\/>update(time);}
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{if}\ (reason\ !=\ ThreadManager::STALL\_UNSCHEDULED)}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ m\_bottlegraphs.update(time,\ thread\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00154\ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{void}\ ThreadStatsManager::threadResume(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time)}
+\DoxyCodeLine{00157\ \{}
+\DoxyCodeLine{00158\ \ \ \ calculateWaitingCosts(time);}
+\DoxyCodeLine{00159\ \ \ \ m\_threads\_stats[thread\_id]-\/>update(time);}
+\DoxyCodeLine{00160\ \ \ \ m\_bottlegraphs.update(time,\ thread\_id,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00161\ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keywordtype}{void}\ ThreadStatsManager::threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00164\ \{}
+\DoxyCodeLine{00165\ \ \ \ calculateWaitingCosts(time);}
+\DoxyCodeLine{00166\ \ \ \ m\_threads\_stats[thread\_id]-\/>update(time);}
+\DoxyCodeLine{00167\ \ \ \ m\_bottlegraphs.update(time,\ thread\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ ThreadStatsManager::ThreadStats::ThreadStats(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00171\ \ \ \ :\ m\_thread(Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id))}
+\DoxyCodeLine{00172\ \ \ \ ,\ m\_core\_id(INVALID\_CORE\_ID)}
+\DoxyCodeLine{00173\ \ \ \ ,\ time\_by\_core(Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00174\ \ \ \ ,\ insn\_by\_core(Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00175\ \ \ \ ,\ m\_elapsed\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00176\ \ \ \ ,\ m\_unscheduled\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00177\ \ \ \ ,\ m\_time\_last(SubsecondTime::Zero())}
+\DoxyCodeLine{00178\ \ \ \ ,\ m\_counts()}
+\DoxyCodeLine{00179\ \ \ \ ,\ m\_last()}
+\DoxyCodeLine{00180\ \{}
+\DoxyCodeLine{00181\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ \textcolor{stringliteral}{"{}elapsed\_time"{}},\ \&m\_elapsed\_time);}
+\DoxyCodeLine{00182\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ \textcolor{stringliteral}{"{}unscheduled\_time"{}},\ \&m\_unscheduled\_time);}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00184\ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ \textcolor{stringliteral}{"{}time\_by\_core["{}}\ +\ itostr(core\_id)\ +\ \textcolor{stringliteral}{"{}]"{}},\ \&time\_by\_core[core\_id]);}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ \textcolor{stringliteral}{"{}instructions\_by\_core["{}}\ +\ itostr(core\_id)\ +\ \textcolor{stringliteral}{"{}]"{}},\ \&insn\_by\_core[core\_id]);}
+\DoxyCodeLine{00187\ \ \ \ \}}
+\DoxyCodeLine{00188\ \ \ \ ThreadStatsManager\ *tsm\ =\ Sim()-\/>getThreadStatsManager();}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{keywordflow}{for}(std::vector<ThreadStatType>::const\_iterator\ it\ =\ tsm-\/>getThreadStatTypes().begin();\ it\ !=\ tsm-\/>getThreadStatTypes().end();\ ++it)}
+\DoxyCodeLine{00190\ \ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ m\_counts[*it]\ =\ 0;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ m\_last[*it]\ =\ 0;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ tsm-\/>getThreadStatName(*it),\ \&m\_counts[*it]);}
+\DoxyCodeLine{00194\ \ \ \ \}}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{keywordtype}{void}\ ThreadStatsManager::ThreadStats::update(SubsecondTime\ time,\ \textcolor{keywordtype}{bool}\ init)}
+\DoxyCodeLine{00198\ \{}
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>getThreadState(m\_thread-\/>getId())\ ==\ Core::IDLE}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ ||\ Sim()-\/>getThreadManager()-\/>getThreadState(m\_thread-\/>getId())\ ==\ Core::INITIALIZING)}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \textcolor{comment}{//\ Increment\ per-\/thread\ statistics\ based\ on\ the\ progress\ our\ core\ has\ made\ since\ last\ time}}
+\DoxyCodeLine{00204\ \ \ \ SubsecondTime\ time\_delta\ =\ init\ ||\ m\_time\_last\ >\ time\ ?\ SubsecondTime::Zero()\ :\ time\ -\/\ m\_time\_last;}
+\DoxyCodeLine{00205\ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_id\ ==\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00206\ \ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ m\_elapsed\_time\ +=\ time\_delta;}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ m\_unscheduled\_time\ +=\ time\_delta;}
+\DoxyCodeLine{00209\ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00211\ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(m\_core\_id);}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ m\_elapsed\_time\ +=\ time\_delta;}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ time\_by\_core[core-\/>getId()]\ +=\ core-\/>getPerformanceModel()-\/>getNonIdleElapsedTime().getFS()\ -\/\ m\_last[ELAPSED\_NONIDLE\_TIME];}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ insn\_by\_core[core-\/>getId()]\ +=\ core-\/>getPerformanceModel()-\/>getInstructionCount()\ -\/\ m\_last[INSTRUCTIONS];}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(std::unordered\_map<ThreadStatType,\ UInt64>::iterator\ it\ =\ m\_counts.begin();\ it\ !=\ m\_counts.end();\ ++it)}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ m\_counts[it-\/>first]\ +=\ Sim()-\/>getThreadStatsManager()-\/>callThreadStatCallback(it-\/>first,\ m\_thread-\/>getId(),\ core)\ -\/\ m\_last[it-\/>first];}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ \textcolor{comment}{//\ Take\ a\ snapshot\ of\ our\ current\ core's\ statistics\ for\ later\ comparison}}
+\DoxyCodeLine{00222\ \ \ \ Core\ *core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00223\ \ \ \ \textcolor{keywordflow}{if}\ (core)}
+\DoxyCodeLine{00224\ \ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ m\_core\_id\ =\ core-\/>getId();}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(std::unordered\_map<ThreadStatType,\ UInt64>::iterator\ it\ =\ m\_counts.begin();\ it\ !=\ m\_counts.end();\ ++it)}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ m\_last[it-\/>first]\ =\ Sim()-\/>getThreadStatsManager()-\/>callThreadStatCallback(it-\/>first,\ m\_thread-\/>getId(),\ core);}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ \ \ \ \}}
+\DoxyCodeLine{00231\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ m\_core\_id\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ m\_time\_last)}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ m\_time\_last\ =\ time;}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ ThreadStatsManager::ThreadStatType\ ThreadStatNamedStat::registerStat(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name,\ String\ objectName,\ String\ metricName)}
+\DoxyCodeLine{00239\ \{}
+\DoxyCodeLine{00240\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getStatsManager()-\/>getMetricObject(objectName,\ 0,\ metricName))}
+\DoxyCodeLine{00241\ \ \ \ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ ThreadStatNamedStat\ *tsns\ =\ \textcolor{keyword}{new}\ ThreadStatNamedStat(objectName,\ metricName);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadStatsManager()-\/>registerThreadStatMetric(ThreadStatsManager::DYNAMIC,\ name,\ callback,\ (UInt64)tsns);}
+\DoxyCodeLine{00244\ \ \ \ \}}
+\DoxyCodeLine{00245\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00246\ \ \ \ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ThreadStatsManager::INVALID;}
+\DoxyCodeLine{00248\ \ \ \ \}}
+\DoxyCodeLine{00249\ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ ThreadStatNamedStat::ThreadStatNamedStat(String\ objectName,\ String\ metricName)}
+\DoxyCodeLine{00252\ \{}
+\DoxyCodeLine{00253\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00254\ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ StatsMetricBase\ *m\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(objectName,\ core\_id,\ metricName);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ m\_stats.push\_back(m);}
+\DoxyCodeLine{00257\ \ \ \ \}}
+\DoxyCodeLine{00258\ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ UInt64\ ThreadStatNamedStat::callback(ThreadStatsManager::ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user)}
+\DoxyCodeLine{00261\ \{}
+\DoxyCodeLine{00262\ \ \ \ StatsMetricBase\ *m\ =\ ((ThreadStatNamedStat*)user)-\/>m\_stats[core-\/>getId()];}
+\DoxyCodeLine{00263\ \ \ \ \textcolor{keywordflow}{if}\ (m)}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m-\/>recordMetric();}
+\DoxyCodeLine{00265\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00267\ \}}
+
+\end{DoxyCode}

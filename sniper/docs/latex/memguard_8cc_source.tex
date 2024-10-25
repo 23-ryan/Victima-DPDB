@@ -1,0 +1,51 @@
+\doxysection{memguard.\+cc}
+\label{memguard_8cc_source}\index{common/misc/memguard.cc@{common/misc/memguard.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}memguard.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <sys/mman.h>}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ MemGuard::MemGuard()}
+\DoxyCodeLine{00006\ \{}
+\DoxyCodeLine{00007\ \ \ \ protect();}
+\DoxyCodeLine{00008\ \}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ MemGuard::MemGuard(\textcolor{keyword}{const}\ MemGuard\&\ m)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ protect();}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{comment}{//\ Explicit\ copy\ constructor:\ don't\ access\ m-\/>guard}}
+\DoxyCodeLine{00014\ \}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ MemGuard\&\ MemGuard::operator=\ (\textcolor{keyword}{const}\ MemGuard\&\ m)}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{//\ Explicit\ operator=:\ don't\ access\ m-\/>guard}}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ MemGuard::\string~MemGuard()\ \{}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{comment}{//\ Memory\ may\ be\ reused\ by\ actual\ data,\ so\ reset\ the\ permissions}}
+\DoxyCodeLine{00024\ \ \ \ unprotect();}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keywordtype}{void}\ MemGuard::protect()}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ mprotect(pagePointer(),\ isAligned()\ ?\ 2*PAGE\_SIZE\ :\ PAGE\_SIZE,\ PROT\_NONE);}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ MemGuard::unprotect()}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ mprotect(pagePointer(),\ isAligned()\ ?\ 2*PAGE\_SIZE\ :\ PAGE\_SIZE,\ PROT\_READ\ |\ PROT\_WRITE\ |\ PROT\_EXEC);}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keywordtype}{bool}\ MemGuard::isAligned()}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{return}\ ((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})this-\/>m\_guard\ \&\ (PAGE\_SIZE-\/1))\ ==\ 0;}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{void}*\ MemGuard::pagePointer()}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)((\textcolor{keywordtype}{unsigned}\ long)(this-\/>m\_guard\ +\ PAGE\_SIZE\ -\/\ 1)\ \&\ \string~(PAGE\_SIZE-\/1));}
+\DoxyCodeLine{00045\ \}}
+
+\end{DoxyCode}

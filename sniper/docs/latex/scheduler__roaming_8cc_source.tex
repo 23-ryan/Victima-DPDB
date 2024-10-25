@@ -1,0 +1,30 @@
+\doxysection{scheduler\+\_\+roaming.\+cc}
+\label{scheduler__roaming_8cc_source}\index{common/scheduler/scheduler\_roaming.cc@{common/scheduler/scheduler\_roaming.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}scheduler\_roaming.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ SchedulerRoaming::SchedulerRoaming(ThreadManager\ *thread\_manager)}
+\DoxyCodeLine{00005\ \ \ \ :\ SchedulerPinnedBase(thread\_manager,\ SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}scheduler/roaming/quantum"{}})))}
+\DoxyCodeLine{00006\ \{}
+\DoxyCodeLine{00007\ \ \ \ m\_core\_mask.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00010\ \ \ \ \{}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ m\_core\_mask[core\_id]\ =\ Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}scheduler/roaming/core\_mask"{}},\ core\_id);}
+\DoxyCodeLine{00012\ \ \ \ \}}
+\DoxyCodeLine{00013\ \}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keywordtype}{void}\ SchedulerRoaming::threadSetInitialAffinity(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ m\_thread\_info[thread\_id].clearAffinity();}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00020\ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_mask[core\_id])}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ m\_thread\_info[thread\_id].addAffinity(core\_id);}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ \}}
+
+\end{DoxyCode}

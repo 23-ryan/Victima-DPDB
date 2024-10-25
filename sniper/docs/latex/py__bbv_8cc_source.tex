@@ -1,0 +1,72 @@
+\doxysection{py\+\_\+bbv.\+cc}
+\label{py__bbv_8cc_source}\index{common/scripting/py\_bbv.cc@{common/scripting/py\_bbv.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ get():\ retrieve\ a\ core's\ BBV}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00011\ enableBbv(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ Sim()-\/>getConfig()-\/>setBBVsEnabled(\textcolor{keyword}{true});}
+\DoxyCodeLine{00014\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00018\ disableBbv(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ Sim()-\/>getConfig()-\/>setBBVsEnabled(\textcolor{keyword}{false});}
+\DoxyCodeLine{00021\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00025\ getBbv(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ core\_id\_t\ core\_id\ =\ -\/1;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}l"{}},\ \&core\_id))}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ >=\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores())\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Core\ does\ not\ exist"{}});}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00035\ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ BbvCount\ *bbv\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getBbvCount();}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ PyObject\ *pRet\ =\ PyTuple\_New(2);}
+\DoxyCodeLine{00040\ \ \ \ PyObject\ *pInstrs\ =\ PyLong\_FromUnsignedLong(bbv-\/>getInstructionCount());}
+\DoxyCodeLine{00041\ \ \ \ PyTuple\_SET\_ITEM(pRet,\ 0,\ pInstrs);}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ PyObject\ *pBbv\ =\ PyTuple\_New(BbvCount::NUM\_BBV);}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ BbvCount::NUM\_BBV;\ ++i)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ PyTuple\_SET\_ITEM(pBbv,\ i,\ PyLong\_FromUnsignedLong(bbv-\/>getDimension(i)));}
+\DoxyCodeLine{00046\ \ \ \ PyTuple\_SET\_ITEM(pRet,\ 1,\ pBbv);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{return}\ pRet;}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ module\ definition}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{static}\ PyMethodDef\ PyBbvMethods[]\ =\ \{}
+\DoxyCodeLine{00057\ \ \ \ \{\textcolor{stringliteral}{"{}enable"{}},\ enableBbv,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Enable\ BBV\ collection."{}}\},}
+\DoxyCodeLine{00058\ \ \ \ \{\textcolor{stringliteral}{"{}disable"{}},\ disableBbv,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Enable\ BBV\ collection."{}}\},}
+\DoxyCodeLine{00059\ \ \ \ \{\textcolor{stringliteral}{"{}get"{}},\ \ getBbv,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Retrieve\ cummulative\ BBV\ for\ core."{}}\},}
+\DoxyCodeLine{00060\ \ \ \ \{NULL,\ NULL,\ 0,\ NULL\}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00061\ \};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{void}\ HooksPy::PyBbv::setup(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ PyObject\ *pModule\ =\ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_bbv"{}},\ PyBbvMethods);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ PyObject\ *pGlobalConst\ =\ PyInt\_FromLong(BbvCount::NUM\_BBV);}
+\DoxyCodeLine{00068\ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}BBV\_SIZE"{}},\ pGlobalConst);}
+\DoxyCodeLine{00069\ \ \ \ Py\_DECREF(pGlobalConst);}
+\DoxyCodeLine{00070\ \}}
+
+\end{DoxyCode}

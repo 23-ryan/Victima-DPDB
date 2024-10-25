@@ -1,0 +1,144 @@
+\doxysection{handle\+\_\+args.\+cc}
+\label{handle__args_8cc_source}\index{common/misc/handle\_args.cc@{common/misc/handle\_args.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}handle\_args.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <stdarg.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string/classification.hpp>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string/predicate.hpp>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string/split.hpp>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{char}*prog\_name;}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{using\ namespace\ }boost::algorithm;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keywordtype}{void}\ handle\_generic\_arg(\textcolor{keyword}{const}\ String\ \&str,\ config::ConfigFile\ \&\ cfg);}
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{void}\ handle\_args(\textcolor{keyword}{const}\ string\_vec\ \&\ args);}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keywordtype}{void}\ usage\_error(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*error\_msg,\ ...)}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Error:\ "{}});}
+\DoxyCodeLine{00022\ \ \ \ va\_list\ args;}
+\DoxyCodeLine{00023\ \ \ \ va\_start(args,\ error\_msg);}
+\DoxyCodeLine{00024\ \ \ \ vfprintf(stderr,\ \ error\_msg,\ args);}
+\DoxyCodeLine{00025\ \ \ \ va\_end(args);}
+\DoxyCodeLine{00026\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Usage:\ \%s\ -\/c\ config\ [extra\_options]\(\backslash\)n"{}},\ prog\_name);}
+\DoxyCodeLine{00029\ \ \ \ exit(-\/1);}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ parse\_args(string\_vec\ \&args,\ String\ \&\ config\_path,\ \textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}\ **argv)}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ prog\_name\ =\ argv[0];}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordtype}{bool}\ set\_config\_path\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ argc;\ i++)}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(strcmp(argv[i],\ \textcolor{stringliteral}{"{}-\/c"{}})\ ==\ 0)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i\ +\ 1\ >=\ argc)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ usage\_error(\textcolor{stringliteral}{"{}Should\ have\ provided\ another\ argument\ to\ the\ -\/c\ parameter.\(\backslash\)n"{}});}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!set\_config\_path)\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ first\ -\/c\ or\ -\/-\/config=\ option\ sets\ base\ configuration\ file,\ overriding\ default\ 'carbon\_sim.cfg\ */}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config\_path\ =\ argv[i+1];}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ set\_config\_path\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ subsequent\ -\/c\ or\ -\/-\/config=\ option\ sets\ extra\ config\ file\ */}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ args.push\_back(String(\textcolor{stringliteral}{"{}-\/-\/config="{}})\ +\ argv[i+1]);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ i++;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(strncmp(argv[i],\textcolor{stringliteral}{"{}-\/-\/config"{}},\ strlen(\textcolor{stringliteral}{"{}-\/-\/config"{}}))\ ==\ 0)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!set\_config\_path)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ first\ -\/c\ or\ -\/-\/config=\ option\ */}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ string\_vec\ split\_args;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ config\_arg(argv[i]);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ boost::split(\ split\_args,\ config\_arg,\ boost::algorithm::is\_any\_of(\textcolor{stringliteral}{"{}="{}})\ );}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(split\_args.size()\ !=\ 2)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ usage\_error(\textcolor{stringliteral}{"{}Error\ parsing\ argument:\ \%s\ (\%s)\(\backslash\)n"{}},\ config\_arg.c\_str(),\ argv[i]);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config\_path\ =\ split\_args[1];}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ set\_config\_path\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ subsequent\ -\/c\ or\ -\/-\/config=\ option\ */}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ args.push\_back(argv[i]);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(strcmp(argv[i],\ \textcolor{stringliteral}{"{}-\/-\/"{}})\ ==\ 0)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(strncmp(argv[i],\ \textcolor{stringliteral}{"{}-\/-\/"{}},\ strlen(\textcolor{stringliteral}{"{}-\/-\/"{}}))\ ==\ 0)}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ args.push\_back(argv[i]);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{if}(config\_path\ ==\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ usage\_error(\textcolor{stringliteral}{"{}Should\ have\ specified\ config\ argument.\(\backslash\)n"{}});}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{void}\ handle\_args(\textcolor{keyword}{const}\ string\_vec\ \&\ args,\ config::ConfigFile\ \&\ cfg)}
+\DoxyCodeLine{00086\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{for}(string\_vec::const\_iterator\ i\ =\ args.begin();}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ i\ !=\ args.end();}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ i++)}
+\DoxyCodeLine{00090\ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ handle\_generic\_arg(*i,\ cfg);}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keywordtype}{void}\ handle\_generic\_arg(\textcolor{keyword}{const}\ String\ \&str,\ config::ConfigFile\ \&\ cfg)}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \ string\_vec\ split\_args;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ boost::split(\ split\_args,\ str,\ boost::algorithm::is\_any\_of(\textcolor{stringliteral}{"{}="{}})\ );}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{if}(split\_args.size()\ !=\ 2\ ||\ split\_args[0].size()\ <=\ 2\ ||}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ split\_args[0].c\_str()[0]\ !=\ \textcolor{charliteral}{'-\/'}\ ||\ split\_args[0].c\_str()[1]\ !=\ \textcolor{charliteral}{'-\/'})}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ usage\_error(\textcolor{stringliteral}{"{}Error\ parsing\ argument:\ \%s\(\backslash\)n"{}},\ str.c\_str());}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ String\ setting(split\_args[0].substr(2));}
+\DoxyCodeLine{00106\ \ \ \ String\ \&\ value(split\_args[1]);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keywordflow}{if}\ (setting\ ==\ \textcolor{stringliteral}{"{}config"{}})}
+\DoxyCodeLine{00109\ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Merge\ settings\ in\ new\ config\ file\ into\ the\ current\ ConfigFile\ object\ */}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ cfg.load(value);}
+\DoxyCodeLine{00112\ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00114\ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ string\_vec\ path;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ boost::split(path,\ setting,\ boost::algorithm::is\_any\_of(\textcolor{stringliteral}{"{}/"{}}));}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{comment}{//\ Build\ a\ valid\ configuration\ file\ from\ the\ command\ line\ parameters}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ first\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ String\ built\_config\_file\ =\ \textcolor{stringliteral}{"{}["{}};}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0\ ;\ i\ <\ path.size()-\/1\ ;\ i++\ )}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (first)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ first\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ built\_config\_file\ +=\ \textcolor{stringliteral}{"{}/"{}};}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ built\_config\_file\ +=\ path[i];}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ built\_config\_file\ +=\ \textcolor{stringliteral}{"{}]\(\backslash\)n"{}}\ +\ path[path.size()-\/1]\ +\ \textcolor{stringliteral}{"{}="{}}\ +\ value;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ cfg.loadConfigFromString(built\_config\_file);}
+\DoxyCodeLine{00137\ \ \ \ \}}
+\DoxyCodeLine{00138\ \}}
+
+\end{DoxyCode}

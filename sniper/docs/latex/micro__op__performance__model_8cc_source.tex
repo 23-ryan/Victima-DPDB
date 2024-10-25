@@ -1,0 +1,573 @@
+\doxysection{micro\+\_\+op\+\_\+performance\+\_\+model.\+cc}
+\label{micro__op__performance__model_8cc_source}\index{common/performance\_model/performance\_models/micro\_op\_performance\_model.cc@{common/performance\_model/performance\_models/micro\_op\_performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}micro\_op\_performance\_model.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}allocator.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}dynamic\_instruction.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ MicroOp*\ MicroOpPerformanceModel::m\_serialize\_uop\ =\ NULL;}
+\DoxyCodeLine{00019\ MicroOp*\ MicroOpPerformanceModel::m\_mfence\_uop\ =\ NULL;}
+\DoxyCodeLine{00020\ MicroOp*\ MicroOpPerformanceModel::m\_memaccess\_uop\ =\ NULL;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ MicroOpPerformanceModel::MicroOpPerformanceModel(Core\ *core,\ \textcolor{keywordtype}{bool}\ issue\_memops)}
+\DoxyCodeLine{00023\ \ \ \ \ :\ PerformanceModel(core)}
+\DoxyCodeLine{00024\ \ \ \ \ ,\ m\_core\_model(CoreModel::getCoreModel(Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}perf\_model/core/core\_model"{}},\ core-\/>getId())))}
+\DoxyCodeLine{00025\ \ \ \ \ ,\ m\_allocator(m\_core\_model-\/>createDMOAllocator())}
+\DoxyCodeLine{00026\ \ \ \ \ ,\ m\_issue\_memops(issue\_memops)}
+\DoxyCodeLine{00027\ \ \ \ \ ,\ m\_dyninsn\_count(0)}
+\DoxyCodeLine{00028\ \ \ \ \ ,\ m\_dyninsn\_cost(0)}
+\DoxyCodeLine{00029\ \ \ \ \ ,\ m\_dyninsn\_zero\_count(0)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}dyninsn\_count"{}},\ \&m\_dyninsn\_count);}
+\DoxyCodeLine{00032\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}dyninsn\_cost"{}},\ \&m\_dyninsn\_cost);}
+\DoxyCodeLine{00033\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}dyninsn\_zero\_count"{}},\ \&m\_dyninsn\_zero\_count);}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#if\ DEBUG\_DYN\_INSN\_LOG}}
+\DoxyCodeLine{00035\ \ \ \ String\ filename;}
+\DoxyCodeLine{00036\ \ \ \ filename\ =\ \textcolor{stringliteral}{"{}sim.dyninsn\_log."{}}\ +\ itostr(core-\/>getId());}
+\DoxyCodeLine{00037\ \ \ \ filename\ =\ Sim()-\/>getConfig()-\/>formatOutputFileName(filename);}
+\DoxyCodeLine{00038\ \ \ \ m\_dyninsn\_log\ =\ std::fopen(filename.c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#if\ DEBUG\_INSN\_LOG}}
+\DoxyCodeLine{00041\ \ \ \ String\ insn\_filename;}
+\DoxyCodeLine{00042\ \ \ \ insn\_filename\ =\ \textcolor{stringliteral}{"{}sim.insn\_log."{}}\ +\ itostr(core-\/>getId());}
+\DoxyCodeLine{00043\ \ \ \ insn\_filename\ =\ Sim()-\/>getConfig()-\/>formatOutputFileName(insn\_filename);}
+\DoxyCodeLine{00044\ \ \ \ m\_insn\_log\ =\ std::fopen(insn\_filename.c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#if\ DEBUG\_CYCLE\_COUNT\_LOG}}
+\DoxyCodeLine{00047\ \ \ \ String\ cycle\_filename;}
+\DoxyCodeLine{00048\ \ \ \ cycle\_filename\ =\ \textcolor{stringliteral}{"{}sim.cycle\_log."{}}\ +\ itostr(core-\/>getId());}
+\DoxyCodeLine{00049\ \ \ \ cycle\_filename\ =\ Sim()-\/>getConfig()-\/>formatOutputFileName(cycle\_filename);}
+\DoxyCodeLine{00050\ \ \ \ m\_cycle\_log\ =\ std::fopen(cycle\_filename.c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ m\_cpiITLBMiss\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00054\ \ \ \ m\_cpiDTLBMiss\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00055\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiITLBMiss"{}},\ \&m\_cpiITLBMiss);}
+\DoxyCodeLine{00056\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiDTLBMiss"{}},\ \&m\_cpiDTLBMiss);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ m\_cpiUnknown\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00059\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiUnknown"{}},\ \&m\_cpiUnknown);}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ m\_cpiMemAccess\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00062\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncMemAccess"{}},\ \&m\_cpiMemAccess);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keywordflow}{if}\ (!\ m\_serialize\_uop)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ m\_serialize\_uop\ =\ \textcolor{keyword}{new}\ MicroOp();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ UInt64\ interval\_sync\_cost\ =\ 1;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ m\_serialize\_uop-\/>makeDynamic(\textcolor{stringliteral}{"{}DynamicInsn-\/Serialize"{}},\ interval\_sync\_cost);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ m\_serialize\_uop-\/>setSerializing(\textcolor{keyword}{true});}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ m\_serialize\_uop-\/>setFirst(\textcolor{keyword}{true});}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ m\_serialize\_uop-\/>setLast(\textcolor{keyword}{true});}
+\DoxyCodeLine{00071\ \ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ (!\ m\_mfence\_uop)\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ m\_mfence\_uop\ =\ \textcolor{keyword}{new}\ MicroOp();}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ m\_mfence\_uop-\/>makeDynamic(\textcolor{stringliteral}{"{}DynamicInsn-\/MFENCE"{}},\ 1);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ m\_mfence\_uop-\/>setMemBarrier(\textcolor{keyword}{true});}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ m\_mfence\_uop-\/>setFirst(\textcolor{keyword}{true});}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ m\_mfence\_uop-\/>setLast(\textcolor{keyword}{true});}
+\DoxyCodeLine{00079\ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{if}\ (!\ m\_memaccess\_uop)\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ m\_memaccess\_uop\ =\ \textcolor{keyword}{new}\ MicroOp();}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ m\_memaccess\_uop-\/>makeLoad(}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ 0\ \textcolor{comment}{//\ uop\ offset\ of\ 0\ (first\ uop)}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ ,\ dl::Decoder::DL\_OPCODE\_INVALID\ \textcolor{comment}{//\ opcode}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ ,\ \textcolor{stringliteral}{"{}invalid"{}}\ \ \textcolor{comment}{//\ instructionName}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ ,\ 8}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ m\_memaccess\_uop-\/>setMemBarrier(\textcolor{keyword}{true});}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ m\_memaccess\_uop-\/>setFirst(\textcolor{keyword}{true});}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ m\_memaccess\_uop-\/>setLast(\textcolor{keyword}{true});}
+\DoxyCodeLine{00092\ \ \ \ \}}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ MicroOpPerformanceModel::\string~MicroOpPerformanceModel()}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#if\ DEBUG\_DYN\_INSN\_LOG}}
+\DoxyCodeLine{00098\ \ \ \ std::fclose(m\_dyninsn\_log);}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#if\ DEBUG\_INSN\_LOG}}
+\DoxyCodeLine{00101\ \ \ \ std::fclose(m\_insn\_log);}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#if\ DEBUG\_CYCLE\_COUNT\_LOG}}
+\DoxyCodeLine{00104\ \ \ \ std::fclose(m\_cycle\_log);}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keyword}{delete}\ m\_allocator;}
+\DoxyCodeLine{00107\ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{keywordtype}{void}\ MicroOpPerformanceModel::doSquashing(std::vector<DynamicMicroOp*>\ \&current\_uops,\ uint32\_t\ first\_squashed)}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ MicroOp::uop\_type\_t\ uop\_type\ =\ MicroOp::UOP\_INVALID;}
+\DoxyCodeLine{00112\ \ \ \ uint32\_t\ i,\ size,\ squashedCount\ =\ 0,\ microOpTypeOffset\ =\ 0;}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \textcolor{comment}{//\ recalculate\ microOpTypeOffsets\ for\ dynamic\ uops\ and}}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{comment}{//\ collect\ squashing\ info}}
+\DoxyCodeLine{00116\ \ \ \ \textcolor{keywordflow}{for}(i\ =\ 0,\ size\ =\ current\_uops.size();\ i\ <\ size;\ i++)}
+\DoxyCodeLine{00117\ \ \ \ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ DynamicMicroOp*\ uop\ =\ current\_uops[i];}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(uop-\/>isSquashed())}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ squashedCount++;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(uop-\/>getMicroOp()-\/>getType()\ !=\ uop\_type)}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ uop\_type\ =\ uop-\/>getMicroOp()-\/>getType();}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ microOpTypeOffset\ =\ 0;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ uop-\/>setMicroOpTypeOffset(microOpTypeOffset++);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ uop-\/>setSquashedCount(squashedCount);}
+\DoxyCodeLine{00133\ \ \ \ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \textcolor{comment}{//\ recalculate\ intraInstructionDependancies}}
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordflow}{for}(i\ =\ first\_squashed;\ i\ <\ size;\ i++)}
+\DoxyCodeLine{00137\ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ DynamicMicroOp*\ uop\ =\ current\_uops[i];}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!uop-\/>isSquashed())}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ uint32\_t\ intraDeps\ =\ uop-\/>getIntraInstrDependenciesLength();}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(intraDeps\ !=\ 0)}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ iBase\ =\ i\ -\/\ uop-\/>getMicroOp()-\/>microOpTypeOffset;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(iBase\ >=\ intraDeps,\ \textcolor{stringliteral}{"{}intraInstructionDependancies\ (\%d)\ should\ be\ <=\ (\%d)"{}},\ intraDeps,\ iBase);}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ uop-\/>setIntraInstrDependenciesLength(intraDeps\ -\/\ (current\_uops[iBase]-\/>getSquashedCount()\ -\/}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_uops[iBase-\/intraDeps]-\/>getSquashedCount()));}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \ \ \ \}}
+\DoxyCodeLine{00151\ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{keywordtype}{void}\ MicroOpPerformanceModel::handleInstruction(DynamicInstruction\ *dynins)}
+\DoxyCodeLine{00154\ \{}
+\DoxyCodeLine{00155\ \ \ \ ComponentPeriod\ insn\_period\ =\ *(\textcolor{keyword}{const\_cast<}ComponentPeriod*\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }ComponentPeriod*\textcolor{keyword}{>}(m\_elapsed\_time)));}
+\DoxyCodeLine{00156\ \ \ \ std::vector<DynamicMicroOp*>\ current\_uops;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \textcolor{comment}{//\ These\ vectors\ are\ local\ to\ handleInstruction,\ but\ keeping\ them\ around\ as\ member\ variables}}
+\DoxyCodeLine{00159\ \ \ \ \textcolor{comment}{//\ saves\ a\ lot\ on\ allocation/deallocation\ time.}}
+\DoxyCodeLine{00160\ \ \ \ m\_current\_uops.clear();}
+\DoxyCodeLine{00161\ \ \ \ m\_cache\_lines\_read.clear();}
+\DoxyCodeLine{00162\ \ \ \ m\_cache\_lines\_written.clear();}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ UInt64\ num\_reads\_done\ =\ 0;}
+\DoxyCodeLine{00165\ \ \ \ UInt64\ num\_writes\_done\ =\ 0;}
+\DoxyCodeLine{00166\ \ \ \ UInt64\ num\_nonmem\_done\ =\ 0;}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordflow}{if}\ (dynins-\/>instruction-\/>getMicroOps())}
+\DoxyCodeLine{00169\ \ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(std::vector<const\ MicroOp*>::const\_iterator\ it\ =\ dynins-\/>instruction-\/>getMicroOps()-\/>begin();\ it\ !=\ dynins-\/>instruction-\/>getMicroOps()-\/>end();\ it++)}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ m\_current\_uops.push\_back(m\_core\_model-\/>createDynamicMicroOp(m\_allocator,\ *it,\ insn\_period));}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \textcolor{comment}{//\ Find\ some\ information}}
+\DoxyCodeLine{00177\ \ \ \ \textcolor{keywordtype}{size\_t}\ num\_loads\ =\ 0;}
+\DoxyCodeLine{00178\ \ \ \ \textcolor{keywordtype}{size\_t}\ num\_stores\ =\ 0;}
+\DoxyCodeLine{00179\ \ \ \ \textcolor{keywordtype}{size\_t}\ exec\_base\_index\ =\ SIZE\_MAX;}
+\DoxyCodeLine{00180\ \ \ \ \textcolor{comment}{//\ Find\ the\ first\ load}}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{keywordtype}{size\_t}\ load\_base\_index\ =\ SIZE\_MAX;}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{comment}{//\ Find\ the\ first\ store}}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordtype}{size\_t}\ store\_base\_index\ =\ SIZE\_MAX;}
+\DoxyCodeLine{00184\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ m\ =\ 0\ ;\ m\ <\ m\_current\_uops.size()\ ;\ m++\ )}
+\DoxyCodeLine{00185\ \ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_current\_uops[m]-\/>getMicroOp()-\/>isExecute())}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ exec\_base\_index\ =\ m;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_current\_uops[m]-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ ++num\_stores;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (store\_base\_index\ ==\ SIZE\_MAX)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ store\_base\_index\ =\ m;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_current\_uops[m]-\/>getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ ++num\_loads;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (load\_base\_index\ ==\ SIZE\_MAX)}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ load\_base\_index\ =\ m;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \textcolor{comment}{//\ Compute\ the\ iCache\ cost,\ and\ add\ to\ our\ cycle\ time}}
+\DoxyCodeLine{00205\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableICacheModeling())}
+\DoxyCodeLine{00206\ \ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \textcolor{comment}{//\ Sometimes,\ these\ aren't\ real\ instructions\ (INST\_SPAWN,\ etc),\ and\ therefore,\ we\ need\ to\ skip\ these}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dynins-\/>instruction-\/>getAddress()\ \&\&\ !dynins-\/>instruction-\/>isPseudo()\ \&\&\ m\_current\_uops.size()\ >\ 0\ )}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ MemoryResult\ memres\ =\ getCore()-\/>readInstructionMemory(dynins-\/>eip,\ dynins-\/>instruction-\/>getSize());}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ the\ interval\ model,\ for\ now,\ use\ integers\ for\ the\ cycle\ latencies}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ UInt64\ memory\_cycle\_latency\ =\ SubsecondTime::divideRounded(memres.latency,\ insn\_period);}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ hit\_where\ information\ for\ the\ icache}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ interval\ model\ will\ only\ add\ icache\ latencies\ if\ there\ hasn't\ been\ a\ hit.}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ m\_current\_uops[0]-\/>setICacheHitWhere(memres.hit\_where);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ m\_current\_uops[0]-\/>setICacheLatency(memory\_cycle\_latency);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \textcolor{keywordtype}{bool}\ do\_squashing\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00223\ \ \ \ \textcolor{comment}{//\ Graphite\ instruction\ operands}}
+\DoxyCodeLine{00224\ \ \ \ \textcolor{keyword}{const}\ OperandList\ \&ops\ =\ dynins-\/>instruction-\/>getOperands();}
+\DoxyCodeLine{00225\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ memidx\ =\ 0;}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \textcolor{keywordflow}{if}\ (m\_issue\_memops)}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ dynins-\/>accessMemory(getCore());}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \textcolor{comment}{//\ If\ we\ haven't\ gotten\ all\ of\ our\ read\ or\ write\ data\ yet,\ iterate\ over\ the\ operands}}
+\DoxyCodeLine{00231\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0\ ;\ i\ <\ ops.size()\ ;\ ++i)}
+\DoxyCodeLine{00232\ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Operand\ \&o\ =\ ops[i];}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (o.m\_type\ ==\ Operand::MEMORY)}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(dynins-\/>num\_memory\ >\ memidx,\ \textcolor{stringliteral}{"{}Did\ not\ get\ enough\ memory\_info\ objects"{}});}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ DynamicInstruction::MemoryInfo\ \&info\ =\ dynins-\/>memory\_info[memidx++];}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(info.dir\ ==\ o.m\_direction,}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Expected\ memory\ \%d\ info,\ got:\ \%d."{}},\ o.m\_direction,\ info.dir);}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Because\ the\ interval\ model\ is\ currently\ in\ cycles,\ convert\ the\ data\ to\ cycles\ here\ before\ using\ it}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Force\ the\ latencies\ into\ cycles\ for\ use\ in\ the\ original\ interval\ model}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ Update\ the\ Interval\ Timer\ to\ use\ SubsecondTime}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ UInt64\ memory\_cycle\_latency\ =\ SubsecondTime::divideRounded(info.latency,\ insn\_period);}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Optimize\ multiple\ accesses\ to\ the\ same\ cache\ line\ by\ one\ instruction\ (vscatter/vgather)}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ For\ simplicity,\ vgather/vscatter\ have\ 16\ load/store\ microops,\ one\ for\ each\ address.}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ Here,\ we\ squash\ microops\ that\ touch\ a\ given\ cache\ line\ a\ second\ time}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ FIXME:\ although\ the\ microop\ is\ squashed\ and\ its\ latency\ ignored,\ the\ cache\ still\ sees\ the\ access}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_line\ =\ info.addr\ \&\ \string~63;\ \textcolor{comment}{//\ FIXME:\ hard-\/coded\ cache\ line\ size}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (o.m\_direction\ ==\ Operand::READ)}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Operand::READ}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (load\_base\_index\ !=\ SIZE\_MAX)}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ load\_index\ =\ load\_base\_index\ +\ num\_reads\_done;}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(load\_index\ <\ m\_current\_uops.size(),}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Expected\ load\_index(\%x)\ to\ be\ less\ than\ uops.size()(\%d)."{}},\ load\_index,\ m\_current\_uops.size());}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_current\_uops[load\_index]-\/>getMicroOp()-\/>isLoad(),}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Expected\ uop\ \%d\ to\ be\ a\ load."{}},\ load\_index);}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::find(m\_cache\_lines\_read.begin(),\ m\_cache\_lines\_read.end(),\ cache\_line)\ !=\ m\_cache\_lines\_read.end())}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[load\_index]-\/>squash(\&m\_current\_uops);}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ do\_squashing\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cache\_lines\_read.push\_back(cache\_line);}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ this\ uop\ with\ load\ latencies}}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ bypass\_latency\ =\ m\_core\_model-\/>getBypassLatency(m\_current\_uops[load\_index]);}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[load\_index]-\/>setExecLatency(memory\_cycle\_latency\ +\ bypass\_latency);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Memory::Access\ addr;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addr.set(info.addr);}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[load\_index]-\/>setAddress(addr);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[load\_index]-\/>setDCacheHitWhere(info.hit\_where);}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++num\_reads\_done;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Read\ operand\ count\ mismatch"{}});}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Operand::WRITE}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (store\_base\_index\ !=\ SIZE\_MAX)}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ store\_index\ =\ store\_base\_index\ +\ num\_writes\_done;}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(store\_index\ <\ m\_current\_uops.size(),}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Expected\ store\_index(\%d)\ to\ be\ less\ than\ uops.size()(\%d)."{}},\ store\_index,\ m\_current\_uops.size());}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_current\_uops[store\_index]-\/>getMicroOp()-\/>isStore(),}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Expected\ uop\ \%d\ to\ be\ a\ store.\ [\%d|\%s]"{}},\ store\_index,\ m\_current\_uops[store\_index]-\/>getMicroOp()-\/>getType(),\ m\_current\_uops[store\_index]-\/>getMicroOp()-\/>toString().c\_str());}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::find(m\_cache\_lines\_written.begin(),\ m\_cache\_lines\_written.end(),\ cache\_line)\ !=\ m\_cache\_lines\_written.end())}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[store\_index]-\/>squash(\&m\_current\_uops);}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ do\_squashing\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cache\_lines\_written.push\_back(cache\_line);}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ this\ uop\ with\ store\ latencies.}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ bypass\_latency\ =\ m\_core\_model-\/>getBypassLatency(m\_current\_uops[store\_index]);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[store\_index]-\/>setExecLatency(memory\_cycle\_latency\ +\ bypass\_latency);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Memory::Access\ addr;}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addr.set(info.addr);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[store\_index]-\/>setAddress(addr);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_current\_uops[store\_index]-\/>setDCacheHitWhere(info.hit\_where);}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++num\_writes\_done;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Write\ operand\ count\ mismatch"{}});}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ ++num\_nonmem\_done;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \textcolor{keywordflow}{if}(do\_squashing\ >\ 0)}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ doSquashing(m\_current\_uops);}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \textcolor{comment}{//\ Make\ sure\ there\ was\ an\ Operand/MemoryInfo\ for\ each\ MicroOp}}
+\DoxyCodeLine{00335\ \ \ \ \textcolor{comment}{//\ This\ should\ detect\ mismatches\ between\ decoding\ as\ done\ by\ fillOperandListMemOps\ and\ InstructionDecoder}}
+\DoxyCodeLine{00336\ \ \ \ assert(num\_reads\_done\ ==\ num\_loads);}
+\DoxyCodeLine{00337\ \ \ \ assert(num\_writes\_done\ ==\ num\_stores);}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ SubsecondTime\ insn\_cost\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \textcolor{keywordflow}{if}\ (dynins-\/>instruction-\/>getType()\ ==\ INST\_BRANCH)}
+\DoxyCodeLine{00342\ \ \ \ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_mispredict;}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ dynins-\/>getBranchCost(getCore(),\ \&is\_mispredict);}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ whether\ the\ branch\ was\ mispredicted\ or\ not}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_current\_uops[exec\_base\_index]-\/>getMicroOp()-\/>isBranch(),\ \textcolor{stringliteral}{"{}Expected\ to\ find\ a\ branch\ here."{}});}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ m\_current\_uops[exec\_base\_index]-\/>setBranchMispredicted(is\_mispredict);}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ m\_current\_uops[exec\_base\_index]-\/>setBranchTaken(dynins-\/>branch\_info.taken);}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ m\_current\_uops[exec\_base\_index]-\/>setBranchTarget(dynins-\/>branch\_info.target);}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ not\ update\ the\ execution\ latency\ of\ a\ branch\ instruction}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \textcolor{comment}{//\ The\ interval\ model\ will\ calculate\ the\ branch\ latency}}
+\DoxyCodeLine{00353\ \ \ \ \}}
+\DoxyCodeLine{00354\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00355\ \ \ \ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ insn\_cost\ =\ dynins-\/>getCost(getCore());}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\ \ \ \#if\ DEBUG\_INSN\_LOG}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (insn\_cost\ >\ 17)}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}[\%llu]\ "{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})m\_cycle\_count);}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (load\_base\_index\ !=\ SIZE\_MAX)\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}L"{}});}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (store\_base\_index\ !=\ SIZE\_MAX)\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}S"{}});}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (exec\_base\_index\ !=\ SIZE\_MAX)\ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}X"{}});}
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}-\/\%s:\%s"{}},\ dynins-\/>instruction-\/>getDisassembly().c\_str(),\ dynins-\/>instruction-\/>getTypeName().c\_str());}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ fflush(m\_insn\_log);}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}approx\ cost\ =\ \%llu\(\backslash\)n"{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})insn\_cost);}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00377\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00378\ \ \ \ \}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \textcolor{comment}{//\ Insert\ an\ instruction\ into\ the\ interval\ model\ to\ indicate\ that\ time\ has\ passed}}
+\DoxyCodeLine{00381\ \ \ \ uint32\_t\ new\_num\_insns\ =\ 0;}
+\DoxyCodeLine{00382\ \ \ \ ComponentTime\ new\_latency(m\_elapsed\_time.getLatencyGenerator());\ \textcolor{comment}{//\ Get\ a\ new,\ empty\ holder\ for\ latency}}
+\DoxyCodeLine{00383\ \ \ \ \textcolor{keywordtype}{bool}\ latency\_out\_of\_band\ =\ \textcolor{keyword}{false};\ \textcolor{comment}{//\ If\ new\_latency\ contains\ any\ values\ not\ returned\ from\ IntervalTimer/RobTimer,\ we'll\ need\ to\ call\ synchronize()}}
+\DoxyCodeLine{00384\ \ \ \ \textcolor{keywordflow}{if}\ (m\_current\_uops.size()\ >\ 0)}
+\DoxyCodeLine{00385\ \ \ \ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ uint64\_t\ new\_latency\_cycles;}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ boost::tie(new\_num\_insns,\ new\_latency\_cycles)\ =\ simulate(m\_current\_uops);}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ new\_latency.addCycleLatency(new\_latency\_cycles);}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \textcolor{preprocessor}{\#if\ DEBUG\_INSN\_LOG\ >\ 1}}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}[\%llu]\ "{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})m\_cycle\_count);}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (load\_base\_index\ !=\ SIZE\_MAX)\ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}L"{}});}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (store\_base\_index\ !=\ SIZE\_MAX)\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}S"{}});}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (exec\_base\_index\ !=\ SIZE\_MAX)\ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}X"{}});}
+\DoxyCodeLine{00400\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}-\/\%s"{}},\ m\_current\_uops[exec\_base\_index].getInstructionOpcodeName().c\_str());}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}approx\ cost\ =\ \%llu\(\backslash\)n"{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})insn\_cost);}
+\DoxyCodeLine{00405\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00406\ \ \ \ \}}
+\DoxyCodeLine{00407\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (insn\_cost\ >\ SubsecondTime::Zero()\ \&\&\ dynins-\/>instruction-\/>getType()\ !=\ INST\_MEM\_ACCESS)}
+\DoxyCodeLine{00408\ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ all\ non-\/zero,\ non\ MemAccess\ instructions\ here}}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ this\ operation\ as\ a\ serialization\ instruction}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \textcolor{comment}{//\ It's\ cost\ needs\ to\ be\ added\ to\ the\ overall\ latency,\ and\ for\ accuracy}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \textcolor{comment}{//\ \ it\ will\ help\ to\ be\ sure\ that\ the\ model\ knows\ about\ additional\ time}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \textcolor{comment}{//\ \ used\ for\ overlapping\ events}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \textcolor{comment}{//\ These\ tend\ to\ be\ sync\ instructions}}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \textcolor{comment}{//\ Because\ of\ timing\ issues\ (large\ synchronization\ deltas),\ take\ these\ latencies\ into\ account\ immediately}}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \textcolor{comment}{//\ \ Nevertheless,\ do\ not\ add\ the\ instruction\ cost\ into\ the\ interval\ model\ because\ the\ latency}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \textcolor{comment}{//\ \ has\ already\ been\ taken\ into\ account\ here.\ \ The\ interval\ model\ will\ serialize,\ flushing\ the\ old\ window}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \ \ std::vector<DynamicMicroOp*>\ uops;}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ uops.push\_back(m\_core\_model-\/>createDynamicMicroOp(m\_allocator,\ m\_serialize\_uop,\ insn\_period));}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \ \ uint64\_t\ new\_latency\_cycles;}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ boost::tie(new\_num\_insns,\ new\_latency\_cycles)\ =\ simulate(uops);}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ new\_latency.addCycleLatency(new\_latency\_cycles);}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ the\ instruction\ cost\ immediately\ to\ prevent\ synchronization\ issues}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (insn\_cost\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ new\_latency.addLatency(insn\_cost);}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ latency\_out\_of\_band\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dynins-\/>instruction-\/>getType()\ ==\ INST\_TLB\_MISS)}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ TLBMissInstruction\ \textcolor{keyword}{const}*\ tlb\_miss\_insn\ =\ \textcolor{keyword}{dynamic\_cast<}TLBMissInstruction\ const*\textcolor{keyword}{>}(dynins-\/>instruction);}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(tlb\_miss\_insn\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ a\ TLBMissInstruction,\ but\ did\ not\ get\ one."{}});}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tlb\_miss\_insn-\/>isIfetch())}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cpiITLBMiss\ +=\ insn\_cost;}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cpiDTLBMiss\ +=\ insn\_cost;}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dynins-\/>instruction-\/>getType()\ ==\ INST\_UNKNOWN)}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ m\_cpiUnknown\ +=\ insn\_cost;}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ ((dynins-\/>instruction-\/>getType()\ ==\ INST\_SYNC)\ ||\ (dynins-\/>instruction-\/>getType()\ ==\ INST\_RECV))}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}The\ performance\ model\ expects\ non-\/idle\ instructions,\ not\ INST\_SYNC\ or\ INST\_RECV"{}});}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unexpectedly\ received\ something\ other\ than\ a\ TLBMiss\ Instruction"{}});}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \textcolor{preprocessor}{\#if\ DEBUG\_DYN\_INSN\_LOG}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ fprintf(m\_dyninsn\_log,\ \textcolor{stringliteral}{"{}[\%llu]\ \%s:\ cost\ =\ \%llu\(\backslash\)n"{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})m\_elapsed\_time,\ dynins-\/>instruction-\/>getTypeName().c\_str(),\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})insn\_cost);}
+\DoxyCodeLine{00460\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00461\ \ \ \ \}}
+\DoxyCodeLine{00462\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (insn\_cost\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00463\ \ \ \ \{}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ non-\/zero\ MemAccess\ DynamicInstructions\ here}}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \textcolor{comment}{//\ MemAccess\ instructions\ are\ memory\ overheads,\ and\ should\ be\ handled\ the\ same\ way\ that\ Long\ Latency\ Loads\ are}}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \textcolor{comment}{//\ Currently,\ the\ simulator\ requires\ that\ latencies\ that\ return\ from\ the\ memory\ hierarchy\ go\ into\ effect}}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \textcolor{comment}{//\ immediately.\ \ If\ one\ tries\ to\ place\ these\ latencies\ as\ normal\ instructions\ into\ the\ interval\ model,}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \textcolor{comment}{//\ Graphite\ will\ still\ see\ a\ huge\ delta\ with\ this\ cpu's\ time,\ and\ then\ generate\ another,\ equally\ large}}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \textcolor{comment}{//\ MemAccess\ instruction.\ \ Therefore,\ as\ a\ work\ around,\ add\ the\ latencies\ to\ the}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \ \ \ \ \ \ MemAccessInstruction\ \textcolor{keyword}{const}*\ mem\_dyn\_insn\ =\ \textcolor{keyword}{dynamic\_cast<}MemAccessInstruction\ const*\textcolor{keyword}{>}(dynins-\/>instruction);}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(mem\_dyn\_insn\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ a\ MemAccessInstruction,\ but\ did\ not\ get\ one."{}});}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ uop\ with\ the\ necessary\ information\ for\ the\ MemAccess\ DynamicInstruction}}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ std::vector<DynamicMicroOp*>\ uops;}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ DynamicMicroOp*\ uop\ =\ m\_core\_model-\/>createDynamicMicroOp(m\_allocator,\ m\_memaccess\_uop,\ insn\_period);}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \textcolor{comment}{//\ Long\ latency\ load\ setup}}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ SubsecondTime\ cost\_add\_latency\_now(SubsecondTime::Zero());}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ uint32\_t\ cost\_add\_latency\_interval\ =\ 0;}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ uint32\_t\ cutoff\ =\ m\_core\_model-\/>getLongLatencyCutoff();}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ force\_lll\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ we\ are\ a\ long\ latency\ load\ (0\ ==\ disable)}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((cutoff\ >\ 0)\ \&\&\ (insn\_cost\ >\ cutoff\ *\ insn\_period.getPeriod()))}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Long\ latency\ load}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ cost\_add\_latency\_now\ =\ insn\_cost;}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ cost\_add\_latency\_interval\ =\ 1;}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Force\ this\ instruction\ as\ a\ LLL,\ even\ though\ we\ will\ be\ taking\ into\ account\ the\ latencies\ right\ away}}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ will\ flush\ the\ old\ window\ and\ also\ check\ for\ 2nd\ order\ effects\ (nested\ LLLs)}}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ For\ possible\ next\ steps,\ be\ sure\ to\ pass\ real\ LLL\ value\ in\ when\ we\ want\ to\ compare\ LLL\ event\ lengths\ for\ higher\ accuracy}}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ force\_lll\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Normal\ load}}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ cost\_add\_latency\_now\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ cost\_add\_latency\_interval\ =\ SubsecondTime::divideRounded(insn\_cost,\ insn\_period.getPeriod());}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \ \ \ Memory::Access\ data\_address;}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ data\_address.set(mem\_dyn\_insn-\/>getDataAddress());}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ uop-\/>setExecLatency(cost\_add\_latency\_interval);}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ uop-\/>setForceLongLatencyLoad(force\_lll);}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ load's\ value\ needs\ to\ be\ registered}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \textcolor{comment}{//\ Right\ now,\ serialization\ instructions\ are\ assumed\ to\ be\ executes,\ and\ the\ load\ latencies\ are\ skipped}}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \textcolor{comment}{//uop.setSerializing(\ mem\_dyn\_insn-\/>isFence()\ );}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ this\ micro-\/op\ to\ the\ vector\ for\ submission}}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ mem\_dyn\_insn-\/>isFence()\ )}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ memory\ fencing\ support\ to\ better\ simulate\ actual\ conditions}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ CMPXCHG\ instructions\ are\ called\ in\ mutex\ handlers,\ and\ their\ performance\ is\ about\ the\ same\ as\ MFENCEs}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ uops.push\_back(m\_core\_model-\/>createDynamicMicroOp(m\_allocator,\ m\_mfence\_uop,\ insn\_period));}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//uops.push\_back(serialize\_uop);}}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ uops.push\_back(uop);}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ uops.push\_back(m\_core\_model-\/>createDynamicMicroOp(m\_allocator,\ m\_mfence\_uop,\ insn\_period));}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Additionally,\ we\ need\ to\ think\ about\ serialization,\ and\ it's\ effect}}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ the\ case\ of\ a\ system\ call,\ the\ system\ will\ be\ serialized}}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ would\ matter\ only\ for\ the\ case\ when\ we\ initially\ don't\ have\ a\ lock}}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ and\ then\ we\ go\ into\ the\ OS\ only\ to\ get\ the\ lock\ and\ return\ without\ much}}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ wait.\ \ In\ that\ case,\ the\ serialization\ effects\ could\ hit\ performance}}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ more\ than\ the\ memory\ barrier\ ones.}}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ uops.push\_back(uop);}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ Before\ simulating,\ iterate\ over\ the\ uops\ to\ mark\ them\ as\ first/last}}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ this\ into\ the\ interval\ simulator}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ uint64\_t\ new\_latency\_cycles;}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ boost::tie(new\_num\_insns,\ new\_latency\_cycles)\ =\ simulate(uops);}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ new\_latency.addCycleLatency(new\_latency\_cycles);}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ a\ potential\ LLL\ cost\ that\ needs\ to\ be\ registered\ right\ away}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cost\_add\_latency\_now\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ new\_latency.addLatency(cost\_add\_latency\_now);}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ latency\_out\_of\_band\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ \ \ \ \ \ \ m\_dyninsn\_count++;}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \textcolor{comment}{//m\_dyninsn\_cost+=insn\_cost;\ //\ FIXME}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ \ \ \ m\_cpiMemAccess\ +=\ cost\_add\_latency\_now;}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \textcolor{preprocessor}{\#if\ DEBUG\_DYN\_INSN\_LOG}}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ fprintf(m\_dyninsn\_log,\ \textcolor{stringliteral}{"{}[\%llu](MA)\ \%s:\ cost\ =\ \%llu\(\backslash\)n"{}},\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})\ m\_elapsed\_time,\ dynins-\/>instruction-\/>getTypeName().c\_str(),\ (\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})\ insn\_cost);}
+\DoxyCodeLine{00553\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00554\ \ \ \ \}}
+\DoxyCodeLine{00555\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00556\ \ \ \ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ m\_dyninsn\_zero\_count++;}
+\DoxyCodeLine{00558\ \ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \ m\_instruction\_count\ +=\ new\_num\_insns;}
+\DoxyCodeLine{00560\ \ \ \ m\_elapsed\_time.addLatency(new\_latency);}
+\DoxyCodeLine{00561\ \ \ \ \textcolor{keywordflow}{if}\ (latency\_out\_of\_band)}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ notifyElapsedTimeUpdate();}
+\DoxyCodeLine{00563\ }
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#if\ DEBUG\_CYCLE\_COUNT\_LOG}}
+\DoxyCodeLine{00565\ \ \ \ fprintf(m\_cycle\_log,\ \textcolor{stringliteral}{"{}[\%s]\ latency=\%d\(\backslash\)n"{}},\ itostr(m\_elapsed\_time).c\_str(),\ itostr(new\_latency.getElapsedTime()).c\_str());}
+\DoxyCodeLine{00566\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00567\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,205 @@
+\doxysection{section.\+cpp}
+\label{section_8cpp_source}\index{common/config/section.cpp@{common/config/section.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}section.hpp"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string.hpp>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00014\ \ \ \ \ Section::Section(\textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keywordtype}{bool}\ case\_sensitive)}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ m\_name(name),}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ m\_subSections(),}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \ \ m\_keys(),}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ m\_parent(*this),}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ m\_isroot(true),}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ m\_case\_sensitive(case\_sensitive)}
+\DoxyCodeLine{00022\ \ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00026\ \ \ \ \ Section::Section(Section\ \textcolor{keyword}{const}\ \&\ parent,\ \textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keywordtype}{bool}\ case\_sensitive)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ m\_name(name),}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ m\_subSections(),}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ m\_keys(),}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ m\_parent(parent),}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ m\_isroot(false),}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ m\_case\_sensitive(case\_sensitive)}
+\DoxyCodeLine{00034\ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00038\ \ \ \ \ Section::\string~Section()}
+\DoxyCodeLine{00039\ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ m\_subSections.clear();}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ m\_keys.clear();}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ m\_array\_keys.clear();}
+\DoxyCodeLine{00043\ \ \ \ \ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//create\ a\ new\ section\ and\ add\ it\ to\ the\ subsection\ map}}
+\DoxyCodeLine{00046\ \ \ \ \ Section\ \&\ Section::addSubsection(\textcolor{keyword}{const}\ String\ \&\ name\_)}
+\DoxyCodeLine{00047\ \ \ \ \ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ String\ iname(name\_);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_case\_sensitive)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ boost::to\_lower(iname);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ m\_subSections.insert(std::pair<\ String,\ Section*\ >(iname,\ \textcolor{keyword}{new}\ Section(*\textcolor{keyword}{this},\ name\_,\ m\_case\_sensitive)));}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_subSections[iname]);}
+\DoxyCodeLine{00054\ \ \ \ \ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ V>}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ Section::addKeyInternal(\textcolor{keyword}{const}\ String\ \&\ name\_,\ \textcolor{keyword}{const}\ V\ \&\ value,\ uint64\_t\ index)}
+\DoxyCodeLine{00058\ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Make\ the\ key\ all\ lower-\/case\ if\ not\ case\ sensitive}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ String\ iname(name\_);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_case\_sensitive)}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ boost::to\_lower(iname);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ for\ non-\/index\ version}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ UINT64\_MAX)}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Remove\ existing\ default\ key}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ m\_keys.erase(iname);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Remove\ overrides}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ m\_array\_keys.erase(iname);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ m\_keys.insert(std::pair<\ String,\ Key*\ >(iname,\ \textcolor{keyword}{new}\ Key(this-\/>getFullPath(),name\_,value)));}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_keys[iname]);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Do\ not\ remove\ existing\ default\ key\ for\ override\ case}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ needed\_size\ =\ index\ +\ 1;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ KeyArrayList::iterator\ found\ =\ m\_array\_keys.find(iname);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(found\ !=\ m\_array\_keys.end())}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<Key*>\ \&\ arr\ =\ (*found).second;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (arr.size()\ <\ needed\_size)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ arr.resize(needed\_size);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ arr[index]\ =\ NULL;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_array\_keys[iname]\ =\ std::vector<Key*>(needed\_size);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ m\_array\_keys[iname][index]\ =\ \textcolor{keyword}{new}\ Key(this-\/>getFullPath(),name\_,value);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_array\_keys[iname][index]);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{template}\ \textcolor{keyword}{const}\ Key\ \&\ Section::addKeyInternal(\textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ String\ \&,\ UInt64);}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{template}\ \textcolor{keyword}{const}\ Key\ \&\ Section::addKeyInternal(\textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ SInt64\ \&,\ UInt64);}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{template}\ \textcolor{keyword}{const}\ Key\ \&\ Section::addKeyInternal(\textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&,\ UInt64);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//get\ a\ subkey\ of\ the\ given\ name}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Not\ to\ be\ called\ unless\ the\ key\ exists\ (see\ hasKey())}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ Section::getKey(\textcolor{keyword}{const}\ String\ \&\ name\_,\ uint64\_t\ index)}
+\DoxyCodeLine{00112\ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ String\ iname(name\_);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_case\_sensitive)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ boost::to\_lower(iname);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ UINT64\_MAX)}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Default\ to\ using\ non-\/index\ version}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_keys[iname]);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (m\_array\_keys.find(iname)\ !=\ m\_array\_keys.end())\ \&\&}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (m\_array\_keys[iname].size()\ >=\ (index+1))\ \ \ \ \ \ \ \ \&\&}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (m\_array\_keys[iname][index]\ !=\ NULL)\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ have\ the\ key\ as\ an\ override,\ use\ it}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_array\_keys[iname][index]);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Otherwise,\ return\ the\ value\ requested\ from\ the\ non-\/indexed\ version}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_keys[iname]);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//get\ a\ subsection\ of\ the\ given\ name}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{const}\ Section\ \&\ Section::getSection(\textcolor{keyword}{const}\ String\ \&\ name)}
+\DoxyCodeLine{00141\ \ \ \ \ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getSection\_unsafe(name);}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//Unsafe\ version\ of\ the\ getSection\ function,\ this\ should\ only\ be\ used\ internally}}
+\DoxyCodeLine{00146\ \ \ \ \ Section\ \&\ Section::getSection\_unsafe(\textcolor{keyword}{const}\ String\ \&\ name)}
+\DoxyCodeLine{00147\ \ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ String\ iname(name);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_case\_sensitive)}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ boost::to\_lower(iname);}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(m\_subSections[iname]);}
+\DoxyCodeLine{00152\ \ \ \ \ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{bool}\ Section::hasSection(\textcolor{keyword}{const}\ String\ \&\ name)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00155\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ String\ iname(name);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_case\_sensitive)}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ boost::to\_lower(iname);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ SectionList::const\_iterator\ found\ =\ m\_subSections.find(iname);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (found\ !=\ m\_subSections.end());}
+\DoxyCodeLine{00161\ \ \ \ \ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{bool}\ Section::hasKey(\textcolor{keyword}{const}\ String\ \&\ name,\ UInt64\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00164\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ String\ iname(name);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_case\_sensitive)}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ boost::to\_lower(iname);}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ UINT64\_MAX)}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_keys.count(iname))}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_array\_keys.count(iname))}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\ (\ (m\_array\_keys.find(iname)\ !=\ m\_array\_keys.end())\ \&\&}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (m\_array\_keys.find(iname)-\/>second.size()\ >=\ (index+1))\ \ \ \ \ \ \ \ \&\&}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (m\_array\_keys.find(iname)-\/>second[index]\ !=\ NULL)\ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (m\_keys.find(iname)\ !=\ m\_keys.end())\ );}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{const}\ String\ Section::getFullPath()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00189\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ String\ path\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isRoot())}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ path;}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(getParent().isRoot())}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getName();}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{comment}{//create\ the\ path\ from\ the\ parent\ section\ and\ this\ section's\ name}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ path\ =\ String(getParent().getFullPath())\ +\ \textcolor{stringliteral}{"{}/"{}}\ +\ getName();}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ path;}
+\DoxyCodeLine{00200\ \ \ \ \ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \}\textcolor{comment}{//end\ of\ namespace\ config}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ }
+
+\end{DoxyCode}

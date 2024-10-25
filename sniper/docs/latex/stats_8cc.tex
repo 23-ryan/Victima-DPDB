@@ -1,0 +1,284 @@
+\doxysection{common/misc/stats.cc File Reference}
+\label{stats_8cc}\index{common/misc/stats.cc@{common/misc/stats.cc}}
+{\ttfamily \#include "{}stats.\+h"{}}\newline
+{\ttfamily \#include "{}simulator.\+h"{}}\newline
+{\ttfamily \#include "{}hooks\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}utils.\+h"{}}\newline
+{\ttfamily \#include "{}itostr.\+h"{}}\newline
+{\ttfamily \#include "{}core\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}memory\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$sstream$>$}\newline
+{\ttfamily \#include $<$unordered\+\_\+set$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$cstring$>$}\newline
+{\ttfamily \#include $<$zlib.\+h$>$}\newline
+{\ttfamily \#include $<$sys/time.\+h$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$fstream$>$}\newline
+{\ttfamily \#include "{}config.\+hpp"{}}\newline
+{\ttfamily \#include "{}tlb.\+h"{}}\newline
+Include dependency graph for stats.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stats_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ UInt64 $>$} (\textbf{ UInt64} t)
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ float $>$} (float t)
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ Subsecond\+Time $>$} (\textbf{ Subsecond\+Time} t)
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ Component\+Time $>$} (\textbf{ Component\+Time} t)
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ int $\ast$ $>$} (int $\ast$t)
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ UInt64 $\ast$ $>$} (\textbf{ UInt64} $\ast$t)
+\item 
+template$<$$>$ \textbf{ UInt64} \textbf{ make\+Stats\+Value$<$ std\+::vector$<$ float $>$ $>$} (std\+::vector$<$ float $>$ t)
+\item 
+\textbf{ UInt64} \textbf{ get\+Wallclock\+Time\+Callback} (String object\+Name, \textbf{ UInt32} index, String metric\+Name, \textbf{ UInt64} arg)
+\item 
+bool \textbf{ comp} (std\+::pair$<$ \textbf{ Int\+Ptr}, int $>$ a, std\+::pair$<$ \textbf{ Int\+Ptr}, int $>$ b)
+\item 
+bool \textbf{ comp2} (std\+::pair$<$ \textbf{ Int\+Ptr}, long int $>$ a, std\+::pair$<$ \textbf{ Int\+Ptr}, long int $>$ b)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+const char $\ast$ \textbf{ db\+\_\+create\+\_\+stmts} [$\,$]
+\item 
+const char \textbf{ db\+\_\+insert\+\_\+stmt\+\_\+name} [$\,$] = "{}INSERT INTO \`{}names\`{} (nameid, objectname, metricname) VALUES (?, ?, ?);"{}
+\item 
+const char \textbf{ db\+\_\+insert\+\_\+stmt\+\_\+prefix} [$\,$] = "{}INSERT INTO \`{}prefixes\`{} (prefixid, prefixname) VALUES (?, ?);"{}
+\item 
+const char \textbf{ db\+\_\+insert\+\_\+stmt\+\_\+value} [$\,$] = "{}INSERT INTO \`{}values\`{} (prefixid, nameid, core, value) VALUES (?, ?, ?, ?);"{}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\index{stats.cc@{stats.cc}!comp@{comp}}
+\index{comp@{comp}!stats.cc@{stats.cc}}
+\doxysubsubsection{comp()}
+{\footnotesize\ttfamily \label{stats_8cc_a730f23ee03f43987ab82839e3f4f1f7e} 
+bool comp (\begin{DoxyParamCaption}\item[{std\+::pair$<$ \textbf{ Int\+Ptr}, int $>$}]{a}{, }\item[{std\+::pair$<$ \textbf{ Int\+Ptr}, int $>$}]{b}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 140} of file \textbf{ stats.\+cc}.
+
+\index{stats.cc@{stats.cc}!comp2@{comp2}}
+\index{comp2@{comp2}!stats.cc@{stats.cc}}
+\doxysubsubsection{comp2()}
+{\footnotesize\ttfamily \label{stats_8cc_ab884c2b683e3a7e8e8ee3fa22a910a8c} 
+bool comp2 (\begin{DoxyParamCaption}\item[{std\+::pair$<$ \textbf{ Int\+Ptr}, long int $>$}]{a}{, }\item[{std\+::pair$<$ \textbf{ Int\+Ptr}, long int $>$}]{b}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 144} of file \textbf{ stats.\+cc}.
+
+\index{stats.cc@{stats.cc}!getWallclockTimeCallback@{getWallclockTimeCallback}}
+\index{getWallclockTimeCallback@{getWallclockTimeCallback}!stats.cc@{stats.cc}}
+\doxysubsubsection{getWallclockTimeCallback()}
+{\footnotesize\ttfamily \label{stats_8cc_a123c6e99e7d706c3f476ab1fe6857403} 
+\textbf{ UInt64} get\+Wallclock\+Time\+Callback (\begin{DoxyParamCaption}\item[{String}]{object\+Name}{, }\item[{\textbf{ UInt32}}]{index}{, }\item[{String}]{metric\+Name}{, }\item[{\textbf{ UInt64}}]{arg}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ stats.\+cc}.
+
+
+
+Referenced by \textbf{ Stats\+Manager\+::\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stats_8cc_a123c6e99e7d706c3f476ab1fe6857403_icgraph}
+\end{center}
+\end{figure}
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ ComponentTime $>$@{makeStatsValue$<$ ComponentTime $>$}}
+\index{makeStatsValue$<$ ComponentTime $>$@{makeStatsValue$<$ ComponentTime $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ ComponentTime $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_a8e5da01b9e3e36b271bc0168569bb2eb} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ \textbf{ Component\+Time} $>$ (\begin{DoxyParamCaption}\item[{\textbf{ Component\+Time}}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, and \textbf{ Subsecond\+Time\+::get\+FS()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stats_8cc_a8e5da01b9e3e36b271bc0168569bb2eb_cgraph}
+\end{center}
+\end{figure}
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ float $>$@{makeStatsValue$<$ float $>$}}
+\index{makeStatsValue$<$ float $>$@{makeStatsValue$<$ float $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ float $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_a040a9a6aba07b89bb6f09fd164932744} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ float $>$ (\begin{DoxyParamCaption}\item[{float}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ stats.\+cc}.
+
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ int $\ast$ $>$@{makeStatsValue$<$ int $\ast$ $>$}}
+\index{makeStatsValue$<$ int $\ast$ $>$@{makeStatsValue$<$ int $\ast$ $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ int $\ast$ $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_a74f6cb2e4e9f2bb8beb83f3041ba90b8} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ int $\ast$ $>$ (\begin{DoxyParamCaption}\item[{int $\ast$}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ stats.\+cc}.
+
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ std::vector$<$ float $>$ $>$@{makeStatsValue$<$ std::vector$<$ float $>$ $>$}}
+\index{makeStatsValue$<$ std::vector$<$ float $>$ $>$@{makeStatsValue$<$ std::vector$<$ float $>$ $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ std::vector$<$ float $>$ $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_a1d37f8070d3cc63097029dbd9f5b74ba} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ std\+::vector$<$ float $>$ $>$ (\begin{DoxyParamCaption}\item[{std\+::vector$<$ float $>$}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ stats.\+cc}.
+
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ SubsecondTime $>$@{makeStatsValue$<$ SubsecondTime $>$}}
+\index{makeStatsValue$<$ SubsecondTime $>$@{makeStatsValue$<$ SubsecondTime $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ SubsecondTime $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_aca45a273e10bff9ea7ec60cc9f35d7f2} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ \textbf{ Subsecond\+Time} $>$ (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ Subsecond\+Time\+::get\+FS()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=342pt]{stats_8cc_aca45a273e10bff9ea7ec60cc9f35d7f2_cgraph}
+\end{center}
+\end{figure}
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ UInt64 $\ast$ $>$@{makeStatsValue$<$ UInt64 $\ast$ $>$}}
+\index{makeStatsValue$<$ UInt64 $\ast$ $>$@{makeStatsValue$<$ UInt64 $\ast$ $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ UInt64 $\ast$ $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_aff802e233b47593e655f58bd077b31cd} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ \textbf{ UInt64} $\ast$ $>$ (\begin{DoxyParamCaption}\item[{\textbf{ UInt64} $\ast$}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ stats.\+cc}.
+
+\index{stats.cc@{stats.cc}!makeStatsValue$<$ UInt64 $>$@{makeStatsValue$<$ UInt64 $>$}}
+\index{makeStatsValue$<$ UInt64 $>$@{makeStatsValue$<$ UInt64 $>$}!stats.cc@{stats.cc}}
+\doxysubsubsection{makeStatsValue$<$ UInt64 $>$()}
+{\footnotesize\ttfamily \label{stats_8cc_ad7213b12927032853481dcee239eb7bb} 
+template$<$$>$ \\
+\textbf{ UInt64} \textbf{ make\+Stats\+Value}$<$ \textbf{ UInt64} $>$ (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{t}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 24} of file \textbf{ stats.\+cc}.
+
+
+
+\doxysubsection{Variable Documentation}
+\index{stats.cc@{stats.cc}!db\_create\_stmts@{db\_create\_stmts}}
+\index{db\_create\_stmts@{db\_create\_stmts}!stats.cc@{stats.cc}}
+\doxysubsubsection{db\_create\_stmts}
+{\footnotesize\ttfamily \label{stats_8cc_ac873aa4fdf7a1e50d80b57d05a7c0edf} 
+const char$\ast$ db\+\_\+create\+\_\+stmts[$\,$]}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ }
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}names`\ (nameid\ INTEGER,\ objectname\ TEXT,\ metricname\ TEXT);"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}prefixes`\ (prefixid\ INTEGER,\ prefixname\ TEXT);"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}values`\ (prefixid\ INTEGER,\ nameid\ INTEGER,\ core\ INTEGER,\ value\ INTEGER);"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ INDEX\ \`{}idx\_prefix\_name`\ ON\ \`{}prefixes`(`prefixname`);"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ INDEX\ \`{}idx\_value\_prefix`\ ON\ \`{}values`(`prefixid`);"{}},}
+\DoxyCodeLine{\ \ \ }
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}topology`\ (componentname\ TEXT,\ coreid\ INTEGER,\ masterid\ INTEGER);"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}event`\ (event\ INTEGER,\ time\ INTEGER,\ core\ INTEGER,\ thread\ INTEGER,\ value0\ INTEGER,\ value1\ INTEGER,\ description\ TEXT);"{}},}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 32} of file \textbf{ stats.\+cc}.
+
+
+
+Referenced by \textbf{ Stats\+Manager\+::init()}.
+
+\index{stats.cc@{stats.cc}!db\_insert\_stmt\_name@{db\_insert\_stmt\_name}}
+\index{db\_insert\_stmt\_name@{db\_insert\_stmt\_name}!stats.cc@{stats.cc}}
+\doxysubsubsection{db\_insert\_stmt\_name}
+{\footnotesize\ttfamily \label{stats_8cc_a578bcd1e70721c7b553953eb7b29b63a} 
+const char db\+\_\+insert\+\_\+stmt\+\_\+name[$\,$] = "{}INSERT INTO \`{}names\`{} (nameid, objectname, metricname) VALUES (?, ?, ?);"{}}
+
+
+
+Definition at line \textbf{ 43} of file \textbf{ stats.\+cc}.
+
+
+
+Referenced by \textbf{ Stats\+Manager\+::init()}.
+
+\index{stats.cc@{stats.cc}!db\_insert\_stmt\_prefix@{db\_insert\_stmt\_prefix}}
+\index{db\_insert\_stmt\_prefix@{db\_insert\_stmt\_prefix}!stats.cc@{stats.cc}}
+\doxysubsubsection{db\_insert\_stmt\_prefix}
+{\footnotesize\ttfamily \label{stats_8cc_a7e6d1a58e2af4f32be7af3c3a532671b} 
+const char db\+\_\+insert\+\_\+stmt\+\_\+prefix[$\,$] = "{}INSERT INTO \`{}prefixes\`{} (prefixid, prefixname) VALUES (?, ?);"{}}
+
+
+
+Definition at line \textbf{ 44} of file \textbf{ stats.\+cc}.
+
+
+
+Referenced by \textbf{ Stats\+Manager\+::init()}.
+
+\index{stats.cc@{stats.cc}!db\_insert\_stmt\_value@{db\_insert\_stmt\_value}}
+\index{db\_insert\_stmt\_value@{db\_insert\_stmt\_value}!stats.cc@{stats.cc}}
+\doxysubsubsection{db\_insert\_stmt\_value}
+{\footnotesize\ttfamily \label{stats_8cc_a646080d819cad7f037817931c71517c1} 
+const char db\+\_\+insert\+\_\+stmt\+\_\+value[$\,$] = "{}INSERT INTO \`{}values\`{} (prefixid, nameid, core, value) VALUES (?, ?, ?, ?);"{}}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ stats.\+cc}.
+
+
+
+Referenced by \textbf{ Stats\+Manager\+::init()}.
+

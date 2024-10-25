@@ -1,0 +1,92 @@
+\doxysection{cheetah\+\_\+manager.\+cc}
+\label{cheetah__manager_8cc_source}\index{common/core/memory\_subsystem/cheetah/cheetah\_manager.cc@{common/core/memory\_subsystem/cheetah/cheetah\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cheetah\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cheetah\_model.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ CheetahManager::CheetahStats\ *CheetahManager::s\_cheetah\_stats\ =\ NULL;}
+\DoxyCodeLine{00010\ std::vector<std::vector<CheetahModel*>\ >\ CheetahManager::s\_cheetah\_models(NUM\_CHEETAH\_TYPES);}
+\DoxyCodeLine{00011\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ CheetahManager::cheetah\_names[]\ =\ \{\ \textcolor{stringliteral}{"{}local"{}},\ \textcolor{stringliteral}{"{}by-\/2"{}},\ \textcolor{stringliteral}{"{}by-\/4"{}},\ \textcolor{stringliteral}{"{}by-\/8"{}},\ \textcolor{stringliteral}{"{}global"{}}\ \};}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ CheetahManager::CheetahManager(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00014\ \ \ \ :\ m\_min\_bits(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}core/cheetah/min\_size\_bits"{}}))}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_max\_bits\_local(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}core/cheetah/max\_size\_bits\_local"{}}))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_max\_bits\_global(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}core/cheetah/max\_size\_bits\_global"{}}))}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_address\_buffer\_size(0)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ LOG\_ASSERT\_ERROR(m\_min\_bits\ >=\ CheetahModel::getMinSize(),}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cheetah/min\_size\_bits\ (\%d)\ must\ be\ >=\ \%d"{}},}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ m\_min\_bits,\ CheetahModel::getMinSize());}
+\DoxyCodeLine{00022\ \ \ \ LOG\_ASSERT\_ERROR(m\_max\_bits\_local\ >=\ CheetahModel::getMinSize(),}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cheetah/max\_size\_bits\_local\ (\%d)\ must\ be\ >=\ \%d"{}},}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ m\_max\_bits\_local,\ CheetahModel::getMinSize());}
+\DoxyCodeLine{00025\ \ \ \ LOG\_ASSERT\_ERROR(m\_max\_bits\_global\ >=\ CheetahModel::getMinSize(),}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cheetah/max\_size\_bits\_global\ (\%d)\ must\ be\ >=\ \%d"{}},}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ m\_max\_bits\_global,\ CheetahModel::getMinSize());}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{if}\ (!s\_cheetah\_stats)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ s\_cheetah\_stats\ =\ \textcolor{keyword}{new}\ CheetahStats(m\_min\_bits,\ m\_max\_bits\_local,\ m\_max\_bits\_global);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ s\_cheetah\_models[CHEETAH\_LOCAL].push\_back(\textcolor{keyword}{new}\ CheetahModel(\textcolor{keyword}{false},\ m\_min\_bits,\ m\_max\_bits\_local));}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ ((core\_id\ \&\ 1)\ ==\ 0)\ s\_cheetah\_models[CHEETAH\_BY2].push\_back(\textcolor{keyword}{new}\ CheetahModel(\textcolor{keyword}{true},\ m\_min\_bits,\ m\_max\_bits\_local));}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{if}\ ((core\_id\ \&\ 3)\ ==\ 0)\ s\_cheetah\_models[CHEETAH\_BY4].push\_back(\textcolor{keyword}{new}\ CheetahModel(\textcolor{keyword}{true},\ m\_min\_bits,\ m\_max\_bits\_local));}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{if}\ ((core\_id\ \&\ 7)\ ==\ 0)\ s\_cheetah\_models[CHEETAH\_BY8].push\_back(\textcolor{keyword}{new}\ CheetahModel(\textcolor{keyword}{true},\ m\_min\_bits,\ m\_max\_bits\_local));}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ ==\ 0)\ \ \ \ \ \ \ s\_cheetah\_models[CHEETAH\_GLOBAL].push\_back(\textcolor{keyword}{new}\ CheetahModel(\textcolor{keyword}{true},\ m\_min\_bits,\ m\_max\_bits\_global));}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ m\_cheetah[CHEETAH\_LOCAL]\ =\ s\_cheetah\_models[CHEETAH\_LOCAL].back();}
+\DoxyCodeLine{00039\ \ \ \ m\_cheetah[CHEETAH\_BY2]\ =\ s\_cheetah\_models[CHEETAH\_BY2].back();}
+\DoxyCodeLine{00040\ \ \ \ m\_cheetah[CHEETAH\_BY4]\ =\ s\_cheetah\_models[CHEETAH\_BY4].back();}
+\DoxyCodeLine{00041\ \ \ \ m\_cheetah[CHEETAH\_BY8]\ =\ s\_cheetah\_models[CHEETAH\_BY8].back();}
+\DoxyCodeLine{00042\ \ \ \ m\_cheetah[CHEETAH\_GLOBAL]\ =\ s\_cheetah\_models[CHEETAH\_GLOBAL].back();}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ CheetahManager::\string~CheetahManager()}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ CheetahManager::access(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ address)}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ m\_address\_buffer[m\_address\_buffer\_size++]\ =\ address;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{if}\ (m\_address\_buffer\_size\ >=\ ADDRESS\_BUFFER\_SIZE)}
+\DoxyCodeLine{00054\ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\ =\ 0;\ idx\ <\ NUM\_CHEETAH\_TYPES;\ ++idx)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ m\_cheetah[idx]-\/>accesses(m\_address\_buffer,\ m\_address\_buffer\_size);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ m\_address\_buffer\_size\ =\ 0;}
+\DoxyCodeLine{00058\ \ \ \ \}}
+\DoxyCodeLine{00059\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ CheetahManager::CheetahStats::CheetahStats(UInt32\ min\_bits,\ UInt32\ max\_bits\_local,\ UInt32\ max\_bits\_global)}
+\DoxyCodeLine{00062\ \ \ \ :\ m\_min\_bits(min\_bits)}
+\DoxyCodeLine{00063\ \ \ \ ,\ m\_max\_bits\_local(max\_bits\_local)}
+\DoxyCodeLine{00064\ \ \ \ ,\ m\_max\_bits\_global(max\_bits\_global)}
+\DoxyCodeLine{00065\ \{}
+\DoxyCodeLine{00066\ \ \ \ m\_stats.resize(NUM\_CHEETAH\_TYPES);}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\ =\ 0;\ idx\ <\ NUM\_CHEETAH\_TYPES;\ ++idx)}
+\DoxyCodeLine{00068\ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ UInt32\ max\_bits\ =\ (idx\ ==\ CHEETAH\_GLOBAL\ ?\ max\_bits\_global\ :\ max\_bits\_local);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ m\_stats[idx].resize(max\_bits\ +\ 1);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ size\ =\ 0;\ size\ <\ max\_bits;\ ++size)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}cheetah"{}},\ size,\ cheetah\_names[idx],\ \&m\_stats[idx][size]);}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PRE\_STAT\_WRITE,\ hook\_update,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{void}\ CheetahManager::CheetahStats::update()}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\ =\ 0;\ idx\ <\ NUM\_CHEETAH\_TYPES;\ ++idx)}
+\DoxyCodeLine{00080\ \ \ \ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ size\_bits\ =\ 0;\ size\_bits\ <\ m\_stats.size();\ ++size\_bits)}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ m\_stats[idx][size\_bits]\ =\ 0;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ s\_cheetah\_models[idx].begin();\ it\ !=\ s\_cheetah\_models[idx].end();\ ++it)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ (*it)-\/>updateStats(m\_stats[idx]);}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ \}}
+
+\end{DoxyCode}

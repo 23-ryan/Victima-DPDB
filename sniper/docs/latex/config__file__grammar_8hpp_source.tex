@@ -1,0 +1,160 @@
+\doxysection{config\+\_\+file\+\_\+grammar.\+hpp}
+\label{config__file__grammar_8hpp_source}\index{common/config/config\_file\_grammar.hpp@{common/config/config\_file\_grammar.hpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ \#define\ BOOST\_SPIRIT\_RULE\_SCANNERTYPE\_LIMIT\ 2}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config\_file.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ \#define\ BOOST\_SPIRIT\_DEBUG\ \ \ \ \ \ \ \ //\ define\ this\ for\ debug\ output}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <boost/version.hpp>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#if\ (BOOST\_VERSION==103500)}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/core.hpp>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/tree/parse\_tree.hpp>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/tree/ast.hpp>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/utility/confix.hpp>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/utility/escape\_char.hpp>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/utility/chset.hpp>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_core.hpp>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_parse\_tree.hpp>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_ast.hpp>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_confix.hpp>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_escape\_char.hpp>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_chset.hpp>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#if\ (BOOST\_VERSION==103500)}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keyword}{using\ namespace\ }boost::spirit;}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{using\ namespace\ }boost::spirit::classic;}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{enum}\ RuleID\ \{\ defaultID,\ sectionID,\ keyNameID,\ keyValueID,\ keySeparatorID,\ keyValueArrayID,\ keyValueSpanID,\ keyID,\ sectionNameID,\ stringID,\ configID\ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{comment}{//\ Like\ int\_p,\ but\ support\ up\ to\ SInt64}}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{typedef}\ int\_parser<SInt64,\ 10,\ 1,\ -\/1>\ long\_parser\_t;}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keyword}{static}\ long\_parser\_t\ long\_p;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{struct\ }config\_parser\ :\ \textcolor{keyword}{public}\ grammar<config\_parser>\ \{}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ utility\ function\ for\ tagging\ each\ node\ with\ an\ 'ID'\ for\ identification}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ when\ we\ walk\ the\ parse\ tree.}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Name\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ Name(RuleID\ e\_)\ :\ e(e\_)\ \{\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Node,\ \textcolor{keyword}{typename}\ It>}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ operator()(Node\&\ n,\ It,\ It)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ n.value.value(e);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ RuleID\ e;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ actual\ node\ structure\ in\ the\ tree,\ we\ simply\ need\ an\ id\ in\ this\ structure}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ as\ the\ strings\ are\ provided\ by\ the\ container\ class\ provided\ by\ spirit.}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }NodeValue\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ RuleID\ e;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ NodeValue()\ :\ e((RuleID)0)\ \{\}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ NodeValue(RuleID\ e\_)\ :\ e(e\_)\ \{\}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ show\_match(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *begin,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*end)}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Matched:\ "{}}\ <<\ String(begin,\ end-\/begin)\ <<\ std::endl;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ node\_iter\_data\_factory<NodeValue>\ factory\_t;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ iterator\_t;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ScannerT>}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }definition\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ definition(config\_parser\ \textcolor{keyword}{const}\&\ self)\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Grammar\ Definition}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Complex\ rules}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_file\ \ \ \ \ \ \ \ \ =\ \ r\_config\_node\ \ >>\ end\_p;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_config\_node\ \ =\ \ r\_config;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_config\ \ \ \ \ \ \ =\ \ *r\_section\_node\ ;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_section\_node\ =\ \ access\_node\_d[\ r\_section\ ][Name(sectionNameID)];}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_section\ \ \ \ \ \ =\ \ root\_node\_d[r\_section\_name\_node]\ >>\ *r\_key\_node\ ;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_key\_node\ \ \ \ \ =\ \ access\_node\_d[\ r\_key\ ][Name(keyID)];}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_key\ \ \ \ \ \ \ \ \ \ =\ \ r\_key\_name}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ >>\ lexeme\_d[\ no\_node\_d[\ *r\_key\_array\ ]\ >>\ no\_node\_d[\ *space\_p\ ]\ >>\ root\_node\_d[\ ch\_p(\textcolor{charliteral}{'='})\ ]\ >>\ no\_node\_d[\ *space\_p\ ]\ ]}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ >>\ !r\_value\ ;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_key\_name\ \ \ \ \ =\ \ access\_node\_d[\ !r\_string\ ][Name(keyNameID)];}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_key\_array\ \ \ \ =\ \ ch\_p(\textcolor{charliteral}{'['})\ >>\ ch\_p(\textcolor{charliteral}{']'});}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\_array\ \ =\ \ access\_node\_d[\ r\_value\_array2\ ][Name(keyValueArrayID)];}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\_array2\ =\ \ r\_value\_single\_or\_empty\ >>\ +(access\_node\_d[\ ch\_p(\textcolor{charliteral}{','})\ ][Name(keySeparatorID)]\ >>\ r\_value\_single\_or\_empty);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\_span\ \ \ =\ \ access\_node\_d[\ r\_value\_long\ >>\ root\_node\_d[\ ch\_p(\textcolor{charliteral}{'-\/'})\ ]\ >>\ r\_value\_long\ ][Name(keyValueSpanID)];}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\_long\ \ \ =\ \ access\_node\_d[\ long\_p\ ][Name(keyValueID)];}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\_single\ =\ \ access\_node\_d[\ r\_string\ ][Name(keyValueID)];}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\_single\_or\_empty\ =\ r\_value\_single\ |\ !r\_value\_single;}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_value\ \ \ \ \ \ \ \ =\ \ r\_value\_array\ |\ r\_value\_span\ |\ r\_value\_single;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Terminals}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Note,\ the\ lexeme\ directive\ tells\ the\ parser\ to\ act\ character-\/by-\/character\ (don't\ skip\ spaces),}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ token\_node\_d\ says\ to\ make\ 1\ node\ out\ of\ the\ matched\ results\ (instead\ of\ 1\ node\ per\ character)}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ inner\_node\ directive\ states\ to\ throw\ away\ each\ of\ the\ '['\ and\ ']'}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ finally\ config\_p\ looks\ for\ matching\ [\ with\ ]}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_section\_name\_node\ =\ access\_node\_d[\ r\_section\_name\ ][Name(sectionNameID)]\ ;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//HACK:}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//This\ is\ a\ total\ hack\ below.\ Because\ we\ are\ using\ Boost\ 1.34,\ we\ cannot\ use\ the\ gen\_pt\_node\_d}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//in\ certain\ places\ (notably\ the\ one\ commented\ below).\ The\ gen\_pt\_node\_d\ function\ allows\ us\ to}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//generate\ an\ AST\ node,\ even\ if\ there\ is\ no\ data\ contained\ within\ the\ node.\ This\ happens\ when\ we}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//get\ a\ section\ that\ doesn't\ have\ a\ name\ in\ it\ (i.e.\ []).\ In\ Boost\ 1.35\ we\ can\ use\ the\ following}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//gent\_pt\_node\_d\ with\ the\ inner\_node\_d\ to\ eliminate\ the\ braces\ at\ parse-\/time.\ Instead\ until\ then}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//we\ have\ to\ leave\ the\ braces\ in\ due\ to\ null-\/node-\/culling\ and\ strip\ them\ at\ the\ time\ we\ walk\ the}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//tree.}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_section\_name\ =\ lexeme\_d[\ token\_node\_d[\ confix\_p(\textcolor{charliteral}{'['},\ (*lex\_escape\_ch\_p),\ \textcolor{charliteral}{']'})\ ]\ ]\ ;}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Strings\ and\ names\ may\ either\ be\ "{}quoted"{}\ or\ not.}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\_string\ \ \ \ \ \ \ =}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ no\_node\_d[\ *space\_p\ ]\ >>\ lexeme\_d[\ token\_node\_d[\ inner\_node\_d[\ confix\_p(\textcolor{charliteral}{'"{}'},\ *lex\_escape\_ch\_p,\ \textcolor{charliteral}{'"{}'})\ ]\ ]\ ]\ >>\ no\_node\_d[\ *space\_p\ ]\ )}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ lexeme\_d[\ token\_node\_d[\ +(alnum\_p\ |\ (punct\_p\ -\/\ ch\_p(\textcolor{charliteral}{'='})\ -\/\ ch\_p(\textcolor{charliteral}{','})\ -\/\ ch\_p(\textcolor{charliteral}{'['})\ -\/\ ch\_p(\textcolor{charliteral}{']'})\ )\ )\ ]\ ]\ )}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rule<ScannerT>\ r\_file,\ r\_config,\ r\_config\_node,\ r\_section,\ r\_key,\ r\_key\_name,\ r\_key\_array,\ r\_value,\ r\_value\_long,\ r\_value\_single,\ r\_value\_single\_or\_empty,\ r\_value\_array,\ r\_value\_array2,\ r\_value\_span,\ r\_key\_node,\ r\_section\_node,\ r\_section\_name,\ r\_section\_name\_node,\ r\_section\_name\_node\_node,\ r\_string;}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rule<ScannerT>\ \textcolor{keyword}{const}\&}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ r\_file;\ \}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00152\ \ \ \ \ \};}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_parse\_info<config\_parser::iterator\_t,\ config\_parser::factory\_t>\ parse\_info\_t;}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_match<config\_parser::iterator\_t,\ config\_parser::factory\_t>\ tree\_match\_t;}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_match\_t::node\_t\ node\_t;}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{typedef}\ tree\_match\_t::const\_tree\_iterator\ tree\_iter\_t;}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \}\ \textcolor{comment}{//namespaces}}
+\DoxyCodeLine{00160\ }
+
+\end{DoxyCode}

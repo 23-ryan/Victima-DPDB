@@ -1,0 +1,765 @@
+\doxysection{Network Class Reference}
+\label{classNetwork}\index{Network@{Network}}
+
+
+{\ttfamily \#include $<$network.\+h$>$}
+
+
+
+Collaboration diagram for Network\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef void($\ast$) \textbf{ Network\+Callback}(void $\ast$, \textbf{ Net\+Packet})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Network} (\textbf{ Core} $\ast$core)
+\item 
+\textbf{ $\sim$\+Network} ()
+\item 
+\textbf{ Core} $\ast$ \textbf{ get\+Core} () const
+\item 
+\textbf{ Transport\+::\+Node} $\ast$ \textbf{ get\+Transport} () const
+\item 
+void \textbf{ register\+Callback} (\textbf{ Packet\+Type} type, \textbf{ Network\+Callback} callback, void $\ast$obj)
+\item 
+void \textbf{ unregister\+Callback} (\textbf{ Packet\+Type} type)
+\item 
+void \textbf{ net\+Pull\+From\+Transport} ()
+\item 
+\textbf{ SInt32} \textbf{ net\+Send} (\textbf{ Net\+Packet} \&packet)
+\item 
+\textbf{ Net\+Packet} \textbf{ net\+Recv} (const \textbf{ Net\+Match} \&match, \textbf{ UInt64} timeout\+\_\+ns=0)
+\item 
+\textbf{ SInt32} \textbf{ net\+Send} (\textbf{ SInt32} dest, \textbf{ Packet\+Type} type, const void $\ast$buf, \textbf{ UInt32} len)
+\item 
+\textbf{ SInt32} \textbf{ net\+Broadcast} (\textbf{ Packet\+Type} type, const void $\ast$buf, \textbf{ UInt32} len)
+\item 
+\textbf{ Net\+Packet} \textbf{ net\+Recv} (\textbf{ SInt32} \textbf{ src}, \textbf{ Packet\+Type} type, \textbf{ UInt64} timeout\+\_\+ns=0)
+\item 
+\textbf{ Net\+Packet} \textbf{ net\+Recv\+From} (\textbf{ SInt32} \textbf{ src}, \textbf{ UInt64} timeout\+\_\+ns=0)
+\item 
+\textbf{ Net\+Packet} \textbf{ net\+Recv\+Type} (\textbf{ Packet\+Type} type, \textbf{ UInt64} timeout\+\_\+ns=0)
+\item 
+void \textbf{ enable\+Models} ()
+\item 
+void \textbf{ disable\+Models} ()
+\item 
+\textbf{ Network\+Model} $\ast$ \textbf{ get\+Network\+Model\+From\+Packet\+Type} (\textbf{ Packet\+Type} packet\+\_\+type)
+\item 
+\textbf{ UInt32} \textbf{ get\+Modeled\+Length} (const \textbf{ Net\+Packet} \&pkt)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ forward\+Packet} (\textbf{ Net\+Packet} \&packet)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Network\+Model} $\ast$ \textbf{ \+\_\+models} [\textbf{ NUM\+\_\+\+STATIC\+\_\+\+NETWORKS}]
+\item 
+\textbf{ Network\+Callback} $\ast$ \textbf{ \+\_\+callbacks}
+\item 
+void $\ast$$\ast$ \textbf{ \+\_\+callback\+Objs}
+\item 
+\textbf{ Core} $\ast$ \textbf{ \+\_\+core}
+\item 
+\textbf{ Transport\+::\+Node} $\ast$ \textbf{ \+\_\+transport}
+\item 
+\textbf{ SInt32} \textbf{ \+\_\+tid}
+\item 
+\textbf{ SInt32} \textbf{ \+\_\+num\+Mod}
+\item 
+\textbf{ Net\+Queue} \textbf{ \+\_\+net\+Queue}
+\item 
+\textbf{ Lock} \textbf{ \+\_\+net\+Queue\+Lock}
+\item 
+\textbf{ Condition\+Variable} \textbf{ \+\_\+net\+Queue\+Cond}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 62} of file \textbf{ network.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{Network@{Network}!NetworkCallback@{NetworkCallback}}
+\index{NetworkCallback@{NetworkCallback}!Network@{Network}}
+\doxysubsubsection{NetworkCallback}
+{\footnotesize\ttfamily \label{classNetwork_ae59dfaba891f1bd1f2aaf0ccd110bcae} 
+void($\ast$) Network\+::\+Network\+Callback(void $\ast$, \textbf{ Net\+Packet})}
+
+
+
+Definition at line \textbf{ 73} of file \textbf{ network.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{Network@{Network}!Network@{Network}}
+\index{Network@{Network}!Network@{Network}}
+\doxysubsubsection{Network()}
+{\footnotesize\ttfamily \label{classNetwork_a7aa2780188a0e81f2c15a57199344209} 
+Network\+::\+Network (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 20} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+callback\+Objs}, \textbf{ \+\_\+callbacks}, \textbf{ \+\_\+core}, \textbf{ \+\_\+models}, \textbf{ \+\_\+num\+Mod}, \textbf{ \+\_\+tid}, \textbf{ \+\_\+transport}, \textbf{ Network\+Model\+::create\+Model()}, \textbf{ Transport\+::create\+Node()}, \textbf{ Core\+::get\+Id()}, \textbf{ Config\+::get\+Network\+Models()}, \textbf{ Config\+::get\+Singleton()}, \textbf{ Transport\+::get\+Singleton()}, \textbf{ Config\+::get\+Total\+Cores()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ NUM\+\_\+\+PACKET\+\_\+\+TYPES}, and \textbf{ NUM\+\_\+\+STATIC\+\_\+\+NETWORKS}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a7aa2780188a0e81f2c15a57199344209_cgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!````~Network@{$\sim$Network}}
+\index{````~Network@{$\sim$Network}!Network@{Network}}
+\doxysubsubsection{$\sim$Network()}
+{\footnotesize\ttfamily \label{classNetwork_a7a4e19cdb4bf0c7ecf82baa643831492} 
+Network\+::$\sim$\+Network (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+callback\+Objs}, \textbf{ \+\_\+callbacks}, \textbf{ \+\_\+models}, \textbf{ \+\_\+transport}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ NUM\+\_\+\+STATIC\+\_\+\+NETWORKS}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{Network@{Network}!disableModels@{disableModels}}
+\index{disableModels@{disableModels}!Network@{Network}}
+\doxysubsubsection{disableModels()}
+{\footnotesize\ttfamily \label{classNetwork_aa2443bf310fe1f7bdb57827d1ee81d38} 
+void Network\+::disable\+Models (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 453} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+models}, \textbf{ Network\+Model\+::disable()}, and \textbf{ NUM\+\_\+\+STATIC\+\_\+\+NETWORKS}.
+
+
+
+Referenced by \textbf{ Core\+::disable\+Performance\+Models()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=314pt]{classNetwork_aa2443bf310fe1f7bdb57827d1ee81d38_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_aa2443bf310fe1f7bdb57827d1ee81d38_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!enableModels@{enableModels}}
+\index{enableModels@{enableModels}!Network@{Network}}
+\doxysubsubsection{enableModels()}
+{\footnotesize\ttfamily \label{classNetwork_a624b738d4c76a0f0950870b944495406} 
+void Network\+::enable\+Models (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 445} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+models}, \textbf{ Network\+Model\+::enable()}, and \textbf{ NUM\+\_\+\+STATIC\+\_\+\+NETWORKS}.
+
+
+
+Referenced by \textbf{ Core\+::enable\+Performance\+Models()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{classNetwork_a624b738d4c76a0f0950870b944495406_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a624b738d4c76a0f0950870b944495406_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!forwardPacket@{forwardPacket}}
+\index{forwardPacket@{forwardPacket}!Network@{Network}}
+\doxysubsubsection{forwardPacket()}
+{\footnotesize\ttfamily \label{classNetwork_ade9ad92f61b29f6df33352ce7c6fce7d} 
+void Network\+::forward\+Packet (\begin{DoxyParamCaption}\item[{\textbf{ Net\+Packet} \&}]{packet}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 140} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ net\+Send()}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_ade9ad92f61b29f6df33352ce7c6fce7d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_ade9ad92f61b29f6df33352ce7c6fce7d_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!getCore@{getCore}}
+\index{getCore@{getCore}!Network@{Network}}
+\doxysubsubsection{getCore()}
+{\footnotesize\ttfamily \label{classNetwork_a61fa52195eb94a745da8841c0a8ff0ba} 
+\textbf{ Core} $\ast$ Network\+::get\+Core (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ network.\+h}.
+
+
+
+References \textbf{ \+\_\+core}.
+
+
+
+Referenced by \textbf{ Network\+Model\+Bus\+::account\+Packet()}, \textbf{ get\+Modeled\+Length()}, \textbf{ Network\+Model\+::\+Network\+Model()}, \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::\+Network\+Model\+EMesh\+Hop\+Counter()}, \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+Magic\+::process\+Received\+Packet()}, and \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::route\+Packet()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a61fa52195eb94a745da8841c0a8ff0ba_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!getModeledLength@{getModeledLength}}
+\index{getModeledLength@{getModeledLength}!Network@{Network}}
+\doxysubsubsection{getModeledLength()}
+{\footnotesize\ttfamily \label{classNetwork_afcd3e723a8a42b285222632910e1431c} 
+\textbf{ UInt32} Network\+::get\+Modeled\+Length (\begin{DoxyParamCaption}\item[{const \textbf{ Net\+Packet} \&}]{pkt}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 462} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ Net\+Packet\+::buffer\+Size()}, \textbf{ Net\+Packet\+::data}, \textbf{ get\+Core()}, \textbf{ Config\+::get\+Core\+IDLength()}, \textbf{ Core\+::get\+Memory\+Manager()}, \textbf{ Memory\+Manager\+Base\+::get\+Modeled\+Length()}, \textbf{ Config\+::get\+Singleton()}, \textbf{ SHARED\+\_\+\+MEM\+\_\+1}, and \textbf{ Net\+Packet\+::type}.
+
+
+
+Referenced by \textbf{ Network\+Model\+::count\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+Magic\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+Bus\+::route\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::route\+Packet()}, and \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::route\+Packet()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=344pt]{classNetwork_afcd3e723a8a42b285222632910e1431c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_afcd3e723a8a42b285222632910e1431c_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!getNetworkModelFromPacketType@{getNetworkModelFromPacketType}}
+\index{getNetworkModelFromPacketType@{getNetworkModelFromPacketType}!Network@{Network}}
+\doxysubsubsection{getNetworkModelFromPacketType()}
+{\footnotesize\ttfamily \label{classNetwork_abaf961ebe6e5e906dcc6449046923f60} 
+\textbf{ Network\+Model} $\ast$ Network\+::get\+Network\+Model\+From\+Packet\+Type (\begin{DoxyParamCaption}\item[{\textbf{ Packet\+Type}}]{packet\+\_\+type}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 145} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+models}.
+
+
+
+Referenced by \textbf{ net\+Send()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_abaf961ebe6e5e906dcc6449046923f60_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!getTransport@{getTransport}}
+\index{getTransport@{getTransport}!Network@{Network}}
+\doxysubsubsection{getTransport()}
+{\footnotesize\ttfamily \label{classNetwork_a8a7129bdfdf5c0ee98de713b3d2af612} 
+\textbf{ Transport\+::\+Node} $\ast$ Network\+::get\+Transport (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 71} of file \textbf{ network.\+h}.
+
+
+
+References \textbf{ \+\_\+transport}.
+
+\index{Network@{Network}!netBroadcast@{netBroadcast}}
+\index{netBroadcast@{netBroadcast}!Network@{Network}}
+\doxysubsubsection{netBroadcast()}
+{\footnotesize\ttfamily \label{classNetwork_a7b25566bb2b7d95c4b56bb46231075e1} 
+\textbf{ SInt32} Network\+::net\+Broadcast (\begin{DoxyParamCaption}\item[{\textbf{ Packet\+Type}}]{type}{, }\item[{const void $\ast$}]{buf}{, }\item[{\textbf{ UInt32}}]{len}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 418} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ Net\+Packet\+::\+BROADCAST}, and \textbf{ net\+Send()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a7b25566bb2b7d95c4b56bb46231075e1_cgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netPullFromTransport@{netPullFromTransport}}
+\index{netPullFromTransport@{netPullFromTransport}!Network@{Network}}
+\doxysubsubsection{netPullFromTransport()}
+{\footnotesize\ttfamily \label{classNetwork_a72906d2adcaef10c316aca66851e1b26} 
+void Network\+::net\+Pull\+From\+Transport (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+callback\+Objs}, \textbf{ \+\_\+callbacks}, \textbf{ \+\_\+core}, \textbf{ \+\_\+models}, \textbf{ \+\_\+net\+Queue}, \textbf{ \+\_\+net\+Queue\+Cond}, \textbf{ \+\_\+net\+Queue\+Lock}, \textbf{ \+\_\+num\+Mod}, \textbf{ \+\_\+transport}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::acquire()}, \textbf{ Net\+Packet\+::\+BROADCAST}, \textbf{ Condition\+Variable\+::broadcast()}, \textbf{ Net\+Packet\+::data}, \textbf{ forward\+Packet()}, \textbf{ Core\+::get\+Id()}, \textbf{ itostr()}, \textbf{ Net\+Packet\+::length}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ NUM\+\_\+\+PACKET\+\_\+\+TYPES}, \textbf{ Network\+Model\+::process\+Received\+Packet()}, \textbf{ Transport\+::\+Node\+::query()}, \textbf{ Net\+Packet\+::receiver}, \textbf{ Transport\+::\+Node\+::recv()}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::release()}, \textbf{ Net\+Packet\+::sender}, \textbf{ Net\+Packet\+::time}, and \textbf{ Net\+Packet\+::type}.
+
+
+
+Referenced by \textbf{ Sim\+Thread\+::run()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a72906d2adcaef10c316aca66851e1b26_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=312pt]{classNetwork_a72906d2adcaef10c316aca66851e1b26_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netRecv@{netRecv}}
+\index{netRecv@{netRecv}!Network@{Network}}
+\doxysubsubsection{netRecv()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classNetwork_aad91ee91b8dd3b3d0f6a372bd0d268df} 
+\textbf{ Net\+Packet} Network\+::net\+Recv (\begin{DoxyParamCaption}\item[{const \textbf{ Net\+Match} \&}]{match}{, }\item[{\textbf{ UInt64}}]{timeout\+\_\+ns}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 291} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+core}, \textbf{ \+\_\+net\+Queue}, \textbf{ \+\_\+net\+Queue\+Cond}, \textbf{ \+\_\+net\+Queue\+Lock}, \textbf{ \+\_\+num\+Mod}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::acquire()}, \textbf{ Net\+Packet\+::\+BROADCAST}, \textbf{ Net\+Recv\+Iterator\+::done()}, \textbf{ Net\+Recv\+Iterator\+::get()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ itostr()}, \textbf{ Net\+Packet\+::length}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ Net\+Recv\+Iterator\+::next()}, \textbf{ Subsecond\+Time\+::\+NS()}, \textbf{ NUM\+\_\+\+PACKET\+\_\+\+TYPES}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::release()}, \textbf{ Net\+Recv\+Iterator\+::reset()}, \textbf{ Net\+Packet\+::sender}, \textbf{ Net\+Match\+::senders}, \textbf{ Net\+Packet\+::time}, \textbf{ Net\+Packet\+::type}, \textbf{ Net\+Match\+::types}, and \textbf{ Condition\+Variable\+::wait()}.
+
+
+
+Referenced by \textbf{ net\+Recv()}, \textbf{ net\+Recv\+From()}, and \textbf{ net\+Recv\+Type()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_aad91ee91b8dd3b3d0f6a372bd0d268df_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{classNetwork_aad91ee91b8dd3b3d0f6a372bd0d268df_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netRecv@{netRecv}}
+\index{netRecv@{netRecv}!Network@{Network}}
+\doxysubsubsection{netRecv()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classNetwork_a3b00431d54680cb72dd5b76eaf34aba0} 
+\textbf{ Net\+Packet} Network\+::net\+Recv (\begin{DoxyParamCaption}\item[{\textbf{ SInt32}}]{src}{, }\item[{\textbf{ Packet\+Type}}]{type}{, }\item[{\textbf{ UInt64}}]{timeout\+\_\+ns}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 423} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ net\+Recv()}, \textbf{ Net\+Match\+::senders}, \textbf{ src}, and \textbf{ Net\+Match\+::types}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a3b00431d54680cb72dd5b76eaf34aba0_cgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netRecvFrom@{netRecvFrom}}
+\index{netRecvFrom@{netRecvFrom}!Network@{Network}}
+\doxysubsubsection{netRecvFrom()}
+{\footnotesize\ttfamily \label{classNetwork_abf1b54f3ef496ee8698401ff4212d397} 
+\textbf{ Net\+Packet} Network\+::net\+Recv\+From (\begin{DoxyParamCaption}\item[{\textbf{ SInt32}}]{src}{, }\item[{\textbf{ UInt64}}]{timeout\+\_\+ns}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 431} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ net\+Recv()}, \textbf{ Net\+Match\+::senders}, and \textbf{ src}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_abf1b54f3ef496ee8698401ff4212d397_cgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netRecvType@{netRecvType}}
+\index{netRecvType@{netRecvType}!Network@{Network}}
+\doxysubsubsection{netRecvType()}
+{\footnotesize\ttfamily \label{classNetwork_a3cfe4cb8302c69df115acf461e27d320} 
+\textbf{ Net\+Packet} Network\+::net\+Recv\+Type (\begin{DoxyParamCaption}\item[{\textbf{ Packet\+Type}}]{type}{, }\item[{\textbf{ UInt64}}]{timeout\+\_\+ns}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 438} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ net\+Recv()}, and \textbf{ Net\+Match\+::types}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a3cfe4cb8302c69df115acf461e27d320_cgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netSend@{netSend}}
+\index{netSend@{netSend}!Network@{Network}}
+\doxysubsubsection{netSend()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classNetwork_a2a661b71e1890a004d9aa8dbdf9ae7fd} 
+\textbf{ SInt32} Network\+::net\+Send (\begin{DoxyParamCaption}\item[{\textbf{ Net\+Packet} \&}]{packet}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 150} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+core}, \textbf{ \+\_\+models}, \textbf{ \+\_\+transport}, \textbf{ Net\+Packet\+::\+BROADCAST}, \textbf{ Net\+Packet\+::buffer\+Size()}, \textbf{ Network\+Model\+::count\+Packet()}, \textbf{ Core\+::get\+Id()}, \textbf{ Core\+::get\+Network()}, \textbf{ get\+Network\+Model\+From\+Packet\+Type()}, \textbf{ itostr()}, \textbf{ Net\+Packet\+::length}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ Net\+Packet\+::make\+Buffer()}, \textbf{ NUM\+\_\+\+PACKET\+\_\+\+TYPES}, \textbf{ Net\+Packet\+::receiver}, \textbf{ Network\+Model\+::route\+Packet()}, \textbf{ Transport\+::\+Node\+::send()}, \textbf{ Net\+Packet\+::sender}, \textbf{ Net\+Packet\+::start\+\_\+time}, \textbf{ Net\+Packet\+::time}, and \textbf{ Net\+Packet\+::type}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::broadcast\+Msg()}, \textbf{ forward\+Packet()}, \textbf{ net\+Broadcast()}, \textbf{ net\+Send()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::send\+Msg()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a2a661b71e1890a004d9aa8dbdf9ae7fd_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a2a661b71e1890a004d9aa8dbdf9ae7fd_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!netSend@{netSend}}
+\index{netSend@{netSend}!Network@{Network}}
+\doxysubsubsection{netSend()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classNetwork_a61c3fc1c46158230f58ef64c8b461e94} 
+\textbf{ SInt32} Network\+::net\+Send (\begin{DoxyParamCaption}\item[{\textbf{ SInt32}}]{dest}{, }\item[{\textbf{ Packet\+Type}}]{type}{, }\item[{const void $\ast$}]{buf}{, }\item[{\textbf{ UInt32}}]{len}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 404} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+core}, \textbf{ Net\+Packet\+::data}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Net\+Packet\+::length}, \textbf{ net\+Send()}, \textbf{ Net\+Packet\+::receiver}, \textbf{ Net\+Packet\+::sender}, \textbf{ Net\+Packet\+::time}, and \textbf{ Net\+Packet\+::type}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a61c3fc1c46158230f58ef64c8b461e94_cgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!registerCallback@{registerCallback}}
+\index{registerCallback@{registerCallback}!Network@{Network}}
+\doxysubsubsection{registerCallback()}
+{\footnotesize\ttfamily \label{classNetwork_af9272f10d7553f6bb81e8ad8f3bee92d} 
+void Network\+::register\+Callback (\begin{DoxyParamCaption}\item[{\textbf{ Packet\+Type}}]{type}{, }\item[{\textbf{ Network\+Callback}}]{callback}{, }\item[{void $\ast$}]{obj}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 58} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+callback\+Objs}, \textbf{ \+\_\+callbacks}, and \textbf{ NUM\+\_\+\+PACKET\+\_\+\+TYPES}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, \textbf{ Core\+Thread\+::run()}, and \textbf{ Sim\+Thread\+::run()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_af9272f10d7553f6bb81e8ad8f3bee92d_icgraph}
+\end{center}
+\end{figure}
+\index{Network@{Network}!unregisterCallback@{unregisterCallback}}
+\index{unregisterCallback@{unregisterCallback}!Network@{Network}}
+\doxysubsubsection{unregisterCallback()}
+{\footnotesize\ttfamily \label{classNetwork_a0cdc2b6fdb898328754bb8d778f098c8} 
+void Network\+::unregister\+Callback (\begin{DoxyParamCaption}\item[{\textbf{ Packet\+Type}}]{type}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ network.\+cc}.
+
+
+
+References \textbf{ \+\_\+callbacks}, and \textbf{ NUM\+\_\+\+PACKET\+\_\+\+TYPES}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::$\sim$\+Memory\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNetwork_a0cdc2b6fdb898328754bb8d778f098c8_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{Network@{Network}!\_callbackObjs@{\_callbackObjs}}
+\index{\_callbackObjs@{\_callbackObjs}!Network@{Network}}
+\doxysubsubsection{\_callbackObjs}
+{\footnotesize\ttfamily \label{classNetwork_a7ce2fb5624b2507b5d42eb2ce5dfafb1} 
+void$\ast$$\ast$ Network\+::\+\_\+callback\+Objs\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}, \textbf{ Network()}, \textbf{ register\+Callback()}, and \textbf{ $\sim$\+Network()}.
+
+\index{Network@{Network}!\_callbacks@{\_callbacks}}
+\index{\_callbacks@{\_callbacks}!Network@{Network}}
+\doxysubsubsection{\_callbacks}
+{\footnotesize\ttfamily \label{classNetwork_ad8699734c8af7cad0bf9eaaa737146b3} 
+\textbf{ Network\+Callback}$\ast$ Network\+::\+\_\+callbacks\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 108} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}, \textbf{ Network()}, \textbf{ register\+Callback()}, \textbf{ unregister\+Callback()}, and \textbf{ $\sim$\+Network()}.
+
+\index{Network@{Network}!\_core@{\_core}}
+\index{\_core@{\_core}!Network@{Network}}
+\doxysubsubsection{\_core}
+{\footnotesize\ttfamily \label{classNetwork_afc77c2da4f39a39b307aa2fe6ad93caa} 
+\textbf{ Core}$\ast$ Network\+::\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core()}, \textbf{ net\+Pull\+From\+Transport()}, \textbf{ net\+Recv()}, \textbf{ net\+Send()}, \textbf{ net\+Send()}, and \textbf{ Network()}.
+
+\index{Network@{Network}!\_models@{\_models}}
+\index{\_models@{\_models}!Network@{Network}}
+\doxysubsubsection{\_models}
+{\footnotesize\ttfamily \label{classNetwork_affdf3f0be8273cf8021cde44de781a8a} 
+\textbf{ Network\+Model}$\ast$ Network\+::\+\_\+models[\textbf{ NUM\+\_\+\+STATIC\+\_\+\+NETWORKS}]\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 106} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ disable\+Models()}, \textbf{ enable\+Models()}, \textbf{ get\+Network\+Model\+From\+Packet\+Type()}, \textbf{ net\+Pull\+From\+Transport()}, \textbf{ net\+Send()}, \textbf{ Network()}, and \textbf{ $\sim$\+Network()}.
+
+\index{Network@{Network}!\_netQueue@{\_netQueue}}
+\index{\_netQueue@{\_netQueue}!Network@{Network}}
+\doxysubsubsection{\_netQueue}
+{\footnotesize\ttfamily \label{classNetwork_a71b0aa1f1bad0b761c7cf4ebef22f800} 
+\textbf{ Net\+Queue} Network\+::\+\_\+net\+Queue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 117} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}, and \textbf{ net\+Recv()}.
+
+\index{Network@{Network}!\_netQueueCond@{\_netQueueCond}}
+\index{\_netQueueCond@{\_netQueueCond}!Network@{Network}}
+\doxysubsubsection{\_netQueueCond}
+{\footnotesize\ttfamily \label{classNetwork_a389d076337de45df6630ebf4228c1ddf} 
+\textbf{ Condition\+Variable} Network\+::\+\_\+net\+Queue\+Cond\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}, and \textbf{ net\+Recv()}.
+
+\index{Network@{Network}!\_netQueueLock@{\_netQueueLock}}
+\index{\_netQueueLock@{\_netQueueLock}!Network@{Network}}
+\doxysubsubsection{\_netQueueLock}
+{\footnotesize\ttfamily \label{classNetwork_ad5ea035928d7745981f87da9a9fdb07d} 
+\textbf{ Lock} Network\+::\+\_\+net\+Queue\+Lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 118} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}, and \textbf{ net\+Recv()}.
+
+\index{Network@{Network}!\_numMod@{\_numMod}}
+\index{\_numMod@{\_numMod}!Network@{Network}}
+\doxysubsubsection{\_numMod}
+{\footnotesize\ttfamily \label{classNetwork_a224364ce1586c806e16c1b27446de30a} 
+\textbf{ SInt32} Network\+::\+\_\+num\+Mod\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ net\+Pull\+From\+Transport()}, \textbf{ net\+Recv()}, and \textbf{ Network()}.
+
+\index{Network@{Network}!\_tid@{\_tid}}
+\index{\_tid@{\_tid}!Network@{Network}}
+\doxysubsubsection{\_tid}
+{\footnotesize\ttfamily \label{classNetwork_ae2750cb771e700e5a2258a24f59604df} 
+\textbf{ SInt32} Network\+::\+\_\+tid\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 114} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ Network()}.
+
+\index{Network@{Network}!\_transport@{\_transport}}
+\index{\_transport@{\_transport}!Network@{Network}}
+\doxysubsubsection{\_transport}
+{\footnotesize\ttfamily \label{classNetwork_a8382b09f30b6d3053dc7315c91ab4e90} 
+\textbf{ Transport\+::\+Node}$\ast$ Network\+::\+\_\+transport\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ network.\+h}.
+
+
+
+Referenced by \textbf{ get\+Transport()}, \textbf{ net\+Pull\+From\+Transport()}, \textbf{ net\+Send()}, \textbf{ Network()}, and \textbf{ $\sim$\+Network()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/network/\textbf{ network.\+h}\item 
+common/network/\textbf{ network.\+cc}\end{DoxyCompactItemize}

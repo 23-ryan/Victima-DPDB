@@ -1,0 +1,75 @@
+\doxysection{ibtb.\+h}
+\label{ibtb_8h_source}\index{common/performance\_model/branch\_predictors/ibtb.h@{common/performance\_model/branch\_predictors/ibtb.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SIMPLE\_INDIRECT\_BRANCH\_TARGET\_BUFFER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SIMPLE\_INDIRECT\_BRANCH\_TARGET\_BUFFER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <boost/scoped\_array.hpp>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }IndirectBranchTargetBuffer\ :\ BranchPredictor}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ IndirectBranchTargetBuffer(UInt32\ entries,\ UInt32\ tag\_bitwidth)}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ :\ m\_num\_entries(entries)}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ ,\ m\_tag\_bitwidth(tag\_bitwidth)}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ ,\ m\_table(new\ uint8\_t[entries])}
+\DoxyCodeLine{00018\ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ assert(tag\_bitwidth\ <=\ 8\ \&\&\ tag\_bitwidth\ >=\ 0);}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ entries\ ;\ i++)\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ m\_table[i]\ =\ 0;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \textcolor{comment}{//\ Report\ if\ we\ have\ a\ iBTB\ hit}}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{comment}{//\ Index\ =\ [13:6]}}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{comment}{//\ Tag\ =\ [14,5:0]}}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordtype}{bool}\ predict(IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ UInt32\ index,\ tag;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ gen\_index\_tag(ip,\ index,\ tag);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_table[index]\ ==\ tag)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ UInt32\ index,\ tag;}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ gen\_index\_tag(ip,\ index,\ tag);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ m\_table[index]\ =\ tag;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ UInt32\ m\_num\_entries;}
+\DoxyCodeLine{00058\ \ \ \ UInt32\ m\_tag\_bitwidth;}
+\DoxyCodeLine{00059\ \ \ \ boost::scoped\_array<uint8\_t>\ m\_table;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordtype}{void}\ gen\_index\_tag(IntPtr\ ip,\ UInt32\&\ index,\ UInt32\ \&tag)}
+\DoxyCodeLine{00062\ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ index\ =\ (ip\ >>\ 6)\ \&\ 0xFF;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ tag\ =\ ((ip\ \&\ 0x4000)\ >>\ 8)\ |\ (ip\ \&\ 0x3F);}
+\DoxyCodeLine{00065\ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ SIMPLE\_INDIRECT\_BRANCH\_TARGET\_BUFFER\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

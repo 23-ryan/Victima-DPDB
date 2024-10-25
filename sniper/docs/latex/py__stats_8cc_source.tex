@@ -1,0 +1,258 @@
+\doxysection{py\+\_\+stats.\+cc}
+\label{py__stats_8cc_source}\index{common/scripting/py\_stats.cc@{common/scripting/py\_stats.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}clock\_skew\_minimization\_object.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}thread\_stats\_manager.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ get():\ retrieve\ a\ stats\ value}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00014\ getStatsValue(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *objectName\ =\ NULL,\ *metricName\ =\ NULL;}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ index\ =\ -\/1;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}sls"{}},\ \&objectName,\ \&index,\ \&metricName))}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ StatsMetricBase\ *metric\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(objectName,\ index,\ metricName);}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordflow}{if}\ (!metric)\ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Stats\ metric\ not\ found"{}});}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00027\ \ \ \ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{return}\ PyLong\_FromUnsignedLongLong(metric-\/>recordMetric());}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ getter():\ return\ a\ statsGetterObject\ Python\ object\ which,\ when\ called,\ returns\ a\ stats\ value}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00038\ \ \ \ PyObject\_HEAD}
+\DoxyCodeLine{00039\ \ \ \ StatsMetricBase\ *metric;}
+\DoxyCodeLine{00040\ \}\ statsGetterObject;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00043\ statsGetterGet(PyObject\ *self,\ PyObject\ *args,\ PyObject\ *kw)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ statsGetterObject\ *getter\ =\ (statsGetterObject\ *)self;}
+\DoxyCodeLine{00046\ \ \ \ StatsMetricBase\ *metric\ =\ getter-\/>metric;}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{return}\ PyLong\_FromUnsignedLongLong(metric-\/>recordMetric());}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{static}\ PyTypeObject\ statsGetterType\ =\ \{}
+\DoxyCodeLine{00051\ \ \ \ PyObject\_HEAD\_INIT(NULL)}
+\DoxyCodeLine{00052\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*ob\_size*/}}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{stringliteral}{"{}statsGetter"{}},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_name*/}}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keyword}{sizeof}(statsGetterObject),\ \textcolor{comment}{/*tp\_basicsize*/}}
+\DoxyCodeLine{00055\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_itemsize*/}}
+\DoxyCodeLine{00056\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_dealloc*/}}
+\DoxyCodeLine{00057\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_print*/}}
+\DoxyCodeLine{00058\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_getattr*/}}
+\DoxyCodeLine{00059\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_setattr*/}}
+\DoxyCodeLine{00060\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_compare*/}}
+\DoxyCodeLine{00061\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_repr*/}}
+\DoxyCodeLine{00062\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_as\_number*/}}
+\DoxyCodeLine{00063\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_as\_sequence*/}}
+\DoxyCodeLine{00064\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_as\_mapping*/}}
+\DoxyCodeLine{00065\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_hash\ */}}
+\DoxyCodeLine{00066\ \ \ \ statsGetterGet,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_call*/}}
+\DoxyCodeLine{00067\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_str*/}}
+\DoxyCodeLine{00068\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_getattro*/}}
+\DoxyCodeLine{00069\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_setattro*/}}
+\DoxyCodeLine{00070\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_as\_buffer*/}}
+\DoxyCodeLine{00071\ \ \ \ Py\_TPFLAGS\_DEFAULT,\ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_flags*/}}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{stringliteral}{"{}Stats\ getter\ objects"{}},\ \ \ \ \textcolor{comment}{/*tp\_doc*/}}
+\DoxyCodeLine{00073\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_traverse*/}}
+\DoxyCodeLine{00074\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_clear*/}}
+\DoxyCodeLine{00075\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_richcompare*/}}
+\DoxyCodeLine{00076\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_weaklistoffset*/}}
+\DoxyCodeLine{00077\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_iter*/}}
+\DoxyCodeLine{00078\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_iternext*/}}
+\DoxyCodeLine{00079\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_methods*/}}
+\DoxyCodeLine{00080\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_members*/}}
+\DoxyCodeLine{00081\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_getset*/}}
+\DoxyCodeLine{00082\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_base*/}}
+\DoxyCodeLine{00083\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_dict*/}}
+\DoxyCodeLine{00084\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_descr\_get*/}}
+\DoxyCodeLine{00085\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_descr\_set*/}}
+\DoxyCodeLine{00086\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_dictoffset*/}}
+\DoxyCodeLine{00087\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_init*/}}
+\DoxyCodeLine{00088\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_alloc*/}}
+\DoxyCodeLine{00089\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_new*/}}
+\DoxyCodeLine{00090\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_free*/}}
+\DoxyCodeLine{00091\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_is\_gc*/}}
+\DoxyCodeLine{00092\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_bases*/}}
+\DoxyCodeLine{00093\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_mro*/}}
+\DoxyCodeLine{00094\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_cache*/}}
+\DoxyCodeLine{00095\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_subclasses*/}}
+\DoxyCodeLine{00096\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_weaklist*/}}
+\DoxyCodeLine{00097\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_del*/}}
+\DoxyCodeLine{00098\ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*tp\_version\_tag*/}}
+\DoxyCodeLine{00099\ \};}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00102\ getStatsGetter(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *objectName\ =\ NULL,\ *metricName\ =\ NULL;}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ index\ =\ -\/1;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}sls"{}},\ \&objectName,\ \&index,\ \&metricName))}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ StatsMetricBase\ *metric\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(objectName,\ index,\ metricName);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keywordflow}{if}\ (!metric)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Stats\ metric\ not\ found"{}});}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00115\ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ statsGetterObject\ *pGetter\ =\ PyObject\_New(statsGetterObject,\ \&statsGetterType);}
+\DoxyCodeLine{00118\ \ \ \ pGetter-\/>metric\ =\ metric;}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{return}\ (PyObject\ *)pGetter;}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ write():\ write\ the\ current\ set\ of\ statistics\ out\ to\ sim.stats\ or\ our\ own\ file}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00129\ writeStats(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00130\ \{}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *prefix\ =\ NULL;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}s"{}},\ \&prefix))}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ Sim()-\/>getStatsManager()-\/>recordStats(prefix);}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ register():\ register\ a\ callback\ function\ that\ returns\ a\ statistics\ value}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keyword}{static}\ UInt64\ statsCallback(String\ objectName,\ UInt32\ index,\ String\ metricName,\ UInt64\ \_pFunc)}
+\DoxyCodeLine{00147\ \{}
+\DoxyCodeLine{00148\ \ \ \ PyObject\ *pFunc\ =\ (PyObject*)\_pFunc;}
+\DoxyCodeLine{00149\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction(pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(sls)"{}},\ objectName.c\_str(),\ index,\ metricName.c\_str()));}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keywordflow}{if}\ (!pResult\ ||\ !PyLong\_Check(pResult))\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ LOG\_PRINT\_WARNING(\textcolor{stringliteral}{"{}Stats\ callback:\ return\ value\ must\ be\ (convertable\ into)\ 64-\/bit\ unsigned\ integer"{}});}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pResult)}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ Py\_XDECREF(pResult);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00156\ \ \ \ \}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ UInt64\ val\ =\ PyLong\_AsLongLong(pResult);}
+\DoxyCodeLine{00159\ \ \ \ Py\_XDECREF(pResult);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordflow}{return}\ val;}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00165\ registerStats(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *objectName\ =\ NULL,\ *metricName\ =\ NULL;}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ index\ =\ -\/1;}
+\DoxyCodeLine{00169\ \ \ \ PyObject\ *pFunc\ =\ NULL;}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}slsO"{}},\ \&objectName,\ \&index,\ \&metricName,\ \&pFunc))}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \textcolor{keywordflow}{if}\ (!PyCallable\_Check(pFunc))\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_TypeError,\ \textcolor{stringliteral}{"{}Fourth\ argument\ must\ be\ callable"{}});}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00177\ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ Py\_INCREF(pFunc);}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ Sim()-\/>getStatsManager()-\/>registerMetric(\textcolor{keyword}{new}\ StatsMetricCallback(objectName,\ index,\ metricName,\ (StatsCallback)statsCallback,\ (UInt64)pFunc));}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00186\ registerPerThread(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00187\ \{}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *objectName\ =\ NULL,\ *metricName\ =\ NULL,\ *sPerThread\ =\ NULL;}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}sss"{}},\ \&sPerThread,\ \&objectName,\ \&metricName))}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ ThreadStatNamedStat::registerStat(strdup(sPerThread),\ objectName,\ metricName);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00200\ \textcolor{comment}{//\ marker():\ record\ a\ marker}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00204\ writeMarker(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00205\ \{}
+\DoxyCodeLine{00206\ \ \ \ UInt64\ core\_id\ =\ INVALID\_CORE\_ID,\ thread\_id\ =\ INVALID\_THREAD\_ID,\ arg0\ =\ 0,\ arg1\ =\ 0;}
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *description\ =\ NULL;}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}llll|z"{}},\ \&core\_id,\ \&thread\_id,\ \&arg0,\ \&arg1,\ \&description))}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ Sim()-\/>getStatsManager()-\/>logMarker(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime(),\ core\_id,\ thread\_id,\ arg0,\ arg1,\ description);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00215\ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00219\ \textcolor{comment}{//\ time():\ Return\ current\ global\ time\ in\ femtoseconds}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00223\ getTime(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00224\ \{}
+\DoxyCodeLine{00225\ \ \ \ SubsecondTime\ time\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime();}
+\DoxyCodeLine{00226\ \ \ \ \textcolor{keywordflow}{return}\ PyLong\_FromUnsignedLongLong(time.getFS());}
+\DoxyCodeLine{00227\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00231\ \textcolor{comment}{//\ icount():\ Return\ current\ global\ instruction\ count}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00235\ getIcount(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00236\ \{}
+\DoxyCodeLine{00237\ \ \ \ UInt64\ icount\ =\ MagicServer::getGlobalInstructionCount();}
+\DoxyCodeLine{00238\ \ \ \ \textcolor{keywordflow}{return}\ PyLong\_FromUnsignedLongLong(icount);}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00243\ \textcolor{comment}{//\ module\ definition}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{keyword}{static}\ PyMethodDef\ PyStatsMethods[]\ =\ \{}
+\DoxyCodeLine{00247\ \ \ \ \{\textcolor{stringliteral}{"{}get"{}},\ \ getStatsValue,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Retrieve\ current\ value\ of\ statistic\ (objectName,\ index,\ metricName)."{}}\},}
+\DoxyCodeLine{00248\ \ \ \ \{\textcolor{stringliteral}{"{}getter"{}},\ getStatsGetter,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Return\ object\ to\ retrieve\ statistics\ value."{}}\},}
+\DoxyCodeLine{00249\ \ \ \ \{\textcolor{stringliteral}{"{}write"{}},\ writeStats,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Write\ statistics\ (<prefix>,\ [<filename>])."{}}\},}
+\DoxyCodeLine{00250\ \ \ \ \{\textcolor{stringliteral}{"{}register"{}},\ registerStats,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Register\ callback\ that\ defines\ statistics\ value\ for\ (objectName,\ index,\ metricName)."{}}\},}
+\DoxyCodeLine{00251\ \ \ \ \{\textcolor{stringliteral}{"{}register\_per\_thread"{}},\ registerPerThread,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Add\ a\ per-\/thread\ statistic\ (perthreadName)\ based\ on\ a\ named\ statistic\ (objectName,\ metricName)."{}}\},}
+\DoxyCodeLine{00252\ \ \ \ \{\textcolor{stringliteral}{"{}marker"{}},\ writeMarker,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Record\ a\ marker\ (coreid,\ threadid,\ arg0,\ arg1,\ [description])."{}}\},}
+\DoxyCodeLine{00253\ \ \ \ \{\textcolor{stringliteral}{"{}time"{}},\ getTime,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Retrieve\ the\ current\ global\ time\ in\ femtoseconds\ (approximate,\ last\ barrier)."{}}\},}
+\DoxyCodeLine{00254\ \ \ \ \{\textcolor{stringliteral}{"{}icount"{}},\ getIcount,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Retrieve\ current\ global\ instruction\ count."{}}\},}
+\DoxyCodeLine{00255\ \ \ \ \{NULL,\ NULL,\ 0,\ NULL\}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00256\ \};}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \textcolor{keywordtype}{void}\ HooksPy::PyStats::setup(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00259\ \{}
+\DoxyCodeLine{00260\ \ \ \ PyObject\ *pModule\ =\ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_stats"{}},\ PyStatsMethods);}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ statsGetterType.tp\_new\ =\ PyType\_GenericNew;}
+\DoxyCodeLine{00263\ \ \ \ \textcolor{keywordflow}{if}\ (PyType\_Ready(\&statsGetterType)\ <\ 0)}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ Py\_INCREF(\&statsGetterType);}
+\DoxyCodeLine{00267\ \ \ \ PyModule\_AddObject(pModule,\ \textcolor{stringliteral}{"{}Getter"{}},\ (PyObject\ *)\&statsGetterType);}
+\DoxyCodeLine{00268\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,108 @@
+\doxysection{dram\+\_\+perf\+\_\+model\+\_\+readwrite.\+cc}
+\label{dram__perf__model__readwrite_8cc_source}\index{common/performance\_model/dram\_perf\_model\_readwrite.cc@{common/performance\_model/dram\_perf\_model\_readwrite.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_readwrite.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ DramPerfModelReadWrite::DramPerfModelReadWrite(core\_id\_t\ core\_id,}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ UInt32\ cache\_block\_size):}
+\DoxyCodeLine{00010\ \ \ \ DramPerfModel(core\_id,\ cache\_block\_size),}
+\DoxyCodeLine{00011\ \ \ \ m\_queue\_model\_read(NULL),}
+\DoxyCodeLine{00012\ \ \ \ m\_queue\_model\_write(NULL),}
+\DoxyCodeLine{00013\ \ \ \ m\_dram\_bandwidth(8\ *\ Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/per\_controller\_bandwidth"{}})),\ \textcolor{comment}{//\ Convert\ bytes\ to\ bits}}
+\DoxyCodeLine{00014\ \ \ \ m\_shared\_readwrite(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/readwrite/shared"{}})),}
+\DoxyCodeLine{00015\ \ \ \ m\_total\_read\_queueing\_delay(SubsecondTime::Zero()),}
+\DoxyCodeLine{00016\ \ \ \ m\_total\_write\_queueing\_delay(SubsecondTime::Zero()),}
+\DoxyCodeLine{00017\ \ \ \ m\_total\_access\_latency(SubsecondTime::Zero())}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ m\_dram\_access\_cost\ =\ SubsecondTime::FS()\ *\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(TimeConverter<float>::NStoFS(Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/latency"{}})));\ \textcolor{comment}{//\ Operate\ in\ fs\ for\ higher\ precision\ before\ converting\ to\ uint64\_t/SubsecondTime}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/enabled"{}}))}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ m\_queue\_model\_read\ =\ QueueModel::create(\textcolor{stringliteral}{"{}dram-\/queue-\/read"{}},\ core\_id,\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/type"{}}),}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_dram\_bandwidth.getRoundedLatency(8\ *\ cache\_block\_size));\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ m\_queue\_model\_write\ =\ QueueModel::create(\textcolor{stringliteral}{"{}dram-\/queue-\/write"{}},\ core\_id,\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/type"{}}),}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_dram\_bandwidth.getRoundedLatency(8\ *\ cache\_block\_size));\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00027\ \ \ \ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}total-\/access-\/latency"{}},\ \&m\_total\_access\_latency);}
+\DoxyCodeLine{00030\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}total-\/read-\/queueing-\/delay"{}},\ \&m\_total\_read\_queueing\_delay);}
+\DoxyCodeLine{00031\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}total-\/write-\/queueing-\/delay"{}},\ \&m\_total\_write\_queueing\_delay);}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ DramPerfModelReadWrite::\string~DramPerfModelReadWrite()}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model\_read)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_queue\_model\_read;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ m\_queue\_model\_read\ =\ NULL;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_queue\_model\_write;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ m\_queue\_model\_write\ =\ NULL;}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ SubsecondTime}
+\DoxyCodeLine{00046\ DramPerfModelReadWrite::getAccessLatency(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{comment}{//\ pkt\_size\ is\ in\ 'Bytes'}}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{comment}{//\ m\_dram\_bandwidth\ is\ in\ 'Bits\ per\ clock\ cycle'}}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{if}\ ((!m\_enabled)\ ||}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores()))}
+\DoxyCodeLine{00052\ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00054\ \ \ \ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ SubsecondTime\ processing\_time\ =\ m\_dram\_bandwidth.getRoundedLatency(8\ *\ pkt\_size);\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{comment}{//\ Compute\ Queue\ Delay}}
+\DoxyCodeLine{00059\ \ \ \ SubsecondTime\ queue\_delay;}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model\_read)}
+\DoxyCodeLine{00061\ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (access\_type\ ==\ DramCntlrInterface::READ)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ queue\_delay\ =\ m\_queue\_model\_read-\/>computeQueueDelay(pkt\_time,\ processing\_time,\ requester);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_shared\_readwrite)}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Shared\ read-\/write\ bandwidth,\ but\ reads\ are\ prioritized\ over\ writes.}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ With\ fluffy\ time,\ where\ we\ can't\ delay\ a\ write\ because\ of\ an\ earlier\ (in\ simulated\ time)\ read}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ that\ was\ simulated\ later\ (in\ wallclock\ time),\ we\ model\ this\ in\ the\ following\ way:}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ -\/\ reads\ are\ only\ delayed\ by\ other\ reads\ (through\ m\_queue\_model\_read),\ this\ assumes\ *all*\ writes}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ can\ be\ moved\ out\ of\ the\ way\ if\ needed.}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ -\/\ writes\ see\ contention\ by\ both\ reads\ and\ other\ writes,\ i.e.,\ m\_queue\_model\_write}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ is\ updated\ on\ both\ read\ and\ write.}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ m\_queue\_model\_write-\/>computeQueueDelay(pkt\_time,\ processing\_time,\ requester);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ queue\_delay\ =\ m\_queue\_model\_write-\/>computeQueueDelay(pkt\_time,\ processing\_time,\ requester);}
+\DoxyCodeLine{00079\ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00081\ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00083\ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ SubsecondTime\ access\_latency\ =\ queue\_delay\ +\ processing\_time\ +\ m\_dram\_access\_cost;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ perf-\/>updateTime(pkt\_time);}
+\DoxyCodeLine{00089\ \ \ \ perf-\/>updateTime(pkt\_time\ +\ queue\_delay,\ ShmemPerf::DRAM\_QUEUE);}
+\DoxyCodeLine{00090\ \ \ \ perf-\/>updateTime(pkt\_time\ +\ queue\_delay\ +\ processing\_time,\ ShmemPerf::DRAM\_BUS);}
+\DoxyCodeLine{00091\ \ \ \ perf-\/>updateTime(pkt\_time\ +\ queue\_delay\ +\ processing\_time\ +\ m\_dram\_access\_cost,\ ShmemPerf::DRAM\_DEVICE);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \textcolor{comment}{//\ Update\ Memory\ Counters}}
+\DoxyCodeLine{00094\ \ \ \ m\_num\_accesses\ ++;}
+\DoxyCodeLine{00095\ \ \ \ m\_total\_access\_latency\ +=\ access\_latency;}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{if}\ (access\_type\ ==\ DramCntlrInterface::READ)}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ m\_total\_read\_queueing\_delay\ +=\ queue\_delay;}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ m\_total\_write\_queueing\_delay\ +=\ queue\_delay;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{return}\ access\_latency;}
+\DoxyCodeLine{00102\ \}}
+
+\end{DoxyCode}

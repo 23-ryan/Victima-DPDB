@@ -1,0 +1,216 @@
+\doxysection{dynamic\+\_\+micro\+\_\+op\+\_\+nehalem.\+cc}
+\label{dynamic__micro__op__nehalem_8cc_source}\index{common/performance\_model/performance\_models/core\_model/dynamic\_micro\_op\_nehalem.cc@{common/performance\_model/performance\_models/core\_model/dynamic\_micro\_op\_nehalem.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op\_nehalem.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ DynamicMicroOpNehalem::getType()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00005\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00006\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}nehalem"{}};}
+\DoxyCodeLine{00007\ \}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ DynamicMicroOpNehalem::PortTypeString(DynamicMicroOpNehalem::uop\_port\_t\ port)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keywordflow}{switch}(port)}
+\DoxyCodeLine{00012\ \ \ \ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT0:\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port0"{}};}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT1:\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port1"{}};}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT2:\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port2"{}};}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT34:\ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port34"{}};}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT5:\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port5"{}};}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT05:\ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port05"{}};}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UOP\_PORT015:\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}port015"{}};}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ port\ type\ \%d"{}},\ port);}
+\DoxyCodeLine{00022\ \ \ \ \}}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ DynamicMicroOpNehalem::uop\_port\_t\ DynamicMicroOpNehalem::getPort(\textcolor{keyword}{const}\ MicroOp\ *uop)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>uop\_subtype)\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_FP\_ADDSUB:}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT1;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_FP\_MULDIV:}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT0;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_LOAD:}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT2;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_STORE:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT34;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_GENERIC:}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getInstructionOpcode())\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_IMUL:}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uop-\/>getOperandSize()\ ==\ 64\ ?\ DynamicMicroOpNehalem::UOP\_PORT0\ :\ DynamicMicroOpNehalem::UOP\_PORT1;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_LEA:}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT1;\ \textcolor{comment}{//\ 0\ on\ Core2,\ 1\ on\ Nehalem,\ 0\ (simple)\ or\ 1\ (complex)\ on\ Sandy\ Bridge}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPS2PD:}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTSS2SD:}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTSS:}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTPS:}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTSD:}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTPD:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTSS:}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTPS:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTSD:}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTPD:}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT0;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_COMISD:}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_COMISS:}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_UCOMISD:}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_UCOMISS:}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MAXSS:}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MAXSD:}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MAXPS:}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MAXPD:}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MINSS:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MINSD:}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MINPS:}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MINPD:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ROUNDPS:}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ROUNDPD:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPD2PS:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTSD2SS:}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTDQ2PS:}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPS2DQ:}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTTPS2DQ:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTDQ2PD:}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPD2DQ:}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTTPD2DQ:}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPI2PS:}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPS2PI:}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTTPS2PI:}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPI2PD:}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTPD2PI:}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTTPD2PI:}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTSI2SS:}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTSS2SI:}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTTSS2SI:}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTSI2SD:}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTSD2SI:}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_CVTTSD2SI:}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_RSQRTSS:}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_RSQRTPS:}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VRSQRTSS:}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VRSQRTPS:}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT1;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ANDPS:}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ANDPD:}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ANDNPS:}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ANDNPD:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ORPS:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_ORPD:}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_XORPS:}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_XORPD:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVAPD:}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVAPS:}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVHLPS:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVHPD:}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVHPS:}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVLHPS:}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVLPD:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVLPS:}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVMSKPD:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVMSKPS:}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVSD\_XMM:}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVSHDUP:}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVSLDUP:}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MOVSS:}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVAPD:}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVAPS:}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVHLPS:}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVHPD:}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVHPS:}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVLHPS:}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVLPD:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVLPS:}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVMSKPD:}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVMSKPS:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVSD:}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVSHDUP:}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVSLDUP:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VMOVSS:}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_UNPCKHPD:}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_UNPCKHPS:}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_UNPCKLPD:}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_UNPCKLPS:}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT5;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT015;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_BRANCH:}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ DynamicMicroOpNehalem::UOP\_PORT5;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ uop\_subtype\ \%u"{}},\ uop-\/>uop\_subtype);}
+\DoxyCodeLine{00140\ \ \ \ \}}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ DynamicMicroOpNehalem::uop\_bypass\_t\ DynamicMicroOpNehalem::getBypassType(\textcolor{keyword}{const}\ MicroOp\ *uop)}
+\DoxyCodeLine{00144\ \{}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getSubtype())}
+\DoxyCodeLine{00146\ \ \ \ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_LOAD:}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>isFpLoadStore())}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_BYPASS\_LOAD\_FP;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_STORE:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>isFpLoadStore())}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_BYPASS\_FP\_STORE;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00157\ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordflow}{return}\ UOP\_BYPASS\_NONE;}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ DynamicMicroOpNehalem::uop\_alu\_t\ DynamicMicroOpNehalem::getAlu(\textcolor{keyword}{const}\ MicroOp\ *uop)}
+\DoxyCodeLine{00162\ \{}
+\DoxyCodeLine{00163\ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>uop\_type)}
+\DoxyCodeLine{00164\ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_ALU\_NONE;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_EXECUTE:}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(uop-\/>getInstructionOpcode())}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIV:}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_IDIV:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FDIV:}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FIDIV:}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FDIVP:}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FDIVR:}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FDIVRP:}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIVSS:}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIVPS:}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIVSD:}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIVPD:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VDIVSS:}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VDIVPS:}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VDIVSD:}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VDIVPD:}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTSS:}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTPS:}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTSD:}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_SQRTPD:}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTSS:}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTPS:}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTSD:}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VSQRTPD:}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_RSQRTSS:}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_RSQRTPS:}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VRSQRTSS:}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_VRSQRTPS:}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_ALU\_TRIG;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UOP\_ALU\_NONE;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \}}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ DynamicMicroOpNehalem::DynamicMicroOpNehalem(\textcolor{keyword}{const}\ MicroOp\ *uop,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ ComponentPeriod\ period)}
+\DoxyCodeLine{00205\ \ \ \ :\ DynamicMicroOp(uop,\ core\_model,\ period)}
+\DoxyCodeLine{00206\ \ \ \ ,\ uop\_port(DynamicMicroOpNehalem::getPort(uop))}
+\DoxyCodeLine{00207\ \ \ \ ,\ uop\_alu(DynamicMicroOpNehalem::getAlu(uop))}
+\DoxyCodeLine{00208\ \ \ \ ,\ uop\_bypass(DynamicMicroOpNehalem::getBypassType(uop))}
+\DoxyCodeLine{00209\ \{}
+\DoxyCodeLine{00210\ \}}
+
+\end{DoxyCode}

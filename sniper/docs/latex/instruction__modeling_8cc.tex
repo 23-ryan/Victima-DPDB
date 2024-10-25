@@ -1,0 +1,304 @@
+\doxysection{pin/instruction\+\_\+modeling.cc File Reference}
+\label{instruction__modeling_8cc}\index{pin/instruction\_modeling.cc@{pin/instruction\_modeling.cc}}
+{\ttfamily \#include "{}instruction\+\_\+modeling.\+h"{}}\newline
+{\ttfamily \#include "{}inst\+\_\+mode\+\_\+macros.\+h"{}}\newline
+{\ttfamily \#include "{}local\+\_\+storage.\+h"{}}\newline
+{\ttfamily \#include "{}spin\+\_\+loop\+\_\+detection.\+h"{}}\newline
+{\ttfamily \#include "{}lite/memory\+\_\+modeling.\+h"{}}\newline
+{\ttfamily \#include "{}lite/handle\+\_\+syscalls.\+h"{}}\newline
+{\ttfamily \#include "{}simulator.\+h"{}}\newline
+{\ttfamily \#include "{}performance\+\_\+model.\+h"{}}\newline
+{\ttfamily \#include "{}core\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}core.\+h"{}}\newline
+{\ttfamily \#include "{}thread.\+h"{}}\newline
+{\ttfamily \#include "{}timer.\+h"{}}\newline
+{\ttfamily \#include "{}instruction\+\_\+decoder.\+h"{}}\newline
+{\ttfamily \#include "{}instruction.\+h"{}}\newline
+{\ttfamily \#include "{}dynamic\+\_\+instruction.\+h"{}}\newline
+{\ttfamily \#include "{}micro\+\_\+op.\+h"{}}\newline
+{\ttfamily \#include "{}magic\+\_\+client.\+h"{}}\newline
+{\ttfamily \#include "{}inst\+\_\+mode.\+h"{}}\newline
+{\ttfamily \#include "{}dvfs\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}hooks\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}branch\+\_\+predictor.\+h"{}}\newline
+{\ttfamily \#include $<$unordered\+\_\+map$>$}\newline
+Include dependency graph for instruction\+\_\+modeling.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \textbf{ handle\+Branch} (THREADID thread\+\_\+id, ADDRINT eip, BOOL taken, ADDRINT target)
+\item 
+static void \textbf{ handle\+Branch\+Warming} (THREADID thread\+\_\+id, ADDRINT eip, BOOL taken, ADDRINT target)
+\item 
+static ADDRINT \textbf{ handle\+Magic} (THREADID thread\+Index, ADDRINT a, ADDRINT b, ADDRINT c)
+\item 
+static void \textbf{ handle\+Rdtsc} (THREADID thread\+\_\+id, PIN\+\_\+\+REGISTER $\ast$gax, PIN\+\_\+\+REGISTER $\ast$gdx)
+\item 
+static void \textbf{ handle\+Cpuid} (THREADID thread\+\_\+id, PIN\+\_\+\+REGISTER $\ast$gax, PIN\+\_\+\+REGISTER $\ast$gbx, PIN\+\_\+\+REGISTER $\ast$gcx, PIN\+\_\+\+REGISTER $\ast$gdx)
+\item 
+static void \textbf{ handle\+Pause} ()
+\item 
+static void \textbf{ fill\+Operand\+List\+Mem\+Ops} (\textbf{ Operand\+List} $\ast$list, INS ins)
+\item 
+static void \textbf{ fill\+Operand\+List} (\textbf{ Operand\+List} $\ast$list, INS ins)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+std\+::unordered\+\_\+map$<$ ADDRINT, const std\+::vector$<$ const \textbf{ Micro\+Op} $\ast$ $>$ $\ast$ $>$ \textbf{ instruction\+\_\+cache}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!fillOperandList@{fillOperandList}}
+\index{fillOperandList@{fillOperandList}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{fillOperandList()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_a946af61aa970bb79532fd93fb53e582c} 
+static void fill\+Operand\+List (\begin{DoxyParamCaption}\item[{\textbf{ Operand\+List} $\ast$}]{list}{, }\item[{INS}]{ins}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 137} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ fill\+Operand\+List\+Mem\+Ops()}, \textbf{ Operand\+::\+IMMEDIATE}, \textbf{ Operand\+::\+READ}, \textbf{ Operand\+::\+REG}, and \textbf{ Operand\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::decode\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=276pt]{instruction__modeling_8cc_a946af61aa970bb79532fd93fb53e582c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a946af61aa970bb79532fd93fb53e582c_icgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!fillOperandListMemOps@{fillOperandListMemOps}}
+\index{fillOperandListMemOps@{fillOperandListMemOps}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{fillOperandListMemOps()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_a479cbacf0f0eb14cd9bb5f0cf57864b7} 
+static void fill\+Operand\+List\+Mem\+Ops (\begin{DoxyParamCaption}\item[{\textbf{ Operand\+List} $\ast$}]{list}{, }\item[{INS}]{ins}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 118} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ Operand\+::\+MEMORY}, \textbf{ Operand\+::\+READ}, and \textbf{ Operand\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ fill\+Operand\+List()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a479cbacf0f0eb14cd9bb5f0cf57864b7_icgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!handleBranch@{handleBranch}}
+\index{handleBranch@{handleBranch}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{handleBranch()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_aa63aadce46b6771b5016c5b1e867dcfb} 
+static void handle\+Branch (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+\_\+id}{, }\item[{ADDRINT}]{eip}{, }\item[{BOOL}]{taken}{, }\item[{ADDRINT}]{target}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ local\+Store}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::add\+Instruction\+Modeling()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_aa63aadce46b6771b5016c5b1e867dcfb_icgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!handleBranchWarming@{handleBranchWarming}}
+\index{handleBranchWarming@{handleBranchWarming}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{handleBranchWarming()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_a50c039efa33182d3bd0b411cf41c6c0d} 
+static void handle\+Branch\+Warming (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+\_\+id}{, }\item[{ADDRINT}]{eip}{, }\item[{BOOL}]{taken}{, }\item[{ADDRINT}]{target}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Branch\+Predictor()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Performance\+Model\+::handle\+Branch\+Mispredict()}, and \textbf{ local\+Store}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::add\+Instruction\+Modeling()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a50c039efa33182d3bd0b411cf41c6c0d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a50c039efa33182d3bd0b411cf41c6c0d_icgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!handleCpuid@{handleCpuid}}
+\index{handleCpuid@{handleCpuid}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{handleCpuid()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_a61b662771b560dd50254625719db817b} 
+static void handle\+Cpuid (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+\_\+id}{, }\item[{PIN\+\_\+\+REGISTER $\ast$}]{gax}{, }\item[{PIN\+\_\+\+REGISTER $\ast$}]{gbx}{, }\item[{PIN\+\_\+\+REGISTER $\ast$}]{gcx}{, }\item[{PIN\+\_\+\+REGISTER $\ast$}]{gdx}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ cpuid\+\_\+result\+\_\+t\+::eax}, \textbf{ cpuid\+\_\+result\+\_\+t\+::ebx}, \textbf{ cpuid\+\_\+result\+\_\+t\+::ecx}, \textbf{ cpuid\+\_\+result\+\_\+t\+::edx}, \textbf{ Core\+::emulate\+Cpuid()}, and \textbf{ local\+Store}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::add\+Instruction\+Modeling()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=325pt]{instruction__modeling_8cc_a61b662771b560dd50254625719db817b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a61b662771b560dd50254625719db817b_icgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!handleMagic@{handleMagic}}
+\index{handleMagic@{handleMagic}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{handleMagic()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_a573099cb192a3a67f572e669780f93e8} 
+static ADDRINT handle\+Magic (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+Index}{, }\item[{ADDRINT}]{a}{, }\item[{ADDRINT}]{b}{, }\item[{ADDRINT}]{c}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 79} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ handle\+Magic\+Instruction()}, and \textbf{ local\+Store}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a573099cb192a3a67f572e669780f93e8_cgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!handlePause@{handlePause}}
+\index{handlePause@{handlePause}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{handlePause()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_a3fbf725700f74041ea9c1bc9b1c94efa} 
+static void handle\+Pause (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::add\+Instruction\+Modeling()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_a3fbf725700f74041ea9c1bc9b1c94efa_icgraph}
+\end{center}
+\end{figure}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!handleRdtsc@{handleRdtsc}}
+\index{handleRdtsc@{handleRdtsc}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{handleRdtsc()}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_afcce3848697a8d0eb0193a6486f08c8f} 
+static void handle\+Rdtsc (\begin{DoxyParamCaption}\item[{THREADID}]{thread\+\_\+id}{, }\item[{PIN\+\_\+\+REGISTER $\ast$}]{gax}{, }\item[{PIN\+\_\+\+REGISTER $\ast$}]{gdx}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 84} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+
+
+
+References \textbf{ Subsecond\+Time\+::divide\+Rounded()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Performance\+Model()}, and \textbf{ local\+Store}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::add\+Instruction\+Modeling()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_afcce3848697a8d0eb0193a6486f08c8f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{instruction__modeling_8cc_afcce3848697a8d0eb0193a6486f08c8f_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{instruction\_modeling.cc@{instruction\_modeling.cc}!instruction\_cache@{instruction\_cache}}
+\index{instruction\_cache@{instruction\_cache}!instruction\_modeling.cc@{instruction\_modeling.cc}}
+\doxysubsubsection{instruction\_cache}
+{\footnotesize\ttfamily \label{instruction__modeling_8cc_ab0bc8810a4ad83e416a8aaae5d6dcd4f} 
+std\+::unordered\+\_\+map$<$ADDRINT, const std\+::vector$<$const \textbf{ Micro\+Op} $\ast$$>$ $\ast$$>$ instruction\+\_\+cache}
+
+
+
+Definition at line \textbf{ 170} of file \textbf{ instruction\+\_\+modeling.\+cc}.
+

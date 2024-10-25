@@ -1,0 +1,88 @@
+\doxysection{py\+\_\+dvfs.\+cc}
+\label{py__dvfs_8cc_source}\index{common/scripting/py\_dvfs.cc@{common/scripting/py\_dvfs.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ ComponentPeriod\ *\ getDomain(SInt64\ domain\_id,\ \textcolor{keywordtype}{bool}\ allow\_global)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keywordflow}{if}\ (domain\_id\ <\ 0)\ \{}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allow\_global)\ \{}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(domain\_id)\ \{}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ -\/1:}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getDvfsManager()-\/>getGlobalDomain();}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ global\ domain\ ID"{}});}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Can\ only\ set\ core\ frequency,\ not\ global\ domains"{}});}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00022\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (domain\_id\ >=\ Sim()-\/>getConfig()-\/>getApplicationCores())\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ core\ ID"{}});}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \}\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getDvfsManager()-\/>getCoreDomain(domain\_id);}
+\DoxyCodeLine{00028\ \ \ \ \}}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00033\ getFrequency(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ domain\_id\ =\ -\/999;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}l"{}},\ \&domain\_id))}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *domain\ =\ getDomain(domain\_id,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordflow}{if}\ (!domain)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ UInt64\ freq\ =\ 1000000000\ /\ domain-\/>getPeriod().getFS();}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordflow}{return}\ PyInt\_FromLong(freq);}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00050\ setFrequency(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ core\_id\ =\ -\/999;}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ freq\_mhz\ =\ -\/1;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}ll"{}},\ \&core\_id,\ \&freq\_mhz))}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *domain\ =\ getDomain(core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{if}\ (!domain)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{comment}{//\ We're\ running\ in\ a\ hook\ so\ we\ already\ have\ the\ thread\ lock,\ call\ MagicServer\ directly}}
+\DoxyCodeLine{00063\ \ \ \ Sim()-\/>getMagicServer()-\/>setFrequency(core\_id,\ freq\_mhz);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{static}\ PyMethodDef\ PyDvfsMethods[]\ =\ \{}
+\DoxyCodeLine{00070\ \ \ \ \{\textcolor{stringliteral}{"{}get\_frequency"{}},\ \ getFrequency,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ core\ or\ global\ frequency,\ in\ MHz."{}}\},}
+\DoxyCodeLine{00071\ \ \ \ \{\textcolor{stringliteral}{"{}set\_frequency"{}},\ \ setFrequency,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Set\ core\ frequency,\ in\ MHz."{}}\},}
+\DoxyCodeLine{00072\ \ \ \ \{NULL,\ NULL,\ 0,\ NULL\}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00073\ \};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{void}\ HooksPy::PyDvfs::setup(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \ PyObject\ *pModule\ =\ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_dvfs"{}},\ PyDvfsMethods);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ PyObject\ *pGlobalConst\ =\ PyInt\_FromLong(-\/1);}
+\DoxyCodeLine{00080\ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}GLOBAL"{}},\ pGlobalConst);}
+\DoxyCodeLine{00081\ \ \ \ Py\_DECREF(pGlobalConst);}
+\DoxyCodeLine{00082\ \}}
+
+\end{DoxyCode}

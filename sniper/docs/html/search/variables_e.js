@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['objectname_0',['objectName',['../classStatsMetricBase.html#af11cc8f144d42e68bc2511e256592a17',1,'StatsMetricBase']]],
+  ['occupancy_1',['occupancy',['../structcuckooTable__t.html#a9e3b7be48feafd0721ed40494a8951ab',1,'cuckooTable_t']]],
+  ['op_2',['op',['../structSyscallServer_1_1futex__args__t.html#a663079020668d248c1509f51648ff524',1,'SyscallServer::futex_args_t']]],
+  ['opcode_3',['opcode',['../structriscvinstr.html#a8380bd3bf3d656e7429c558c50090acd',1,'riscvinstr']]],
+  ['open_5fpage_4',['open_page',['../structDramPerfModelDisagg_1_1BankInfo.html#a13b910ab6e791b2d3e1b02e161ec2d1d',1,'DramPerfModelDisagg::BankInfo']]],
+  ['open_5fpage_5ftype_5',['open_page_type',['../structDramPerfModelDisagg_1_1BankInfo.html#adee0cfe5a0c4f93e39f0e6df82affdef',1,'DramPerfModelDisagg::BankInfo']]],
+  ['open_5frow_5fpolicy_6',['open_row_policy',['../classDramPerfModelDisagg.html#ae344242efcca9d1ec0eee458bab6a39e',1,'DramPerfModelDisagg']]],
+  ['operand_5fsize_7',['operand_size',['../structMicroOp.html#ac8d4eef17f65275e85486cb639d8b762',1,'MicroOp']]],
+  ['option_5fnames_8',['option_names',['../classCacheBlockInfo.html#a2a4cf9386e3a197c7b8baac80dbc9768',1,'CacheBlockInfo']]],
+  ['oracle_5fexpressive_5fenabled_9',['oracle_expressive_enabled',['../classParametricDramDirectoryMSI_1_1MemoryManager.html#a26a5295a14c88c3f6954515be6345899',1,'ParametricDramDirectoryMSI::MemoryManager']]],
+  ['oracle_5fprotection_5fenabled_10',['oracle_protection_enabled',['../classParametricDramDirectoryMSI_1_1MemoryManager.html#a023110e279e1664a481177faf4488907',1,'ParametricDramDirectoryMSI::MemoryManager']]],
+  ['oracle_5ftranslation_5fenabled_11',['oracle_translation_enabled',['../classParametricDramDirectoryMSI_1_1MemoryManager.html#ad43f674cbba3639ccf8279bddc4688c8',1,'ParametricDramDirectoryMSI::MemoryManager']]],
+  ['order_12',['order',['../structHooksManager_1_1HookCallback.html#a0c5fc707d358f5ed74c411fdec97957d',1,'HooksManager::HookCallback']]],
+  ['orig_5fargc_13',['orig_argc',['../follow__execv_8cc.html#af000405f506cf537d8f81d06e78dcd5a',1,'follow_execv.cc']]],
+  ['orig_5fargv_14',['orig_argv',['../follow__execv_8cc.html#afee8554237d7e2399f49669db6b83aa8',1,'follow_execv.cc']]],
+  ['outfile_15',['outfile',['../classSchedulerSequential.html#a1b65f52d576cdbab6bb7fd1cd4677076',1,'SchedulerSequential']]],
+  ['outlen_16',['outlen',['../structblake2s__state____.html#a49a76c18b7065a25eeb4dd877b2f966d',1,'blake2s_state__::outlen'],['../structblake2b__state____.html#aa26a50698c257897f78c901de4419940',1,'blake2b_state__::outlen'],['../structblake2sp__state____.html#a168f056ffe06d7e0298f662a0746baa1',1,'blake2sp_state__::outlen'],['../structblake2bp__state____.html#a5c565a72956f3bde4357f0ab8d080b45',1,'blake2bp_state__::outlen']]],
+  ['output_5fdirection_5fnames_17',['output_direction_names',['../network__model__emesh__hop__by__hop_8cc.html#a6337b394e7c1b7fd2f944a753a4930d7',1,'network_model_emesh_hop_by_hop.cc']]],
+  ['outstanding_5fmisses_18',['outstanding_misses',['../classParametricDramDirectoryMSI_1_1CacheParameters.html#a97a48e9ab02a7302034cb6b363bb6b8b',1,'ParametricDramDirectoryMSI::CacheParameters']]],
+  ['overlapflags_19',['overlapFlags',['../structWindows_1_1WindowEntry.html#aa0e34fe2a9c96dc0917d6cbc0c125e96',1,'Windows::WindowEntry']]]
+];

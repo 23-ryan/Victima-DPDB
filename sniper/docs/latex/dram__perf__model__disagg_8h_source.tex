@@ -1,0 +1,173 @@
+\doxysection{dram\+\_\+perf\+\_\+model\+\_\+disagg.\+h}
+\label{dram__perf__model__disagg_8h_source}\index{common/performance\_model/dram\_perf\_model\_disagg.h@{common/performance\_model/dram\_perf\_model\_disagg.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DRAM\_PERF\_MODEL\_DISAGG\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DRAM\_PERF\_MODEL\_DISAGG\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}queue\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}dram\_cntlr\_interface.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <bitset>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }DramPerfModelDisagg\ :\ \textcolor{keyword}{public}\ DramPerfModel}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{const}\ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keyword}{const}\ AddressHomeLookup*\ m\_address\_home\_lookup;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{comment}{//ParametricDramDirectoryMSI::MemoryManager\ *\ m\_memory\_manager;\ //Adding\ link\ to\ mmu}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_num\_banks;\ \ \ \ \ \ \ \textcolor{comment}{//\ number\ of\ banks\ in\ a\ rank}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_num\_banks\_log2;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_num\_bank\_groups;\ \textcolor{comment}{//\ number\ of\ bank\ groups\ in\ a\ rank}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_num\_ranks;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_rank\_offset;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_num\_channels;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_channel\_offset;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_home\_lookup\_bit;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_total\_ranks;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_banks\_per\_channel;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_banks\_per\_bank\_group;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_total\_banks;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_total\_bank\_groups;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_data\_bus\_width;\ \ \textcolor{comment}{//\ bus\ between\ dram\ and\ memory\ controller}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_dram\_speed;\ \ \ \ \ \ \textcolor{comment}{//\ MHz,\ 533,\ 667,\ etc.}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_dram\_page\_size;\ \ \textcolor{comment}{//\ dram\ page\ size\ in\ bytes}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_dram\_page\_size\_log2;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_open\_page\_mapping;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_column\_offset;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_column\_hi\_offset;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_bank\_offset;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_randomize\_address;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_randomize\_offset;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_column\_bits\_shift;\ \textcolor{comment}{//\ position\ of\ column\ bits\ for\ closed-\/page\ mapping\ (after\ cutting\ interleaving/channel/rank/bank\ from\ bottom)}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentBandwidth\ m\_bus\_bandwidth;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ ComponentBandwidth\ m\_r\_bus\_bandwidth;\ //remote}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ ComponentBandwidth\ m\_r\_part\_bandwidth;\ //remote}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ ComponentBandwidth\ m\_r\_part2\_bandwidth;\ //remote}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_bank\_keep\_open;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_bank\_open\_delay;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_bank\_close\_delay;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_dram\_access\_cost;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_intercommand\_delay;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_intercommand\_delay\_short;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_intercommand\_delay\_long;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_controller\_delay;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_refresh\_interval;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_refresh\_length;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ SubsecondTime\ m\_r\_added\_latency;\ //Additional\ remote\ latency}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_datamov\_threshold;\ //Mov\ data\ if\ greater\ than\ yy}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_localdram\_size;\ \textcolor{comment}{//Mov\ data\ if\ greater\ than\ yy}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_enable\_remote\_mem;\ //Enable\ remote\ memory\ with\ the\ same\ DDR\ type\ as\ local\ for\ now}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_simulate\_tlb\_overhead;\ //Simulate\ tlb\ overhead}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_simulate\_datamov\_overhead;\ //Simulate\ tlb\ overhead}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_mode\ ;\ //Randomly\ assigned\ =\ 0;\ Cache\ =\ 1\ \ }}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_partitioning\_ratio\ ;\ //\ \%\ in\ local\ memory\ }}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_simulate\_sw\_pagereclaim\_overhead;\ //Simulate\ tlb\ overhead}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_exclusive\_cache;\ //Simulate\ tlb\ overhead}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_remote\_init;\ }}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_enable\_nl\_prefetcher;\ }}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_disturbance\_factor;\ }}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_dontevictdirty;\ make}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_enable\_selective\_moves;\ }}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_partition\_queues;\ }}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_cacheline\_gran;\ }}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_reserved\_bufferspace;\ }}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ UInt32\ m\_r\_limit\_redundant\_moves;\ }}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{comment}{//\ const\ bool\ m\_r\_throttle\_redundant\_moves;\ }}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Local\ }}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ std::vector<QueueModel*>\ m\_queue\_model;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ std::vector<QueueModel*>\ m\_rank\_avail;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ std::vector<QueueModel*>\ m\_bank\_group\_avail;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ METADATA,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ NOT\_METADATA,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ NUMBER\_OF\_TYPES}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \}page\_type;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }BankInfo}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ core\_id\_t\ core\_id;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ IntPtr\ open\_page;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_avail;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ page\_type\ open\_page\_type;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ std::vector<BankInfo>\ m\_banks;}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \textcolor{comment}{//Remote\ memory}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{comment}{//\ std::vector<QueueModel*>\ m\_r\_queue\_model;}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{comment}{//\ std::vector<QueueModel*>\ m\_r\_rank\_avail;}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{comment}{//\ std::vector<QueueModel*>\ m\_r\_bank\_group\_avail;}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{comment}{//\ std::vector<BankInfo>\ m\_r\_banks;}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{comment}{//\ std::map<UInt64,\ UInt32>\ m\_remote\_access\_tracker;\ }}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ std::list<UInt64>\ m\_local\_pages;}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{comment}{//\ std::list<UInt64>\ m\_remote\_pages;}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ std::list<UInt64>\ m\_dirty\_pages;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ std::map<UInt64,\ SubsecondTime>\ m\_inflight\_pages;\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ std::map<UInt64,\ UInt32>\ m\_inflight\_redundant;\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ std::map<UInt64,\ SubsecondTime>\ m\_inflightevicted\_pages;\ }
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ UInt64\ m\_page\_hits;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ UInt64\ m\_page\_empty;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ UInt64\ m\_page\_closing;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ UInt64\ m\_page\_miss;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ UInt64\ m\_page\_conflict\_metadata\_to\_data;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ UInt64\ m\_page\_conflict\_data\_to\_metadata;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ UInt64\ m\_page\_conflict\_data\_to\_data;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ UInt64\ m\_page\_conflict\_metadata\_to\_metadata;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{comment}{//\ UInt64\ m\_remote\_reads;}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{comment}{//\ UInt64\ m\_remote\_writes;}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ UInt64\ m\_data\_moves;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ UInt64\ m\_page\_prefetches;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ UInt64\ m\_inflight\_hits;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ UInt64\ m\_writeback\_pages;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ UInt64\ m\_local\_evictions;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ UInt64\ m\_extra\_pages;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ UInt64\ m\_redundant\_moves;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ UInt64\ m\_max\_bufferspace;}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ SubsecondTime\ m\_total\_queueing\_delay;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ SubsecondTime\ m\_total\_access\_latency;}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ constant\_time\_policy;\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ selective\_constant\_time\_policy;\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ open\_row\_policy;}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ parseDeviceAddress(IntPtr\ address,\ UInt32\ \&channel,\ UInt32\ \&rank,\ UInt32\ \&bank\_group,\ UInt32\ \&bank,\ UInt32\ \&column,\ UInt64\ \&page);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ UInt64\ parseAddressBits(UInt64\ address,\ UInt32\ \&data,\ UInt32\ offset,\ UInt32\ size,\ UInt64\ base\_address);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{comment}{//\ SubsecondTime\ possiblyEvict(UInt64\ phys\_page,\ SubsecondTime\ pkt\_time,\ core\_id\_t\ requester);\ }}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{comment}{//\ void\ possiblyPrefetch(UInt64\ phys\_page,\ SubsecondTime\ pkt\_time,\ core\_id\_t\ requester);\ }}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{comment}{//DramPerfModelDisagg(String\ name,\ core\_id\_t\ core\_id,\ AddressHomeLookup*\ address\_home\_lookup,\ UInt32\ cache\_block\_size,\ ParametricDramDirectoryMSI::MemoryManager*\ memory\_manager);}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ DramPerfModelDisagg(core\_id\_t\ core\_id,\ UInt32\ cache\_block\_size,\ AddressHomeLookup*\ address\_home\_lookup);}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \string~DramPerfModelDisagg();}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{comment}{//bool\ isRemoteAccess(IntPtr\ address,\ core\_id\_t\ requester,\ DramCntlrInterface::access\_t\ access\_type);\ }}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{comment}{//Changing\ this...\ not\ sure\ whether\ queue\_delay\ is\ needed);\ }}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{comment}{//SubsecondTime\ getAccessLatencyRemote(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\ SubsecondTime\ \&queue\_delay);}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{comment}{//\ SubsecondTime\ getAccessLatencyRemote(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf);}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{comment}{//SubsecondTime\ getAccessLatency(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\ SubsecondTime\ \&queue\_delay);}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ SubsecondTime\ getAccessLatency(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_metadata);}
+\DoxyCodeLine{00165\ \};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_DRAM\_PERF\_MODEL\_DISAGG\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

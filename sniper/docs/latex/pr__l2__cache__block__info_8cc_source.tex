@@ -1,0 +1,68 @@
+\doxysection{pr\+\_\+l2\+\_\+cache\+\_\+block\+\_\+info.\+cc}
+\label{pr__l2__cache__block__info_8cc_source}\index{common/core/memory\_subsystem/cache/pr\_l2\_cache\_block\_info.cc@{common/core/memory\_subsystem/cache/pr\_l2\_cache\_block\_info.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pr\_l2\_cache\_block\_info.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ MemComponent::component\_t\ }
+\DoxyCodeLine{00005\ PrL2CacheBlockInfo::getCachedLoc()}
+\DoxyCodeLine{00006\ \{}
+\DoxyCodeLine{00007\ \ \ \ LOG\_ASSERT\_ERROR(m\_cached\_loc\_bitvec\ !=\ ((1\ <<\ MemComponent::L1\_ICACHE)\ |\ (1\ <<\ MemComponent::L1\_DCACHE)),}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}m\_cached\_loc\_bitvec(\%u)"{}},\ m\_cached\_loc\_bitvec);}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keywordflow}{switch}(m\_cached\_loc\_bitvec)}
+\DoxyCodeLine{00010\ \ \ \ \{}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ((UInt32)\ 1)\ <<\ MemComponent::L1\_ICACHE:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MemComponent::L1\_ICACHE;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ }
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ((UInt32)\ 1)\ <<\ MemComponent::L1\_DCACHE:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MemComponent::L1\_DCACHE;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ((UInt32)\ 0):}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MemComponent::INVALID\_MEM\_COMPONENT;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Error:\ m\_cached\_loc\_bitvec(\%u)"{}},\ m\_cached\_loc\_bitvec);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MemComponent::INVALID\_MEM\_COMPONENT;}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ }
+\DoxyCodeLine{00027\ PrL2CacheBlockInfo::setCachedLoc(MemComponent::component\_t\ cached\_loc)}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ LOG\_ASSERT\_ERROR(cached\_loc\ !=\ MemComponent::INVALID\_MEM\_COMPONENT,}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}m\_cached\_loc\_bitvec(\%u),\ cached\_loc(\%u)"{}},}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ m\_cached\_loc\_bitvec,\ cached\_loc);}
+\DoxyCodeLine{00032\ \ \ \ LOG\_ASSERT\_ERROR(!(m\_cached\_loc\_bitvec\ \&\ (1\ <<\ cached\_loc)),}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}m\_cached\_loc\_bitvec(\%u),\ cached\_loc(\%u)"{}},}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ m\_cached\_loc\_bitvec,\ cached\_loc);}
+\DoxyCodeLine{00035\ \ \ \ m\_cached\_loc\_bitvec\ |=\ (((UInt32)\ 1)\ <<\ cached\_loc);}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00039\ PrL2CacheBlockInfo::clearCachedLoc(MemComponent::component\_t\ cached\_loc)}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ LOG\_ASSERT\_ERROR(cached\_loc\ !=\ MemComponent::INVALID\_MEM\_COMPONENT,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}m\_cached\_loc\_bitvec(\%u),\ cached\_loc(\%u)"{}},}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ m\_cached\_loc\_bitvec,\ cached\_loc);}
+\DoxyCodeLine{00044\ \ \ \ LOG\_ASSERT\_ERROR(m\_cached\_loc\_bitvec\ \&\ (1\ <<\ cached\_loc),}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}m\_cached\_loc\_bitvec(\%u),\ cached\_loc(\%u)"{}},\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ m\_cached\_loc\_bitvec,\ cached\_loc);}
+\DoxyCodeLine{00047\ \ \ \ m\_cached\_loc\_bitvec\ \&=\ (\string~(((UInt32)\ 1)\ <<\ cached\_loc));}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ }
+\DoxyCodeLine{00051\ PrL2CacheBlockInfo::invalidate()}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ m\_cached\_loc\_bitvec\ =\ 0;}
+\DoxyCodeLine{00054\ \ \ \ CacheBlockInfo::invalidate();}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keywordtype}{void}\ }
+\DoxyCodeLine{00058\ PrL2CacheBlockInfo::clone(CacheBlockInfo*\ cache\_block\_info)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ m\_cached\_loc\_bitvec\ =\ ((PrL2CacheBlockInfo*)\ cache\_block\_info)-\/>getCachedLocBitVec();}
+\DoxyCodeLine{00061\ \ \ \ CacheBlockInfo::clone(cache\_block\_info);}
+\DoxyCodeLine{00062\ \}}
+
+\end{DoxyCode}

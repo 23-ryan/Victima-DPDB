@@ -1,0 +1,82 @@
+\doxysection{scheduler\+\_\+dynamic.\+cc}
+\label{scheduler__dynamic_8cc_source}\index{common/scheduler/scheduler\_dynamic.cc@{common/scheduler/scheduler\_dynamic.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}scheduler\_dynamic.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}thread\_stats\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ SchedulerDynamic::SchedulerDynamic(ThreadManager\ *thread\_manager)}
+\DoxyCodeLine{00007\ \ \ \ :\ Scheduler(thread\_manager)}
+\DoxyCodeLine{00008\ \ \ \ ,\ m\_threads\_runnable(16)}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_in\_periodic(false)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PERIODIC,\ hook\_periodic,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_ACTION);}
+\DoxyCodeLine{00012\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_START,\ hook\_thread\_start,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_ACTION);}
+\DoxyCodeLine{00013\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_STALL,\ hook\_thread\_stall,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_ACTION);}
+\DoxyCodeLine{00014\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_RESUME,\ hook\_thread\_resume,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_ACTION);}
+\DoxyCodeLine{00015\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_EXIT,\ hook\_thread\_exit,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_ACTION);}
+\DoxyCodeLine{00016\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ SchedulerDynamic::\string~SchedulerDynamic()}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{void}\ SchedulerDynamic::\_\_periodic(SubsecondTime\ time)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ Sim()-\/>getThreadStatsManager()-\/>update();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ m\_in\_periodic\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00027\ \ \ \ periodic(time);}
+\DoxyCodeLine{00028\ \ \ \ m\_in\_periodic\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keywordtype}{void}\ SchedulerDynamic::\_\_threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ (m\_threads\_runnable.size()\ <=\ (\textcolor{keywordtype}{size\_t})thread\_id)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ m\_threads\_runnable.resize(m\_threads\_runnable.size()\ +\ 16);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ m\_threads\_runnable[thread\_id]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00037\ \ \ \ threadStart(thread\_id,\ time);}
+\DoxyCodeLine{00038\ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keywordtype}{void}\ SchedulerDynamic::\_\_threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (reason\ !=\ ThreadManager::STALL\_UNSCHEDULED)}
+\DoxyCodeLine{00043\ \ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ m\_threads\_runnable[thread\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ threadStall(thread\_id,\ reason,\ time);}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ SchedulerDynamic::\_\_threadResume(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time)}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ m\_threads\_runnable[thread\_id]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00052\ \ \ \ threadResume(thread\_id,\ thread\_by,\ time);}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}\ SchedulerDynamic::\_\_threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ m\_threads\_runnable[thread\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00058\ \ \ \ threadExit(thread\_id,\ time);}
+\DoxyCodeLine{00059\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keywordtype}{void}\ SchedulerDynamic::moveThread(thread\_id\_t\ thread\_id,\ core\_id\_t\ core\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\ \ \ \#if\ 0}}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{comment}{//\ TODO:\ sched\_yield\ and\ sched\_setaffinity\ also\ check\ for\ rescheduling.\ There\ doesn't\ seem\ to\ be}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ a\ uniform\ way\ of\ knowing\ when\ this\ is\ allowed,\ so\ drop\ the\ check\ for\ now}}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{comment}{//\ Threads\ will\ re-\/check\ their\ core\_id\ on\ return\ from\ barrier,\ or\ on\ wakeup.}}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{comment}{//\ Outside\ of\ this,\ preemption\ is\ not\ possible.}}
+\DoxyCodeLine{00068\ \ \ \ LOG\_ASSERT\_ERROR(m\_in\_periodic}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ m\_threads\_runnable[thread\_id]\ ==\ \textcolor{keyword}{false}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>getCore()\ ==\ NULL,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Cannot\ pre-\/emptively\ move\ or\ unschedule\ thread\ outside\ of\ periodic()"{}});}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ m\_thread\_manager-\/>moveThread(thread\_id,\ core\_id,\ time);}
+\DoxyCodeLine{00075\ \ \ \ Sim()-\/>getThreadStatsManager()-\/>update(thread\_id,\ time);}
+\DoxyCodeLine{00076\ \}}
+
+\end{DoxyCode}

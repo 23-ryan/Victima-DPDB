@@ -1,0 +1,52 @@
+\doxysection{address\+\_\+home\+\_\+lookup.\+cc}
+\label{address__home__lookup_8cc_source}\index{common/core/memory\_subsystem/address\_home\_lookup.cc@{common/core/memory\_subsystem/address\_home\_lookup.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ AddressHomeLookup::AddressHomeLookup(UInt32\ ahl\_param,}
+\DoxyCodeLine{00005\ \ \ \ \ \ \ std::vector<core\_id\_t>\&\ core\_list,}
+\DoxyCodeLine{00006\ \ \ \ \ \ \ UInt32\ cache\_block\_size):}
+\DoxyCodeLine{00007\ \ \ \ m\_ahl\_param(ahl\_param),}
+\DoxyCodeLine{00008\ \ \ \ m\_ahl\_mask((UInt64(1)\ <<\ ahl\_param)\ -\/\ 1),}
+\DoxyCodeLine{00009\ \ \ \ m\_core\_list(core\_list),}
+\DoxyCodeLine{00010\ \ \ \ m\_cache\_block\_size(cache\_block\_size)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ \textcolor{comment}{//\ Each\ Block\ Address\ is\ as\ follows:}}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{comment}{//\ ///////////////////////////////////////////////////////////\ //}}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{comment}{//\ \ \ block\_num\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ block\_offset\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //}}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{comment}{//\ ///////////////////////////////////////////////////////////\ //}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ LOG\_ASSERT\_ERROR((1\ <<\ m\_ahl\_param)\ >=\ (SInt32)\ m\_cache\_block\_size,}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}2\string^AHL\ param(\%u)\ must\ be\ >=\ Cache\ Block\ Size(\%u)"{}},}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ m\_ahl\_param,\ m\_cache\_block\_size);}
+\DoxyCodeLine{00021\ \ \ \ m\_total\_modules\ =\ core\_list.size();}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ AddressHomeLookup::\string~AddressHomeLookup()}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{comment}{//\ There\ is\ no\ memory\ to\ deallocate,\ so\ destructor\ has\ no\ function}}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ core\_id\_t\ AddressHomeLookup::getHome(IntPtr\ address)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00031\ \ \ \ SInt32\ module\_num\ =\ (address\ >>\ m\_ahl\_param)\ \%\ m\_total\_modules;}
+\DoxyCodeLine{00032\ \ \ \ LOG\_ASSERT\_ERROR(0\ <=\ module\_num\ \&\&\ module\_num\ <\ (SInt32)\ m\_total\_modules,\ \textcolor{stringliteral}{"{}module\_num(\%i),\ total\_modules(\%u)"{}},\ module\_num,\ m\_total\_modules);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}address(0x\%x),\ module\_num(\%i)"{}},\ address,\ module\_num);}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{return}\ (m\_core\_list[module\_num]);}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ IntPtr\ AddressHomeLookup::getLinearBlock(IntPtr\ address)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00039\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{return}\ (address\ >>\ m\_ahl\_param)\ /\ m\_total\_modules;}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ IntPtr\ AddressHomeLookup::getLinearAddress(IntPtr\ address)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{return}\ (getLinearBlock(address)\ <<\ m\_ahl\_param)\ |\ (address\ \&\ m\_ahl\_mask);}
+\DoxyCodeLine{00046\ \}}
+
+\end{DoxyCode}

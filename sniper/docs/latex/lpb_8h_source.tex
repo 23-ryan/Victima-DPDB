@@ -1,0 +1,344 @@
+\doxysection{lpb.\+h}
+\label{lpb_8h_source}\index{common/performance\_model/branch\_predictors/lpb.h@{common/performance\_model/branch\_predictors/lpb.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ LOOP\_BRANCH\_PREDICTOR\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ LOOP\_BRANCH\_PREDICTOR\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor\_return\_value.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}saturating\_predictor.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ DEBUG\ 0}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#if\ DEBUG\ ==\ 0}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#\ define\ debug\_cout\ if\ (0)\ std::cout}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#\ define\ debug\_cout\ std::cout}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }LoopBranchPredictor}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ LoopBranchPredictor(UInt32\ entries,\ UInt32\ tag\_bitwidth,\ UInt32\ ways)}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ :\ m\_lru\_use\_count(0)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ ,\ m\_num\_ways(ways)}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ ,\ m\_ways(ways,\ Way(entries/ways,\ tag\_bitwidth))}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{comment}{//\ Not\ sure\ if\ predicted\ can\ be\ used}}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//\ \ it\ comes\ from\ a\ higher\ hierarchy}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{comment}{//\ \ our\ predictor\ isn't\ valid\ for\ this\ implementation}}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordtype}{bool}\ predict(IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{comment}{//\ A\ IP\ =>\ predictor\ is\ undefined\ for\ the\ LPB\ because\ it\ provides\ both\ a\ hit\ and\ prediction}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{comment}{//\ (prediction\ is\ only\ valid\ when\ there\ is\ a\ hit)}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00040\ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ BranchPredictorReturnValue\ lookup(IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00042\ \ \ \ \{}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ UInt32\ index,\ tag;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ BranchPredictorReturnValue\ ret\ =\ \{\ 0,\ 0,\ 0,\ BranchPredictorReturnValue::InvalidBranch\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ gen\_index\_tag(ip,\ index,\ tag);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ w\ =\ 0\ ;\ w\ <\ m\_num\_ways\ ;\ ++w\ )}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ we\ are\ enabled,\ and\ we\ hit,\ we\ can\ use\ the\ value\ even\ if\ the\ count\ isn't\ set\ to\ the\ limit}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ m\_ways[w].m\_enabled[index]}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_ways[w].m\_tags[index]\ ==\ tag\ )}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ count\ =\ m\_ways[w].m\_count[index];}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ limit\ =\ m\_ways[w].m\_limit[index];}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ ret.hit\ =\ 1;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 000001\ -\/>\ predict()\ ==\ 0;\ 111110\ -\/>\ predict()\ ==\ 1}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (count\ ==\ limit)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ret.prediction\ =\ !\ m\_ways[w].m\_predictors[index].predict();}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ret.prediction\ =\ m\_ways[w].m\_predictors[index].predict();}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Save\ the\ lru\ data}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_lru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00075\ \ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{comment}{//\ 000001\ -\/>\ predict()\ ==\ 0;\ 111110\ -\/>\ predict()\ ==\ 1}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ UInt32\ index,\ tag,\ lru\_way;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ gen\_index\_tag(ip,\ index,\ tag);}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{comment}{//\ Start\ with\ way\ 0\ as\ the\ least\ recently\ used}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ lru\_way\ =\ 0;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ w\ =\ 0\ ;\ w\ <\ m\_num\_ways\ ;\ ++w\ )}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_tags[index]\ ==\ tag)}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ current\_prediction\ =\ m\_ways[w].m\_predictors[index].predict();}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ match\ =\ prediction\_match(w,\ index,\ actual);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ previous\_actual\ =\ m\_ways[w].m\_previous\_actual[index];}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ \&next\_counter\ =\ m\_ways[w].m\_count[index];}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ \&next\_limit\ =\ m\_ways[w].m\_limit[index];}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ \&next\_enabled\ =\ m\_ways[w].m\_enabled[index];}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ current\_counter\ =\ next\_counter;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ current\_limit\ =\ next\_limit;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ current\_enabled\ =\ next\_enabled;}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ First,\ determine\ the\ control\ logic\ for\ when\ we\ are\ moving\ in\ the\ same\ direction}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ When\ we\ see\ a\ change,\ update\ the\ limit\ and\ reset\ the\ counter}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ If\ we\ are\ changing\ our\ prediction\ (000001\ to\ 111110),\ this\ logic\ won't\ work,}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ and\ will\ be\ overwritten\ by\ the\ additional\ logic\ below}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ same\_direction\_counter;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ same\_direction\_limit;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ same\_direction\_enabled\ =\ next\_enabled;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ the\ limit\ if\ we\ have\ mismatched}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ match\ )}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Always\ update\ the\ counter\ on\ a\ mismatch}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[SAME-\/DIRECTION]\ Mismatch\ detected"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ new\ loop\ length\ is\ now\ shorter,\ update\ the\ limit\ with\ the\ new\ counter\ (loop\ length)}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ the\ counter\ because\ we\ are\ starting\ a\ new\ loop}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_counter\ <\ current\_limit)}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[SAME-\/DIRECTION]\ Mismatch:\ Shorter\ loop\ found"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_counter\ =\ 0;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_limit\ =\ current\_counter;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Otherwise,\ the\ loop\ length\ is\ now\ longer,\ increment\ the\ counter\ and\ the\ limit}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ not\ reset\ the\ counter\ yet}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Since\ this\ loop\ is\ now\ longer,\ we\ should\ match\ sometime\ in\ the\ future}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_counter\ =\ current\_counter\ +\ 1;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_limit\ =\ current\_counter\ +\ 1;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_enabled\ =\ 0;}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[SAME-\/DIRECTION]\ Mismatch:\ Longer\ loop\ found\ [C:L]\ ["{}}\ <<\ current\_counter\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ current\_limit\ <<\ \textcolor{stringliteral}{"{}]\ =>\ ["{}}\ <<\ same\_direction\_counter\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ same\_direction\_limit\ <<\ \textcolor{stringliteral}{"{}]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[SAME-\/DIRECTION]\ Match\ detected"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ On\ a\ match,\ we\ can\ continue\ as\ normal}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ the\ counter,\ and\ nothing\ else}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ have\ reached\ the\ limit,\ reset\ the\ counter}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_counter\ ==\ current\_limit)}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_counter\ =\ 0;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_counter\ =\ current\_counter\ +\ 1;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ limit\ will\ remain\ the\ same}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ same\_direction\_limit\ =\ current\_limit;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Determine\ if\ we\ have\ changed\ our\ state}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ happens\ when\ we\ have\ seen\ two\ branches\ both\ as\ either\ taken\ or\ not-\/taken,}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ and\ that\ this\ branch\ status\ was\ different\ than\ the\ type\ predicted.}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ 000001\ -\/>\ predict()\ ==\ 0;\ 111110\ -\/>\ predict()\ ==\ 1}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ Example:\ For\ the\ 000001\ case\ (0),\ we\ do\ not\ expect\ to\ see\ two\ 1's\ in\ a\ row.}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previous\_actual\ ==\ actual\ \&\&\ actual\ ==\ !current\_prediction)}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[CHANGE-\/DIRECTION]\ Detected!"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ have\ seen\ two\ of\ the\ opposite\ type\ in\ a\ row}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ the\ limit\ and\ the\ counter\ for\ the\ next\ pass}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ assume\ that\ the\ two\ predictions\ seen\ here\ are\ not\ part\ of\ the\ same\ branch}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ structure,\ but\ of\ two\ seperate\ branch\ structures,\ and\ therefore\ count\ it\ as\ one\ loop}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ iteration\ instead\ of\ two}}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_counter\ =\ 1;}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_limit\ =\ 1;}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ the\ predictor}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ For\ the\ 000001\ (0)\ case,\ and\ we've\ seen\ two\ 1's,\ set\ the\ predictor\ to\ (1),\ ie.\ 111110}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_predictors[index].update(actual);}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Disable\ the\ entry\ since\ we\ have\ just\ started\ to\ look\ in\ another\ direction}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_enabled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[NO-\/CHANGE-\/DIR]\ Not\ Detected!"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Determine\ if\ we\ should\ enable\ this\ prediction\ entry}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ should\ happen\ when\ we\ first\ see\ a\ string\ of\ branches}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ and\ then\ have\ one\ in\ the\ opposite\ direction}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ and\ we\ are\ following\ our\ current\ prediction\ direction}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ situation\ is\ also\ seen\ in\ the\ normal\ same-\/direction}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ processing.\ \ If\ that\ is\ the\ case,\ continue\ as\ normal}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Therefore,\ only\ reset\ the\ counters\ if\ we\ are\ not\ currently}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ enabled.\ \ Already\ enabled\ branches\ should\ continue\ as\ they\ are}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previous\_actual\ !=\ actual\ \&\&\ actual\ ==\ !current\_prediction)}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\ current\_enabled)}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[NO-\/CHANGE-\/DIR]\ Enabling\ entry"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ At\ the\ same\ time,\ setup\ the\ count\ and\ limits\ correctly}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_counter\ =\ 0;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_limit\ =\ current\_limit;}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[NO-\/CHANGE-\/DIR]\ Entry\ already\ enabled"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ haven't\ see\ a\ direction\ change.}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ the\ state\ from\ the\ previous,\ same\ direction,\ section}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_enabled\ =\ same\_direction\_enabled;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_counter\ =\ same\_direction\_counter;}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_limit\ =\ same\_direction\_limit;}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ continuing\ along\ the\ normal\ prediction\ path,\ simply\ update\ with\ the\ next\ state}}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[NO-\/CHANGE-\/DIR]\ Updating\ entry\ with\ same\ direction\ [C:L]\ ["{}}\ <<\ current\_counter\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ current\_limit\ <<\ \textcolor{stringliteral}{"{}]\ =>\ ["{}}\ <<\ same\_direction\_counter\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ same\_direction\_limit\ <<\ \textcolor{stringliteral}{"{}]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ haven't\ see\ a\ direction\ change.}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ the\ state\ from\ the\ previous,\ same\ direction,\ section}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_enabled\ =\ same\_direction\_enabled;}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_counter\ =\ same\_direction\_counter;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next\_limit\ =\ same\_direction\_limit;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ not\ update\ the\ actual\ predictor,\ since\ we\ are\ moving\ in\ the\ same\ loop\ direction}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ state\ and\ LRU\ for\ our\ next\ branch}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_previous\_actual[index]\ =\ actual;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_lru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Once\ we\ have\ a\ tag\ match\ and\ have\ updated\ the\ LRU\ information,}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ can\ return}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ track\ of\ the\ LRU\ in\ case\ we\ do\ not\ have\ a\ tag\ match}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_lru[index]\ <\ m\_ways[lru\_way].m\_lru[index])}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ lru\_way\ =\ w;}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ will\ get\ here\ only\ if\ we\ have\ not\ matched\ the\ tag}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ that\ is\ the\ case,\ select\ the\ LRU\ entry,\ and\ update\ the\ tag}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \textcolor{comment}{//\ appropriately}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ m\_ways[lru\_way].m\_tags[index]\ =\ tag;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ miss\ with\ the\ tag,\ so\ reset\ instead\ of\ updating}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ m\_ways[lru\_way].m\_predictors[index].reset(actual);}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ m\_ways[lru\_way].m\_previous\_actual[index]\ =\ actual;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ m\_ways[lru\_way].m\_lru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ m\_ways[lru\_way].m\_count[index]\ =\ 1;}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ m\_ways[lru\_way].m\_limit[index]\ =\ 1;}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \textcolor{keyword}{class\ }Way}
+\DoxyCodeLine{00265\ \ \ \ \{}
+\DoxyCodeLine{00266\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ Way(UInt32\ entries,\ UInt32\ tag\_bitwidth)}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ :\ m\_tags(entries,\ 0)}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ ,\ m\_previous\_actual(entries,\ 0)}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ ,\ m\_enabled(entries,\ 0)}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ ,\ m\_predictors(entries,\ SaturatingPredictor<1>(0))}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ ,\ m\_lru(entries,\ 0)}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ ,\ m\_count(entries,\ 0)}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ ,\ m\_limit(entries,\ 0)}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ ,\ m\_num\_entries(entries)}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ ,\ m\_tag\_bitwidth(tag\_bitwidth)}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ assert(tag\_bitwidth\ <=\ 8);}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \ \ std::vector<uint8\_t>\ m\_tags;}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ std::vector<uint8\_t>\ m\_previous\_actual;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ std::vector<uint8\_t>\ m\_enabled;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ std::vector<SaturatingPredictor<1>\ >\ m\_predictors;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ std::vector<UInt64>\ m\_lru;}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ std::vector<UInt32>\ m\_count;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ std::vector<UInt32>\ m\_limit;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ UInt32\ m\_num\_entries;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ UInt32\ m\_tag\_bitwidth;}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \};}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \textcolor{comment}{//\ Pentium\ M-\/specific\ indexing\ and\ tag\ values}}
+\DoxyCodeLine{00295\ \ \ \ \textcolor{keywordtype}{void}\ gen\_index\_tag(IntPtr\ ip,\ UInt32\&\ index,\ UInt32\ \&tag)}
+\DoxyCodeLine{00296\ \ \ \ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ index\ =\ (ip\ >>\ 4)\ \&\ 0x3F;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ tag\ =\ (ip\ >>\ 10)\ \&\ 0x3F;}
+\DoxyCodeLine{00299\ \ \ \ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \textcolor{comment}{//\ 000001\ -\/>\ predict()\ ==\ 0;\ 111110\ -\/>\ predict()\ ==\ 1}}
+\DoxyCodeLine{00302\ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ prediction\_match(UInt32\ way,\ UInt32\ index,\ \textcolor{keywordtype}{bool}\ actual)}
+\DoxyCodeLine{00303\ \ \ \ \{}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ prediction\ =\ m\_ways[way].m\_predictors[index].predict();}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ UInt32\ count\ =\ m\_ways[way].m\_count[index];}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ UInt32\ limit\ =\ m\_ways[way].m\_limit[index];}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \textcolor{comment}{//\ At\ our\ count\ limit}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (count\ ==\ limit)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Did\ we\ predict\ correctly?}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prediction\ !=\ actual)}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ debug\_cout\ <<\ \textcolor{stringliteral}{"{}[PRED-\/MATCH]\ Predicted\ the\ Loop\ taken/not-\/taken\ limit"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{comment}{//\ Not\ at\ our\ count\ limit}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Did\ we\ predict\ correctly?}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prediction\ ==\ actual)}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00330\ \ \ \ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ UInt64\ m\_lru\_use\_count;}
+\DoxyCodeLine{00333\ \ \ \ UInt32\ m\_num\_ways;}
+\DoxyCodeLine{00334\ \ \ \ std::vector<Way>\ m\_ways;}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \};}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ LOOP\_BRANCH\_PREDICTOR\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

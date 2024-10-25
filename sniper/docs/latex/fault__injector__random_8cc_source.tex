@@ -1,0 +1,44 @@
+\doxysection{fault\+\_\+injector\+\_\+random.\+cc}
+\label{fault__injector__random_8cc_source}\index{common/fault\_injection/fault\_injector\_random.cc@{common/fault\_injection/fault\_injector\_random.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}fault\_injector\_random.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}rng.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ FaultInjectorRandom::FaultInjectorRandom(UInt32\ core\_id,\ MemComponent::component\_t\ mem\_component)}
+\DoxyCodeLine{00005\ \ \ \ :\ FaultInjector(core\_id,\ mem\_component)}
+\DoxyCodeLine{00006\ \ \ \ ,\ m\_rng(rng\_seed(0))}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keywordflow}{if}\ (mem\_component\ ==\ MemComponent::L1\_DCACHE)}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ m\_active\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ m\_active\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00012\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00015\ FaultInjectorRandom::preRead(IntPtr\ addr,\ IntPtr\ location,\ UInt32\ data\_size,\ Byte\ *fault,\ SubsecondTime\ time)}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{comment}{//\ Data\ at\ virtual\ address\ <addr>\ is\ about\ to\ be\ read\ with\ size\ <data\_size>.}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{//\ <location>\ corresponds\ to\ the\ physical\ location\ (cache\ line)\ where\ the\ data\ lives.}}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ Update\ <fault>\ here\ according\ to\ errors\ that\ have\ accumulated\ in\ this\ memory\ location.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{comment}{//\ Dummy\ random\ fault\ injector}}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{if}\ (m\_active\ \&\&\ (rng\_next(m\_rng)\ \%\ 0xffff)\ ==\ 0)}
+\DoxyCodeLine{00023\ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ UInt32\ bit\_location\ =\ rng\_next(m\_rng)\ \%\ data\_size;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Inserting\ bit\ \%d\ flip\ at\ address\ \%"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{}\ on\ read\ access\ by\ core\ \%d\ to\ component\ \%s\(\backslash\)n"{}},}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ bit\_location,\ addr,\ m\_core\_id,\ MemComponentString(m\_mem\_component));}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ fault[bit\_location\ /\ 8]\ |=\ 1\ <<\ (bit\_location\ \%\ 8);}
+\DoxyCodeLine{00030\ \ \ \ \}}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00034\ FaultInjectorRandom::postWrite(IntPtr\ addr,\ IntPtr\ location,\ UInt32\ data\_size,\ Byte\ *fault,\ SubsecondTime\ time)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{comment}{//\ Data\ at\ virtual\ address\ <addr>\ has\ just\ been\ written\ to.}}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{comment}{//\ Update\ <fault>\ here\ according\ to\ errors\ that\ occured\ during\ the\ writing\ of\ this\ memory\ location.}}
+\DoxyCodeLine{00038\ \}}
+
+\end{DoxyCode}

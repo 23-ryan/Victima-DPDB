@@ -1,0 +1,63 @@
+\doxysection{stream\+\_\+prefetcher.\+h}
+\label{stream__prefetcher_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/stream\_prefetcher.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/stream\_prefetcher.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ STREAM\_PREFETCHER}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ STREAM\_PREFETCHER}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}prefetcher.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }StreamEntry}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ valid;\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ \ IntPtr\ page;}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ IntPtr\ last\_offset;}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ int8\_t\ dir;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ int8\_t\ conf;}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ uint32\_t\ lru;}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ StreamEntry()\ :\ page(0xdeadbeef),\ last\_offset(0),\ dir(0),\ conf(0),\ lru(0)\ \{\}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \string~StreamEntry()\{\}}
+\DoxyCodeLine{00019\ \};}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{class\ }Streamer\ :\ \textcolor{keyword}{public}\ Prefetcher}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_allocate\_on\_miss;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ uint32\_t\ m\_num\_prefetches;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ uint32\_t\ m\_num\_streams;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ uint32\_t\ m\_prefetch\_front;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ uint8\_t\ m\_max\_conf,\ m\_conf\_thresh;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ std::vector<StreamEntry*>\ m\_stream\_table;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ pref\_called;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ table\_hit;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ table\_replacement;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ incr\_conf;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ decr\_conf;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ steady;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ gen\_prefetch;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \}\ stats;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ Streamer(String\ configName,\ core\_id\_t\ \_core\_id);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \string~Streamer();}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ int32\_t\ find(IntPtr\ page);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ update\_age(int32\_t\ current);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ int32\_t\ find\_replacement();}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ std::vector<IntPtr>\ generatePrefetchAddress(StreamEntry\ *stream\_entry,\ IntPtr\ current\_page,\ IntPtr\ current\_offset);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ std::vector<IntPtr>\ getNextAddress(IntPtr\ current\_address,\ core\_id\_t\ core\_id,\ Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ IntPtr\ eip);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ incr\_conf(StreamEntry\ *entry)\ \{\textcolor{keywordflow}{if}(entry-\/>conf\ <\ m\_max\_conf)\ entry-\/>conf++;\}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ decr\_conf(StreamEntry\ *entry)\ \{\textcolor{keywordflow}{if}(entry-\/>conf)\ entry-\/>conf-\/-\/;\}}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ STREAM\_PREFETCHER\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00057\ }
+
+\end{DoxyCode}

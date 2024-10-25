@@ -1,0 +1,736 @@
+\doxysection{Cache\+Base Class Reference}
+\label{classCacheBase}\index{CacheBase@{CacheBase}}
+
+
+{\ttfamily \#include $<$cache\+\_\+base.\+h$>$}
+
+
+
+Inheritance diagram for Cache\+Base\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=110pt]{classCacheBase__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Cache\+Base\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=155pt]{classCacheBase__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ access\+\_\+t} \{ \newline
+\textbf{ INVALID\+\_\+\+ACCESS\+\_\+\+TYPE}
+, \textbf{ MIN\+\_\+\+ACCESS\+\_\+\+TYPE}
+, \textbf{ LOAD} = MIN\+\_\+\+ACCESS\+\_\+\+TYPE
+, \textbf{ STORE}
+, \newline
+\textbf{ MAX\+\_\+\+ACCESS\+\_\+\+TYPE} = STORE
+, \textbf{ NUM\+\_\+\+ACCESS\+\_\+\+TYPES} = MAX\+\_\+\+ACCESS\+\_\+\+TYPE -\/ MIN\+\_\+\+ACCESS\+\_\+\+TYPE + 1
+ \}
+\item 
+enum \textbf{ cache\+\_\+t} \{ \newline
+\textbf{ INVALID\+\_\+\+CACHE\+\_\+\+TYPE}
+, \textbf{ MIN\+\_\+\+CACHE\+\_\+\+TYPE}
+, \textbf{ PR\+\_\+\+L1\+\_\+\+CACHE} = MIN\+\_\+\+CACHE\+\_\+\+TYPE
+, \textbf{ PR\+\_\+\+L2\+\_\+\+CACHE}
+, \newline
+\textbf{ SHARED\+\_\+\+CACHE}
+, \textbf{ MAX\+\_\+\+CACHE\+\_\+\+TYPE} = SHARED\+\_\+\+CACHE
+, \textbf{ NUM\+\_\+\+CACHE\+\_\+\+TYPES} = MAX\+\_\+\+CACHE\+\_\+\+TYPE -\/ MIN\+\_\+\+CACHE\+\_\+\+TYPE + 1
+ \}
+\item 
+enum \textbf{ hash\+\_\+t} \{ \newline
+\textbf{ INVALID\+\_\+\+HASH\+\_\+\+TYPE}
+, \textbf{ HASH\+\_\+\+MASK}
+, \textbf{ HASH\+\_\+\+MOD}
+, \textbf{ HASH\+\_\+\+RNG1\+\_\+\+MOD}
+, \newline
+\textbf{ HASH\+\_\+\+RNG2\+\_\+\+MOD}
+, \textbf{ HASH\+\_\+\+PRIME\+\_\+\+DIS}
+, \textbf{ HASH\+\_\+\+XOR\+\_\+\+MOD}
+, \textbf{ HASH\+\_\+\+MER\+\_\+\+MOD}
+ \}
+\item 
+enum \textbf{ Replacement\+Policy} \{ \newline
+\textbf{ ROUND\+\_\+\+ROBIN} = 0
+, \textbf{ LRU}
+, \textbf{ LRU\+\_\+\+QBS}
+, \textbf{ NRU}
+, \newline
+\textbf{ MRU}
+, \textbf{ NMRU}
+, \textbf{ PLRU}
+, \textbf{ SRRIP}
+, \newline
+\textbf{ SRRIP\+\_\+\+QBS}
+, \textbf{ RANDOM}
+, \textbf{ NUM\+\_\+\+REPLACEMENT\+\_\+\+POLICIES}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Cache\+Base} (String name, \textbf{ UInt32} num\+\_\+sets, \textbf{ UInt32} associativity, \textbf{ UInt32} cache\+\_\+block\+\_\+size, \textbf{ Cache\+Base\+::hash\+\_\+t} hash, \textbf{ Address\+Home\+Lookup} $\ast$ahl=NULL)
+\item 
+virtual \textbf{ $\sim$\+Cache\+Base} ()
+\item 
+void \textbf{ split\+Address} (const \textbf{ Int\+Ptr} addr, \textbf{ Int\+Ptr} \&tag, \textbf{ UInt32} \&set\+\_\+index) const
+\item 
+void \textbf{ split\+Address\+TLB} (const \textbf{ Int\+Ptr} addr, \textbf{ Int\+Ptr} \&tag, \textbf{ UInt32} \&set\+\_\+index, int page\+\_\+size) const
+\item 
+void \textbf{ split\+Address} (const \textbf{ Int\+Ptr} addr, \textbf{ Int\+Ptr} \&tag, \textbf{ UInt32} \&set\+\_\+index, \textbf{ UInt32} \&block\+\_\+offset) const
+\item 
+void \textbf{ split\+Address\+TLB} (const \textbf{ Int\+Ptr} addr, \textbf{ Int\+Ptr} \&tag, \textbf{ UInt32} \&set\+\_\+index, \textbf{ UInt32} \&block\+\_\+offset, int page\+\_\+size) const
+\item 
+\textbf{ Int\+Ptr} \textbf{ tag\+To\+Address} (const \textbf{ Int\+Ptr} tag)
+\item 
+\textbf{ Int\+Ptr} \textbf{ tag\+To\+Address\+TLB} (const \textbf{ Int\+Ptr} tag, int page\+\_\+size)
+\item 
+String \textbf{ get\+Name} (void)
+\item 
+\textbf{ UInt32} \textbf{ get\+Num\+Sets} () const
+\item 
+\textbf{ UInt32} \textbf{ get\+Associativity} () const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ hash\+\_\+t} \textbf{ parse\+Address\+Hash} (String hash\+\_\+name)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+String \textbf{ m\+\_\+name}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+cache\+\_\+size}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+associativity}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+blocksize}
+\item 
+\textbf{ Cache\+Base\+::hash\+\_\+t} \textbf{ m\+\_\+hash}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+sets}
+\item 
+\textbf{ Address\+Home\+Lookup} $\ast$ \textbf{ m\+\_\+ahl}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+log\+\_\+blocksize}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+log\+\_\+num\+\_\+sets}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 14} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{CacheBase@{CacheBase}!access\_t@{access\_t}}
+\index{access\_t@{access\_t}!CacheBase@{CacheBase}}
+\doxysubsubsection{access\_t}
+{\footnotesize\ttfamily \label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+enum \textbf{ Cache\+Base\+::access\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID\_ACCESS\_TYPE@{INVALID\_ACCESS\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!INVALID\_ACCESS\_TYPE@{INVALID\_ACCESS\_TYPE}}}\label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+INVALID\+\_\+\+ACCESS\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MIN\_ACCESS\_TYPE@{MIN\_ACCESS\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!MIN\_ACCESS\_TYPE@{MIN\_ACCESS\_TYPE}}}\label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+MIN\+\_\+\+ACCESS\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LOAD@{LOAD}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!LOAD@{LOAD}}}\label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+LOAD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STORE@{STORE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!STORE@{STORE}}}\label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+STORE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MAX\_ACCESS\_TYPE@{MAX\_ACCESS\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!MAX\_ACCESS\_TYPE@{MAX\_ACCESS\_TYPE}}}\label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+MAX\+\_\+\+ACCESS\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_ACCESS\_TYPES@{NUM\_ACCESS\_TYPES}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!NUM\_ACCESS\_TYPES@{NUM\_ACCESS\_TYPES}}}\label{classCacheBase_a97ec7582ac66b0376dabd9546dda20f7} 
+NUM\+\_\+\+ACCESS\+\_\+\+TYPES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 18} of file \textbf{ cache\+\_\+base.\+h}.
+
+\index{CacheBase@{CacheBase}!cache\_t@{cache\_t}}
+\index{cache\_t@{cache\_t}!CacheBase@{CacheBase}}
+\doxysubsubsection{cache\_t}
+{\footnotesize\ttfamily \label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+enum \textbf{ Cache\+Base\+::cache\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID\_CACHE\_TYPE@{INVALID\_CACHE\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!INVALID\_CACHE\_TYPE@{INVALID\_CACHE\_TYPE}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+INVALID\+\_\+\+CACHE\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MIN\_CACHE\_TYPE@{MIN\_CACHE\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!MIN\_CACHE\_TYPE@{MIN\_CACHE\_TYPE}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+MIN\+\_\+\+CACHE\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PR\_L1\_CACHE@{PR\_L1\_CACHE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!PR\_L1\_CACHE@{PR\_L1\_CACHE}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+PR\+\_\+\+L1\+\_\+\+CACHE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PR\_L2\_CACHE@{PR\_L2\_CACHE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!PR\_L2\_CACHE@{PR\_L2\_CACHE}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+PR\+\_\+\+L2\+\_\+\+CACHE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SHARED\_CACHE@{SHARED\_CACHE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!SHARED\_CACHE@{SHARED\_CACHE}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+SHARED\+\_\+\+CACHE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MAX\_CACHE\_TYPE@{MAX\_CACHE\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!MAX\_CACHE\_TYPE@{MAX\_CACHE\_TYPE}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+MAX\+\_\+\+CACHE\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_CACHE\_TYPES@{NUM\_CACHE\_TYPES}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!NUM\_CACHE\_TYPES@{NUM\_CACHE\_TYPES}}}\label{classCacheBase_ac4ed4362508bcf740362a258d3ca0e19} 
+NUM\+\_\+\+CACHE\+\_\+\+TYPES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 28} of file \textbf{ cache\+\_\+base.\+h}.
+
+\index{CacheBase@{CacheBase}!hash\_t@{hash\_t}}
+\index{hash\_t@{hash\_t}!CacheBase@{CacheBase}}
+\doxysubsubsection{hash\_t}
+{\footnotesize\ttfamily \label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+enum \textbf{ Cache\+Base\+::hash\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID\_HASH\_TYPE@{INVALID\_HASH\_TYPE}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!INVALID\_HASH\_TYPE@{INVALID\_HASH\_TYPE}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+INVALID\+\_\+\+HASH\+\_\+\+TYPE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_MASK@{HASH\_MASK}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_MASK@{HASH\_MASK}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+MASK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_MOD@{HASH\_MOD}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_MOD@{HASH\_MOD}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+MOD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_RNG1\_MOD@{HASH\_RNG1\_MOD}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_RNG1\_MOD@{HASH\_RNG1\_MOD}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+RNG1\+\_\+\+MOD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_RNG2\_MOD@{HASH\_RNG2\_MOD}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_RNG2\_MOD@{HASH\_RNG2\_MOD}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+RNG2\+\_\+\+MOD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_PRIME\_DIS@{HASH\_PRIME\_DIS}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_PRIME\_DIS@{HASH\_PRIME\_DIS}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+PRIME\+\_\+\+DIS&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_XOR\_MOD@{HASH\_XOR\_MOD}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_XOR\_MOD@{HASH\_XOR\_MOD}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+XOR\+\_\+\+MOD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HASH\_MER\_MOD@{HASH\_MER\_MOD}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!HASH\_MER\_MOD@{HASH\_MER\_MOD}}}\label{classCacheBase_aa7214e1d20b5af2a3a861bca58aef2f7} 
+HASH\+\_\+\+MER\+\_\+\+MOD&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 39} of file \textbf{ cache\+\_\+base.\+h}.
+
+\index{CacheBase@{CacheBase}!ReplacementPolicy@{ReplacementPolicy}}
+\index{ReplacementPolicy@{ReplacementPolicy}!CacheBase@{CacheBase}}
+\doxysubsubsection{ReplacementPolicy}
+{\footnotesize\ttfamily \label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+enum \textbf{ Cache\+Base\+::\+Replacement\+Policy}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{ROUND\_ROBIN@{ROUND\_ROBIN}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!ROUND\_ROBIN@{ROUND\_ROBIN}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+ROUND\+\_\+\+ROBIN&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LRU@{LRU}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!LRU@{LRU}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+LRU&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LRU\_QBS@{LRU\_QBS}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!LRU\_QBS@{LRU\_QBS}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+LRU\+\_\+\+QBS&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NRU@{NRU}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!NRU@{NRU}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+NRU&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MRU@{MRU}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!MRU@{MRU}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+MRU&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NMRU@{NMRU}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!NMRU@{NMRU}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+NMRU&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PLRU@{PLRU}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!PLRU@{PLRU}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+PLRU&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SRRIP@{SRRIP}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!SRRIP@{SRRIP}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+SRRIP&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SRRIP\_QBS@{SRRIP\_QBS}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!SRRIP\_QBS@{SRRIP\_QBS}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+SRRIP\+\_\+\+QBS&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{RANDOM@{RANDOM}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!RANDOM@{RANDOM}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+RANDOM&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_REPLACEMENT\_POLICIES@{NUM\_REPLACEMENT\_POLICIES}!CacheBase@{CacheBase}}\index{CacheBase@{CacheBase}!NUM\_REPLACEMENT\_POLICIES@{NUM\_REPLACEMENT\_POLICIES}}}\label{classCacheBase_ab099b116b958792d9b1f21e83edd49c7} 
+NUM\+\_\+\+REPLACEMENT\+\_\+\+POLICIES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 51} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{CacheBase@{CacheBase}!CacheBase@{CacheBase}}
+\index{CacheBase@{CacheBase}!CacheBase@{CacheBase}}
+\doxysubsubsection{CacheBase()}
+{\footnotesize\ttfamily \label{classCacheBase_a53d7467afcbdfed6170e693d9a3bc53b} 
+Cache\+Base\+::\+Cache\+Base (\begin{DoxyParamCaption}\item[{String}]{name}{, }\item[{\textbf{ UInt32}}]{num\+\_\+sets}{, }\item[{\textbf{ UInt32}}]{associativity}{, }\item[{\textbf{ UInt32}}]{cache\+\_\+block\+\_\+size}{, }\item[{\textbf{ Cache\+Base\+::hash\+\_\+t}}]{hash}{, }\item[{\textbf{ Address\+Home\+Lookup} $\ast$}]{ahl}{ = {\ttfamily NULL}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 7} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ floor\+Log2()}, \textbf{ HASH\+\_\+\+MASK}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+blocksize}, \textbf{ m\+\_\+log\+\_\+blocksize}, \textbf{ m\+\_\+log\+\_\+num\+\_\+sets}, and \textbf{ m\+\_\+num\+\_\+sets}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=257pt]{classCacheBase_a53d7467afcbdfed6170e693d9a3bc53b_cgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!````~CacheBase@{$\sim$CacheBase}}
+\index{````~CacheBase@{$\sim$CacheBase}!CacheBase@{CacheBase}}
+\doxysubsubsection{$\sim$CacheBase()}
+{\footnotesize\ttfamily \label{classCacheBase_a62728766428319c1502f879287cf8c79} 
+Cache\+Base\+::$\sim$\+Cache\+Base (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{CacheBase@{CacheBase}!getAssociativity@{getAssociativity}}
+\index{getAssociativity@{getAssociativity}!CacheBase@{CacheBase}}
+\doxysubsubsection{getAssociativity()}
+{\footnotesize\ttfamily \label{classCacheBase_a594f848d364d956cca80b58d410e33c6} 
+\textbf{ UInt32} Cache\+Base\+::get\+Associativity (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 95} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+References \textbf{ m\+\_\+associativity}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::track\+\_\+utilization()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::walk\+Usage\+Bits()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_a594f848d364d956cca80b58d410e33c6_icgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!getName@{getName}}
+\index{getName@{getName}!CacheBase@{CacheBase}}
+\doxysubsubsection{getName()}
+{\footnotesize\ttfamily \label{classCacheBase_a6dda5f017cfd0c76bc251da986f0918c} 
+String Cache\+Base\+::get\+Name (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 92} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+References \textbf{ m\+\_\+name}.
+
+\index{CacheBase@{CacheBase}!getNumSets@{getNumSets}}
+\index{getNumSets@{getNumSets}!CacheBase@{CacheBase}}
+\doxysubsubsection{getNumSets()}
+{\footnotesize\ttfamily \label{classCacheBase_aabe2db2a737a4ae0a3de1845b8d85f45} 
+\textbf{ UInt32} Cache\+Base\+::get\+Num\+Sets (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 94} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+References \textbf{ m\+\_\+num\+\_\+sets}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::track\+\_\+utilization()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::walk\+Usage\+Bits()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_aabe2db2a737a4ae0a3de1845b8d85f45_icgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!parseAddressHash@{parseAddressHash}}
+\index{parseAddressHash@{parseAddressHash}!CacheBase@{CacheBase}}
+\doxysubsubsection{parseAddressHash()}
+{\footnotesize\ttfamily \label{classCacheBase_a6f7e6ab41d491c7d71b8202312a029c8} 
+\textbf{ Cache\+Base\+::hash\+\_\+t} Cache\+Base\+::parse\+Address\+Hash (\begin{DoxyParamCaption}\item[{String}]{hash\+\_\+name}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 31} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ HASH\+\_\+\+MASK}, \textbf{ HASH\+\_\+\+MER\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+PRIME\+\_\+\+DIS}, \textbf{ HASH\+\_\+\+RNG1\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+RNG2\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+XOR\+\_\+\+MOD}, and \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::\+Cache\+Cntlr()}, \textbf{ Dram\+Cache\+::\+Dram\+Cache()}, \textbf{ Nuca\+Cache\+::\+Nuca\+Cache()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::\+UTR()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_a6f7e6ab41d491c7d71b8202312a029c8_icgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!splitAddress@{splitAddress}}
+\index{splitAddress@{splitAddress}!CacheBase@{CacheBase}}
+\doxysubsubsection{splitAddress()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classCacheBase_a2411558a014a2e65ebe977d4f6aba6eb} 
+void Cache\+Base\+::split\+Address (\begin{DoxyParamCaption}\item[{const \textbf{ Int\+Ptr}}]{addr}{, }\item[{\textbf{ Int\+Ptr} \&}]{tag}{, }\item[{\textbf{ UInt32} \&}]{set\+\_\+index}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ Address\+Home\+Lookup\+::get\+Linear\+Address()}, \textbf{ HASH\+\_\+\+MASK}, \textbf{ HASH\+\_\+\+MER\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+PRIME\+\_\+\+DIS}, \textbf{ HASH\+\_\+\+RNG1\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+RNG2\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+XOR\+\_\+\+MOD}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ m\+\_\+ahl}, \textbf{ m\+\_\+hash}, \textbf{ m\+\_\+log\+\_\+blocksize}, \textbf{ m\+\_\+log\+\_\+num\+\_\+sets}, \textbf{ m\+\_\+num\+\_\+sets}, \textbf{ rng\+\_\+next()}, and \textbf{ rng\+\_\+seed()}.
+
+
+
+Referenced by \textbf{ ATD\+::access()}, \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+PWC\+::allocate()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Utopia\+Cache\+::allocate()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::allocate()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::calculate\+\_\+permission\+\_\+address()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::calculate\+\_\+tag\+\_\+address()}, \textbf{ Cache\+::get\+Set\+Lock()}, \textbf{ Cache\+::insert\+Single\+Line()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::in\+UTR()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::in\+UTRnostats()}, \textbf{ Cache\+::invalidate\+Single\+Line()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB\+::lookup()}, \textbf{ Cache\+::mark\+Metadata()}, \textbf{ Nuca\+Cache\+::mark\+Translation\+Metadata()}, \textbf{ Cache\+::peek\+Single\+Line()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+UTR\+::permission\+\_\+filter()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Flush\+Req\+From\+Dram\+Directory()}, \textbf{ split\+Address()}, and \textbf{ Cache\+::update\+Set\+Replacement()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_a2411558a014a2e65ebe977d4f6aba6eb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_a2411558a014a2e65ebe977d4f6aba6eb_icgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!splitAddress@{splitAddress}}
+\index{splitAddress@{splitAddress}!CacheBase@{CacheBase}}
+\doxysubsubsection{splitAddress()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classCacheBase_ab59458a898fc54ce66da4aacc5b678dd} 
+void Cache\+Base\+::split\+Address (\begin{DoxyParamCaption}\item[{const \textbf{ Int\+Ptr}}]{addr}{, }\item[{\textbf{ Int\+Ptr} \&}]{tag}{, }\item[{\textbf{ UInt32} \&}]{set\+\_\+index}{, }\item[{\textbf{ UInt32} \&}]{block\+\_\+offset}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 175} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ m\+\_\+blocksize}, and \textbf{ split\+Address()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_ab59458a898fc54ce66da4aacc5b678dd_cgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!splitAddressTLB@{splitAddressTLB}}
+\index{splitAddressTLB@{splitAddressTLB}!CacheBase@{CacheBase}}
+\doxysubsubsection{splitAddressTLB()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classCacheBase_aae33bdf03167c3e1ecd41a378790b0d1} 
+void Cache\+Base\+::split\+Address\+TLB (\begin{DoxyParamCaption}\item[{const \textbf{ Int\+Ptr}}]{addr}{, }\item[{\textbf{ Int\+Ptr} \&}]{tag}{, }\item[{\textbf{ UInt32} \&}]{set\+\_\+index}{, }\item[{int}]{page\+\_\+size}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 113} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ HASH\+\_\+\+MASK}, \textbf{ HASH\+\_\+\+MER\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+PRIME\+\_\+\+DIS}, \textbf{ HASH\+\_\+\+RNG1\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+RNG2\+\_\+\+MOD}, \textbf{ HASH\+\_\+\+XOR\+\_\+\+MOD}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ m\+\_\+hash}, \textbf{ m\+\_\+log\+\_\+num\+\_\+sets}, \textbf{ m\+\_\+num\+\_\+sets}, \textbf{ rng\+\_\+next()}, and \textbf{ rng\+\_\+seed()}.
+
+
+
+Referenced by \textbf{ Cache\+::access\+Single\+Line\+TLB()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB\+::allocate()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+ULB\+::allocate()}, \textbf{ Cache\+::insert\+Single\+Line\+TLB()}, and \textbf{ split\+Address\+TLB()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{classCacheBase_aae33bdf03167c3e1ecd41a378790b0d1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_aae33bdf03167c3e1ecd41a378790b0d1_icgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!splitAddressTLB@{splitAddressTLB}}
+\index{splitAddressTLB@{splitAddressTLB}!CacheBase@{CacheBase}}
+\doxysubsubsection{splitAddressTLB()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classCacheBase_afa109b18f9f0350717a64066c3ed2932} 
+void Cache\+Base\+::split\+Address\+TLB (\begin{DoxyParamCaption}\item[{const \textbf{ Int\+Ptr}}]{addr}{, }\item[{\textbf{ Int\+Ptr} \&}]{tag}{, }\item[{\textbf{ UInt32} \&}]{set\+\_\+index}{, }\item[{\textbf{ UInt32} \&}]{block\+\_\+offset}{, }\item[{int}]{page\+\_\+size}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 183} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ split\+Address\+TLB()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_afa109b18f9f0350717a64066c3ed2932_cgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!tagToAddress@{tagToAddress}}
+\index{tagToAddress@{tagToAddress}!CacheBase@{CacheBase}}
+\doxysubsubsection{tagToAddress()}
+{\footnotesize\ttfamily \label{classCacheBase_a75cb6503054abe1d9518167a2665b767} 
+\textbf{ Int\+Ptr} Cache\+Base\+::tag\+To\+Address (\begin{DoxyParamCaption}\item[{const \textbf{ Int\+Ptr}}]{tag}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 191} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+References \textbf{ m\+\_\+log\+\_\+blocksize}.
+
+
+
+Referenced by \textbf{ Cache\+::insert\+Single\+Line()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::is\+In\+Lower\+Level\+Cache()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_a75cb6503054abe1d9518167a2665b767_icgraph}
+\end{center}
+\end{figure}
+\index{CacheBase@{CacheBase}!tagToAddressTLB@{tagToAddressTLB}}
+\index{tagToAddressTLB@{tagToAddressTLB}!CacheBase@{CacheBase}}
+\doxysubsubsection{tagToAddressTLB()}
+{\footnotesize\ttfamily \label{classCacheBase_af177462229e590081c081926bde88cdc} 
+\textbf{ Int\+Ptr} Cache\+Base\+::tag\+To\+Address\+TLB (\begin{DoxyParamCaption}\item[{const \textbf{ Int\+Ptr}}]{tag}{, }\item[{int}]{page\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 196} of file \textbf{ cache\+\_\+base.\+cc}.
+
+
+
+Referenced by \textbf{ Cache\+::insert\+Single\+Line\+TLB()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCacheBase_af177462229e590081c081926bde88cdc_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{CacheBase@{CacheBase}!m\_ahl@{m\_ahl}}
+\index{m\_ahl@{m\_ahl}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_ahl}
+{\footnotesize\ttfamily \label{classCacheBase_af450a7d17cca8367ff8c3c07e56c55c9} 
+\textbf{ Address\+Home\+Lookup}$\ast$ Cache\+Base\+::m\+\_\+ahl\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 74} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ split\+Address()}.
+
+\index{CacheBase@{CacheBase}!m\_associativity@{m\_associativity}}
+\index{m\_associativity@{m\_associativity}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_associativity}
+{\footnotesize\ttfamily \label{classCacheBase_a34d4597bd8a74634e076aec866ebebdf} 
+\textbf{ UInt32} Cache\+Base\+::m\+\_\+associativity\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ Cache\+::access\+Single\+Line\+TLB()}, \textbf{ Cache\+::\+Cache()}, \textbf{ get\+Associativity()}, \textbf{ Cache\+::insert\+Single\+Line()}, and \textbf{ Cache\+::insert\+Single\+Line\+TLB()}.
+
+\index{CacheBase@{CacheBase}!m\_blocksize@{m\_blocksize}}
+\index{m\_blocksize@{m\_blocksize}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_blocksize}
+{\footnotesize\ttfamily \label{classCacheBase_af72a0f4f9b2ba64933b0ea1ff1395bbc} 
+\textbf{ UInt32} Cache\+Base\+::m\+\_\+blocksize\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 71} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+::\+Cache()}, \textbf{ Cache\+Base()}, and \textbf{ split\+Address()}.
+
+\index{CacheBase@{CacheBase}!m\_cache\_size@{m\_cache\_size}}
+\index{m\_cache\_size@{m\_cache\_size}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_cache\_size}
+{\footnotesize\ttfamily \label{classCacheBase_a826f2510a85c45514aa6d7b884a728b2} 
+\textbf{ UInt64} Cache\+Base\+::m\+\_\+cache\+\_\+size\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 69} of file \textbf{ cache\+\_\+base.\+h}.
+
+\index{CacheBase@{CacheBase}!m\_hash@{m\_hash}}
+\index{m\_hash@{m\_hash}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_hash}
+{\footnotesize\ttfamily \label{classCacheBase_a4c27075f9745dbc78eb0f6dc75b592f5} 
+\textbf{ Cache\+Base\+::hash\+\_\+t} Cache\+Base\+::m\+\_\+hash\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 72} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ split\+Address()}, and \textbf{ split\+Address\+TLB()}.
+
+\index{CacheBase@{CacheBase}!m\_log\_blocksize@{m\_log\_blocksize}}
+\index{m\_log\_blocksize@{m\_log\_blocksize}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_log\_blocksize}
+{\footnotesize\ttfamily \label{classCacheBase_ad8e5451b09ac7088fac676624dd16cca} 
+\textbf{ UInt32} Cache\+Base\+::m\+\_\+log\+\_\+blocksize\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 77} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+Base()}, \textbf{ split\+Address()}, and \textbf{ tag\+To\+Address()}.
+
+\index{CacheBase@{CacheBase}!m\_log\_num\_sets@{m\_log\_num\_sets}}
+\index{m\_log\_num\_sets@{m\_log\_num\_sets}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_log\_num\_sets}
+{\footnotesize\ttfamily \label{classCacheBase_af9e44a31fb2022a5c65c7c76bc6add72} 
+\textbf{ UInt32} Cache\+Base\+::m\+\_\+log\+\_\+num\+\_\+sets\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 78} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+Base()}, \textbf{ split\+Address()}, and \textbf{ split\+Address\+TLB()}.
+
+\index{CacheBase@{CacheBase}!m\_name@{m\_name}}
+\index{m\_name@{m\_name}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_name}
+{\footnotesize\ttfamily \label{classCacheBase_a92bfc237c3177e7e0f4a71da8c278f23} 
+String Cache\+Base\+::m\+\_\+name\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ get\+Name()}, \textbf{ Cache\+::insert\+Single\+Line()}, \textbf{ Cache\+::invalidate\+Single\+Line()}, \textbf{ Cache\+::peek\+Single\+Line()}, and \textbf{ Cache\+::$\sim$\+Cache()}.
+
+\index{CacheBase@{CacheBase}!m\_num\_sets@{m\_num\_sets}}
+\index{m\_num\_sets@{m\_num\_sets}!CacheBase@{CacheBase}}
+\doxysubsubsection{m\_num\_sets}
+{\footnotesize\ttfamily \label{classCacheBase_ad92661f5ac58ef3dd756d31e150cbe9d} 
+\textbf{ UInt32} Cache\+Base\+::m\+\_\+num\+\_\+sets\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 73} of file \textbf{ cache\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ Cache\+::\+Cache()}, \textbf{ Cache\+Base()}, \textbf{ get\+Num\+Sets()}, \textbf{ Cache\+::get\+Set\+Lock()}, \textbf{ Cache\+::invalidate\+Single\+Line()}, \textbf{ Cache\+::measure\+Stats()}, \textbf{ split\+Address()}, \textbf{ split\+Address\+TLB()}, and \textbf{ Cache\+::$\sim$\+Cache()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/cache/\textbf{ cache\+\_\+base.\+h}\item 
+common/core/memory\+\_\+subsystem/cache/\textbf{ cache\+\_\+base.\+cc}\end{DoxyCompactItemize}

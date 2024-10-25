@@ -1,0 +1,60 @@
+\doxysection{pagetable\+\_\+walker\+\_\+xmem.\+cc}
+\label{pagetable__walker__xmem_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_xmem.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_xmem.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}utopia\_cache\_template.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <math.h>}\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <time.h>}\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00010\ \ \ \ \ XMemManager::XMemManager(\textcolor{keywordtype}{int}\ size,\textcolor{keywordtype}{int}\ granularity,\textcolor{keywordtype}{int}\ cache\_size,\textcolor{keywordtype}{int}\ cache\_associativity,\textcolor{keywordtype}{int}\ cache\_hit\_latency,\textcolor{keywordtype}{int}\ cache\_miss\_latency,Core*\ \_core,ShmemPerfModel*\ \_m\_shmem\_perf\_model,PWC*\ \_pwc,\ \textcolor{keywordtype}{bool}\ \_page\_walk\_cache\_enabled)}
+\DoxyCodeLine{00011\ \ \ \ \ \{}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ this-\/>granularity=granularity;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\_core!=NULL)\{}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>atom\_table=(\textcolor{keywordtype}{char}*)malloc(\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{char})*1024*((size*1024*1024)/granularity));}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>m\_shmem\_perf\_model=\_m\_shmem\_perf\_model;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>buffer=\textcolor{keyword}{new}\ UtopiaCache(\textcolor{stringliteral}{"{}xmem\_cache"{}},\ \textcolor{stringliteral}{"{}xmem\_cache"{}},\ \_core-\/>getId(),(\textcolor{keywordtype}{int})log2(granularity),\ cache\_size,\ cache\_associativity,\ ComponentLatency(\_core-\/>getDvfsDomain(),\ cache\_hit\_latency),\ ComponentLatency(\_core-\/>getDvfsDomain(),cache\_miss\_latency));}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ }
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00020\ \ \ \ \ \}}
+\DoxyCodeLine{00021\ \ \ \ \ SubsecondTime\ XMemManager::init\_walk(IntPtr\ eip,\ IntPtr\ address,}
+\DoxyCodeLine{00022\ \ \ \ \ CacheCntlr\ *\_cache,}
+\DoxyCodeLine{00023\ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00024\ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ SubsecondTime\ s1=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ UtopiaCache::where\_t\ result\ \ =buffer-\/>lookup(address,s1,\textcolor{keyword}{true},\textcolor{keyword}{false});}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(result\ ==\ UtopiaCache::HIT)\{}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ e1=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,s1);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ e1-\/s1;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ index=address>>((int)log2(granularity));}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ now=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(\&atom\_table[index]))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \_cache-\/>processMemOpFromCore(eip,\ lock\_signal,Core::mem\_op\_t::READ,cache\_address,0,data\_buf,data\_length,modeled,\textcolor{keyword}{false},CacheBlockInfo::block\_type\_t::EXPRESSIVE,SubsecondTime::Zero());}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ end=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency=end-\/now;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,s1);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(nuca)\{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nuca-\/>markTranslationMetadata(cache\_address,CacheBlockInfo::block\_type\_t::EXPRESSIVE);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::EXPRESSIVE);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::EXPRESSIVE);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00053\ \ \ \ \ \}}
+\DoxyCodeLine{00054\ \}}
+
+\end{DoxyCode}

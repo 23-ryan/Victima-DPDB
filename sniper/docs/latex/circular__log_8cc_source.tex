@@ -1,0 +1,99 @@
+\doxysection{circular\+\_\+log.\+cc}
+\label{circular__log_8cc_source}\index{common/misc/circular\_log.cc@{common/misc/circular\_log.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <stdarg.h>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ CircularLog*\ CircularLog::g\_singleton\ =\ NULL;}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keywordtype}{void}\ CircularLog::init(String\ filename)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ g\_singleton\ =\ \textcolor{keyword}{new}\ CircularLog(filename);}
+\DoxyCodeLine{00013\ \}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keywordtype}{void}\ CircularLog::enableCallbacks()}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{if}\ (g\_singleton)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_SIGUSR1,\ CircularLog::hook\_sigusr1,\ 0);}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keywordtype}{void}\ CircularLog::fini()}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{if}\ (g\_singleton)}
+\DoxyCodeLine{00024\ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ g\_singleton;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ g\_singleton\ =\ NULL;}
+\DoxyCodeLine{00027\ \ \ \ \}}
+\DoxyCodeLine{00028\ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keywordtype}{void}\ CircularLog::dump()}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{if}\ (g\_singleton)}
+\DoxyCodeLine{00033\ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ ScopedLock\ sl(g\_singleton-\/>m\_lock);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ g\_singleton-\/>writeLog();}
+\DoxyCodeLine{00036\ \ \ \ \}}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ CircularLog::CircularLog(String\ filename)}
+\DoxyCodeLine{00040\ \ \ \ :\ m\_filename(filename)}
+\DoxyCodeLine{00041\ \ \ \ ,\ m\_buffer(new\ event\_t[BUFFER\_SIZE])}
+\DoxyCodeLine{00042\ \ \ \ ,\ m\_eventnum(0)}
+\DoxyCodeLine{00043\ \ \ \ ,\ m\_time\_zero(rdtsc())}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ CircularLog::\string~CircularLog()}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \ writeLog();}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keyword}{delete}\ m\_buffer;}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{void}\ CircularLog::insert(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ ...)}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordtype}{int}\ position\ =\ \_\_sync\_fetch\_and\_add(\&m\_eventnum,\ 1)\ \%\ BUFFER\_SIZE;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ m\_buffer[position].time\ \ =\ getTime();}
+\DoxyCodeLine{00058\ \ \ \ m\_buffer[position].type\ \ =\ type;}
+\DoxyCodeLine{00059\ \ \ \ m\_buffer[position].msg\ \ \ =\ msg;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ va\_list\ args;}
+\DoxyCodeLine{00062\ \ \ \ va\_start(args,\ msg);}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 6;\ ++i)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ m\_buffer[position].args[i]\ =\ va\_arg(args,\ UInt64);}
+\DoxyCodeLine{00065\ \ \ \ va\_end(args);}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}\ CircularLog::writeLog()}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ FILE\ *fp\ =\ fopen(m\_filename.c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ UInt64\ head\ =\ m\_eventnum\ \%\ BUFFER\_SIZE;}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ (head\ !=\ m\_eventnum)}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}...\ \%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ prior\ events\ ...\(\backslash\)n"{}},\ m\_eventnum\ -\/\ BUFFER\_SIZE);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt64\ idx\ =\ head;\ idx\ <\ BUFFER\_SIZE;\ ++idx)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ writeEntry(fp,\ idx);}
+\DoxyCodeLine{00078\ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{for}(UInt64\ idx\ =\ 0;\ idx\ <\ head;\ ++idx)}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ writeEntry(fp,\ idx);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ fclose(fp);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ printf(\textcolor{stringliteral}{"{}[LOG]\ Wrote\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ out\ of\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ events\ to\ sim.clog\(\backslash\)n"{}},\ head\ <\ m\_eventnum\ ?\ BUFFER\_SIZE\ :\ head,\ m\_eventnum);}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keywordtype}{void}\ CircularLog::writeEntry(FILE\ *fp,\ \textcolor{keywordtype}{int}\ idx)}
+\DoxyCodeLine{00088\ \{}
+\DoxyCodeLine{00089\ \ \ \ event\_t\ \&e\ =\ m\_buffer[idx];}
+\DoxyCodeLine{00090\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ [\%s]\ "{}},\ e.time,\ e.type);}
+\DoxyCodeLine{00091\ \ \ \ fprintf(fp,\ e.msg,\ e.args[0],\ e.args[1],\ e.args[2],\ e.args[3],\ e.args[4],\ e.args[5]);}
+\DoxyCodeLine{00092\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00093\ \}}
+
+\end{DoxyCode}

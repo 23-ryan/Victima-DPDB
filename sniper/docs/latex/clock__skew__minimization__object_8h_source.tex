@@ -1,0 +1,77 @@
+\doxysection{clock\+\_\+skew\+\_\+minimization\+\_\+object.\+h}
+\label{clock__skew__minimization__object_8h_source}\index{common/system/clock\_skew\_minimization\_object.h@{common/system/clock\_skew\_minimization\_object.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_CLOCK\_SKEW\_MINIMIZATION\_OBJECT\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_CLOCK\_SKEW\_MINIMIZATION\_OBJECT\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }ClockSkewMinimizationObject}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ Scheme}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ NONE\ =\ 0,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ BARRIER,}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ NUM\_SCHEMES}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{static}\ Scheme\ parseScheme(String\ scheme);}
+\DoxyCodeLine{00021\ \};}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }ClockSkewMinimizationClient\ :\ \textcolor{keyword}{public}\ ClockSkewMinimizationObject}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00026\ \ \ \ ClockSkewMinimizationClient()\ \{\}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keyword}{virtual}\ \string~ClockSkewMinimizationClient()\ \{\}}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keyword}{static}\ ClockSkewMinimizationClient*\ create(Core*\ core);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ enable()\ =\ 0;}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ disable()\ =\ 0;}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ synchronize(SubsecondTime\ time\ =\ SubsecondTime::Zero(),\ \textcolor{keywordtype}{bool}\ ignore\_time\ =\ \textcolor{keyword}{false},\ \textcolor{keywordtype}{bool}\ abort\_func(\textcolor{keywordtype}{void}*)\ =\ NULL,\ \textcolor{keywordtype}{void}*\ abort\_arg\ =\ NULL)\ =\ 0;}
+\DoxyCodeLine{00035\ \};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }ClockSkewMinimizationManager\ :\ \textcolor{keyword}{public}\ ClockSkewMinimizationObject}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00040\ \ \ \ ClockSkewMinimizationManager()\ \{\}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keyword}{virtual}\ \string~ClockSkewMinimizationManager()\ \{\}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{static}\ ClockSkewMinimizationManager*\ create();}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ processSyncMsg(Byte*\ msg)\ =\ 0;}
+\DoxyCodeLine{00047\ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{class\ }ClockSkewMinimizationServer\ :\ \textcolor{keyword}{public}\ ClockSkewMinimizationObject}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00052\ \ \ \ ClockSkewMinimizationServer()\ \{\}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keyword}{virtual}\ \string~ClockSkewMinimizationServer()\ \{\}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keyword}{static}\ ClockSkewMinimizationServer*\ create();}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ synchronize(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)\ =\ 0;}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ release()\ =\ 0;}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ advance()\ =\ 0;}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setDisable(\textcolor{keywordtype}{bool}\ disable)\ \{\ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setGroup(core\_id\_t\ core\_id,\ core\_id\_t\ master\_core\_id)\ =\ 0;}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setFastForward(\textcolor{keywordtype}{bool}\ fastforward,\ SubsecondTime\ next\_barrier\_time\ =\ SubsecondTime::MaxTime())\ =\ 0;}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ getGlobalTime(\textcolor{keywordtype}{bool}\ upper\_bound\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setBarrierInterval(SubsecondTime\ barrier\_interval)\ =\ 0;}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ getBarrierInterval()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ printState(\textcolor{keywordtype}{void})\ \{\}}
+\DoxyCodeLine{00069\ \};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_CLOCK\_SKEW\_MINIMIZATION\_OBJECT\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

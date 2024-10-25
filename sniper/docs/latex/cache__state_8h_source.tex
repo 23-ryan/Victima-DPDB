@@ -1,0 +1,52 @@
+\doxysection{cache\+\_\+state.\+h}
+\label{cache__state_8h_source}\index{common/core/memory\_subsystem/cache/cache\_state.h@{common/core/memory\_subsystem/cache/cache\_state.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CACHE\_STATE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CACHE\_STATE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }CacheState}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ cstate\_t}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ CSTATE\_FIRST\ =\ 0,}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ INVALID\ =\ CSTATE\_FIRST,}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ SHARED,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ SHARED\_UPGRADING,}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ EXCLUSIVE,}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ OWNED,}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ MODIFIED,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ NUM\_CSTATE\_STATES,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Below\ are\ special\ states,\ used\ only\ for\ reporting\ */}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ INVALID\_COLD\ =\ NUM\_CSTATE\_STATES,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ INVALID\_EVICT,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ INVALID\_COHERENCY,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ NUM\_CSTATE\_SPECIAL\_STATES}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ CacheState(cstate\_t\ state\ =\ INVALID)\ :\ cstate(state)\ \{\}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \string~CacheState()\ \{\}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ readable()}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (cstate\ ==\ MODIFIED)\ ||\ (cstate\ ==\ OWNED)\ ||\ (cstate\ ==\ SHARED)\ ||\ (cstate\ ==\ EXCLUSIVE);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ writable()}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (cstate\ ==\ MODIFIED);}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ cstate\_t\ cstate;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CACHE\_STATE\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

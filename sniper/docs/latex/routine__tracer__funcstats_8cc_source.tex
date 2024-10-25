@@ -1,0 +1,385 @@
+\doxysection{routine\+\_\+tracer\+\_\+funcstats.\+cc}
+\label{routine__tracer__funcstats_8cc_source}\index{common/system/routine\_tracer\_funcstats.cc@{common/system/routine\_tracer\_funcstats.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer\_funcstats.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}cache\_efficiency\_tracker.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ RoutineTracerFunctionStats::RtnThread::RtnThread(RoutineTracerFunctionStats::RtnMaster\ *master,\ Thread\ *thread)}
+\DoxyCodeLine{00015\ \ \ \ :\ RoutineTracerThread(thread)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_master(master)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_current\_eip(0)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionEnter(IntPtr\ eip,\ IntPtr\ callEip)}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \ functionBegin(eip);}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionExit(IntPtr\ eip)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ functionEnd(eip,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionChildEnter(IntPtr\ eip,\ IntPtr\ eip\_child)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ functionEnd(eip,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionChildExit(IntPtr\ eip,\ IntPtr\ eip\_child)}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \ \ \ functionBegin(eip);}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionBeginHelper(IntPtr\ eip,\ RtnValues\&\ values\_start)}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ m\_current\_eip\ =\ eip;}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{const}\ ThreadStatsManager::ThreadStatTypeList\&\ types\ =\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatTypes();}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{for}(ThreadStatsManager::ThreadStatTypeList::const\_iterator\ it\ =\ types.begin();\ it\ !=\ types.end();\ ++it)}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ values\_start[*it]\ =\ getThreadStat(*it);}
+\DoxyCodeLine{00048\ \ \ \ \}}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionEndHelper(IntPtr\ eip,\ UInt64\ count)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ RtnValues\ values;}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keyword}{const}\ ThreadStatsManager::ThreadStatTypeList\&\ types\ =\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatTypes();}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{for}(ThreadStatsManager::ThreadStatTypeList::const\_iterator\ it\ =\ types.begin();\ it\ !=\ types.end();\ ++it)}
+\DoxyCodeLine{00056\ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ values[*it]\ =\ getThreadStat(*it)\ -\/\ m\_values\_start[*it];}
+\DoxyCodeLine{00058\ \ \ \ \}}
+\DoxyCodeLine{00059\ \ \ \ m\_master-\/>updateRoutine(eip,\ count,\ values);}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionEndFullHelper(\textcolor{keyword}{const}\ CallStack\ \&stack,\ UInt64\ count)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ RtnValues\ values;}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keyword}{const}\ ThreadStatsManager::ThreadStatTypeList\&\ types\ =\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatTypes();}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ types.begin();\ it\ !=\ types.end();\ ++it)}
+\DoxyCodeLine{00067\ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ values[*it]\ =\ getThreadStat(*it)\ -\/\ m\_values\_start\_full[stack][*it];}
+\DoxyCodeLine{00069\ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ m\_master-\/>updateRoutineFull(stack,\ count,\ values);}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionBegin(IntPtr\ eip)}
+\DoxyCodeLine{00074\ \{}
+\DoxyCodeLine{00075\ \ \ \ Sim()-\/>getThreadStatsManager()-\/>update(m\_thread-\/>getId());}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ functionBeginHelper(eip,\ m\_values\_start);}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{if}\ (m\_stack.size())}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ functionBeginHelper(eip,\ m\_values\_start\_full[m\_stack]);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnThread::functionEnd(IntPtr\ eip,\ \textcolor{keywordtype}{bool}\ is\_function\_start)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ Sim()-\/>getThreadStatsManager()-\/>update(m\_thread-\/>getId());}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ functionEndHelper(eip,\ is\_function\_start\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keywordflow}{if}\ (m\_stack.size())}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ functionEndFullHelper(m\_stack,\ is\_function\_start\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ UInt64\ RoutineTracerFunctionStats::RtnThread::getThreadStat(ThreadStatsManager::ThreadStatType\ type)}
+\DoxyCodeLine{00093\ \{}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatistic(m\_thread-\/>getId(),\ type);}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ UInt64\ RoutineTracerFunctionStats::RtnThread::getCurrentRoutineId()}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{if}\ (m\_stack.size())}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt64)m\_master-\/>getRoutineFullPtr(m\_stack);}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ RoutineTracerFunctionStats::RtnMaster::RtnMaster()}
+\DoxyCodeLine{00108\ \{}
+\DoxyCodeLine{00109\ \ \ \ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}fp\_addsub"{}},\ \textcolor{stringliteral}{"{}interval\_timer"{}},\ \textcolor{stringliteral}{"{}uop\_fp\_addsub"{}});}
+\DoxyCodeLine{00110\ \ \ \ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}fp\_muldiv"{}},\ \textcolor{stringliteral}{"{}interval\_timer"{}},\ \textcolor{stringliteral}{"{}uop\_fp\_muldiv"{}});}
+\DoxyCodeLine{00111\ \ \ \ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l2miss"{}},\ \textcolor{stringliteral}{"{}L2"{}},\ \textcolor{stringliteral}{"{}load-\/misses"{}});}
+\DoxyCodeLine{00112\ \ \ \ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}l3miss"{}},\ \textcolor{stringliteral}{"{}L3"{}},\ \textcolor{stringliteral}{"{}load-\/misses"{}});}
+\DoxyCodeLine{00113\ \ \ \ ThreadStatAggregates::registerStats();}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{keywordflow}{if}\ (ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}cpiBase"{}},\ \textcolor{stringliteral}{"{}interval\_timer"{}},\ \textcolor{stringliteral}{"{}cpiBase"{}})\ ==\ ThreadStatsManager::INVALID)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}cpiBase"{}},\ \textcolor{stringliteral}{"{}rob\_timer"{}},\ \textcolor{stringliteral}{"{}cpiBase"{}});}
+\DoxyCodeLine{00116\ \ \ \ \textcolor{keywordflow}{if}\ (ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}cpiBranchPredictor"{}},\ \textcolor{stringliteral}{"{}interval\_timer"{}},\ \textcolor{stringliteral}{"{}cpiBranchPredictor"{}})\ ==\ ThreadStatsManager::INVALID)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ ThreadStatNamedStat::registerStat(\textcolor{stringliteral}{"{}cpiBranchPredictor"{}},\ \textcolor{stringliteral}{"{}rob\_timer"{}},\ \textcolor{stringliteral}{"{}cpiBranchPredictor"{}});}
+\DoxyCodeLine{00118\ \ \ \ ThreadStatCpiMem::registerStat();}
+\DoxyCodeLine{00119\ \ \ \ Sim()-\/>getConfig()-\/>setCacheEfficiencyCallbacks(\_\_ce\_get\_owner,\ NULL,\ \_\_ce\_notify\_evict,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ RoutineTracerFunctionStats::RtnMaster::\string~RtnMaster()}
+\DoxyCodeLine{00123\ \{}
+\DoxyCodeLine{00124\ \ \ \ writeResults(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}sim.rtntrace"{}}).c\_str());}
+\DoxyCodeLine{00125\ \ \ \ writeResultsFull(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}sim.rtntracefull"{}}).c\_str());}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ UInt64\ RoutineTracerFunctionStats::RtnMaster::ce\_get\_owner(core\_id\_t\ core\_id,\ UInt64\ address)}
+\DoxyCodeLine{00129\ \{}
+\DoxyCodeLine{00130\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getThread();}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordflow}{if}\ (thread\ \&\&\ m\_threads.count(thread-\/>getId()))}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_threads[thread-\/>getId()]-\/>getCurrentRoutineId();}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::ce\_notify\_evict(\textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total)}
+\DoxyCodeLine{00138\ \{}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordflow}{if}\ (owner\ ==\ 0)}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ RoutineTracerFunctionStats::Routine*\ rtn\ =\ (RoutineTracerFunctionStats::Routine*)owner;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ LOG\_ASSERT\_ERROR(m\_routines.count(rtn-\/>m\_eip)\ !=\ 0,\ \textcolor{stringliteral}{"{}Routine\ not\ found\ (rtn\ \%lx,\ eip\ \%lx)"{}},\ rtn,\ rtn-\/>m\_eip);}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ m\_routines[rtn-\/>m\_eip]-\/>m\_bits\_used\ +=\ countBits(bits\_used);}
+\DoxyCodeLine{00149\ \ \ \ m\_routines[rtn-\/>m\_eip]-\/>m\_bits\_total\ +=\ bits\_total;}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ rtn-\/>m\_bits\_used\ +=\ countBits(bits\_used);}
+\DoxyCodeLine{00152\ \ \ \ rtn-\/>m\_bits\_total\ +=\ bits\_total;}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ RoutineTracerThread*\ RoutineTracerFunctionStats::RtnMaster::getThreadHandler(Thread\ *thread)}
+\DoxyCodeLine{00156\ \{}
+\DoxyCodeLine{00157\ \ \ \ RtnThread*\ thread\_handler\ =\ \textcolor{keyword}{new}\ RtnThread(\textcolor{keyword}{this},\ thread);}
+\DoxyCodeLine{00158\ \ \ \ m\_threads[thread-\/>getId()]\ =\ thread\_handler;}
+\DoxyCodeLine{00159\ \ \ \ \textcolor{keywordflow}{return}\ thread\_handler;}
+\DoxyCodeLine{00160\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00163\ \{}
+\DoxyCodeLine{00164\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \textcolor{keywordflow}{if}\ (m\_routines.count(eip)\ ==\ 0)}
+\DoxyCodeLine{00167\ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ m\_routines[eip]\ =\ \textcolor{keyword}{new}\ RoutineTracerFunctionStats::Routine(eip,\ name,\ imgname,\ offset,\ column,\ line,\ filename);}
+\DoxyCodeLine{00169\ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_routines[eip]-\/>isProvisional())}
+\DoxyCodeLine{00171\ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ m\_routines[eip]-\/>updateLocation(name,\ imgname,\ offset,\ column,\ line,\ filename);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ m\_routines[eip]-\/>setProvisional(\textcolor{keyword}{false});}
+\DoxyCodeLine{00174\ \ \ \ \}}
+\DoxyCodeLine{00175\ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \textcolor{keywordtype}{bool}\ RoutineTracerFunctionStats::RtnMaster::hasRoutine(IntPtr\ eip)}
+\DoxyCodeLine{00178\ \{}
+\DoxyCodeLine{00179\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \textcolor{keywordflow}{return}\ m\_routines.count(eip)\ >\ 0;}
+\DoxyCodeLine{00182\ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::updateRoutine(IntPtr\ eip,\ UInt64\ calls,\ RtnValues\ values)}
+\DoxyCodeLine{00185\ \{}
+\DoxyCodeLine{00186\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keywordflow}{if}\ (m\_routines.count(eip)\ ==\ 0)}
+\DoxyCodeLine{00189\ \ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \textcolor{comment}{//\ Another\ thread\ must\ have\ done\ the\ instrumentation\ and\ set\ the\ function\ information,}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{comment}{//\ but\ it's\ still\ going\ through\ the\ (SIFT)\ pipe.\ Create\ a\ provisional\ record\ now\ to\ hold\ the\ statistics,}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{comment}{//\ we\ will\ update\ the\ name/location\ information\ once\ it\ arrives.}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ m\_routines[eip]\ =\ \textcolor{keyword}{new}\ RoutineTracerFunctionStats::Routine(eip,\ \textcolor{stringliteral}{"{}(unknown)"{}},\ \textcolor{stringliteral}{"{}(unknown)"{}},\ 0,\ 0,\ 0,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ m\_routines[eip]-\/>setProvisional(\textcolor{keyword}{true});}
+\DoxyCodeLine{00195\ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ LOG\_ASSERT\_ERROR(m\_routines.count(eip),\ \textcolor{stringliteral}{"{}Routine\ \%lx\ not\ found"{}},\ eip);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ m\_routines[eip]-\/>m\_calls\ +=\ calls;}
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{for}(RtnValues::iterator\ it\ =\ values.begin();\ it\ !=\ values.end();\ ++it)}
+\DoxyCodeLine{00201\ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ m\_routines[eip]-\/>m\_values[it-\/>first]\ +=\ it-\/>second;}
+\DoxyCodeLine{00203\ \ \ \ \}}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ RoutineTracerFunctionStats::Routine*\ RoutineTracerFunctionStats::RtnMaster::getRoutineFullPtr(\textcolor{keyword}{const}\ CallStack\&\ stack)}
+\DoxyCodeLine{00207\ \{}
+\DoxyCodeLine{00208\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{if}\ (m\_routines.count(stack.back())\ ==\ 0)}
+\DoxyCodeLine{00211\ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ m\_routines[stack.back()]\ =\ \textcolor{keyword}{new}\ RoutineTracerFunctionStats::Routine(stack.back(),\ \textcolor{stringliteral}{"{}(unknown)"{}},\ \textcolor{stringliteral}{"{}(unknown)"{}},\ 0,\ 0,\ 0,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ m\_routines[stack.back()]-\/>setProvisional(\textcolor{keyword}{true});}
+\DoxyCodeLine{00214\ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \textcolor{keywordflow}{if}\ (m\_callstack\_routines.count(stack)\ ==\ 0)}
+\DoxyCodeLine{00217\ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ m\_callstack\_routines[stack]\ =\ \textcolor{keyword}{new}\ RoutineTracerFunctionStats::Routine(*m\_routines[stack.back()]);}
+\DoxyCodeLine{00219\ \ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \textcolor{keywordflow}{return}\ m\_callstack\_routines[stack];}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::updateRoutineFull(\textcolor{keyword}{const}\ CallStack\&\ stack,\ UInt64\ calls,\ RtnValues\ values)}
+\DoxyCodeLine{00225\ \{}
+\DoxyCodeLine{00226\ \ \ \ updateRoutineFull(getRoutineFullPtr(stack),\ calls,\ values);}
+\DoxyCodeLine{00227\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::updateRoutineFull(RoutineTracerFunctionStats::Routine*\ rtn,\ UInt64\ calls,\ RtnValues\ values)}
+\DoxyCodeLine{00230\ \{}
+\DoxyCodeLine{00231\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ rtn-\/>m\_calls\ +=\ calls;}
+\DoxyCodeLine{00234\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ values.begin();\ it\ !=\ values.end();\ ++it)}
+\DoxyCodeLine{00235\ \ \ \ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ rtn-\/>m\_values[it-\/>first]\ +=\ it-\/>second;}
+\DoxyCodeLine{00237\ \ \ \ \}}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::writeResults(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00241\ \{}
+\DoxyCodeLine{00242\ \ \ \ FILE\ *fp\ =\ fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \textcolor{keyword}{const}\ ThreadStatsManager::ThreadStatTypeList\&\ types\ =\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatTypes();}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}eip\(\backslash\)tname\(\backslash\)tsource\(\backslash\)tcalls\(\backslash\)tbits\_used\(\backslash\)tbits\_total"{}});}
+\DoxyCodeLine{00247\ \ \ \ \textcolor{keywordflow}{for}(ThreadStatsManager::ThreadStatTypeList::const\_iterator\ it\ =\ types.begin();\ it\ !=\ types.end();\ ++it)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)t\%s"{}},\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatName(*it));}
+\DoxyCodeLine{00249\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \textcolor{keywordflow}{for}(RoutineMap::iterator\ it\ =\ m\_routines.begin();\ it\ !=\ m\_routines.end();\ ++it)}
+\DoxyCodeLine{00252\ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{}\(\backslash\)t\%s\(\backslash\)t\%s\(\backslash\)t\%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\(\backslash\)t\%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\(\backslash\)t\%"{}}\ PRId64,}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ it-\/>second-\/>m\_eip,\ it-\/>second-\/>m\_name,\ it-\/>second-\/>m\_location,}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ it-\/>second-\/>m\_calls,\ it-\/>second-\/>m\_bits\_used,\ it-\/>second-\/>m\_bits\_total);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(ThreadStatsManager::ThreadStatTypeList::const\_iterator\ jt\ =\ types.begin();\ jt\ !=\ types.end();\ ++jt)}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)t\%"{}}\ PRId64,\ it-\/>second-\/>m\_values[*jt]);}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00259\ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ fclose(fp);}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::RtnMaster::writeResultsFull(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00264\ \{}
+\DoxyCodeLine{00265\ \ \ \ FILE\ *fp\ =\ fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \textcolor{keyword}{const}\ ThreadStatsManager::ThreadStatTypeList\&\ types\ =\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatTypes();}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \textcolor{comment}{//\ header\ line}}
+\DoxyCodeLine{00270\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}stack\(\backslash\)tcalls\(\backslash\)tbits\_used\(\backslash\)tbits\_total"{}});}
+\DoxyCodeLine{00271\ \ \ \ \textcolor{keywordflow}{for}(ThreadStatsManager::ThreadStatTypeList::const\_iterator\ it\ =\ types.begin();\ it\ !=\ types.end();\ ++it)}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)t\%s"{}},\ Sim()-\/>getThreadStatsManager()-\/>getThreadStatName(*it));}
+\DoxyCodeLine{00273\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \textcolor{comment}{//\ first\ print\ all\ routine\ names}}
+\DoxyCodeLine{00276\ \ \ \ \textcolor{keywordflow}{for}(RoutineMap::iterator\ it\ =\ m\_routines.begin();\ it\ !=\ m\_routines.end();\ ++it)}
+\DoxyCodeLine{00277\ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>second-\/>m\_calls)}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}:\%"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{}\(\backslash\)t\%s\(\backslash\)t\%s\(\backslash\)n"{}},\ it-\/>second-\/>m\_eip,\ it-\/>second-\/>m\_name,\ it-\/>second-\/>m\_location);}
+\DoxyCodeLine{00280\ \ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \textcolor{comment}{//\ now\ print\ context-\/aware\ statistics}}
+\DoxyCodeLine{00283\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ m\_callstack\_routines.begin();\ it\ !=\ m\_callstack\_routines.end();\ ++it)}
+\DoxyCodeLine{00284\ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>second-\/>m\_calls)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ std::ostringstream\ s;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ s\ <<\ std::hex\ <<\ it-\/>first.front();}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ kt\ =\ ++it-\/>first.begin();\ kt\ !=\ it-\/>first.end();\ ++kt)}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ s\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ std::hex\ <<\ *kt\ <<\ std::dec;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%s\(\backslash\)t\%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\(\backslash\)t\%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\(\backslash\)t\%"{}}\ PRId64,}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ s.str().c\_str(),\ it-\/>second-\/>m\_calls,\ it-\/>second-\/>m\_bits\_used,\ it-\/>second-\/>m\_bits\_total);}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(ThreadStatsManager::ThreadStatTypeList::const\_iterator\ jt\ =\ types.begin();\ jt\ !=\ types.end();\ ++jt)}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)t\%"{}}\ PRId64,\ it-\/>second-\/>m\_values[*jt]);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00299\ \ \ \ \}}
+\DoxyCodeLine{00300\ \ \ \ fclose(fp);}
+\DoxyCodeLine{00301\ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \textcolor{comment}{//\ Helper\ class\ to\ provide\ global\ icount/time\ statistics}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{keyword}{class\ }ThreadStatAggregates}
+\DoxyCodeLine{00307\ \{}
+\DoxyCodeLine{00308\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ registerStats();}
+\DoxyCodeLine{00310\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ callback(ThreadStatsManager::ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user);}
+\DoxyCodeLine{00312\ \};}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{keywordtype}{void}\ RoutineTracerFunctionStats::ThreadStatAggregates::registerStats()}
+\DoxyCodeLine{00315\ \{}
+\DoxyCodeLine{00316\ \ \ \ Sim()-\/>getThreadStatsManager()-\/>registerThreadStatMetric(ThreadStatsManager::DYNAMIC,\ \textcolor{stringliteral}{"{}global\_instructions"{}},\ callback,\ (UInt64)GLOBAL\_INSTRUCTIONS);}
+\DoxyCodeLine{00317\ \ \ \ Sim()-\/>getThreadStatsManager()-\/>registerThreadStatMetric(ThreadStatsManager::DYNAMIC,\ \textcolor{stringliteral}{"{}global\_nonidle\_elapsed\_time"{}},\ callback,\ (UInt64)GLOBAL\_NONIDLE\_ELAPSED\_TIME);}
+\DoxyCodeLine{00318\ \}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ UInt64\ RoutineTracerFunctionStats::ThreadStatAggregates::callback(ThreadStatsManager::ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user)}
+\DoxyCodeLine{00321\ \{}
+\DoxyCodeLine{00322\ \ \ \ UInt64\ result\ =\ 0;}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \textcolor{keywordflow}{switch}(user)}
+\DoxyCodeLine{00325\ \ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ GLOBAL\_INSTRUCTIONS:}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ result\ +=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getPerformanceModel()-\/>getInstructionCount();}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ GLOBAL\_NONIDLE\_ELAPSED\_TIME:}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ result\ +=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getPerformanceModel()-\/>getNonIdleElapsedTime().getFS();}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unexpected\ user\ value\ \%d"{}},\ user);}
+\DoxyCodeLine{00338\ \ \ \ \}}
+\DoxyCodeLine{00339\ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \textcolor{comment}{//\ Helper\ class\ to\ provide\ simplified\ cpiMem\ component}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ ThreadStatsManager::ThreadStatType\ RoutineTracerFunctionStats::ThreadStatCpiMem::registerStat()}
+\DoxyCodeLine{00345\ \{}
+\DoxyCodeLine{00346\ \ \ \ ThreadStatCpiMem\ *tsns\ =\ \textcolor{keyword}{new}\ ThreadStatCpiMem();}
+\DoxyCodeLine{00347\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadStatsManager()-\/>registerThreadStatMetric(ThreadStatsManager::DYNAMIC,\ \textcolor{stringliteral}{"{}cpiMem"{}},\ callback,\ (UInt64)tsns);}
+\DoxyCodeLine{00348\ \}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ RoutineTracerFunctionStats::ThreadStatCpiMem::ThreadStatCpiMem()}
+\DoxyCodeLine{00351\ \ \ \ :\ m\_stats(Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00352\ \{}
+\DoxyCodeLine{00353\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00354\ \ \ \ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ String\ metricName\ =\ \textcolor{stringliteral}{"{}cpiDataCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ StatsMetricBase\ *m\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core\_id,\ metricName);}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m)}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\ =\ Sim()-\/>getStatsManager()-\/>getMetricObject(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core\_id,\ metricName);}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\ !=\ NULL,\ \textcolor{stringliteral}{"{}Invalid\ statistic\ \%s.\%d.\%s"{}},\ \textcolor{stringliteral}{"{}interval\_timer"{}},\ core\_id,\ metricName.c\_str());}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ m\_stats[core\_id].push\_back(m);}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00367\ \ \ \ \}}
+\DoxyCodeLine{00368\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ UInt64\ RoutineTracerFunctionStats::ThreadStatCpiMem::callback(ThreadStatsManager::ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user)}
+\DoxyCodeLine{00371\ \{}
+\DoxyCodeLine{00372\ \ \ \ ThreadStatCpiMem*\ tsns\ =\ (ThreadStatCpiMem*)user;}
+\DoxyCodeLine{00373\ \ \ \ std::vector<StatsMetricBase*>\&\ stats\ =\ tsns-\/>m\_stats[core-\/>getId()];}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ UInt64\ result\ =\ 0;}
+\DoxyCodeLine{00376\ \ \ \ \textcolor{keywordflow}{for}(std::vector<StatsMetricBase*>::iterator\ it\ =\ stats.begin();\ it\ !=\ stats.end();\ ++it)}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ result\ +=\ (*it)-\/>recordMetric();}
+\DoxyCodeLine{00378\ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00379\ \}}
+
+\end{DoxyCode}

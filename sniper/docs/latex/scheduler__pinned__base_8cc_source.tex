@@ -1,0 +1,366 @@
+\doxysection{scheduler\+\_\+pinned\+\_\+base.\+cc}
+\label{scheduler__pinned__base_8cc_source}\index{common/scheduler/scheduler\_pinned\_base.cc@{common/scheduler/scheduler\_pinned\_base.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}scheduler\_pinned\_base.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}os\_compat.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Pinned\ scheduler.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Each\ thread\ has\ is\ pinned\ to\ a\ specific\ core\ (m\_thread\_affinity).}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Cores\ are\ handed\ out\ to\ new\ threads\ in\ round-\/robin\ fashion.}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ If\ multiple\ threads\ share\ a\ core,\ they\ are\ time-\/shared\ with\ a\ configurable\ quantum}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ SchedulerPinnedBase::SchedulerPinnedBase(ThreadManager\ *thread\_manager,\ SubsecondTime\ quantum)}
+\DoxyCodeLine{00015\ \ \ \ :\ SchedulerDynamic(thread\_manager)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_quantum(quantum)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_last\_periodic(SubsecondTime::Zero())}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_core\_thread\_running(Sim()-\/>getConfig()-\/>getApplicationCores(),\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_quantum\_left(Sim()-\/>getConfig()-\/>getApplicationCores(),\ SubsecondTime::Zero())}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ core\_id\_t\ SchedulerPinnedBase::findFreeCoreForThread(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00026\ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].hasAffinity(core\_id)\ \&\&\ m\_core\_thread\_running[core\_id]\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_id;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00033\ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ core\_id\_t\ SchedulerPinnedBase::threadCreate(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info.size()\ <=\ (\textcolor{keywordtype}{size\_t})thread\_id)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ m\_thread\_info.resize(m\_thread\_info.size()\ +\ 16);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].hasAffinity())}
+\DoxyCodeLine{00041\ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ already\ has\ an\ affinity\ set\ at/before\ creation}}
+\DoxyCodeLine{00043\ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ threadSetInitialAffinity(thread\_id);}
+\DoxyCodeLine{00047\ \ \ \ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \textcolor{comment}{//\ The\ first\ thread\ scheduled\ on\ this\ core\ can\ start\ immediately,\ the\ others\ have\ to\ wait}}
+\DoxyCodeLine{00050\ \ \ \ core\_id\_t\ free\_core\_id\ =\ findFreeCoreForThread(thread\_id);}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keywordflow}{if}\ (free\_core\_id\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00052\ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ m\_thread\_info[thread\_id].setCoreRunning(free\_core\_id);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ m\_core\_thread\_running[free\_core\_id]\ =\ thread\_id;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ m\_quantum\_left[free\_core\_id]\ =\ m\_quantum;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ free\_core\_id;}
+\DoxyCodeLine{00057\ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00059\ \ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ m\_thread\_info[thread\_id].setCoreRunning(INVALID\_CORE\_ID);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00062\ \ \ \ \}}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::threadYield(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \ \ \ core\_id\_t\ core\_id\ =\ m\_thread\_info[thread\_id].getCoreRunning();}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00070\ \ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ SubsecondTime\ time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ m\_quantum\_left[core\_id]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ reschedule(time,\ core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_thread\_info[thread\_id].hasAffinity(core\_id))}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ core\_id\_t\ free\_core\_id\ =\ findFreeCoreForThread(thread\_id);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (free\_core\_id\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ just\ been\ moved\ to\ a\ different\ core(s),\ and\ one\ of\ them\ is\ free.\ Schedule\ us\ there\ now.}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ reschedule(time,\ free\_core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00086\ \ \ \ \}}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keywordtype}{bool}\ SchedulerPinnedBase::threadSetAffinity(thread\_id\_t\ calling\_thread\_id,\ thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{size\_t}\ cpusetsize,\ \textcolor{keyword}{const}\ cpu\_set\_t\ *mask)}
+\DoxyCodeLine{00090\ \{}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info.size()\ <=\ (\textcolor{keywordtype}{size\_t})thread\_id)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ m\_thread\_info.resize(thread\_id\ +\ 16);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ m\_thread\_info[thread\_id].setExplicitAffinity();}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{if}\ (!mask)}
+\DoxyCodeLine{00097\ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{comment}{//\ No\ mask\ given:\ free\ to\ schedule\ anywhere.}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ m\_thread\_info[thread\_id].addAffinity(core\_id);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00105\ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ m\_thread\_info[thread\_id].clearAffinity();}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ cpu\ =\ 0;\ cpu\ <\ 8\ *\ cpusetsize;\ ++cpu)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (CPU\_ISSET\_S(cpu,\ cpusetsize,\ mask))}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(cpu\ <\ Sim()-\/>getConfig()-\/>getApplicationCores(),\ \textcolor{stringliteral}{"{}Invalid\ core\ \%d\ found\ in\ sched\_setaffinity()\ mask"{}},\ cpu);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ m\_thread\_info[thread\_id].addAffinity(cpu);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ We're\ setting\ the\ affinity\ of\ a\ thread\ that\ isn't\ yet\ created.\ Do\ nothing\ else\ for\ now.}}
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ >=\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads())}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ ==\ calling\_thread\_id)}
+\DoxyCodeLine{00124\ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ threadYield(thread\_id);}
+\DoxyCodeLine{00126\ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].isRunning()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ running}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ !m\_thread\_info[thread\_id].hasAffinity(m\_thread\_info[thread\_id].getCoreRunning()))\ \textcolor{comment}{//\ but\ not\ where\ we\ want\ it\ to}}
+\DoxyCodeLine{00129\ \ \ \ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{comment}{//\ Reschedule\ the\ thread\ as\ soon\ as\ possible}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ m\_quantum\_left[m\_thread\_info[thread\_id].getCoreRunning()]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00132\ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_threads\_runnable[thread\_id]\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ runnable}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ !m\_thread\_info[thread\_id].isRunning())\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ not\ running\ (we\ can't\ preempt\ it\ outside\ of\ the\ barrier)}}
+\DoxyCodeLine{00135\ \ \ \ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ core\_id\_t\ free\_core\_id\ =\ findFreeCoreForThread(thread\_id);}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (free\_core\_id\ !=\ INVALID\_THREAD\_ID)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread's\ new\ core\ is\ free}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ just\ been\ moved\ to\ a\ different\ core,\ and\ that\ core\ is\ free.\ Schedule\ us\ there\ now.}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(free\_core\_id);}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ SubsecondTime\ time\ =\ std::max(core-\/>getPerformanceModel()-\/>getElapsedTime(),\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime());}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ reschedule(time,\ free\_core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keywordtype}{bool}\ SchedulerPinnedBase::threadGetAffinity(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{size\_t}\ cpusetsize,\ cpu\_set\_t\ *mask)}
+\DoxyCodeLine{00150\ \{}
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keywordflow}{if}\ (cpusetsize*8\ <\ Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00152\ \ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{comment}{//\ Not\ enough\ space\ to\ return\ result}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00155\ \ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ CPU\_ZERO\_S(cpusetsize,\ mask);}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00159\ \ \ \ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ m\_thread\_info[thread\_id].hasAffinity(core\_id)}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ application\ has\ not\ yet\ done\ any\ sched\_setaffinity\ calls,\ lie\ and\ return\ a\ fully\ populated\ affinity\ bitset.}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ makes\ libiomp5\ use\ all\ available\ cores.}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ ||\ !m\_thread\_info[thread\_id].hasExplicitAffinity()}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ )}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ CPU\_SET\_S(core\_id,\ cpusetsize,\ mask);}
+\DoxyCodeLine{00167\ \ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00173\ \{}
+\DoxyCodeLine{00174\ \ \ \ \textcolor{comment}{//\ Thread\ transitioned\ out\ of\ INITIALIZING,\ if\ it\ did\ not\ get\ a\ core\ assigned\ by\ threadCreate\ but\ there\ is\ a\ free\ one\ now,\ schedule\ it\ there}}
+\DoxyCodeLine{00175\ \ \ \ core\_id\_t\ free\_core\_id\ =\ findFreeCoreForThread(thread\_id);}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keywordflow}{if}\ (free\_core\_id\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ reschedule(time,\ free\_core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time)}
+\DoxyCodeLine{00181\ \{}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{comment}{//\ If\ the\ running\ thread\ becomes\ unrunnable,\ schedule\ someone\ else}}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].isRunning())}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ reschedule(time,\ m\_thread\_info[thread\_id].getCoreRunning(),\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::threadResume(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time)}
+\DoxyCodeLine{00188\ \{}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{comment}{//\ If\ our\ core\ is\ currently\ idle,\ schedule\ us\ now}}
+\DoxyCodeLine{00190\ \ \ \ core\_id\_t\ free\_core\_id\ =\ findFreeCoreForThread(thread\_id);}
+\DoxyCodeLine{00191\ \ \ \ \textcolor{keywordflow}{if}\ (free\_core\_id\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ reschedule(time,\ free\_core\_id,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00193\ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00196\ \{}
+\DoxyCodeLine{00197\ \ \ \ \textcolor{comment}{//\ If\ the\ running\ thread\ becomes\ unrunnable,\ schedule\ someone\ else}}
+\DoxyCodeLine{00198\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].isRunning())}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ reschedule(time,\ m\_thread\_info[thread\_id].getCoreRunning(),\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::periodic(SubsecondTime\ time)}
+\DoxyCodeLine{00203\ \{}
+\DoxyCodeLine{00204\ \ \ \ SubsecondTime\ delta\ =\ time\ -\/\ m\_last\_periodic;}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00207\ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (delta\ >\ m\_quantum\_left[core\_id]\ ||\ m\_core\_thread\_running[core\_id]\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ reschedule(time,\ core\_id,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ m\_quantum\_left[core\_id]\ -\/=\ delta;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ m\_last\_periodic\ =\ time;}
+\DoxyCodeLine{00219\ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::reschedule(SubsecondTime\ time,\ core\_id\_t\ core\_id,\ \textcolor{keywordtype}{bool}\ is\_periodic)}
+\DoxyCodeLine{00222\ \{}
+\DoxyCodeLine{00223\ \ \ \ thread\_id\_t\ current\_thread\_id\ =\ m\_core\_thread\_running[core\_id];}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \textcolor{keywordflow}{if}\ (current\_thread\_id\ !=\ INVALID\_THREAD\_ID}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \&\&\ Sim()-\/>getThreadManager()-\/>getThreadState(current\_thread\_id)\ ==\ Core::INITIALIZING)}
+\DoxyCodeLine{00227\ \ \ \ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ on\ this\ core\ is\ starting\ up,\ don't\ reschedule\ it\ for\ now}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00230\ \ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ thread\_id\_t\ new\_thread\_id\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00233\ \ \ \ SInt64\ max\_score\ =\ INT64\_MIN;}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)m\_threads\_runnable.size();\ ++thread\_id)}
+\DoxyCodeLine{00236\ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].hasAffinity(core\_id)\ \textcolor{comment}{//\ Thread\ is\ allowed\ to\ run\ on\ this\ core}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_threads\_runnable[thread\_id]\ ==\ \textcolor{keyword}{true}\ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ not\ stalled}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \&\&\ (!m\_thread\_info[thread\_id].isRunning()\ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ not\ already\ running\ somewhere\ else}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ m\_thread\_info[thread\_id].getCoreRunning()\ ==\ core\_id)}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ )}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ SInt64\ score;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].isRunning())}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ currently\ running:\ negative\ score\ depending\ on\ how\ long\ it's\ already\ running}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ score\ =\ SInt64(m\_thread\_info[thread\_id].getLastScheduledIn().getPS())\ -\/\ time.getPS();}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ not\ currently\ running:\ positive\ score\ depending\ on\ how\ long\ we\ have\ been\ waiting}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ score\ =\ time.getPS()\ -\/\ SInt64(m\_thread\_info[thread\_id].getLastScheduledOut().getPS());}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Find\ thread\ that\ was\ scheduled\ the\ longest\ time\ ago}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (score\ >\ max\_score)}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ new\_thread\_id\ =\ thread\_id;}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ max\_score\ =\ score;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \textcolor{keywordflow}{if}\ (current\_thread\_id\ !=\ new\_thread\_id)}
+\DoxyCodeLine{00261\ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ a\ thread\ was\ running\ on\ this\ core,\ and\ we'll\ schedule\ another\ one,\ unschedule\ the\ current\ one}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current\_thread\_id\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ m\_thread\_info[current\_thread\_id].setCoreRunning(INVALID\_CORE\_ID);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ last\ scheduled\ out\ time,\ with\ a\ small\ extra\ penalty\ to\ make\ sure\ we\ don't}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ reconsider\ this\ thread\ in\ the\ same\ periodic()\ call\ but\ for\ a\ next\ core}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ m\_thread\_info[current\_thread\_id].setLastScheduledOut(time\ +\ SubsecondTime::PS(core\_id));}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ moveThread(current\_thread\_id,\ INVALID\_CORE\_ID,\ time);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ core\ as\ running\ this\ thread\ *before*\ we\ call\ moveThread(),\ otherwise\ the\ HOOK\_THREAD\_RESUME\ callback\ for\ this}}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{comment}{//\ thread\ might\ see\ an\ empty\ core,\ causing\ a\ recursive\ loop\ of\ reschedulings}}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ m\_core\_thread\_running[core\_id]\ =\ new\_thread\_id;}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ found\ a\ new\ thread\ to\ schedule,\ move\ it\ here}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_thread\_id\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ thread\ was\ running\ somewhere\ else:\ let\ that\ core\ know}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[new\_thread\_id].isRunning())}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ m\_core\_thread\_running[m\_thread\_info[new\_thread\_id].getCoreRunning()]\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ thread\ to\ this\ core}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ m\_thread\_info[new\_thread\_id].setCoreRunning(core\_id);}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ m\_thread\_info[new\_thread\_id].setLastScheduledIn(time);}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ moveThread(new\_thread\_id,\ core\_id,\ time);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00287\ \ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ m\_quantum\_left[core\_id]\ =\ m\_quantum;}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ String\ SchedulerPinnedBase::ThreadInfo::getAffinityString()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00293\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00294\ \ \ \ std::stringstream\ ss;}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00297\ \ \ \ \{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hasAffinity(core\_id))}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ss.str().size()\ >\ 0)}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ ss\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ ss\ <<\ core\_id;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \ \}}
+\DoxyCodeLine{00305\ \ \ \ \textcolor{keywordflow}{return}\ String(ss.str().c\_str());}
+\DoxyCodeLine{00306\ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \textcolor{keywordtype}{void}\ SchedulerPinnedBase::printState()}
+\DoxyCodeLine{00309\ \{}
+\DoxyCodeLine{00310\ \ \ \ printf(\textcolor{stringliteral}{"{}thread\ state:"{}});}
+\DoxyCodeLine{00311\ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00312\ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ state;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(Sim()-\/>getThreadManager()-\/>getThreadState(thread\_id))}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::INITIALIZING:}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'I'};}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::RUNNING:}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'R'};}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::STALLED:}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'S'};}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::SLEEPING:}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'s'};}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::WAKING\_UP:}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'W'};}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::IDLE:}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'I'};}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::BROKEN:}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'B'};}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::NUM\_STATES:}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ state\ =\ \textcolor{charliteral}{'?'};}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_info[thread\_id].isRunning())}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%c@\%d"{}},\ state,\ m\_thread\_info[thread\_id].getCoreRunning());}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%c\%c\%s"{}},\ state,\ m\_threads\_runnable[thread\_id]\ ?\ \textcolor{charliteral}{'+'}\ :\ \textcolor{charliteral}{'\_'},\ m\_thread\_info[thread\_id].getAffinityString().c\_str());}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00350\ \ \ \ \}}
+\DoxyCodeLine{00351\ \ \ \ printf(\textcolor{stringliteral}{"{}\ \ -\/-\/\ \ core\ state:"{}});}
+\DoxyCodeLine{00352\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00353\ \ \ \ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_thread\_running[core\_id]\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \_\_"{}});}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%2d"{}},\ m\_core\_thread\_running[core\_id]);}
+\DoxyCodeLine{00358\ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00360\ \}}
+
+\end{DoxyCode}

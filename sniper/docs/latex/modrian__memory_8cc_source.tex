@@ -1,0 +1,270 @@
+\doxysection{modrian\+\_\+memory.\+cc}
+\label{modrian__memory_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/modrian\_memory.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/modrian\_memory.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <math.h>}\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <time.h>}\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00008\ \ \ \ \ ModrianMemoryManager::ModrianMemoryManager(\textcolor{keywordtype}{int}\ number\_of\_levels,Core*\ \_core,ShmemPerfModel*\ \_m\_shmem\_perf\_model,\textcolor{keywordtype}{int}\ *level\_percentages,\textcolor{keywordtype}{int}\ *level\_bit\_indices,\textcolor{keywordtype}{int}\ segments,PWC*\ pwc,\ \textcolor{keywordtype}{bool}\ pwc\_enabled)\{}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(level\_percentages!=NULL)\{}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>core\ =\_core;}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>m\_shmem\_perf\_model=\_m\_shmem\_perf\_model;}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats.number\_of\_levels=number\_of\_levels;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats.hit\_percentages=(\textcolor{keywordtype}{int}\ *)malloc(number\_of\_levels*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats.address\_bit\_indices=(\textcolor{keywordtype}{int}\ *)malloc((number\_of\_levels+1)*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats.segments=segments;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ number\_of\_levels+1;\ i++)}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i<number\_of\_levels)\{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats.hit\_percentages[i]=level\_percentages[i];}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats.address\_bit\_indices[i]=level\_bit\_indices[i];}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>starting\_table=InitiateTable((\textcolor{keywordtype}{int})pow(2.0,(\textcolor{keywordtype}{float})level\_bit\_indices[0]));}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ srand(time(NULL));}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00028\ \ \ \ \ \}}
+\DoxyCodeLine{00029\ \ \ \ \ SubsecondTime\ ModrianMemoryManager::init\_walk(}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ IntPtr\ address,}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ CacheCntlr\ *\_cache,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\textcolor{keywordtype}{bool}\ count)}
+\DoxyCodeLine{00036\ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ cache=\_cache;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats.number\_of\_levels;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats.address\_bit\_indices[i];}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ SubsecondTime\ now=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(\&starting\_table-\/>entries[a1]))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(eip,\ lock\_signal,Core::mem\_op\_t::READ,cache\_address,0,data\_buf,data\_length,modeled,\textcolor{keyword}{false},CacheBlockInfo::block\_type\_t::SECURITY,SubsecondTime::Zero());}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ SubsecondTime\ end=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ SubsecondTime\ latency=end-\/now;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,now);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(nuca)\{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ nuca-\/>markTranslationMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ UInt64\ vpn\ =\ address\ >>\ init\_walk\_functional(address);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::NONE)\{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ starting\_table-\/>entries[a1]=*CreateNewEntryAtLevel(1,stats.number\_of\_levels,stats.hit\_percentages,stats.address\_bit\_indices);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Not\ Essential}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::BITVECTOR)\{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::RLE)\{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ ComponentLatency\ range\_latency=ComponentLatency(core-\/>getDvfsDomain(),log(stats.segments));}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ range\_latency.getLatency();}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Not\ Essential}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency+FindPermissionsRecursive(eip,\ address,2,starting\_table-\/>entries[a1].next\_level\_table,lock\_signal,data\_buf,data\_length,modeled);}
+\DoxyCodeLine{00077\ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \ SubsecondTime\ ModrianMemoryManager::FindPermissionsRecursive(}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ uint64\_t\ address,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ level,table*\ new\_table,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled)}
+\DoxyCodeLine{00085\ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats.number\_of\_levels;\ i\ >=\ level;\ i-\/-\/)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats.address\_bit\_indices[i];}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ SubsecondTime\ now=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(\&new\_table-\/>entries[a1]))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(eip,lock\_signal,Core::mem\_op\_t::READ,cache\_address,0,data\_buf,data\_length,modeled,\textcolor{keyword}{false},CacheBlockInfo::block\_type\_t::SECURITY,SubsecondTime::Zero());}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ SubsecondTime\ end=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ SubsecondTime\ latency=end-\/now;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,now);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(nuca)\{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ nuca-\/>markTranslationMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ UInt64\ vpn\ =\ address\ >>\ init\_walk\_functional(address);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::NONE)\{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ new\_table-\/>entries[a1]=*CreateNewEntryAtLevel(level,stats.number\_of\_levels,stats.hit\_percentages,stats.address\_bit\_indices);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::BITVECTOR)\{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<std::hex<<address<<"{}\ -\/\ "{}<<std::hex<<a1<<"{}\ -\/\ "{}<<level<<"{}\ BitVector\(\backslash\)n"{};}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ now\_bv=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\_bv\ =\ ((IntPtr)(\&new\_table-\/>entries[a1].bitvector[(address>>stats.address\_bit\_indices[level+1])\&0x1ff]))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(eip,\ lock\_signal,Core::mem\_op\_t::READ,cache\_address\_bv,0,data\_buf,data\_length,modeled,\textcolor{keyword}{false},CacheBlockInfo::block\_type\_t::SECURITY,SubsecondTime::Zero());}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ end\_bv=m\_shmem\_perf\_model-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency\_bv=end\_bv-\/now\_bv;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,now\_bv);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(nuca)\{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nuca-\/>markTranslationMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>markMetadata(cache\_address,CacheBlockInfo::block\_type\_t::SECURITY);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ vpn\ =\ address\ >>\ init\_walk\_functional(address);}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency\_bv;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::RLE)\{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<std::hex<<address<<"{}\ -\/\ "{}<<std::hex<<a1<<"{}\ -\/\ "{}<<level<<"{}\ RLE\(\backslash\)n"{};}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ ComponentLatency\ range\_latency=ComponentLatency(core-\/>getDvfsDomain(),(\textcolor{keywordtype}{int})log(stats.segments));}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency\_rle=range\_latency.getLatency();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency\_rle;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency+FindPermissionsRecursive(eip,\ address,level+1,new\_table-\/>entries[a1].next\_level\_table,lock\_signal,data\_buf,data\_length,modeled);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{int}\ ModrianMemoryManager::init\_walk\_functional(IntPtr\ address)\{}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats.number\_of\_levels;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats.address\_bit\_indices[i];}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::NONE)\{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Not\ Essential}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::BITVECTOR)\{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ shift\_bits;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::RLE)\{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ shift\_bits;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Not\ Essential}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ init\_walk\_functional\_rec(address,2,starting\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{int}\ ModrianMemoryManager::init\_walk\_functional\_rec(uint64\_t\ address,}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{int}\ level,table*\ new\_table)\{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats.number\_of\_levels;\ i\ >=\ level;\ i-\/-\/)}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats.address\_bit\_indices[i];}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::NONE)\{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::BITVECTOR)\{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ shift\_bits;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::RLE)\{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ shift\_bits;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ init\_walk\_functional\_rec(address,level+1,new\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordtype}{bool}\ ModrianMemoryManager::isPageFault(IntPtr\ address)\{}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats.number\_of\_levels;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats.address\_bit\_indices[i];}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::NONE)\{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Not\ Essential}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::BITVECTOR)\{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==table\_entry\_type::RLE)\{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Not\ Essential}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ isPageFault\_rec(address,2,starting\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00222\ \ \ \ \ \}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{bool}\ ModrianMemoryManager::isPageFault\_rec(uint64\_t\ address,}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordtype}{int}\ level,table*\ new\_table)\{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats.number\_of\_levels;\ i\ >=\ level;\ i-\/-\/)}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats.address\_bit\_indices[i];}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::NONE)\{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::BITVECTOR)\{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==table\_entry\_type::RLE)\{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ isPageFault\_rec(address,level+1,new\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00246\ \ \ \ \ \}}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{comment}{/*int\ main(int\ argc,\ char\ *argv[])\{}}
+\DoxyCodeLine{00248\ \textcolor{comment}{\ \ \ \ \ \ \ \ int\ per[]=\{0,2,28,100\};}}
+\DoxyCodeLine{00249\ \textcolor{comment}{\ \ \ \ \ \ \ \ int\ ind[]=\{9,9,9,9,12\};}}
+\DoxyCodeLine{00250\ \textcolor{comment}{\ \ \ \ \ \ \ \ ModrianMemoryManager\ mmm(4,per,ind,8);}}
+\DoxyCodeLine{00251\ \textcolor{comment}{\ \ \ \ \ \ \ \ srand\ (time(NULL));}}
+\DoxyCodeLine{00252\ \textcolor{comment}{\ \ \ \ \ \ \ \ uint64\_t\ n;}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ \ \ \ \ \ \ std::ifstream\ in\_file;}}
+\DoxyCodeLine{00254\ \textcolor{comment}{\ \ \ \ \ \ \ \ in\_file.open\ (argv[1]);}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00256\ \textcolor{comment}{\ \ \ \ \ \ \ \ while\ (!in\_file.eof())}}
+\DoxyCodeLine{00257\ \textcolor{comment}{\ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00258\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ in\_file>>n;}}
+\DoxyCodeLine{00259\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ int\ r=mmm.FindPermissions(n);}}
+\DoxyCodeLine{00260\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00261\ \textcolor{comment}{\ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00262\ \textcolor{comment}{\ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00263\ \textcolor{comment}{\ \ \ \ \}*/}}
+\DoxyCodeLine{00264\ \}}
+
+\end{DoxyCode}

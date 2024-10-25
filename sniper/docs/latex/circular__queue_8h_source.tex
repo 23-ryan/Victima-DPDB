@@ -1,0 +1,178 @@
+\doxysection{circular\+\_\+queue.\+h}
+\label{circular__queue_8h_source}\index{common/misc/circular\_queue.h@{common/misc/circular\_queue.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CIRCULAR\_QUEUE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CIRCULAR\_QUEUE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>\ \textcolor{keyword}{class\ }CircularQueue}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ m\_size;}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \textcolor{keyword}{volatile}\ UInt32\ m\_first;\ \textcolor{comment}{//\ next\ element\ to\ be\ inserted\ here}}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ UInt8\ padding1[60];}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{volatile}\ UInt32\ m\_last;\ \ \textcolor{comment}{//\ last\ element\ is\ here}}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ UInt8\ padding2[60];}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ T*\ \textcolor{keyword}{const}\ m\_queue;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\ value\_type;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{class\ }iterator\ :\ \textcolor{keyword}{public}\ std::iterator<std::forward\_iterator\_tag,\ T,\ std::ptrdiff\_t,\ const\ T*,\ const\ T\&>}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ CircularQueue\ \&\_queue;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ \_idx;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ iterator(CircularQueue\ \&queue,\ UInt32\ idx)\ :\ \_queue(queue),\ \_idx(idx)\ \{\}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ T\&\ operator*()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_queue.at(\_idx);\ \}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ T*\ operator-\/>()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \&\_queue.at(\_idx);\ \}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ iterator\&\ operator++()\ \{\ \_idx++;\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator==(iterator\ \textcolor{keyword}{const}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \&\_queue\ ==\ \&rhs.\_queue\ \&\&\ \_idx\ ==\ rhs.\_idx;\ \}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator!=(iterator\ \textcolor{keyword}{const}\&\ rhs)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ !\ (*\textcolor{keyword}{this}\ ==\ rhs);\ \}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ CircularQueue(UInt32\ size\ =\ 63);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ CircularQueue(\textcolor{keyword}{const}\ CircularQueue\ \&queue);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \string~CircularQueue();}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ push(\textcolor{keyword}{const}\ T\&\ t);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ pushCircular(\textcolor{keyword}{const}\ T\&\ t);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ T\&\ next(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ T\ pop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ T\&\ front(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{const}\ T\&\ front(\textcolor{keywordtype}{void})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ T\&\ back(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keyword}{const}\ T\&\ back(\textcolor{keywordtype}{void})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ full(\textcolor{keywordtype}{void})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ empty(\textcolor{keywordtype}{void})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ UInt32\ size(\textcolor{keywordtype}{void})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ iterator\ begin(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ iterator(*\textcolor{keyword}{this},\ 0);\ \}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ iterator\ end(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ iterator(*\textcolor{keyword}{this},\ size());\ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ T\&\ operator[](UInt32\ idx)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_queue[(m\_last\ +\ idx)\ \%\ m\_size];\ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ T\&\ at(UInt32\ idx)\textcolor{keyword}{\ const\ }\{\ assert(idx\ <\ size());\ \textcolor{keywordflow}{return}\ (*\textcolor{keyword}{this})[idx];\ \}}
+\DoxyCodeLine{00051\ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00054\ CircularQueue<T>::CircularQueue(UInt32\ size)}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{comment}{//\ Since\ we\ use\ head\ ==\ tail\ as\ the\ empty\ condition\ instead\ of\ an\ extra\ empty\ flag,\ we\ can\ hold\ at\ most\ m\_size-\/1\ elements}}
+\DoxyCodeLine{00056\ \ \ \ :\ m\_size(size\ +\ 1)}
+\DoxyCodeLine{00057\ \ \ \ ,\ m\_first(0)}
+\DoxyCodeLine{00058\ \ \ \ ,\ m\_last(0)}
+\DoxyCodeLine{00059\ \ \ \ ,\ m\_queue(new\ T[m\_size])}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Copy\ only\ the\ size\ parameter\ from\ the\ other\ CircularQueue}}
+\DoxyCodeLine{00064\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00065\ CircularQueue<T>::CircularQueue(\textcolor{keyword}{const}\ CircularQueue\ \&queue)}
+\DoxyCodeLine{00066\ \ \ \ :\ m\_size(queue.m\_size)}
+\DoxyCodeLine{00067\ \ \ \ ,\ m\_first(0)}
+\DoxyCodeLine{00068\ \ \ \ ,\ m\_last(0)}
+\DoxyCodeLine{00069\ \ \ \ ,\ m\_queue(new\ T[m\_size])}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \ assert(queue.size()\ ==\ 0);}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00075\ CircularQueue<T>::\string~CircularQueue()}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_queue;}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00082\ CircularQueue<T>::push(\textcolor{keyword}{const}\ T\&\ t)}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ assert(!full());}
+\DoxyCodeLine{00085\ \ \ \ m\_queue[m\_first]\ =\ t;}
+\DoxyCodeLine{00086\ \ \ \ m\_first\ =\ (m\_first\ +\ 1)\ \%\ m\_size;}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00091\ CircularQueue<T>::pushCircular(\textcolor{keyword}{const}\ T\&\ t)}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordflow}{if}\ (full())}
+\DoxyCodeLine{00094\ \ \ \ \ pop();}
+\DoxyCodeLine{00095\ \ \ push(t);}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00099\ T\&}
+\DoxyCodeLine{00100\ CircularQueue<T>::next(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \ assert(!full());}
+\DoxyCodeLine{00103\ \ \ \ T\&\ t\ =\ m\_queue[m\_first];}
+\DoxyCodeLine{00104\ \ \ \ m\_first\ =\ (m\_first\ +\ 1)\ \%\ m\_size;}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00109\ T}
+\DoxyCodeLine{00110\ CircularQueue<T>::pop()}
+\DoxyCodeLine{00111\ \{}
+\DoxyCodeLine{00112\ \ \ \ assert(!empty());}
+\DoxyCodeLine{00113\ \ \ \ UInt32\ idx\ =\ m\_last;}
+\DoxyCodeLine{00114\ \ \ \ m\_last\ =\ (m\_last\ +\ 1)\ \%\ m\_size;}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keywordflow}{return}\ m\_queue[idx];}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00119\ T\ \&}
+\DoxyCodeLine{00120\ CircularQueue<T>::front()}
+\DoxyCodeLine{00121\ \{}
+\DoxyCodeLine{00122\ \ \ \ assert(!empty());}
+\DoxyCodeLine{00123\ \ \ \ \textcolor{keywordflow}{return}\ m\_queue[m\_last];}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00127\ \textcolor{keyword}{const}\ T\ \&}
+\DoxyCodeLine{00128\ CircularQueue<T>::front()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00129\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00130\ \ \ \ assert(!empty());}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordflow}{return}\ m\_queue[m\_last];}
+\DoxyCodeLine{00132\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00135\ T\ \&}
+\DoxyCodeLine{00136\ CircularQueue<T>::back()}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ \ assert(!empty());}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordflow}{return}\ m\_queue[(m\_first\ +\ m\_size\ -\/\ 1)\ \%\ m\_size];}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00143\ \textcolor{keyword}{const}\ T\ \&}
+\DoxyCodeLine{00144\ CircularQueue<T>::back()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00145\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00146\ \ \ \ assert(!empty());}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keywordflow}{return}\ m\_queue[(m\_first\ +\ m\_size\ -\/\ 1)\ \%\ m\_size];}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00151\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00152\ CircularQueue<T>::full(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00153\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keywordflow}{return}\ (m\_first\ +\ 1)\ \%\ m\_size\ ==\ m\_last;}
+\DoxyCodeLine{00155\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00158\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00159\ CircularQueue<T>::empty(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00160\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordflow}{return}\ m\_first\ ==\ m\_last;}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00165\ UInt32}
+\DoxyCodeLine{00166\ CircularQueue<T>::size()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00167\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordflow}{return}\ (m\_first\ +\ m\_size\ -\/\ m\_last)\ \%\ m\_size;}
+\DoxyCodeLine{00169\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ CIRCULAR\_QUEUE\_H}}
+
+\end{DoxyCode}

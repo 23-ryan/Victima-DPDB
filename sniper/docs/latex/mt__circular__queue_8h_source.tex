@@ -1,0 +1,135 @@
+\doxysection{mt\+\_\+circular\+\_\+queue.\+h}
+\label{mt__circular__queue_8h_source}\index{common/misc/mt\_circular\_queue.h@{common/misc/mt\_circular\_queue.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ MT\_CIRCULAR\_QUEUE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ MT\_CIRCULAR\_QUEUE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}circular\_queue.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cond.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>\ \textcolor{keyword}{class\ }MTCircularQueue\ :\ \textcolor{keyword}{public}\ CircularQueue<T>}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ ConditionVariable\ m\_full;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ ConditionVariable\ m\_empty;}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{class\ }iterator\ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ unless\ we\ add\ locking,\ iterating\ over\ a\ MTCircularQueue\ which\ can\ be\ updated\ by\ another\ thread\ is\ unsafe!}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \ \ \ iterator(\textcolor{keyword}{const}\ MTCircularQueue\ \&queue,\ UInt32\ idx)\ =\ 0;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ MTCircularQueue(UInt32\ size\ =\ 64)\ :\ CircularQueue<T>(size)\ \{\}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ push(\textcolor{keyword}{const}\ T\&\ t);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ push\_wait(\textcolor{keyword}{const}\ T\&\ t);}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ push\_locked(\textcolor{keyword}{const}\ T\&\ t);}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ T\ pop(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ T\ pop\_wait(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ T\ pop\_locked(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ full\_wait(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ empty\_wait(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ full\_wait\_locked(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ empty\_wait\_locked(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00031\ \};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00035\ MTCircularQueue<T>::full\_wait(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00038\ \ \ \ full\_wait\_locked();}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00043\ MTCircularQueue<T>::full\_wait\_locked(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{while}(CircularQueue<T>::full())}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ m\_full.wait(m\_lock);}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00051\ MTCircularQueue<T>::empty\_wait(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00054\ \ \ \ empty\_wait\_locked();}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00059\ MTCircularQueue<T>::empty\_wait\_locked()}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{while}(CircularQueue<T>::empty())}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ m\_empty.wait(m\_lock);}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00069\ MTCircularQueue<T>::push\_locked(\textcolor{keyword}{const}\ T\&\ t)}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordtype}{bool}\ wasEmpty\ =\ CircularQueue<T>::empty();}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ CircularQueue<T>::push(t);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{if}\ (wasEmpty)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ m\_empty.signal();}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00081\ MTCircularQueue<T>::push(\textcolor{keyword}{const}\ T\&\ t)}
+\DoxyCodeLine{00082\ \{}
+\DoxyCodeLine{00083\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00084\ \ \ \ push\_locked(t);}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00088\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00089\ MTCircularQueue<T>::push\_wait(\textcolor{keyword}{const}\ T\&\ t)}
+\DoxyCodeLine{00090\ \{}
+\DoxyCodeLine{00091\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00092\ \ \ \ full\_wait\_locked();}
+\DoxyCodeLine{00093\ \ \ \ push\_locked(t);}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00099\ T}
+\DoxyCodeLine{00100\ MTCircularQueue<T>::pop\_locked()}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \ \textcolor{keywordtype}{bool}\ wasFull\ =\ CircularQueue<T>::full();}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ T\ t\ =\ CircularQueue<T>::pop();}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordflow}{if}\ (wasFull)}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ m\_full.signal();}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00113\ T}
+\DoxyCodeLine{00114\ MTCircularQueue<T>::pop()}
+\DoxyCodeLine{00115\ \{}
+\DoxyCodeLine{00116\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordflow}{return}\ pop\_locked();}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00121\ T}
+\DoxyCodeLine{00122\ MTCircularQueue<T>::pop\_wait()}
+\DoxyCodeLine{00123\ \{}
+\DoxyCodeLine{00124\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00125\ \ \ \ empty\_wait\_locked();}
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keywordflow}{return}\ pop\_locked();}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//MT\_CIRCULAR\_QUEUE\_H}}
+
+\end{DoxyCode}

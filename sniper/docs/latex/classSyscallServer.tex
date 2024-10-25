@@ -1,0 +1,559 @@
+\doxysection{Syscall\+Server Class Reference}
+\label{classSyscallServer}\index{SyscallServer@{SyscallServer}}
+
+
+{\ttfamily \#include $<$syscall\+\_\+server.\+h$>$}
+
+
+
+Collaboration diagram for Syscall\+Server\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=174pt]{classSyscallServer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ futex\+\_\+args\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Syscall\+Server} ()
+\item 
+\textbf{ $\sim$\+Syscall\+Server} ()
+\item 
+void \textbf{ handle\+Sleep\+Call} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} wake\+\_\+time, \textbf{ Subsecond\+Time} curr\+\_\+time, \textbf{ Subsecond\+Time} \&end\+\_\+time)
+\item 
+\textbf{ Int\+Ptr} \textbf{ handle\+Futex\+Call} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ futex\+\_\+args\+\_\+t} \&args, \textbf{ Subsecond\+Time} curr\+\_\+time, \textbf{ Subsecond\+Time} \&end\+\_\+time)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ get\+Next\+Timeout} (\textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\+::unordered\+\_\+map$<$ \textbf{ Int\+Ptr}, \textbf{ Sim\+Futex} $>$ \textbf{ Futex\+Map}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Int\+Ptr} \textbf{ futex\+Wait} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, int $\ast$uaddr, int val, int act\+\_\+val, int val3, \textbf{ Subsecond\+Time} curr\+\_\+time, \textbf{ Subsecond\+Time} timeout\+\_\+time, \textbf{ Subsecond\+Time} \&end\+\_\+time)
+\item 
+\textbf{ Int\+Ptr} \textbf{ futex\+Wake} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, int $\ast$uaddr, int nr\+\_\+wake, int val3, \textbf{ Subsecond\+Time} curr\+\_\+time, \textbf{ Subsecond\+Time} \&end\+\_\+time)
+\item 
+\textbf{ Int\+Ptr} \textbf{ futex\+Wake\+Op} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, int $\ast$uaddr, int $\ast$uaddr2, int nr\+\_\+wake, int nr\+\_\+wake2, int op, \textbf{ Subsecond\+Time} curr\+\_\+time, \textbf{ Subsecond\+Time} \&end\+\_\+time)
+\item 
+\textbf{ Int\+Ptr} \textbf{ futex\+Cmp\+Requeue} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, int $\ast$uaddr, int val, int $\ast$uaddr2, int val3, int act\+\_\+val, \textbf{ Subsecond\+Time} curr\+\_\+time, \textbf{ Subsecond\+Time} \&end\+\_\+time)
+\item 
+\textbf{ Sim\+Futex} $\ast$ \textbf{ find\+Futex\+By\+Uaddr} (int $\ast$uaddr, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ wake\+Futex\+One} (\textbf{ Sim\+Futex} $\ast$sim\+\_\+futex, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+by, int mask, \textbf{ Subsecond\+Time} curr\+\_\+time)
+\item 
+int \textbf{ futex\+Do\+Op} (\textbf{ Core} $\ast$core, int op, int $\ast$uaddr)
+\item 
+void \textbf{ futex\+Periodic} (\textbf{ Subsecond\+Time} time)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ apply\+Reschedule\+Cost} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, bool conditional=true)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+periodic} (\textbf{ UInt64} ptr, \textbf{ UInt64} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+reschedule\+\_\+cost}
+\item 
+\textbf{ Sim\+Futex\+::\+Thread\+Queue} \textbf{ m\+\_\+sleeping}
+\item 
+\textbf{ Futex\+Map} \textbf{ m\+\_\+futexes}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Thread\+Manager}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 46} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{SyscallServer@{SyscallServer}!FutexMap@{FutexMap}}
+\index{FutexMap@{FutexMap}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{FutexMap}
+{\footnotesize\ttfamily \label{classSyscallServer_a6273961d52b8d154a59241fbf8767d13} 
+std\+::unordered\+\_\+map$<$\textbf{ Int\+Ptr}, \textbf{ Sim\+Futex}$>$ \textbf{ Syscall\+Server\+::\+Futex\+Map}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 93} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{SyscallServer@{SyscallServer}!SyscallServer@{SyscallServer}}
+\index{SyscallServer@{SyscallServer}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{SyscallServer()}
+{\footnotesize\ttfamily \label{classSyscallServer_afb60dec7d79967fd4fc45a499da9c5e6} 
+Syscall\+Server\+::\+Syscall\+Server (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 16} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+PERIODIC}, \textbf{ hook\+\_\+periodic()}, \textbf{ m\+\_\+reschedule\+\_\+cost}, and \textbf{ Subsecond\+Time\+::\+NS()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_afb60dec7d79967fd4fc45a499da9c5e6_cgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!````~SyscallServer@{$\sim$SyscallServer}}
+\index{````~SyscallServer@{$\sim$SyscallServer}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{$\sim$SyscallServer()}
+{\footnotesize\ttfamily \label{classSyscallServer_a36876cb07c257ee9e23cf7c3588f248c} 
+Syscall\+Server\+::$\sim$\+Syscall\+Server (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 23} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{SyscallServer@{SyscallServer}!applyRescheduleCost@{applyRescheduleCost}}
+\index{applyRescheduleCost@{applyRescheduleCost}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{applyRescheduleCost()}
+{\footnotesize\ttfamily \label{classSyscallServer_aa0287b0b9fb0943391596454d4944c5d} 
+\textbf{ Subsecond\+Time} Syscall\+Server\+::apply\+Reschedule\+Cost (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{bool}]{conditional}{ = {\ttfamily true}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+reschedule\+\_\+cost}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ futex\+Wake()}, \textbf{ futex\+Wake\+Op()}, and \textbf{ wake\+Futex\+One()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_aa0287b0b9fb0943391596454d4944c5d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_aa0287b0b9fb0943391596454d4944c5d_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!findFutexByUaddr@{findFutexByUaddr}}
+\index{findFutexByUaddr@{findFutexByUaddr}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{findFutexByUaddr()}
+{\footnotesize\ttfamily \label{classSyscallServer_afcf09a098eaae5f9d36e24b867162f53} 
+\textbf{ Sim\+Futex} $\ast$ Syscall\+Server\+::find\+Futex\+By\+Uaddr (\begin{DoxyParamCaption}\item[{int $\ast$}]{uaddr}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 123} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+futexes}.
+
+
+
+Referenced by \textbf{ futex\+Cmp\+Requeue()}, \textbf{ futex\+Wait()}, \textbf{ futex\+Wake()}, and \textbf{ futex\+Wake\+Op()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_afcf09a098eaae5f9d36e24b867162f53_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!futexCmpRequeue@{futexCmpRequeue}}
+\index{futexCmpRequeue@{futexCmpRequeue}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{futexCmpRequeue()}
+{\footnotesize\ttfamily \label{classSyscallServer_a2120c2c7d79693f7a2c6a41f74b1de36} 
+\textbf{ Int\+Ptr} Syscall\+Server\+::futex\+Cmp\+Requeue (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{int $\ast$}]{uaddr}{, }\item[{int}]{val}{, }\item[{int $\ast$}]{uaddr2}{, }\item[{int}]{val3}{, }\item[{int}]{act\+\_\+val}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time} \&}]{end\+\_\+time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 280} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ Sim\+Futex\+::dequeue\+Waiter()}, \textbf{ find\+Futex\+By\+Uaddr()}, \textbf{ FUTEX\+\_\+\+BITSET\+\_\+\+MATCH\+\_\+\+ANY}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ Sim\+Futex\+::requeue\+Waiter()}.
+
+
+
+Referenced by \textbf{ handle\+Futex\+Call()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a2120c2c7d79693f7a2c6a41f74b1de36_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a2120c2c7d79693f7a2c6a41f74b1de36_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!futexDoOp@{futexDoOp}}
+\index{futexDoOp@{futexDoOp}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{futexDoOp()}
+{\footnotesize\ttfamily \label{classSyscallServer_ae1e26df7e14f313436890348aaf24026} 
+int Syscall\+Server\+::futex\+Do\+Op (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{int}]{op}{, }\item[{int $\ast$}]{uaddr}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 176} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Core\+::\+LOCK}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING\+\_\+\+ONCE}, \textbf{ Core\+::\+READ\+\_\+\+EX}, \textbf{ Core\+::\+UNLOCK}, and \textbf{ Core\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ futex\+Wake\+Op()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_ae1e26df7e14f313436890348aaf24026_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_ae1e26df7e14f313436890348aaf24026_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!futexPeriodic@{futexPeriodic}}
+\index{futexPeriodic@{futexPeriodic}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{futexPeriodic()}
+{\footnotesize\ttfamily \label{classSyscallServer_a4c9057078776d6402e2d0c4347ca04c1} 
+void Syscall\+Server\+::futex\+Periodic (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 320} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+futexes}, and \textbf{ m\+\_\+sleeping}.
+
+\index{SyscallServer@{SyscallServer}!futexWait@{futexWait}}
+\index{futexWait@{futexWait}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{futexWait()}
+{\footnotesize\ttfamily \label{classSyscallServer_a66bed254b0dc016e510bd88a95439995} 
+\textbf{ Int\+Ptr} Syscall\+Server\+::futex\+Wait (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{int $\ast$}]{uaddr}{, }\item[{int}]{val}{, }\item[{int}]{act\+\_\+val}{, }\item[{int}]{val3}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time}}]{timeout\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time} \&}]{end\+\_\+time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ Sim\+Futex\+::enqueue\+Waiter()}, \textbf{ find\+Futex\+By\+Uaddr()}, and \textbf{ LOG\+\_\+\+PRINT}.
+
+
+
+Referenced by \textbf{ handle\+Futex\+Call()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=327pt]{classSyscallServer_a66bed254b0dc016e510bd88a95439995_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a66bed254b0dc016e510bd88a95439995_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!futexWake@{futexWake}}
+\index{futexWake@{futexWake}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{futexWake()}
+{\footnotesize\ttfamily \label{classSyscallServer_a74cc1a88e98a6a2d4168deb35c48867e} 
+\textbf{ Int\+Ptr} Syscall\+Server\+::futex\+Wake (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{int $\ast$}]{uaddr}{, }\item[{int}]{nr\+\_\+wake}{, }\item[{int}]{val3}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time} \&}]{end\+\_\+time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 157} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ apply\+Reschedule\+Cost()}, \textbf{ find\+Futex\+By\+Uaddr()}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ wake\+Futex\+One()}.
+
+
+
+Referenced by \textbf{ handle\+Futex\+Call()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a74cc1a88e98a6a2d4168deb35c48867e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a74cc1a88e98a6a2d4168deb35c48867e_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!futexWakeOp@{futexWakeOp}}
+\index{futexWakeOp@{futexWakeOp}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{futexWakeOp()}
+{\footnotesize\ttfamily \label{classSyscallServer_acd0b467c6783ad1a2af48be32ed72761} 
+\textbf{ Int\+Ptr} Syscall\+Server\+::futex\+Wake\+Op (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{int $\ast$}]{uaddr}{, }\item[{int $\ast$}]{uaddr2}{, }\item[{int}]{nr\+\_\+wake}{, }\item[{int}]{nr\+\_\+wake2}{, }\item[{int}]{op}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time} \&}]{end\+\_\+time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 244} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ apply\+Reschedule\+Cost()}, \textbf{ find\+Futex\+By\+Uaddr()}, \textbf{ FUTEX\+\_\+\+BITSET\+\_\+\+MATCH\+\_\+\+ANY}, \textbf{ futex\+Do\+Op()}, \textbf{ Thread\+::get\+Core()}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ wake\+Futex\+One()}.
+
+
+
+Referenced by \textbf{ handle\+Futex\+Call()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_acd0b467c6783ad1a2af48be32ed72761_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_acd0b467c6783ad1a2af48be32ed72761_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!getNextTimeout@{getNextTimeout}}
+\index{getNextTimeout@{getNextTimeout}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{getNextTimeout()}
+{\footnotesize\ttfamily \label{classSyscallServer_adb1d207a700e72dce2b046531ed255ea} 
+\textbf{ Subsecond\+Time} Syscall\+Server\+::get\+Next\+Timeout (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 343} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+futexes}, \textbf{ m\+\_\+sleeping}, and \textbf{ Subsecond\+Time\+::\+Max\+Time()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_adb1d207a700e72dce2b046531ed255ea_cgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!handleFutexCall@{handleFutexCall}}
+\index{handleFutexCall@{handleFutexCall}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{handleFutexCall()}
+{\footnotesize\ttfamily \label{classSyscallServer_ad6b4ae0f28e20aca4755b754eba9fde1} 
+\textbf{ Int\+Ptr} Syscall\+Server\+::handle\+Futex\+Call (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ futex\+\_\+args\+\_\+t} \&}]{args}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time} \&}]{end\+\_\+time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ CLOG}, \textbf{ FUTEX\+\_\+\+BITSET\+\_\+\+MATCH\+\_\+\+ANY}, \textbf{ FUTEX\+\_\+\+CMD\+\_\+\+MASK}, \textbf{ FUTEX\+\_\+\+PRIVATE\+\_\+\+FLAG}, \textbf{ FUTEX\+\_\+\+WAIT\+\_\+\+BITSET}, \textbf{ FUTEX\+\_\+\+WAKE\+\_\+\+BITSET}, \textbf{ futex\+Cmp\+Requeue()}, \textbf{ futex\+Wait()}, \textbf{ futex\+Wake()}, \textbf{ futex\+Wake\+Op()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+WARNING\+\_\+\+ONCE}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Core\+::\+NONE}, \textbf{ Subsecond\+Time\+::\+NS()}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::op}, \textbf{ Core\+::\+READ}, \textbf{ Subsecond\+Time\+::\+SEC()}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::timeout}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::uaddr}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::uaddr2}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::val}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::val2}, and \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::val3}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_ad6b4ae0f28e20aca4755b754eba9fde1_cgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!handleSleepCall@{handleSleepCall}}
+\index{handleSleepCall@{handleSleepCall}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{handleSleepCall()}
+{\footnotesize\ttfamily \label{classSyscallServer_a5c72dc9f472b1a4721d3b7dc501e14e1} 
+void Syscall\+Server\+::handle\+Sleep\+Call (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{wake\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{, }\item[{\textbf{ Subsecond\+Time} \&}]{end\+\_\+time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+sleeping}, and \textbf{ Thread\+Manager\+::\+STALL\+\_\+\+SLEEP}.
+
+\index{SyscallServer@{SyscallServer}!hook\_periodic@{hook\_periodic}}
+\index{hook\_periodic@{hook\_periodic}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{hook\_periodic()}
+{\footnotesize\ttfamily \label{classSyscallServer_a1510369969f0edd290b22c498e9e45aa} 
+static \textbf{ SInt64} Syscall\+Server\+::hook\+\_\+periodic (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 81} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ Syscall\+Server()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{classSyscallServer_a1510369969f0edd290b22c498e9e45aa_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallServer@{SyscallServer}!wakeFutexOne@{wakeFutexOne}}
+\index{wakeFutexOne@{wakeFutexOne}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{wakeFutexOne()}
+{\footnotesize\ttfamily \label{classSyscallServer_a1e021502bd9ba4fe0cf25251aa9d2298} 
+\textbf{ thread\+\_\+id\+\_\+t} Syscall\+Server\+::wake\+Futex\+One (\begin{DoxyParamCaption}\item[{\textbf{ Sim\+Futex} $\ast$}]{sim\+\_\+futex}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+by}{, }\item[{int}]{mask}{, }\item[{\textbf{ Subsecond\+Time}}]{curr\+\_\+time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 151} of file \textbf{ syscall\+\_\+server.\+cc}.
+
+
+
+References \textbf{ apply\+Reschedule\+Cost()}, and \textbf{ Sim\+Futex\+::dequeue\+Waiter()}.
+
+
+
+Referenced by \textbf{ futex\+Wake()}, and \textbf{ futex\+Wake\+Op()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a1e021502bd9ba4fe0cf25251aa9d2298_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallServer_a1e021502bd9ba4fe0cf25251aa9d2298_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Friends And Related Symbol Documentation}
+\index{SyscallServer@{SyscallServer}!ThreadManager@{ThreadManager}}
+\index{ThreadManager@{ThreadManager}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{ThreadManager}
+{\footnotesize\ttfamily \label{classSyscallServer_a2a28fc3c6cee05204a42286ac77ace1a} 
+friend class \textbf{ Thread\+Manager}\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 96} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{SyscallServer@{SyscallServer}!m\_futexes@{m\_futexes}}
+\index{m\_futexes@{m\_futexes}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{m\_futexes}
+{\footnotesize\ttfamily \label{classSyscallServer_a8c78a43f8ba8a0b40e7e52c391b5239d} 
+\textbf{ Futex\+Map} Syscall\+Server\+::m\+\_\+futexes\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 94} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ find\+Futex\+By\+Uaddr()}, \textbf{ futex\+Periodic()}, and \textbf{ get\+Next\+Timeout()}.
+
+\index{SyscallServer@{SyscallServer}!m\_reschedule\_cost@{m\_reschedule\_cost}}
+\index{m\_reschedule\_cost@{m\_reschedule\_cost}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{m\_reschedule\_cost}
+{\footnotesize\ttfamily \label{classSyscallServer_a99e65bf91e47060f0f9f49b7b96c51c6} 
+\textbf{ Subsecond\+Time} Syscall\+Server\+::m\+\_\+reschedule\+\_\+cost\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 87} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ apply\+Reschedule\+Cost()}, and \textbf{ Syscall\+Server()}.
+
+\index{SyscallServer@{SyscallServer}!m\_sleeping@{m\_sleeping}}
+\index{m\_sleeping@{m\_sleeping}!SyscallServer@{SyscallServer}}
+\doxysubsubsection{m\_sleeping}
+{\footnotesize\ttfamily \label{classSyscallServer_a703118956a200698c5f56a84fe46be7b} 
+\textbf{ Sim\+Futex\+::\+Thread\+Queue} Syscall\+Server\+::m\+\_\+sleeping\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ syscall\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ futex\+Periodic()}, \textbf{ get\+Next\+Timeout()}, and \textbf{ handle\+Sleep\+Call()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ syscall\+\_\+server.\+h}\item 
+common/system/\textbf{ syscall\+\_\+server.\+cc}\end{DoxyCompactItemize}

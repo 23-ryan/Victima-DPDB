@@ -1,0 +1,91 @@
+\doxysection{config\+\_\+exceptions.\+hpp}
+\label{config__exceptions_8hpp_source}\index{common/config/config\_exceptions.hpp@{common/config/config\_exceptions.hpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//Exceptions\ that\ the\ library\ might\ throw\ in\ case\ of}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//error\ conditions\ as\ noted.}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ CONFIG\_EXCEPTIONS\_HPP}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ CONFIG\_EXCEPTIONS\_HPP}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <exception>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//This\ error\ gets\ thrown\ then\ the\ parse\ is\ unsuccessful}}
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }parserError:\ \textcolor{keyword}{public}\ std::exception}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00017\ \ \ \ \ parserError(\textcolor{keyword}{const}\ String\ \&\ leftover)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ m\_leftover(\textcolor{stringliteral}{"{}parser\ Error:\ "{}}\ +\ leftover)}
+\DoxyCodeLine{00020\ \ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keyword}{virtual}\ \string~parserError()\ throw()\ \{\}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ what()\ \textcolor{keyword}{const}\ throw()}
+\DoxyCodeLine{00026\ \ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_leftover.c\_str();}
+\DoxyCodeLine{00028\ \ \ \ \ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ String\ m\_leftover;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//This\ error\ gets\ thrown\ when\ a\ key\ is\ not\ found}}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }KeyNotFound:\ \textcolor{keyword}{public}\ std::exception}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ what()\ \textcolor{keyword}{const}\ throw()}
+\DoxyCodeLine{00039\ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}Key\ not\ found."{}};}
+\DoxyCodeLine{00041\ \ \ \ \ \}}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//This\ error\ gets\ thrown\ when\ a\ key\ is\ not\ found}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{class\ }FileNotFound:\ \textcolor{keyword}{public}\ std::exception}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00048\ \ \ \ \ FileNotFound(\textcolor{keyword}{const}\ String\ \&filename)}
+\DoxyCodeLine{00049\ \ \ \ \ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ m\_filename\ =\ String(\textcolor{stringliteral}{"{}File\ not\ found:\ ["{}})\ +\ filename\ +\ String(\textcolor{stringliteral}{"{}]"{}});}
+\DoxyCodeLine{00051\ \ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{virtual}\ \string~FileNotFound()\ throw()\ \{\}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ what()\ \textcolor{keyword}{const}\ throw()}
+\DoxyCodeLine{00054\ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_filename.c\_str();}
+\DoxyCodeLine{00056\ \ \ \ \ \}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00058\ \ \ \ \ String\ m\_filename;}
+\DoxyCodeLine{00059\ \};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{comment}{//This\ error\ gets\ thrown\ then\ the\ parse\ is\ unsuccessful}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{class\ }SaveError:\ \textcolor{keyword}{public}\ std::exception}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00066\ \ \ \ \ SaveError(\textcolor{keyword}{const}\ String\ \&\ error\_str)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ m\_error(\textcolor{stringliteral}{"{}Save\ Error:\ "{}}\ +\ error\_str)}
+\DoxyCodeLine{00069\ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{virtual}\ \string~SaveError()\ throw()\ \{\}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ what()\ \textcolor{keyword}{const}\ throw()}
+\DoxyCodeLine{00075\ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_error.c\_str();}
+\DoxyCodeLine{00077\ \ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ String\ m\_error;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

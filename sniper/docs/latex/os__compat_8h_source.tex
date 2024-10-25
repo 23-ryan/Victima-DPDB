@@ -1,0 +1,71 @@
+\doxysection{os\+\_\+compat.\+h}
+\label{os__compat_8h_source}\index{common/misc/os\_compat.h@{common/misc/os\_compat.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Define\ missing\ macros\ when\ compiling\ on\ older\ kernels}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ FUTEX\_WAIT\_BITSET}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#\ \ define\ FUTEX\_WAIT\_BITSET\ 9}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ FUTEX\_WAKE\_BITSET}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#\ \ define\ FUTEX\_WAKE\_BITSET\ 10}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#ifndef\ FUTEX\_BITSET\_MATCH\_ANY}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#\ \ define\ FUTEX\_BITSET\_MATCH\_ANY\ 0xffffffff}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#ifndef\ FUTEX\_PRIVATE\_FLAG}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ On\ older\ kernels\ that\ don't\ know\ about\ FUTEX\_PRIVATE\_FLAG:\ don't\ use\ it}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ (Might\ be\ slightly\ slower\ but\ should\ still\ work)}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#\ \ define\ FUTEX\_PRIVATE\_FLAG\ 0}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ Older\ kernels\ only\ cut\ out\ the\ flags\ they\ know\ about,\ we\ want\ just\ the\ lower\ bits}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#undef\ FUTEX\_CMD\_MASK}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ FUTEX\_CMD\_MASK\ 0x7f}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifndef\ CLOCK\_MONOTONIC\_RAW}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ CLOCK\_MONOTONIC\_RAW\ 4}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#ifndef\ CLOCK\_MONOTONIC\_COARSE}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ CLOCK\_MONOTONIC\_COARSE\ 6}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#ifndef\ CPU\_SET\_S}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#\ define\ CPU\_SET\_S(cpu,\ setsize,\ cpusetp)\ \ \ \_\_CPU\_SET\_S\ (cpu,\ setsize,\ cpusetp)}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#\ define\ CPU\_CLR\_S(cpu,\ setsize,\ cpusetp)\ \ \ \_\_CPU\_CLR\_S\ (cpu,\ setsize,\ cpusetp)}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#\ define\ CPU\_ISSET\_S(cpu,\ setsize,\ cpusetp)\ \_\_CPU\_ISSET\_S\ (cpu,\ setsize,\ \(\backslash\)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpusetp)}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#\ define\ CPU\_ZERO\_S(setsize,\ cpusetp)\ \ \ \ \ \ \ \_\_CPU\_ZERO\_S\ (setsize,\ cpusetp)}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#\ define\ CPU\_COUNT\_S(setsize,\ cpusetp)\ \ \ \ \ \ \_\_CPU\_COUNT\_S\ (setsize,\ cpusetp)}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#\ define\ \_\_CPU\_SET\_S(cpu,\ setsize,\ cpusetp)\ \(\backslash\)}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ (\_\_extension\_\_\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ (\{\ size\_t\ \_\_cpu\ =\ (cpu);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \ \ \_\_cpu\ <\ 8\ *\ (setsize)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ \ \ ?\ (((\_\_cpu\_mask\ *)\ ((cpusetp)-\/>\_\_bits))[\_\_CPUELT\ (\_\_cpu)]\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ |=\ \_\_CPUMASK\ (\_\_cpu))\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \ \ :\ 0;\ \}))}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#\ define\ \_\_CPU\_CLR\_S(cpu,\ setsize,\ cpusetp)\ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ (\_\_extension\_\_\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ (\{\ size\_t\ \_\_cpu\ =\ (cpu);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ \ \ \_\_cpu\ <\ 8\ *\ (setsize)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \ \ ?\ (((\_\_cpu\_mask\ *)\ ((cpusetp)-\/>\_\_bits))[\_\_CPUELT\ (\_\_cpu)]\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \&=\ \string~\_\_CPUMASK\ (\_\_cpu))\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \ \ :\ 0;\ \}))}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#\ define\ \_\_CPU\_ISSET\_S(cpu,\ setsize,\ cpusetp)\ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ \ (\_\_extension\_\_\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ (\{\ size\_t\ \_\_cpu\ =\ (cpu);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\ \ \ \ \ \ \_\_cpu\ <\ 8\ *\ (setsize)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ \ \ \ ?\ ((((\_\_const\ \_\_cpu\_mask\ *)\ ((cpusetp)-\/>\_\_bits))[\_\_CPUELT\ (\_\_cpu)]\ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \&\ \_\_CPUMASK\ (\_\_cpu)))\ !=\ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \ \ \ :\ 0;\ \}))}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#\ \ define\ \_\_CPU\_ZERO\_S(setsize,\ cpusetp)\ \(\backslash\)}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ do\ \_\_builtin\_memset\ (cpusetp,\ '\(\backslash\)0',\ setsize);\ while\ (0)}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#\ define\ \_\_CPU\_COUNT\_S(setsize,\ cpusetp)\ \(\backslash\)}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \_\_sched\_cpucount\ (setsize,\ cpusetp)}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

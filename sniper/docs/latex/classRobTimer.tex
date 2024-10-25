@@ -1,0 +1,1489 @@
+\doxysection{Rob\+Timer Class Reference}
+\label{classRobTimer}\index{RobTimer@{RobTimer}}
+
+
+{\ttfamily \#include $<$rob\+\_\+timer.\+h$>$}
+
+
+
+Collaboration diagram for Rob\+Timer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Rob\+Entry}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Rob\+Timer} (\textbf{ Core} $\ast$core, \textbf{ Performance\+Model} $\ast$\textbf{ perf}, const \textbf{ Core\+Model} $\ast$core\+\_\+model, int \textbf{ misprediction\+\_\+penalty}, int dispatch\+\_\+width, int window\+\_\+size)
+\item 
+\textbf{ $\sim$\+Rob\+Timer} ()
+\item 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ Subsecond\+Time} $>$ \textbf{ simulate} (const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&insts)
+\item 
+void \textbf{ synchronize} (\textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef \textbf{ Circular\+Queue}$<$ \textbf{ Rob\+Entry} $>$ \textbf{ Rob}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Rob\+Entry} $\ast$ \textbf{ find\+Entry\+By\+Sequence\+Number} (\textbf{ UInt64} sequence\+Number)
+\item 
+\textbf{ Subsecond\+Time} $\ast$ \textbf{ find\+Cpi\+Component} ()
+\item 
+void \textbf{ count\+Outstanding\+Memop} (\textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ print\+Rob} ()
+\item 
+void \textbf{ execute} (\textbf{ uint64\+\_\+t} \&instructions\+Executed, \textbf{ Subsecond\+Time} \&latency)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ do\+Dispatch} (\textbf{ Subsecond\+Time} $\ast$$\ast$cpi\+Component)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ do\+Issue} ()
+\item 
+\textbf{ Subsecond\+Time} \textbf{ do\+Commit} (\textbf{ uint64\+\_\+t} \&instructions\+Executed)
+\item 
+void \textbf{ issue\+Instruction} (\textbf{ uint64\+\_\+t} idx, \textbf{ Subsecond\+Time} \&next\+\_\+event)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ dispatch\+Width}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ commit\+Width}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ window\+Size}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ rs\+Entries}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ misprediction\+\_\+penalty}
+\item 
+const bool \textbf{ m\+\_\+store\+\_\+to\+\_\+load\+\_\+forwarding}
+\item 
+const bool \textbf{ m\+\_\+no\+\_\+address\+\_\+disambiguation}
+\item 
+const bool \textbf{ inorder}
+\item 
+\textbf{ Core} $\ast$ \textbf{ m\+\_\+core}
+\item 
+\textbf{ Rob} \textbf{ rob}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}
+\item 
+\textbf{ Rob\+Contention} $\ast$ \textbf{ m\+\_\+rob\+\_\+contention}
+\item 
+\textbf{ Component\+Time} \textbf{ now}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ frontend\+\_\+stalled\+\_\+until}
+\item 
+bool \textbf{ in\+\_\+icache\+\_\+miss}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ last\+\_\+store\+\_\+done}
+\item 
+\textbf{ Contention\+Model} \textbf{ load\+\_\+queue}
+\item 
+\textbf{ Contention\+Model} \textbf{ store\+\_\+queue}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ next\+Sequence\+Number}
+\item 
+bool \textbf{ will\+\_\+skip}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ time\+\_\+skipped}
+\item 
+\textbf{ Register\+Dependencies} $\ast$const \textbf{ register\+Dependencies}
+\item 
+\textbf{ Memory\+Dependencies} $\ast$const \textbf{ memory\+Dependencies}
+\item 
+int \textbf{ address\+Mask}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uop\+\_\+type\+\_\+count} [\textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}]
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uops\+\_\+total}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uops\+\_\+x87}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uops\+\_\+pause}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+ICache\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+BPred\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+DCache\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Long\+Latency\+Loads}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Serialization\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Serialization\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Hidden\+Longer\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Hidden\+Longer\+DCache\+Latency}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+outstanding\+Long\+Latency\+Insns}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+outstanding\+Long\+Latency\+Cycles}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+last\+Accounted\+Memory\+Cycle}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+loads\+\_\+count}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+loads\+\_\+latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+stores\+\_\+count}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+stores\+\_\+latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Producer\+Ins\+Distance}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Consumers}
+\item 
+std\+::vector$<$ \textbf{ uint64\+\_\+t} $>$ \textbf{ m\+\_\+producer\+Ins\+Distance}
+\item 
+\textbf{ Performance\+Model} $\ast$ \textbf{ perf}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Mfence\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Mfence\+Latency}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Base}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Branch\+Predictor}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Serialization}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+RSFull}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+cpi\+Instruction\+Cache}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+cpi\+Data\+Cache}
+\item 
+\textbf{ Subsecond\+Time} $\ast$ \textbf{ m\+\_\+cpi\+Current\+Front\+End\+Stall}
+\item 
+const bool \textbf{ m\+\_\+mlp\+\_\+histogram}
+\item 
+std\+::vector$<$ std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ $>$ \textbf{ m\+\_\+outstanding\+Loads}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+outstanding\+Loads\+All}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const unsigned int \textbf{ MAX\+\_\+\+OUTSTANDING} = 32
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 14} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{RobTimer@{RobTimer}!Rob@{Rob}}
+\index{Rob@{Rob}!RobTimer@{RobTimer}}
+\doxysubsubsection{Rob}
+{\footnotesize\ttfamily \label{classRobTimer_a75446a251faf16924c3979f677687c57} 
+\textbf{ Circular\+Queue}$<$\textbf{ Rob\+Entry}$>$ \textbf{ Rob\+Timer\+::\+Rob}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 59} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{RobTimer@{RobTimer}!RobTimer@{RobTimer}}
+\index{RobTimer@{RobTimer}!RobTimer@{RobTimer}}
+\doxysubsubsection{RobTimer()}
+{\footnotesize\ttfamily \label{classRobTimer_af2166e212a0f3e8e8d9bfded1391e223} 
+Rob\+Timer\+::\+Rob\+Timer (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Performance\+Model} $\ast$}]{perf}{, }\item[{const \textbf{ Core\+Model} $\ast$}]{core\+\_\+model}{, }\item[{int}]{misprediction\+\_\+penalty}{, }\item[{int}]{dispatch\+\_\+width}{, }\item[{int}]{window\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Id()}, \textbf{ Micro\+Op\+::get\+Subtype\+String()}, \textbf{ Hit\+Where\+Is\+Valid()}, \textbf{ Hit\+Where\+String()}, \textbf{ itostr()}, \textbf{ m\+\_\+cpi\+Base}, \textbf{ m\+\_\+cpi\+Branch\+Predictor}, \textbf{ m\+\_\+cpi\+Data\+Cache}, \textbf{ m\+\_\+cpi\+Instruction\+Cache}, \textbf{ m\+\_\+cpi\+RSFull}, \textbf{ m\+\_\+cpi\+Serialization}, \textbf{ m\+\_\+last\+Accounted\+Memory\+Cycle}, \textbf{ m\+\_\+loads\+\_\+count}, \textbf{ m\+\_\+loads\+\_\+latency}, \textbf{ m\+\_\+mlp\+\_\+histogram}, \textbf{ m\+\_\+num\+Mfence\+Insns}, \textbf{ m\+\_\+num\+Serialization\+Insns}, \textbf{ m\+\_\+outstanding\+Loads}, \textbf{ m\+\_\+outstanding\+Loads\+All}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Cycles}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Insns}, \textbf{ m\+\_\+producer\+Ins\+Distance}, \textbf{ m\+\_\+stores\+\_\+count}, \textbf{ m\+\_\+stores\+\_\+latency}, \textbf{ m\+\_\+total\+Consumers}, \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}, \textbf{ m\+\_\+total\+Mfence\+Latency}, \textbf{ m\+\_\+total\+Producer\+Ins\+Distance}, \textbf{ m\+\_\+total\+Serialization\+Latency}, \textbf{ m\+\_\+uop\+\_\+type\+\_\+count}, \textbf{ m\+\_\+uops\+\_\+pause}, \textbf{ m\+\_\+uops\+\_\+total}, \textbf{ m\+\_\+uops\+\_\+x87}, \textbf{ MAX\+\_\+\+OUTSTANDING}, \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}, \textbf{ register\+Stats\+Metric()}, \textbf{ time\+\_\+skipped}, \textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}, \textbf{ Hit\+Where\+::\+WHERE\+\_\+\+FIRST}, \textbf{ window\+Size}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_af2166e212a0f3e8e8d9bfded1391e223_cgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!````~RobTimer@{$\sim$RobTimer}}
+\index{````~RobTimer@{$\sim$RobTimer}!RobTimer@{RobTimer}}
+\doxysubsubsection{$\sim$RobTimer()}
+{\footnotesize\ttfamily \label{classRobTimer_a36910d2fe2d599b1902da1918111438c} 
+Rob\+Timer\+::$\sim$\+Rob\+Timer (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 176} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::begin()}, and \textbf{ rob}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=295pt]{classRobTimer_a36910d2fe2d599b1902da1918111438c_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Function Documentation}
+\index{RobTimer@{RobTimer}!countOutstandingMemop@{countOutstandingMemop}}
+\index{countOutstandingMemop@{countOutstandingMemop}!RobTimer@{RobTimer}}
+\doxysubsubsection{countOutstandingMemop()}
+{\footnotesize\ttfamily \label{classRobTimer_a14a4944caa5a0c24a44979fb266b70c4} 
+void Rob\+Timer\+::count\+Outstanding\+Memop (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 955} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+outstanding\+Loads}, \textbf{ m\+\_\+outstanding\+Loads\+All}, \textbf{ MAX\+\_\+\+OUTSTANDING}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}, \textbf{ rob}, and \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a14a4944caa5a0c24a44979fb266b70c4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a14a4944caa5a0c24a44979fb266b70c4_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!doCommit@{doCommit}}
+\index{doCommit@{doCommit}!RobTimer@{RobTimer}}
+\doxysubsubsection{doCommit()}
+{\footnotesize\ttfamily \label{classRobTimer_a279ada9eab327ce4a59572ba07815da6} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::do\+Commit (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t} \&}]{instructions\+Executed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 831} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ commit\+Width}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::dispatched}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::free()}, \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Last()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::issued}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+core}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Circular\+Queue$<$ T $>$\+::pop()}, \textbf{ rob}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ Performance\+Model\+::trace\+Instruction()}, \textbf{ uint64\+\_\+t}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ will\+\_\+skip}.
+
+
+
+Referenced by \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a279ada9eab327ce4a59572ba07815da6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a279ada9eab327ce4a59572ba07815da6_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!doDispatch@{doDispatch}}
+\index{doDispatch@{doDispatch}!RobTimer@{RobTimer}}
+\doxysubsubsection{doDispatch()}
+{\footnotesize\ttfamily \label{classRobTimer_a18346d1d3c338299014aca63077067ed} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::do\+Dispatch (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time} $\ast$$\ast$}]{cpi\+Component}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 438} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::dispatched}, \textbf{ dispatch\+Width}, \textbf{ find\+Cpi\+Component()}, \textbf{ frontend\+\_\+stalled\+\_\+until}, \textbf{ Dynamic\+Micro\+Op\+::get\+ICache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+ICache\+Latency()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ in\+\_\+icache\+\_\+miss}, \textbf{ Micro\+Op\+::is\+Branch()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Branch\+Mispredicted()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Last()}, \textbf{ Hit\+Where\+::\+L1I}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+cpi\+Base}, \textbf{ m\+\_\+cpi\+Branch\+Predictor}, \textbf{ m\+\_\+cpi\+Current\+Front\+End\+Stall}, \textbf{ m\+\_\+cpi\+Instruction\+Cache}, \textbf{ m\+\_\+cpi\+RSFull}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ rob}, \textbf{ rs\+Entries}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ uint32\+\_\+t}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}, \textbf{ will\+\_\+skip}, and \textbf{ window\+Size}.
+
+
+
+Referenced by \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a18346d1d3c338299014aca63077067ed_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a18346d1d3c338299014aca63077067ed_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!doIssue@{doIssue}}
+\index{doIssue@{doIssue}!RobTimer@{RobTimer}}
+\doxysubsubsection{doIssue()}
+{\footnotesize\ttfamily \label{classRobTimer_a571711b71d54d6b21581890ff01dbd4a} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::do\+Issue (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 697} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::address\+Ready}, \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ dispatch\+Width}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Contention\+Model\+::has\+Free\+Slot()}, \textbf{ Rob\+Contention\+::init\+Cycle()}, \textbf{ inorder}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Long\+Latency\+Load()}, \textbf{ Micro\+Op\+::is\+Mem\+Barrier()}, \textbf{ Micro\+Op\+::is\+Serializing()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ issue\+Instruction()}, \textbf{ Hit\+Where\+::\+L1\+\_\+\+OWN}, \textbf{ last\+\_\+store\+\_\+done}, \textbf{ load\+\_\+queue}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+last\+Accounted\+Memory\+Cycle}, \textbf{ m\+\_\+no\+\_\+address\+\_\+disambiguation}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Cycles}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Insns}, \textbf{ m\+\_\+rob\+\_\+contention}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Rob\+Contention\+::no\+More()}, \textbf{ now}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ rob}, \textbf{ store\+\_\+queue}, \textbf{ Rob\+Contention\+::try\+Issue()}, \textbf{ uint64\+\_\+t}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ will\+\_\+skip}.
+
+
+
+Referenced by \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a571711b71d54d6b21581890ff01dbd4a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a571711b71d54d6b21581890ff01dbd4a_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!execute@{execute}}
+\index{execute@{execute}!RobTimer@{RobTimer}}
+\doxysubsubsection{execute()}
+{\footnotesize\ttfamily \label{classRobTimer_a3e0c8a04a75c42ad634b2ec1a80004a9} 
+void Rob\+Timer\+::execute (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t} \&}]{instructions\+Executed}{, }\item[{\textbf{ Subsecond\+Time} \&}]{latency}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 874} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ count\+Outstanding\+Memop()}, \textbf{ dispatch\+Width}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ frontend\+\_\+stalled\+\_\+until}, \textbf{ Component\+Time\+::get\+Period()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+mlp\+\_\+histogram}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ print\+Rob()}, \textbf{ rob}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ time\+\_\+skipped}, \textbf{ will\+\_\+skip}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classRobTimer_a3e0c8a04a75c42ad634b2ec1a80004a9_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a3e0c8a04a75c42ad634b2ec1a80004a9_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!findCpiComponent@{findCpiComponent}}
+\index{findCpiComponent@{findCpiComponent}!RobTimer@{RobTimer}}
+\doxysubsubsection{findCpiComponent()}
+{\footnotesize\ttfamily \label{classRobTimer_afa414a68fb0519b49895b662883c4af7} 
+\textbf{ Subsecond\+Time} $\ast$ Rob\+Timer\+::find\+Cpi\+Component (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 414} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Mem\+Barrier()}, \textbf{ Micro\+Op\+::is\+Serializing()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ m\+\_\+cpi\+Data\+Cache}, \textbf{ m\+\_\+cpi\+Serialization}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ now}, \textbf{ rob}, \textbf{ uint64\+\_\+t}, and \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_afa414a68fb0519b49895b662883c4af7_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_afa414a68fb0519b49895b662883c4af7_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!findEntryBySequenceNumber@{findEntryBySequenceNumber}}
+\index{findEntryBySequenceNumber@{findEntryBySequenceNumber}!RobTimer@{RobTimer}}
+\doxysubsubsection{findEntryBySequenceNumber()}
+{\footnotesize\ttfamily \label{classRobTimer_a7526e6f4e0c56ed13b2699915fe562f4} 
+\textbf{ Rob\+Timer\+::\+Rob\+Entry} $\ast$ Rob\+Timer\+::find\+Entry\+By\+Sequence\+Number (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{sequence\+Number}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 242} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ rob}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, and \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, and \textbf{ simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a7526e6f4e0c56ed13b2699915fe562f4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a7526e6f4e0c56ed13b2699915fe562f4_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!issueInstruction@{issueInstruction}}
+\index{issueInstruction@{issueInstruction}!RobTimer@{RobTimer}}
+\doxysubsubsection{issueInstruction()}
+{\footnotesize\ttfamily \label{classRobTimer_a8fb94eb2c913ce4dacaf50791b016ed2} 
+void Rob\+Timer\+::issue\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{idx}{, }\item[{\textbf{ Subsecond\+Time} \&}]{next\+\_\+event}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 567} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Memory\+::\+Access\+::address}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::address\+Ready}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::address\+Ready\+Max}, \textbf{ Subsecond\+Time\+::divide\+Rounded()}, \textbf{ Rob\+Contention\+::do\+Issue()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ frontend\+\_\+stalled\+\_\+until}, \textbf{ Dynamic\+Micro\+Op\+::get\+Address()}, \textbf{ Instruction\+::get\+Address()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Address\+Producer()}, \textbf{ Contention\+Model\+::get\+Completion\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Dependant()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependencies\+Length()}, \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Micro\+Op\+::get\+Instruction()}, \textbf{ Micro\+Op\+::get\+Memory\+Access\+Size()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Num\+Address\+Producers()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Num\+Dependants()}, \textbf{ Component\+Time\+::get\+Period()}, \textbf{ Subsecond\+Time\+::get\+PS()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ Memory\+Result\+::hit\+\_\+where}, \textbf{ Micro\+Op\+::is\+Branch()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Branch\+Mispredicted()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::issued}, \textbf{ last\+\_\+store\+\_\+done}, \textbf{ Memory\+Result\+::latency}, \textbf{ load\+\_\+queue}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+core}, \textbf{ m\+\_\+loads\+\_\+count}, \textbf{ m\+\_\+loads\+\_\+latency}, \textbf{ m\+\_\+rob\+\_\+contention}, \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}, \textbf{ m\+\_\+stores\+\_\+count}, \textbf{ m\+\_\+stores\+\_\+latency}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+RETURN}, \textbf{ misprediction\+\_\+penalty}, \textbf{ Core\+::\+NONE}, \textbf{ now}, \textbf{ Core\+::\+READ}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready\+Max}, \textbf{ Dynamic\+Micro\+Op\+::remove\+Dependency()}, \textbf{ rob}, \textbf{ Dynamic\+Micro\+Op\+::set\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::set\+Exec\+Latency()}, \textbf{ store\+\_\+queue}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ uint64\+\_\+t}, \textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ Core\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ do\+Issue()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classRobTimer_a8fb94eb2c913ce4dacaf50791b016ed2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a8fb94eb2c913ce4dacaf50791b016ed2_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!printRob@{printRob}}
+\index{printRob@{printRob}!RobTimer@{RobTimer}}
+\doxysubsubsection{printRob()}
+{\footnotesize\ttfamily \label{classRobTimer_a8930f55c2be43ca73a9f976aa9719f38} 
+void Rob\+Timer\+::print\+Rob (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 976} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Memory\+::\+Access\+::address}, \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ frontend\+\_\+stalled\+\_\+until}, \textbf{ Dynamic\+Micro\+Op\+::get\+Address()}, \textbf{ Instruction\+::get\+Address()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependencies\+Length()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependency()}, \textbf{ Instruction\+::get\+Disassembly()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Micro\+Op\+::get\+Instruction()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Contention\+Model\+::get\+Num\+Used()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ in\+\_\+icache\+\_\+miss}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ load\+\_\+queue}, \textbf{ m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ rob}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ store\+\_\+queue}, \textbf{ uint32\+\_\+t}, and \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a8930f55c2be43ca73a9f976aa9719f38_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a8930f55c2be43ca73a9f976aa9719f38_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!simulate@{simulate}}
+\index{simulate@{simulate}!RobTimer@{RobTimer}}
+\doxysubsubsection{simulate()}
+{\footnotesize\ttfamily \label{classRobTimer_ad2b05e2133e28b1da22fa3e3dcad92ab} 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ Subsecond\+Time} $>$ Rob\+Timer\+::simulate (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&}]{insts}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 253} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::add\+Address\+Producer()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::add\+Dependant()}, \textbf{ Dynamic\+Micro\+Op\+::add\+Dependency()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::address\+Ready}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::address\+Ready\+Max}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ execute()}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Address\+Producer()}, \textbf{ Micro\+Op\+::get\+Address\+Register()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Dependant()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependencies\+Length()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependency()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Num\+Address\+Producers()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::get\+Num\+Dependants()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::init()}, \textbf{ INVALID\+\_\+\+SEQNR}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING\+\_\+\+ONCE}, \textbf{ m\+\_\+producer\+Ins\+Distance}, \textbf{ m\+\_\+store\+\_\+to\+\_\+load\+\_\+forwarding}, \textbf{ m\+\_\+total\+Consumers}, \textbf{ m\+\_\+total\+Producer\+Ins\+Distance}, \textbf{ m\+\_\+uop\+\_\+type\+\_\+count}, \textbf{ m\+\_\+uops\+\_\+pause}, \textbf{ m\+\_\+uops\+\_\+total}, \textbf{ m\+\_\+uops\+\_\+x87}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ memory\+Dependencies}, \textbf{ Circular\+Queue$<$ T $>$\+::next()}, \textbf{ next\+Sequence\+Number}, \textbf{ Register\+Dependencies\+::peek\+Producer()}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::ready\+Max}, \textbf{ register\+Dependencies}, \textbf{ Dynamic\+Micro\+Op\+::remove\+Dependency()}, \textbf{ rob}, \textbf{ Memory\+Dependencies\+::set\+Dependencies()}, \textbf{ Register\+Dependencies\+::set\+Dependencies()}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ uint64\+\_\+t}, \textbf{ Rob\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Rob\+Performance\+Model\+::simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classRobTimer_ad2b05e2133e28b1da22fa3e3dcad92ab_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=294pt]{classRobTimer_ad2b05e2133e28b1da22fa3e3dcad92ab_icgraph}
+\end{center}
+\end{figure}
+\index{RobTimer@{RobTimer}!synchronize@{synchronize}}
+\index{synchronize@{synchronize}!RobTimer@{RobTimer}}
+\doxysubsubsection{synchronize()}
+{\footnotesize\ttfamily \label{classRobTimer_a1137fdaecf638423d93437753ffb216b} 
+void Rob\+Timer\+::synchronize (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 406} of file \textbf{ rob\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ now}, and \textbf{ Component\+Time\+::set\+Elapsed\+Time()}.
+
+
+
+Referenced by \textbf{ Rob\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobTimer_a1137fdaecf638423d93437753ffb216b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=325pt]{classRobTimer_a1137fdaecf638423d93437753ffb216b_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{RobTimer@{RobTimer}!addressMask@{addressMask}}
+\index{addressMask@{addressMask}!RobTimer@{RobTimer}}
+\doxysubsubsection{addressMask}
+{\footnotesize\ttfamily \label{classRobTimer_a9f64b816098e1c4300f6bc79e9d13e35} 
+int Rob\+Timer\+::address\+Mask\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 79} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!commitWidth@{commitWidth}}
+\index{commitWidth@{commitWidth}!RobTimer@{RobTimer}}
+\doxysubsubsection{commitWidth}
+{\footnotesize\ttfamily \label{classRobTimer_a66b49abb3a0c4f5a2f7348e7cacdf67c} 
+const \textbf{ uint64\+\_\+t} Rob\+Timer\+::commit\+Width\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Commit()}.
+
+\index{RobTimer@{RobTimer}!dispatchWidth@{dispatchWidth}}
+\index{dispatchWidth@{dispatchWidth}!RobTimer@{RobTimer}}
+\doxysubsubsection{dispatchWidth}
+{\footnotesize\ttfamily \label{classRobTimer_a8ef804ef830aca4be8350fd96f5ed518} 
+const \textbf{ uint64\+\_\+t} Rob\+Timer\+::dispatch\+Width\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, and \textbf{ execute()}.
+
+\index{RobTimer@{RobTimer}!frontend\_stalled\_until@{frontend\_stalled\_until}}
+\index{frontend\_stalled\_until@{frontend\_stalled\_until}!RobTimer@{RobTimer}}
+\doxysubsubsection{frontend\_stalled\_until}
+{\footnotesize\ttfamily \label{classRobTimer_a02134b0ba2dbce84fcaa4b2207b1d21b} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::frontend\+\_\+stalled\+\_\+until\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 66} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, \textbf{ execute()}, \textbf{ issue\+Instruction()}, and \textbf{ print\+Rob()}.
+
+\index{RobTimer@{RobTimer}!in\_icache\_miss@{in\_icache\_miss}}
+\index{in\_icache\_miss@{in\_icache\_miss}!RobTimer@{RobTimer}}
+\doxysubsubsection{in\_icache\_miss}
+{\footnotesize\ttfamily \label{classRobTimer_a66271770c4e2394c2570ea43d81bd58b} 
+bool Rob\+Timer\+::in\+\_\+icache\+\_\+miss\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 67} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, and \textbf{ print\+Rob()}.
+
+\index{RobTimer@{RobTimer}!inorder@{inorder}}
+\index{inorder@{inorder}!RobTimer@{RobTimer}}
+\doxysubsubsection{inorder}
+{\footnotesize\ttfamily \label{classRobTimer_a81b249f9f8815c1af855c08b95bdb8a3} 
+const bool Rob\+Timer\+::inorder\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}.
+
+\index{RobTimer@{RobTimer}!last\_store\_done@{last\_store\_done}}
+\index{last\_store\_done@{last\_store\_done}!RobTimer@{RobTimer}}
+\doxysubsubsection{last\_store\_done}
+{\footnotesize\ttfamily \label{classRobTimer_a3ba1398b0bd2e4a49f44e4ad32833736} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::last\+\_\+store\+\_\+done\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, and \textbf{ issue\+Instruction()}.
+
+\index{RobTimer@{RobTimer}!load\_queue@{load\_queue}}
+\index{load\_queue@{load\_queue}!RobTimer@{RobTimer}}
+\doxysubsubsection{load\_queue}
+{\footnotesize\ttfamily \label{classRobTimer_a561bf26762d6fc8462dbbf0cd2491f02} 
+\textbf{ Contention\+Model} Rob\+Timer\+::load\+\_\+queue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 69} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, \textbf{ issue\+Instruction()}, and \textbf{ print\+Rob()}.
+
+\index{RobTimer@{RobTimer}!m\_core@{m\_core}}
+\index{m\_core@{m\_core}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_core}
+{\footnotesize\ttfamily \label{classRobTimer_ad920b4091bcf9909675d2203c61cbf34} 
+\textbf{ Core}$\ast$ Rob\+Timer\+::m\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 57} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Commit()}, and \textbf{ issue\+Instruction()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiBase@{m\_cpiBase}}
+\index{m\_cpiBase@{m\_cpiBase}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiBase}
+{\footnotesize\ttfamily \label{classRobTimer_a4eb24c785dd8e4a5f650a250d1086e7c} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+cpi\+Base\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 123} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiBranchPredictor@{m\_cpiBranchPredictor}}
+\index{m\_cpiBranchPredictor@{m\_cpiBranchPredictor}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiBranchPredictor}
+{\footnotesize\ttfamily \label{classRobTimer_ae46bc0950a530a2f4e31785ceb901581} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+cpi\+Branch\+Predictor\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 124} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiCurrentFrontEndStall@{m\_cpiCurrentFrontEndStall}}
+\index{m\_cpiCurrentFrontEndStall@{m\_cpiCurrentFrontEndStall}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiCurrentFrontEndStall}
+{\footnotesize\ttfamily \label{classRobTimer_a765b9e27040fc02fee9e31a32b1826f5} 
+\textbf{ Subsecond\+Time}$\ast$ Rob\+Timer\+::m\+\_\+cpi\+Current\+Front\+End\+Stall\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiDataCache@{m\_cpiDataCache}}
+\index{m\_cpiDataCache@{m\_cpiDataCache}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiDataCache}
+{\footnotesize\ttfamily \label{classRobTimer_a7cb27f28cdfca24165f9e629f7471b99} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Rob\+Timer\+::m\+\_\+cpi\+Data\+Cache\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 129} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ find\+Cpi\+Component()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiInstructionCache@{m\_cpiInstructionCache}}
+\index{m\_cpiInstructionCache@{m\_cpiInstructionCache}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiInstructionCache}
+{\footnotesize\ttfamily \label{classRobTimer_a9425f9545fff0a7affb570cfa7f75c30} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Rob\+Timer\+::m\+\_\+cpi\+Instruction\+Cache\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 128} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiRSFull@{m\_cpiRSFull}}
+\index{m\_cpiRSFull@{m\_cpiRSFull}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiRSFull}
+{\footnotesize\ttfamily \label{classRobTimer_a4bf472f0109419b4b9be2c617fd38765} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+cpi\+RSFull\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 126} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_cpiSerialization@{m\_cpiSerialization}}
+\index{m\_cpiSerialization@{m\_cpiSerialization}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_cpiSerialization}
+{\footnotesize\ttfamily \label{classRobTimer_a0122cf833754a796c603aeccd766f93a} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+cpi\+Serialization\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 125} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ find\+Cpi\+Component()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_lastAccountedMemoryCycle@{m\_lastAccountedMemoryCycle}}
+\index{m\_lastAccountedMemoryCycle@{m\_lastAccountedMemoryCycle}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_lastAccountedMemoryCycle}
+{\footnotesize\ttfamily \label{classRobTimer_ab08ae1617828b18d307376232b8faea6} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+last\+Accounted\+Memory\+Cycle\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_loads\_count@{m\_loads\_count}}
+\index{m\_loads\_count@{m\_loads\_count}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_loads\_count}
+{\footnotesize\ttfamily \label{classRobTimer_afebe97b840e461f8f4c28af0221cc7d5} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+loads\+\_\+count\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 104} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_loads\_latency@{m\_loads\_latency}}
+\index{m\_loads\_latency@{m\_loads\_latency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_loads\_latency}
+{\footnotesize\ttfamily \label{classRobTimer_a60ce642a86f1395ab50ae784dcc12df5} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+loads\+\_\+latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 105} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_mlp\_histogram@{m\_mlp\_histogram}}
+\index{m\_mlp\_histogram@{m\_mlp\_histogram}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_mlp\_histogram}
+{\footnotesize\ttfamily \label{classRobTimer_aa5ac5792b5bd7936ed9c89b091f90f60} 
+const bool Rob\+Timer\+::m\+\_\+mlp\+\_\+histogram\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 133} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ execute()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_no\_address\_disambiguation@{m\_no\_address\_disambiguation}}
+\index{m\_no\_address\_disambiguation@{m\_no\_address\_disambiguation}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_no\_address\_disambiguation}
+{\footnotesize\ttfamily \label{classRobTimer_aa5470fc3e4fe6e843d7ca5a9ee0d06bf} 
+const bool Rob\+Timer\+::m\+\_\+no\+\_\+address\+\_\+disambiguation\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 54} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}.
+
+\index{RobTimer@{RobTimer}!m\_num\_in\_rob@{m\_num\_in\_rob}}
+\index{m\_num\_in\_rob@{m\_num\_in\_rob}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_num\_in\_rob}
+{\footnotesize\ttfamily \label{classRobTimer_afd4c925bd1f21f5ad90162fc8f681f1b} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+\_\+in\+\_\+rob\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 61} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ execute()}, \textbf{ find\+Cpi\+Component()}, and \textbf{ print\+Rob()}.
+
+\index{RobTimer@{RobTimer}!m\_numBPredOverlapped@{m\_numBPredOverlapped}}
+\index{m\_numBPredOverlapped@{m\_numBPredOverlapped}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numBPredOverlapped}
+{\footnotesize\ttfamily \label{classRobTimer_a6b025bda02368eade66fbe87614c7313} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+BPred\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 87} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_numDCacheOverlapped@{m\_numDCacheOverlapped}}
+\index{m\_numDCacheOverlapped@{m\_numDCacheOverlapped}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numDCacheOverlapped}
+{\footnotesize\ttfamily \label{classRobTimer_a678558272bbeece3bef591b44814fdc3} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+DCache\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 88} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_numHiddenLongerDCacheLatency@{m\_numHiddenLongerDCacheLatency}}
+\index{m\_numHiddenLongerDCacheLatency@{m\_numHiddenLongerDCacheLatency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numHiddenLongerDCacheLatency}
+{\footnotesize\ttfamily \label{classRobTimer_a2fe9fb1d37de6d96f580c478aecc552d} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+Hidden\+Longer\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 98} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_numICacheOverlapped@{m\_numICacheOverlapped}}
+\index{m\_numICacheOverlapped@{m\_numICacheOverlapped}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numICacheOverlapped}
+{\footnotesize\ttfamily \label{classRobTimer_a9ee504f4492ccd9c11ebf071ad7c6795} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+ICache\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 86} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_numLongLatencyLoads@{m\_numLongLatencyLoads}}
+\index{m\_numLongLatencyLoads@{m\_numLongLatencyLoads}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numLongLatencyLoads}
+{\footnotesize\ttfamily \label{classRobTimer_a68ab3d70c4059b920077cf7fe28fa37c} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+Long\+Latency\+Loads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_numMfenceInsns@{m\_numMfenceInsns}}
+\index{m\_numMfenceInsns@{m\_numMfenceInsns}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numMfenceInsns}
+{\footnotesize\ttfamily \label{classRobTimer_a65d3f614fd6400dc533630a2b21920b7} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+Mfence\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_numSerializationInsns@{m\_numSerializationInsns}}
+\index{m\_numSerializationInsns@{m\_numSerializationInsns}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numSerializationInsns}
+{\footnotesize\ttfamily \label{classRobTimer_ad7b10a874beb780af6d3eee3547b603c} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+Serialization\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 93} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_numTotalLongLatencyLoadLatency@{m\_numTotalLongLatencyLoadLatency}}
+\index{m\_numTotalLongLatencyLoadLatency@{m\_numTotalLongLatencyLoadLatency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_numTotalLongLatencyLoadLatency}
+{\footnotesize\ttfamily \label{classRobTimer_ac758fb1d62a5a84ca7165b7660a1825e} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 91} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_outstandingLoads@{m\_outstandingLoads}}
+\index{m\_outstandingLoads@{m\_outstandingLoads}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_outstandingLoads}
+{\footnotesize\ttfamily \label{classRobTimer_adccd1eb64095ca7add80d63682b17f84} 
+std\+::vector$<$std\+::vector$<$\textbf{ Subsecond\+Time}$>$ $>$ Rob\+Timer\+::m\+\_\+outstanding\+Loads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 135} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_outstandingLoadsAll@{m\_outstandingLoadsAll}}
+\index{m\_outstandingLoadsAll@{m\_outstandingLoadsAll}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_outstandingLoadsAll}
+{\footnotesize\ttfamily \label{classRobTimer_acc1412bb1596e4387e9c9dd5891381d9} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Rob\+Timer\+::m\+\_\+outstanding\+Loads\+All\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 136} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_outstandingLongLatencyCycles@{m\_outstandingLongLatencyCycles}}
+\index{m\_outstandingLongLatencyCycles@{m\_outstandingLongLatencyCycles}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_outstandingLongLatencyCycles}
+{\footnotesize\ttfamily \label{classRobTimer_aa497df16a04788092f61dbf30a03d692} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+outstanding\+Long\+Latency\+Cycles\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 101} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_outstandingLongLatencyInsns@{m\_outstandingLongLatencyInsns}}
+\index{m\_outstandingLongLatencyInsns@{m\_outstandingLongLatencyInsns}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_outstandingLongLatencyInsns}
+{\footnotesize\ttfamily \label{classRobTimer_a1323acd54485478416af34c1b58ad48f} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+outstanding\+Long\+Latency\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_producerInsDistance@{m\_producerInsDistance}}
+\index{m\_producerInsDistance@{m\_producerInsDistance}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_producerInsDistance}
+{\footnotesize\ttfamily \label{classRobTimer_aad343282beb9ce3dd24285b1c6a056f8} 
+std\+::vector$<$\textbf{ uint64\+\_\+t}$>$ Rob\+Timer\+::m\+\_\+producer\+Ins\+Distance\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_rob\_contention@{m\_rob\_contention}}
+\index{m\_rob\_contention@{m\_rob\_contention}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_rob\_contention}
+{\footnotesize\ttfamily \label{classRobTimer_a284ed15622d6e5ffb12d77fa52145203} 
+\textbf{ Rob\+Contention}$\ast$ Rob\+Timer\+::m\+\_\+rob\+\_\+contention\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 63} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, and \textbf{ issue\+Instruction()}.
+
+\index{RobTimer@{RobTimer}!m\_rs\_entries\_used@{m\_rs\_entries\_used}}
+\index{m\_rs\_entries\_used@{m\_rs\_entries\_used}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_rs\_entries\_used}
+{\footnotesize\ttfamily \label{classRobTimer_a0a60a7fcbf5c3c2e95565f86b52bb3c9} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+rs\+\_\+entries\+\_\+used\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, \textbf{ issue\+Instruction()}, and \textbf{ print\+Rob()}.
+
+\index{RobTimer@{RobTimer}!m\_store\_to\_load\_forwarding@{m\_store\_to\_load\_forwarding}}
+\index{m\_store\_to\_load\_forwarding@{m\_store\_to\_load\_forwarding}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_store\_to\_load\_forwarding}
+{\footnotesize\ttfamily \label{classRobTimer_afd50021dfc85bdfa89fef09f56ac9604} 
+const bool Rob\+Timer\+::m\+\_\+store\+\_\+to\+\_\+load\+\_\+forwarding\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_stores\_count@{m\_stores\_count}}
+\index{m\_stores\_count@{m\_stores\_count}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_stores\_count}
+{\footnotesize\ttfamily \label{classRobTimer_a20bde40b90ee2a97abd5e92aba739b2d} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+stores\+\_\+count\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 106} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_stores\_latency@{m\_stores\_latency}}
+\index{m\_stores\_latency@{m\_stores\_latency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_stores\_latency}
+{\footnotesize\ttfamily \label{classRobTimer_a95746eed50d02689b294bc5a9744fd8c} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::m\+\_\+stores\+\_\+latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 107} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_totalConsumers@{m\_totalConsumers}}
+\index{m\_totalConsumers@{m\_totalConsumers}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_totalConsumers}
+{\footnotesize\ttfamily \label{classRobTimer_aa68089e7fce03770ad0607a560211eaa} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+total\+Consumers\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 110} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_totalHiddenDCacheLatency@{m\_totalHiddenDCacheLatency}}
+\index{m\_totalHiddenDCacheLatency@{m\_totalHiddenDCacheLatency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_totalHiddenDCacheLatency}
+{\footnotesize\ttfamily \label{classRobTimer_aa9649d9e4fca1cd3f4e03bf14e16dcf3} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+total\+Hidden\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 96} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_totalHiddenLongerDCacheLatency@{m\_totalHiddenLongerDCacheLatency}}
+\index{m\_totalHiddenLongerDCacheLatency@{m\_totalHiddenLongerDCacheLatency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_totalHiddenLongerDCacheLatency}
+{\footnotesize\ttfamily \label{classRobTimer_a2ddf9e7ebc0d1b03244fb64220e60ef9} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+total\+Hidden\+Longer\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!m\_totalMfenceLatency@{m\_totalMfenceLatency}}
+\index{m\_totalMfenceLatency@{m\_totalMfenceLatency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_totalMfenceLatency}
+{\footnotesize\ttfamily \label{classRobTimer_aa17272cf48e3b610a1b3e5eab067fc73} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+total\+Mfence\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 120} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_totalProducerInsDistance@{m\_totalProducerInsDistance}}
+\index{m\_totalProducerInsDistance@{m\_totalProducerInsDistance}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_totalProducerInsDistance}
+{\footnotesize\ttfamily \label{classRobTimer_a4c5442fb3cd6baf066c8d021471e0c9d} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+total\+Producer\+Ins\+Distance\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_totalSerializationLatency@{m\_totalSerializationLatency}}
+\index{m\_totalSerializationLatency@{m\_totalSerializationLatency}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_totalSerializationLatency}
+{\footnotesize\ttfamily \label{classRobTimer_a1943f0e8733d57575daa6d5e8bdb23eb} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::m\+\_\+total\+Serialization\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 94} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!m\_uop\_type\_count@{m\_uop\_type\_count}}
+\index{m\_uop\_type\_count@{m\_uop\_type\_count}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_uop\_type\_count}
+{\footnotesize\ttfamily \label{classRobTimer_a9b647e639d241988ca40338474c6c2f5} 
+\textbf{ UInt64} Rob\+Timer\+::m\+\_\+uop\+\_\+type\+\_\+count[\textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}]\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 81} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_uops\_pause@{m\_uops\_pause}}
+\index{m\_uops\_pause@{m\_uops\_pause}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_uops\_pause}
+{\footnotesize\ttfamily \label{classRobTimer_a4f760fb3f154d1f981e1ce6a8ffd5546} 
+\textbf{ UInt64} Rob\+Timer\+::m\+\_\+uops\+\_\+pause\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 84} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_uops\_total@{m\_uops\_total}}
+\index{m\_uops\_total@{m\_uops\_total}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_uops\_total}
+{\footnotesize\ttfamily \label{classRobTimer_ad2d8c8b862a19fe6880cf8354cafc4a6} 
+\textbf{ UInt64} Rob\+Timer\+::m\+\_\+uops\+\_\+total\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 82} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!m\_uops\_x87@{m\_uops\_x87}}
+\index{m\_uops\_x87@{m\_uops\_x87}!RobTimer@{RobTimer}}
+\doxysubsubsection{m\_uops\_x87}
+{\footnotesize\ttfamily \label{classRobTimer_a4c5df53dfb46e12b5fc527f2adf9f146} 
+\textbf{ UInt64} Rob\+Timer\+::m\+\_\+uops\+\_\+x87\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 83} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Timer()}, and \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!MAX\_OUTSTANDING@{MAX\_OUTSTANDING}}
+\index{MAX\_OUTSTANDING@{MAX\_OUTSTANDING}!RobTimer@{RobTimer}}
+\doxysubsubsection{MAX\_OUTSTANDING}
+{\footnotesize\ttfamily \label{classRobTimer_a5e0cb83e58eed4fdd6decc7d6277a864} 
+const unsigned int Rob\+Timer\+::\+MAX\+\_\+\+OUTSTANDING = 32\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 134} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!memoryDependencies@{memoryDependencies}}
+\index{memoryDependencies@{memoryDependencies}!RobTimer@{RobTimer}}
+\doxysubsubsection{memoryDependencies}
+{\footnotesize\ttfamily \label{classRobTimer_a0ce6de31a8013faf707fad79db0fd839} 
+\textbf{ Memory\+Dependencies}$\ast$ const Rob\+Timer\+::memory\+Dependencies\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 77} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!misprediction\_penalty@{misprediction\_penalty}}
+\index{misprediction\_penalty@{misprediction\_penalty}!RobTimer@{RobTimer}}
+\doxysubsubsection{misprediction\_penalty}
+{\footnotesize\ttfamily \label{classRobTimer_ac75e6a4d6761a8f8f314020a110dc218} 
+const \textbf{ uint64\+\_\+t} Rob\+Timer\+::misprediction\+\_\+penalty\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}.
+
+\index{RobTimer@{RobTimer}!nextSequenceNumber@{nextSequenceNumber}}
+\index{nextSequenceNumber@{nextSequenceNumber}!RobTimer@{RobTimer}}
+\doxysubsubsection{nextSequenceNumber}
+{\footnotesize\ttfamily \label{classRobTimer_af2032370dbfd1588f954365f55d647f5} 
+\textbf{ uint64\+\_\+t} Rob\+Timer\+::next\+Sequence\+Number\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 72} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!now@{now}}
+\index{now@{now}!RobTimer@{RobTimer}}
+\doxysubsubsection{now}
+{\footnotesize\ttfamily \label{classRobTimer_af6d14291da14aa6759157d30c6489334} 
+\textbf{ Component\+Time} Rob\+Timer\+::now\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ execute()}, \textbf{ find\+Cpi\+Component()}, \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, and \textbf{ synchronize()}.
+
+\index{RobTimer@{RobTimer}!perf@{perf}}
+\index{perf@{perf}!RobTimer@{RobTimer}}
+\doxysubsubsection{perf}
+{\footnotesize\ttfamily \label{classRobTimer_a7228a0f454be3e088a999159418ae1f3} 
+\textbf{ Performance\+Model}$\ast$ Rob\+Timer\+::perf\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 113} of file \textbf{ rob\+\_\+timer.\+h}.
+
+\index{RobTimer@{RobTimer}!registerDependencies@{registerDependencies}}
+\index{registerDependencies@{registerDependencies}!RobTimer@{RobTimer}}
+\doxysubsubsection{registerDependencies}
+{\footnotesize\ttfamily \label{classRobTimer_a497d0622fe38db4a22295a76f6e1ce88} 
+\textbf{ Register\+Dependencies}$\ast$ const Rob\+Timer\+::register\+Dependencies\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+\index{RobTimer@{RobTimer}!rob@{rob}}
+\index{rob@{rob}!RobTimer@{RobTimer}}
+\doxysubsubsection{rob}
+{\footnotesize\ttfamily \label{classRobTimer_ad74d30385b57e42cd85d78cc22b89d82} 
+\textbf{ Rob} Rob\+Timer\+::rob\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ execute()}, \textbf{ find\+Cpi\+Component()}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, \textbf{ simulate()}, and \textbf{ $\sim$\+Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!rsEntries@{rsEntries}}
+\index{rsEntries@{rsEntries}!RobTimer@{RobTimer}}
+\doxysubsubsection{rsEntries}
+{\footnotesize\ttfamily \label{classRobTimer_ad639822f23140e0e4193985eb79bebeb} 
+const \textbf{ uint64\+\_\+t} Rob\+Timer\+::rs\+Entries\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}.
+
+\index{RobTimer@{RobTimer}!store\_queue@{store\_queue}}
+\index{store\_queue@{store\_queue}!RobTimer@{RobTimer}}
+\doxysubsubsection{store\_queue}
+{\footnotesize\ttfamily \label{classRobTimer_a2490e1144d6358b09908a934b818bc1b} 
+\textbf{ Contention\+Model} Rob\+Timer\+::store\+\_\+queue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, \textbf{ issue\+Instruction()}, and \textbf{ print\+Rob()}.
+
+\index{RobTimer@{RobTimer}!time\_skipped@{time\_skipped}}
+\index{time\_skipped@{time\_skipped}!RobTimer@{RobTimer}}
+\doxysubsubsection{time\_skipped}
+{\footnotesize\ttfamily \label{classRobTimer_a5d3946c6fbb5e54bbf8f0202e755b911} 
+\textbf{ Subsecond\+Time} Rob\+Timer\+::time\+\_\+skipped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 74} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ execute()}, and \textbf{ Rob\+Timer()}.
+
+\index{RobTimer@{RobTimer}!will\_skip@{will\_skip}}
+\index{will\_skip@{will\_skip}!RobTimer@{RobTimer}}
+\doxysubsubsection{will\_skip}
+{\footnotesize\ttfamily \label{classRobTimer_acb0a7bc4983326af703d18dc75c15393} 
+bool Rob\+Timer\+::will\+\_\+skip\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 73} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, and \textbf{ execute()}.
+
+\index{RobTimer@{RobTimer}!windowSize@{windowSize}}
+\index{windowSize@{windowSize}!RobTimer@{RobTimer}}
+\doxysubsubsection{windowSize}
+{\footnotesize\ttfamily \label{classRobTimer_ac1d767d9e0e8709857691ee6cc117f08} 
+const \textbf{ uint64\+\_\+t} Rob\+Timer\+::window\+Size\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ rob\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}, and \textbf{ Rob\+Timer()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/performance\+\_\+model/performance\+\_\+models/rob\+\_\+performance\+\_\+model/\textbf{ rob\+\_\+timer.\+h}\item 
+common/performance\+\_\+model/performance\+\_\+models/rob\+\_\+performance\+\_\+model/\textbf{ rob\+\_\+timer.\+cc}\end{DoxyCompactItemize}

@@ -1,0 +1,97 @@
+\doxysection{routine\+\_\+tracer.\+h}
+\label{routine__tracer_8h_source}\index{common/system/routine\_tracer.h@{common/system/routine\_tracer.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_ROUTINE\_TRACER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_ROUTINE\_TRACER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <deque>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <boost/functional/hash.hpp>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ From\ http://stackoverflow.com/questions/8027368/are-\/there-\/no-\/specializations-\/of-\/stdhash-\/for-\/standard-\/containers}}
+\DoxyCodeLine{00011\ \textcolor{keyword}{namespace\ }std}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{struct\ }hash<std::deque<T>\ >}
+\DoxyCodeLine{00015\ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ operator()(\textcolor{keyword}{const}\ std::deque<T>\&\ a)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00017\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ boost::hash\_range(a.begin(),\ a.end());}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00020\ \ \ \ \};}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{typedef}\ std::deque<IntPtr>\ CallStack;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{class\ }RoutineTracerThread}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ RoutineTracerThread(Thread\ *thread);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~RoutineTracerThread();}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ routineEnter(IntPtr\ eip,\ IntPtr\ esp,\ IntPtr\ returnEip);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ routineExit(IntPtr\ eip,\ IntPtr\ esp);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ mallocEnter(IntPtr\ eip,\ IntPtr\ esp,\ IntPtr\ returnEip);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ mallocExit(IntPtr\ eip,\ IntPtr\ esp)\ \{\};}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ routineAssert(IntPtr\ eip,\ IntPtr\ esp);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{const}\ CallStack\&\ getCallStack()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_stack;\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ Thread\ *m\_thread;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ CallStack\ m\_stack;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ IntPtr\ m\_last\_esp;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ unwindTo(IntPtr\ eip);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ routineEnter\_unlocked(IntPtr\ eip,\ IntPtr\ esp,\ IntPtr\ callEip);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionEnter(IntPtr\ eip,\ IntPtr\ callEip)\ =\ 0;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionExit(IntPtr\ eip)\ =\ 0;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionChildEnter(IntPtr\ eip,\ IntPtr\ eip\_child)\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionChildExit(IntPtr\ eip,\ IntPtr\ eip\_child)\ =\ 0;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ hookRoiBegin();}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ hookRoiEnd();}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ \_\_hook\_roi\_begin(UInt64\ user,\ UInt64\ arg)\ \{\ ((RoutineTracerThread*)user)-\/>hookRoiBegin();\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ \_\_hook\_roi\_end(UInt64\ user,\ UInt64\ arg)\ \{\ ((RoutineTracerThread*)user)-\/>hookRoiEnd();\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00062\ \};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{class\ }RoutineTracer}
+\DoxyCodeLine{00065\ \{}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keyword}{class\ }Routine}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ IntPtr\ m\_eip;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *m\_name,\ *m\_imgname,\ *m\_filename,\ *m\_location;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ m\_offset;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ m\_column,\ m\_line;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ Routine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateLocation(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keyword}{static}\ RoutineTracer*\ create();}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ RoutineTracer();}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~RoutineTracer();}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)\ =\ 0;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ hasRoutine(IntPtr\ eip)\ =\ 0;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ RoutineTracerThread*\ getThreadHandler(Thread\ *thread)\ =\ 0;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ Routine*\ getRoutineInfo(IntPtr\ eip)\ \{\ \textcolor{keywordflow}{return}\ NULL;\ \}}
+\DoxyCodeLine{00089\ \};}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_ROUTINE\_TRACER\_H}}
+
+\end{DoxyCode}

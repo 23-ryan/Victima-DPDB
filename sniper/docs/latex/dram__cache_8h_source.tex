@@ -1,0 +1,53 @@
+\doxysection{dram\+\_\+cache.\+h}
+\label{dram__cache_8h_source}\index{common/core/memory\_subsystem/dram/dram\_cache.h@{common/core/memory\_subsystem/dram/dram\_cache.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DRAM\_CACHE}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DRAM\_CACHE}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dram\_cntlr\_interface.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}contention\_model.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }QueueModel;}
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }Prefetcher;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }DramCache\ :\ \textcolor{keyword}{public}\ DramCntlrInterface}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ DramCache(MemoryManagerBase*\ memory\_manager,\ ShmemPerfModel*\ shmem\_perf\_model,\ AddressHomeLookup*\ home\_lookup,\ UInt32\ cache\_block\_size,\ DramCntlrInterface\ *dram\_cntlr);}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \string~DramCache();}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ getDataFromDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_matadata);}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ putDataToDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\textcolor{keywordtype}{bool}\ is\_matadata);}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ SubsecondTime\ m\_data\_access\_time;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ SubsecondTime\ m\_tags\_access\_time;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ ComponentBandwidth\ m\_data\_array\_bandwidth;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ AddressHomeLookup*\ m\_home\_lookup;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ DramCntlrInterface*\ m\_dram\_cntlr;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ Cache*\ m\_cache;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ QueueModel*\ m\_queue\_model;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ Prefetcher*\ m\_prefetcher;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_prefetch\_on\_prefetch\_hit;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ ContentionModel\ m\_prefetch\_mshr;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ UInt64\ m\_reads,\ m\_writes;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ UInt64\ m\_read\_misses,\ m\_write\_misses;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ UInt64\ m\_hits\_prefetch,\ m\_prefetches;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ SubsecondTime\ m\_prefetch\_mshr\_delay;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ std::pair<bool,\ SubsecondTime>\ doAccess(Cache::access\_t\ access,\ IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ insertLine(Cache::access\_t\ access,\ IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ SubsecondTime\ accessDataArray(Cache::access\_t\ access,\ core\_id\_t\ requester,\ SubsecondTime\ t\_start,\ ShmemPerf\ *perf);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ callPrefetcher(IntPtr\ address,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ SubsecondTime\ t\_issue);}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_DRAM\_CACHE}}
+
+\end{DoxyCode}

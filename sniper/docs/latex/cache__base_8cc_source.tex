@@ -1,0 +1,205 @@
+\doxysection{cache\+\_\+base.\+cc}
+\label{cache__base_8cc_source}\index{common/core/memory\_subsystem/cache/cache\_base.cc@{common/core/memory\_subsystem/cache/cache\_base.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_base.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}rng.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ CacheBase::CacheBase(}
+\DoxyCodeLine{00008\ \ \ \ String\ name,\ UInt32\ num\_sets,\ UInt32\ associativity,\ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00009\ \ \ \ CacheBase::hash\_t\ hash,\ AddressHomeLookup\ *ahl)}
+\DoxyCodeLine{00010\ :}
+\DoxyCodeLine{00011\ \ \ \ m\_name(name),}
+\DoxyCodeLine{00012\ \ \ \ m\_cache\_size(UInt64(num\_sets)\ *\ associativity\ *\ cache\_block\_size),}
+\DoxyCodeLine{00013\ \ \ \ m\_associativity(associativity),}
+\DoxyCodeLine{00014\ \ \ \ m\_blocksize(cache\_block\_size),}
+\DoxyCodeLine{00015\ \ \ \ m\_hash(hash),}
+\DoxyCodeLine{00016\ \ \ \ m\_num\_sets(num\_sets),}
+\DoxyCodeLine{00017\ \ \ \ m\_ahl(ahl)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ m\_log\_blocksize\ =\ floorLog2(m\_blocksize);}
+\DoxyCodeLine{00020\ \ \ \ m\_log\_num\_sets\ =\ floorLog2(m\_num\_sets);}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ LOG\_ASSERT\_ERROR((m\_num\_sets\ ==\ (1UL\ <<\ floorLog2(m\_num\_sets)))\ ||\ (hash\ !=\ CacheBase::HASH\_MASK),}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Caches\ of\ non-\/power\ of\ 2\ size\ need\ funky\ hash\ function"{}});}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ CacheBase::\string~CacheBase()}
+\DoxyCodeLine{00027\ \{\}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ utilities}}
+\DoxyCodeLine{00030\ CacheBase::hash\_t}
+\DoxyCodeLine{00031\ CacheBase::parseAddressHash(String\ hash\_name)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}mask"{}})}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_MASK;}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}mod"{}})}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_MOD;}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}rng1\_mod"{}})}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_RNG1\_MOD;}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}rng2\_mod"{}})}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_RNG2\_MOD;}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}prime\_dis"{}})}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_PRIME\_DIS;}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}xor\_mod"{}})}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_XOR\_MOD;}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (hash\_name\ ==\ \textcolor{stringliteral}{"{}mersenne\_mod"{}})}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::HASH\_MER\_MOD;}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ address\ hash\ function\ \%s"{}},\ hash\_name.c\_str());}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00052\ CacheBase::splitAddress(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00054\ \ \ \ tag\ =\ addr\ >>\ m\_log\_blocksize;}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ IntPtr\ linearAddress\ =\ m\_ahl\ ?\ m\_ahl-\/>getLinearAddress(addr)\ :\ addr;}
+\DoxyCodeLine{00057\ \ \ \ IntPtr\ block\_num\ =\ linearAddress\ >>\ m\_log\_blocksize;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{switch}(m\_hash)}
+\DoxyCodeLine{00060\ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_MASK:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ set\_index\ =\ block\_num\ \&\ (m\_num\_sets-\/1);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_MOD:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ set\_index\ =\ block\_num\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_RNG1\_MOD:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ UInt64\ state\ =\ rng\_seed(block\_num);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ set\_index\ =\ rng\_next(state)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_RNG2\_MOD:}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ UInt64\ state\ =\ rng\_seed(block\_num);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ rng\_next(state);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ set\_index\ =\ rng\_next(state)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_PRIME\_DIS:}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Prime\ Displacement\ Hashing\ Function\ (HPCA04)}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ UInt64\ si\ =\ block\_num\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ UInt64\ Ti\ =\ block\_num\ >>\ m\_log\_num\_sets;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ UInt64\ rho\ =\ 3;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ set\_index\ =\ (rho\ *\ Ti\ +\ si)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_XOR\_MOD:}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Based\ on\ related\ work\ of\ "{}Eliminating\ Conflict\ Misses\ Using\ Prime\ Number-\/Based\ Cache\ Indexing"{}\ (TC\ may\ 2005)}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//XOR\ based\ hash\ function}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ UInt64\ si\ =\ block\_num\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ UInt64\ ti\ =\ (block\_num\ >>\ m\_log\_num\_sets)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ set\_index\ =\ (si\ \string^\ ti);\ \textcolor{comment}{//\ \string^\ -\/>\ bitwise\ XOR}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_MER\_MOD:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Based\ on\ related\ work\ of\ "{}Eliminating\ Conflict\ Misses\ Using\ Prime\ Number-\/Based\ Cache\ Indexing"{}\ (TC\ may\ 2005)}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Mersenne\ based\ hash\ function}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Disadvantage\ of\ this\ mod\ is\ that\ we\ will\ not\ use\ one\ set\ in\ our\ cache.}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ set\_index\ =\ block\_num\ \%\ (m\_num\_sets\ -\/\ 1);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ hash\ function\ \%d"{}},\ m\_hash);}
+\DoxyCodeLine{00109\ \ \ \ \}}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00113\ CacheBase::splitAddressTLB(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index,\ \textcolor{keywordtype}{int}\ page\_size)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00114\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00115\ \ \ \ tag\ =\ addr\ >>\ page\_size;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{comment}{//\ IntPtr\ linearAddress\ =\ m\_ahl\ ?\ m\_ahl-\/>getLinearAddress(addr)\ :\ addr;}}
+\DoxyCodeLine{00118\ \ \ \ IntPtr\ linearAddress\ =\ addr;}
+\DoxyCodeLine{00119\ \ \ \ IntPtr\ block\_num\ =\ linearAddress\ >>\ page\_size;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordflow}{switch}(m\_hash)}
+\DoxyCodeLine{00122\ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_MASK:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ set\_index\ =\ block\_num\ \&\ (m\_num\_sets-\/1);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_MOD:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ set\_index\ =\ block\_num\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_RNG1\_MOD:}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ UInt64\ state\ =\ rng\_seed(block\_num);}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ set\_index\ =\ rng\_next(state)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_RNG2\_MOD:}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ UInt64\ state\ =\ rng\_seed(block\_num);}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ rng\_next(state);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ set\_index\ =\ rng\_next(state)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_PRIME\_DIS:}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Prime\ Displacement\ Hashing\ Function\ (HPCA04)}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ UInt64\ si\ =\ block\_num\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ UInt64\ Ti\ =\ block\_num\ >>\ m\_log\_num\_sets;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ UInt64\ rho\ =\ 3;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ set\_index\ =\ (rho\ *\ Ti\ +\ si)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_XOR\_MOD:}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Based\ on\ related\ work\ of\ "{}Eliminating\ Conflict\ Misses\ Using\ Prime\ Number-\/Based\ Cache\ Indexing"{}\ (TC\ may\ 2005)}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//XOR\ based\ hash\ function}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ UInt64\ si\ =\ block\_num\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ UInt64\ ti\ =\ (block\_num\ >>\ m\_log\_num\_sets)\ \%\ m\_num\_sets;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ set\_index\ =\ (si\ \string^\ ti);\ \textcolor{comment}{//\ \string^\ -\/>\ bitwise\ XOR}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::HASH\_MER\_MOD:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Based\ on\ related\ work\ of\ "{}Eliminating\ Conflict\ Misses\ Using\ Prime\ Number-\/Based\ Cache\ Indexing"{}\ (TC\ may\ 2005)}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Mersenne\ based\ hash\ function}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Disadvantage\ of\ this\ mod\ is\ that\ we\ will\ not\ use\ one\ set\ in\ our\ cache.}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ set\_index\ =\ block\_num\ \%\ (m\_num\_sets\ -\/\ 1);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ hash\ function\ \%d"{}},\ m\_hash);}
+\DoxyCodeLine{00171\ \ \ \ \}}
+\DoxyCodeLine{00172\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00175\ CacheBase::splitAddress(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\&\ block\_offset)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00177\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00178\ \ \ \ block\_offset\ =\ addr\ \&\ (m\_blocksize-\/1);}
+\DoxyCodeLine{00179\ \ \ \ splitAddress(addr,\ tag,\ set\_index);}
+\DoxyCodeLine{00180\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00183\ CacheBase::splitAddressTLB(\textcolor{keyword}{const}\ IntPtr\ addr,\ IntPtr\&\ tag,\ UInt32\&\ set\_index,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\&\ block\_offset,\ \textcolor{keywordtype}{int}\ m\_page\_size)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00185\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00186\ \ \ \ block\_offset\ =\ 0;}
+\DoxyCodeLine{00187\ \ \ \ splitAddressTLB(addr,\ tag,\ set\_index,m\_page\_size);}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ IntPtr}
+\DoxyCodeLine{00191\ CacheBase::tagToAddress(\textcolor{keyword}{const}\ IntPtr\ tag)}
+\DoxyCodeLine{00192\ \{}
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keywordflow}{return}\ tag\ <<\ m\_log\_blocksize;}
+\DoxyCodeLine{00194\ \}}
+\DoxyCodeLine{00195\ IntPtr}
+\DoxyCodeLine{00196\ CacheBase::tagToAddressTLB(\textcolor{keyword}{const}\ IntPtr\ tag,\ \textcolor{keywordtype}{int}\ pagesize)}
+\DoxyCodeLine{00197\ \{}
+\DoxyCodeLine{00198\ \ \ \ \textcolor{keywordflow}{return}\ tag\ <<\ pagesize;}
+\DoxyCodeLine{00199\ \}}
+
+\end{DoxyCode}

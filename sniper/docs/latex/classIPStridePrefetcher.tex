@@ -1,0 +1,442 @@
+\doxysection{IPStride\+Prefetcher Class Reference}
+\label{classIPStridePrefetcher}\index{IPStridePrefetcher@{IPStridePrefetcher}}
+
+
+{\ttfamily \#include $<$ip\+\_\+stride\+\_\+prefetcher.\+h$>$}
+
+
+
+Inheritance diagram for IPStride\+Prefetcher\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=140pt]{classIPStridePrefetcher__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for IPStride\+Prefetcher\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=140pt]{classIPStridePrefetcher__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ IPStride\+Prefetcher} (String config\+Name, \textbf{ core\+\_\+id\+\_\+t} \+\_\+core\+\_\+id)
+\item 
+\textbf{ $\sim$\+IPStride\+Prefetcher} ()
+\item 
+int32\+\_\+t \textbf{ find} (\textbf{ Int\+Ptr} eip)
+\item 
+void \textbf{ update\+\_\+age} (int32\+\_\+t current)
+\item 
+int32\+\_\+t \textbf{ find\+\_\+replacement} ()
+\item 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ \textbf{ generate\+Prefetch\+Address} (\textbf{ RPTEntry} $\ast$rpt\+\_\+entry, \textbf{ Int\+Ptr} current\+\_\+page, \textbf{ Int\+Ptr} current\+\_\+offset)
+\item 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ \textbf{ get\+Next\+Address} (\textbf{ Int\+Ptr} current\+\_\+address, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, bool cache\+\_\+hit, bool prefetch\+\_\+hit, \textbf{ Int\+Ptr} eip)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \textbf{ Prefetcher}}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ m\+\_\+core\+\_\+id}
+\item 
+bool \textbf{ m\+\_\+allocate\+\_\+on\+\_\+miss}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+num\+\_\+prefetches}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+num\+\_\+streams}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+stop\+\_\+at\+\_\+page}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+lookahead}
+\item 
+std\+::vector$<$ \textbf{ RPTEntry} $\ast$ $>$ \textbf{ m\+\_\+rpt}
+\item 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+struct \{\\
+\>\textbf{ UInt64} \textbf{ pref\_called}\\
+\>\textbf{ UInt64} \textbf{ rpt\_hit}\\
+\>\textbf{ UInt64} \textbf{ non\_zero\_curr\_stride}\\
+\>\textbf{ UInt64} \textbf{ curr\_stride\_correct}\\
+\>\textbf{ UInt64} \textbf{ steady}\\
+\>\textbf{ UInt64} \textbf{ rpt\_replacement}\\
+\>\textbf{ UInt64} \textbf{ gen\_prefetch}\\
+\} \textbf{ stats}\\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\doxysubsubsection*{Additional Inherited Members}
+\doxysubsection*{Static Public Member Functions inherited from \textbf{ Prefetcher}}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Prefetcher} $\ast$ \textbf{ create\+Prefetcher} (String type, String config\+Name, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ UInt32} shared\+\_\+cores)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 34} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!IPStridePrefetcher@{IPStridePrefetcher}}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{IPStridePrefetcher()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a9244c5c3259f2686ad763e912feccab0} 
+IPStride\+Prefetcher\+::\+IPStride\+Prefetcher (\begin{DoxyParamCaption}\item[{String}]{config\+Name}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{\+\_\+core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 14} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+num\+\_\+streams}, \textbf{ m\+\_\+rpt}, \textbf{ register\+Stats\+Metric()}, and \textbf{ stats}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{classIPStridePrefetcher_a9244c5c3259f2686ad763e912feccab0_cgraph}
+\end{center}
+\end{figure}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!````~IPStridePrefetcher@{$\sim$IPStridePrefetcher}}
+\index{````~IPStridePrefetcher@{$\sim$IPStridePrefetcher}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{$\sim$IPStridePrefetcher()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a57e20c34bf04d984ae0f6846f781e66e} 
+IPStride\+Prefetcher\+::$\sim$\+IPStride\+Prefetcher (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!find@{find}}
+\index{find@{find}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{find()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_aa7e967d81736997587880ec1fd0a850f} 
+int32\+\_\+t IPStride\+Prefetcher\+::find (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{eip}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 132} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+rpt}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=273pt]{classIPStridePrefetcher_aa7e967d81736997587880ec1fd0a850f_icgraph}
+\end{center}
+\end{figure}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!find\_replacement@{find\_replacement}}
+\index{find\_replacement@{find\_replacement}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{find\_replacement()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a6a461743160bb6fbfad66530a6e79ee5} 
+int32\+\_\+t IPStride\+Prefetcher\+::find\+\_\+replacement (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 161} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+rpt}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=273pt]{classIPStridePrefetcher_a6a461743160bb6fbfad66530a6e79ee5_icgraph}
+\end{center}
+\end{figure}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!generatePrefetchAddress@{generatePrefetchAddress}}
+\index{generatePrefetchAddress@{generatePrefetchAddress}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{generatePrefetchAddress()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a8ebfb354e92464de6ab41d440153e771} 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ IPStride\+Prefetcher\+::generate\+Prefetch\+Address (\begin{DoxyParamCaption}\item[{\textbf{ RPTEntry} $\ast$}]{rpt\+\_\+entry}{, }\item[{\textbf{ Int\+Ptr}}]{current\+\_\+page}{, }\item[{\textbf{ Int\+Ptr}}]{current\+\_\+offset}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 181} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ LOG2\+\_\+\+CACHE\+\_\+\+BLOCK\+\_\+\+SIZE}, \textbf{ LOG2\+\_\+\+PAGE\+\_\+\+SIZE}, \textbf{ m\+\_\+lookahead}, \textbf{ m\+\_\+num\+\_\+prefetches}, \textbf{ m\+\_\+stop\+\_\+at\+\_\+page}, \textbf{ NUM\+\_\+\+CACHE\+\_\+\+BLOCKS\+\_\+\+IN\+\_\+\+PAGE}, \textbf{ stats}, and \textbf{ RPTEntry\+::stride}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=307pt]{classIPStridePrefetcher_a8ebfb354e92464de6ab41d440153e771_icgraph}
+\end{center}
+\end{figure}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!getNextAddress@{getNextAddress}}
+\index{getNextAddress@{getNextAddress}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{getNextAddress()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a8b909531229e7b3bb0cc6f4c506a97a6} 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ IPStride\+Prefetcher\+::get\+Next\+Address (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{current\+\_\+address}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{bool}]{cache\+\_\+hit}{, }\item[{bool}]{prefetch\+\_\+hit}{, }\item[{\textbf{ Int\+Ptr}}]{eip}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Prefetcher} \doxyref{}{p.}{classPrefetcher_ab38e02dd64bc9685acfeb5451c32004e}.
+
+
+
+Definition at line \textbf{ 46} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ CACHE\+\_\+\+BLOCK\+\_\+\+MASK}, \textbf{ RPTEntry\+::eip}, \textbf{ find()}, \textbf{ find\+\_\+replacement()}, \textbf{ generate\+Prefetch\+Address()}, \textbf{ INIT}, \textbf{ LOG2\+\_\+\+CACHE\+\_\+\+BLOCK\+\_\+\+SIZE}, \textbf{ LOG2\+\_\+\+PAGE\+\_\+\+SIZE}, \textbf{ m\+\_\+allocate\+\_\+on\+\_\+miss}, \textbf{ m\+\_\+rpt}, \textbf{ NO\+\_\+\+PRED}, \textbf{ RPTEntry\+::prev\+\_\+offset}, \textbf{ RPTEntry\+::state}, \textbf{ stats}, \textbf{ STEADY}, \textbf{ RPTEntry\+::stride}, \textbf{ TRANSIENT}, \textbf{ update\+\_\+age()}, \textbf{ RPTEntry\+::valid}, and \textbf{ Core\+::\+WRITE}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=307pt]{classIPStridePrefetcher_a8b909531229e7b3bb0cc6f4c506a97a6_cgraph}
+\end{center}
+\end{figure}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!update\_age@{update\_age}}
+\index{update\_age@{update\_age}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{update\_age()}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_afa7024cc257272fc97ef9f081cfe1b52} 
+void IPStride\+Prefetcher\+::update\+\_\+age (\begin{DoxyParamCaption}\item[{int32\+\_\+t}]{current}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 146} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+rpt}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=273pt]{classIPStridePrefetcher_afa7024cc257272fc97ef9f081cfe1b52_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{IPStridePrefetcher@{IPStridePrefetcher}!curr\_stride\_correct@{curr\_stride\_correct}}
+\index{curr\_stride\_correct@{curr\_stride\_correct}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{curr\_stride\_correct}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a3f828d938722f58b8b20e0cef5d70759} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::curr\+\_\+stride\+\_\+correct}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!gen\_prefetch@{gen\_prefetch}}
+\index{gen\_prefetch@{gen\_prefetch}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{gen\_prefetch}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_af3da7aea4a94c905d892d59a965dc06c} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::gen\+\_\+prefetch}
+
+
+
+Definition at line \textbf{ 54} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_allocate\_on\_miss@{m\_allocate\_on\_miss}}
+\index{m\_allocate\_on\_miss@{m\_allocate\_on\_miss}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_allocate\_on\_miss}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a2a4dc53d75fbb27879b28bc26a52acb0} 
+bool IPStride\+Prefetcher\+::m\+\_\+allocate\+\_\+on\+\_\+miss\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_core\_id@{m\_core\_id}}
+\index{m\_core\_id@{m\_core\_id}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_core\_id}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_aaeeac01ec27dfab8afff93a64187efa3} 
+\textbf{ core\+\_\+id\+\_\+t} IPStride\+Prefetcher\+::m\+\_\+core\+\_\+id\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ IPStride\+Prefetcher()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_lookahead@{m\_lookahead}}
+\index{m\_lookahead@{m\_lookahead}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_lookahead}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a8bbbace1457a72ede561080fbb4dfb07} 
+\textbf{ uint32\+\_\+t} IPStride\+Prefetcher\+::m\+\_\+lookahead\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_num\_prefetches@{m\_num\_prefetches}}
+\index{m\_num\_prefetches@{m\_num\_prefetches}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_num\_prefetches}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_af97168cf97e423fa14bd885f5c8d4376} 
+\textbf{ uint32\+\_\+t} IPStride\+Prefetcher\+::m\+\_\+num\+\_\+prefetches\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_num\_streams@{m\_num\_streams}}
+\index{m\_num\_streams@{m\_num\_streams}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_num\_streams}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_ade24dd83628c2955b9a2cd3019630168} 
+\textbf{ uint32\+\_\+t} IPStride\+Prefetcher\+::m\+\_\+num\+\_\+streams\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ IPStride\+Prefetcher()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_rpt@{m\_rpt}}
+\index{m\_rpt@{m\_rpt}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_rpt}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_abcec8ea16a6bca0efc54ec7b2bd28024} 
+std\+::vector$<$\textbf{ RPTEntry}$\ast$$>$ IPStride\+Prefetcher\+::m\+\_\+rpt\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 44} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ find()}, \textbf{ find\+\_\+replacement()}, \textbf{ get\+Next\+Address()}, \textbf{ IPStride\+Prefetcher()}, and \textbf{ update\+\_\+age()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!m\_stop\_at\_page@{m\_stop\_at\_page}}
+\index{m\_stop\_at\_page@{m\_stop\_at\_page}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{m\_stop\_at\_page}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a8671c008bc46706f5b7fbf63a44948c4} 
+\textbf{ uint32\+\_\+t} IPStride\+Prefetcher\+::m\+\_\+stop\+\_\+at\+\_\+page\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!non\_zero\_curr\_stride@{non\_zero\_curr\_stride}}
+\index{non\_zero\_curr\_stride@{non\_zero\_curr\_stride}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{non\_zero\_curr\_stride}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a724757e77207757067039c9fcb9e4e95} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::non\+\_\+zero\+\_\+curr\+\_\+stride}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!pref\_called@{pref\_called}}
+\index{pref\_called@{pref\_called}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{pref\_called}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a791bbe0cfab28569d7f502a469d61ee5} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::pref\+\_\+called}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!rpt\_hit@{rpt\_hit}}
+\index{rpt\_hit@{rpt\_hit}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{rpt\_hit}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a974205398c890eeb86c17396ea6de7a8} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::rpt\+\_\+hit}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!rpt\_replacement@{rpt\_replacement}}
+\index{rpt\_replacement@{rpt\_replacement}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{rpt\_replacement}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a6d2d3b94ea1d807c771c0aad379912ec} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::rpt\+\_\+replacement}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!stats@{stats}}
+\index{stats@{stats}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{[struct]}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a525f195dbd54f0b978358469ac35bade} 
+struct  \{ ... \}  IPStride\+Prefetcher\+::stats\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}, \textbf{ get\+Next\+Address()}, and \textbf{ IPStride\+Prefetcher()}.
+
+\index{IPStridePrefetcher@{IPStridePrefetcher}!steady@{steady}}
+\index{steady@{steady}!IPStridePrefetcher@{IPStridePrefetcher}}
+\doxysubsubsection{steady}
+{\footnotesize\ttfamily \label{classIPStridePrefetcher_a23400ba9b958b44c380cf621b02a7023} 
+\textbf{ UInt64} IPStride\+Prefetcher\+::steady}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ ip\+\_\+stride\+\_\+prefetcher.\+h}\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ ip\+\_\+stride\+\_\+prefetcher.\+cc}\end{DoxyCompactItemize}

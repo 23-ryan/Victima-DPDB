@@ -1,0 +1,89 @@
+\doxysection{timer.\+h}
+\label{timer_8h_source}\index{common/misc/timer.h@{common/misc/timer.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ TIMER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ TIMER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_point.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <sys/time.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ UInt64\ rdtsc(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }Timer}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ switched;}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \ \ \ \ Timer();}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \string~Timer();}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ start(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ UInt64\ getTime(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ now(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ UInt64\ t\_start;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ UInt64\ r\_start;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ UInt32\ cpu\_start;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{comment}{//\ Default\ FixedPoint\ uses\ a\ 16k\ multiplier,\ this\ overflows\ with\ long\ simulation\ times.}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{comment}{//\ Now,\ we\ can\ simulate\ at\ least\ 3\ months\ (0x100\ *\ rdtsc()\ <\ INT64\_MAX)\ with\ sufficient\ precision}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ TFixedPoint<0x100>\ RdtscSpeed;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keyword}{static}\ RdtscSpeed\ rdtsc\_speed;}
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }TotalTimer}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ TotalTimer(String\ \_name,\ UInt32\ \_ignore\ =\ 0);}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \string~TotalTimer();}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ add(UInt64\ t,\ \textcolor{keywordtype}{bool}\ switched\ =\ \textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&total,\ t);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&n,\ 1);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\ >\ max)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ max\ =\ t;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (switched)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&n\_switched,\ 1);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ report(FILE*\ fp);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ reports(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keyword}{static}\ TotalTimer*\ getTimerByStacktrace(String\ name);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ String\ name;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ UInt64\ total;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ UInt64\ n;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ UInt64\ max;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ UInt64\ n\_switched;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ BACKTRACE\_SIZE\ =\ 8;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *\ backtrace\_buffer[BACKTRACE\_SIZE];}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ backtrace\_n,\ backtrace\_ignore;}
+\DoxyCodeLine{00064\ \};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{class\ }ScopedTimer}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ TotalTimer\ \&total;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ Timer\ timer;}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ ScopedTimer(TotalTimer\ \&\_total)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ :\ total(\_total)}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \string~ScopedTimer()}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ UInt64\ t\ =\ timer.getTime();}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ total.add(t,\ timer.switched);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ TIMER\_H}}
+
+\end{DoxyCode}

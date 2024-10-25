@@ -1,0 +1,411 @@
+\doxysection{barrier\+\_\+sync\+\_\+server.\+cc}
+\label{barrier__sync__server_8cc_source}\index{common/system/barrier\_sync\_server.cc@{common/system/barrier\_sync\_server.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}barrier\_sync\_client.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}barrier\_sync\_server.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}syscall\_server.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ BarrierSyncServer::BarrierSyncServer()}
+\DoxyCodeLine{00019\ \ \ \ :\ m\_local\_clock\_list(Sim()-\/>getConfig()-\/>getApplicationCores(),\ SubsecondTime::Zero())}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_barrier\_acquire\_list(Sim()-\/>getConfig()-\/>getApplicationCores(),\ false)}
+\DoxyCodeLine{00021\ \ \ \ ,\ m\_core\_cond(Sim()-\/>getConfig()-\/>getApplicationCores(),\ NULL)}
+\DoxyCodeLine{00022\ \ \ \ ,\ m\_core\_group(Sim()-\/>getConfig()-\/>getApplicationCores(),\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_core\_thread(Sim()-\/>getConfig()-\/>getApplicationCores(),\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00024\ \ \ \ ,\ m\_global\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00025\ \ \ \ ,\ m\_fastforward(false)}
+\DoxyCodeLine{00026\ \ \ \ ,\ m\_disable(false)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ m\_barrier\_interval\ =\ SubsecondTime::NS()\ *\ (UInt64)\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}clock\_skew\_minimization/barrier/quantum"{}});}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{catch}(...)}
+\DoxyCodeLine{00033\ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Error\ Reading\ 'clock\_skew\_minimization/barrier/quantum'\ from\ the\ config\ file"{}});}
+\DoxyCodeLine{00035\ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ m\_core\_cond[core\_id]\ =\ \textcolor{keyword}{new}\ ConditionVariable();}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ m\_next\_barrier\_time\ =\ m\_barrier\_interval;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{comment}{//\ Order\ our\ hooks\ to\ occur\ after\ possible\ reschedulings\ (which\ are\ done\ with\ ORDER\_ACTION)}}
+\DoxyCodeLine{00043\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_EXIT,\ BarrierSyncServer::hookThreadExit,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_POST);}
+\DoxyCodeLine{00044\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_STALL,\ BarrierSyncServer::hookThreadStall,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_POST);}
+\DoxyCodeLine{00045\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_THREAD\_MIGRATE,\ BarrierSyncServer::hookThreadMigrate,\ (UInt64)\textcolor{keyword}{this},\ HooksManager::ORDER\_NOTIFY\_POST);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}barrier"{}},\ 0,\ \textcolor{stringliteral}{"{}global\_time"{}},\ \&m\_global\_time);}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ BarrierSyncServer::\string~BarrierSyncServer()}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_core\_cond[core\_id];}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00057\ BarrierSyncServer::synchronize(core\_id\_t\ core\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{if}\ (m\_disable)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00064\ \ \ \ core\_id\_t\ master\_core\_id;}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ master\_core\_id\ =\ core\_id;\ \ \textcolor{comment}{//\ In\ fast-\/forward,\ the\ SMT\ performance\ model\ in\ not\ active\ so\ every\ core\ (HW\ context)\ calls\ into\ the\ barrier}}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ master\_core\_id\ =\ m\_core\_group[core\_id]\ ==\ INVALID\_CORE\_ID\ ?\ core\_id\ :\ m\_core\_group[core\_id];}
+\DoxyCodeLine{00069\ \ \ \ Core\ *master\_core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00070\ \ \ \ thread\_id\_t\ thread\_me\ =\ core-\/>getThread()-\/>getId();}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}Core\ \%d\ entry\ (master\ core\ \%d,\ thread\ \%d,\ ffwd\ \%d)"{}},\ core\_id,\ master\_core\_id,\ thread\_me,\ m\_fastforward);}
+\DoxyCodeLine{00073\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Received\ 'SIM\_BARRIER\_WAIT'\ from\ Core(\%i),\ Time(\%s)"{}},\ core\_id,\ itostr(time).c\_str());}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ LOG\_ASSERT\_ERROR(core-\/>getState()\ ==\ Core::RUNNING\ ||\ core-\/>getState()\ ==\ Core::INITIALIZING,\ \textcolor{stringliteral}{"{}Core(\%i)\ is\ not\ running\ or\ initializing\ at\ time(\%s)"{}},\ core\_id,\ itostr(time).c\_str());}
+\DoxyCodeLine{00076\ \ \ \ LOG\_ASSERT\_ERROR(m\_barrier\_acquire\_list[master\_core\_id]\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Core(\%i)\ or\ its\ sibling\ is\ already\ in\ the\ barrier\ (this\ is\ thread\ \%d,\ we\ have\ thread\ \%d)"{}},\ master\_core\_id,\ thread\_me,\ m\_core\_thread[master\_core\_id]);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{if}\ (time\ <\ m\_next\_barrier\_time\ \&\&\ !m\_fastforward)}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Sent\ 'SIM\_BARRIER\_RELEASE'\ immediately\ time(\%s),\ m\_next\_barrier\_time(\%s)"{}},\ itostr(time).c\_str(),\ itostr(m\_next\_barrier\_time).c\_str());}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{comment}{//\ LOG\_PRINT\_WARNING("{}core\_id(\%i),\ local\_clock(\%llu),\ m\_next\_barrier\_time(\%llu),\ m\_barrier\_interval(\%llu)"{},\ core\_id,\ time,\ m\_next\_barrier\_time,\ m\_barrier\_interval);}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}Core\ \%d\ immediate\ exit"{}},\ core\_id);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00084\ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \textcolor{comment}{//\ One\ thread\ entered\ the\ barrier,\ another\ one\ can\ resume}}
+\DoxyCodeLine{00087\ \ \ \ doRelease(1);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ master\_core-\/>getPerformanceModel()-\/>barrierEnter();}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ m\_local\_clock\_list[master\_core\_id]\ =\ time;}
+\DoxyCodeLine{00092\ \ \ \ m\_barrier\_acquire\_list[master\_core\_id]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00093\ \ \ \ m\_core\_thread[master\_core\_id]\ =\ thread\_me;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \textcolor{keywordtype}{bool}\ mustWait\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{if}\ (isBarrierReached())}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ mustWait\ =\ barrierRelease(thread\_me);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordflow}{if}\ (mustWait)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ m\_core\_cond[master\_core\_id]-\/>wait(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ master\_core-\/>getPerformanceModel()-\/>barrierExit();}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}Core\ \%d\ exit\ (master\ core\ \%d,\ thread\ \%d)"{}},\ core\_id,\ master\_core\_id,\ thread\_me);}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00108\ BarrierSyncServer::threadExit(HooksManager::ThreadTime\ *argument)}
+\DoxyCodeLine{00109\ \{}
+\DoxyCodeLine{00110\ \ \ \ \textcolor{comment}{//\ Release\ thread\ from\ the\ barrier}}
+\DoxyCodeLine{00111\ \ \ \ releaseThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00112\ \ \ \ \textcolor{comment}{//\ Check\ to\ see\ if\ we\ were\ waiting\ for\ this\ thread}}
+\DoxyCodeLine{00113\ \ \ \ signal();}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00117\ BarrierSyncServer::threadStall(HooksManager::ThreadStall\ *argument)}
+\DoxyCodeLine{00118\ \{}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ Release\ thread\ from\ the\ barrier}}
+\DoxyCodeLine{00120\ \ \ \ releaseThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00121\ \ \ \ \textcolor{comment}{//\ Check\ to\ see\ if\ we\ were\ waiting\ for\ this\ thread}}
+\DoxyCodeLine{00122\ \ \ \ signal();}
+\DoxyCodeLine{00123\ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00126\ BarrierSyncServer::threadMigrate(HooksManager::ThreadMigrate\ *argument)}
+\DoxyCodeLine{00127\ \{}
+\DoxyCodeLine{00128\ \ \ \ \textcolor{comment}{//\ Update\ the\ migrating\ thread's\ time\ so\ we'll\ be\ sure\ to\ release\ it}}
+\DoxyCodeLine{00129\ \ \ \ releaseThread(argument-\/>thread\_id);}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{comment}{//\ Migration\ due\ to\ thread\ stall/exit\ will\ generate\ another\ event\ later,\ we'll\ do\ a\ signal()\ then}}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{comment}{//\ Migration\ because\ of\ pre-\/emption\ is\ done\ only\ inside\ periodic(),\ we'll\ return\ into\ barrierRelease()}}
+\DoxyCodeLine{00132\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00135\ BarrierSyncServer::releaseThread(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00136\ \{}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00138\ \ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_barrier\_acquire\_list[core\_id]\ \&\&\ m\_core\_thread[core\_id]\ ==\ thread\_id)}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ thread\ is\ released\ on\ next\ barrierRelease()}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ m\_local\_clock\_list[core\_id]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \}}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{comment}{//\ One\ thread\ stopped\ running,\ release\ another\ one\ now}}
+\DoxyCodeLine{00146\ \ \ \ doRelease(1);}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00150\ BarrierSyncServer::signal()}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{if}\ (m\_disable)}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \textcolor{keywordflow}{if}\ (isBarrierReached())}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ barrierRelease(INVALID\_THREAD\_ID);}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00160\ BarrierSyncServer::isCoreRunning(core\_id\_t\ core\_id,\ \textcolor{keywordtype}{bool}\ siblings)}
+\DoxyCodeLine{00161\ \{}
+\DoxyCodeLine{00162\ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00163\ \ \ \ \textcolor{keywordflow}{if}\ (core-\/>getState()\ ==\ Core::RUNNING)}
+\DoxyCodeLine{00164\ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(core-\/>getThread(),\ \textcolor{stringliteral}{"{}Core\ (\%d)\ is\ running\ but\ has\ no\ thread"{}},\ core\_id);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>isThreadRunning(core-\/>getThread()-\/>getId()))}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00168\ \ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \textcolor{keywordflow}{if}\ (siblings\ \&\&\ !m\_fastforward)}
+\DoxyCodeLine{00172\ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ sibling\_core\_id\ =\ 0;\ sibling\_core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ sibling\_core\_id++)}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_group[sibling\_core\_id]\ ==\ core\_id)}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (isCoreRunning(sibling\_core\_id,\ \textcolor{keyword}{false}))}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00184\ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00187\ BarrierSyncServer::advance()}
+\DoxyCodeLine{00188\ \{}
+\DoxyCodeLine{00189\ \ \ \ barrierRelease(INVALID\_THREAD\_ID,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00190\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00193\ BarrierSyncServer::isBarrierReached()}
+\DoxyCodeLine{00194\ \{}
+\DoxyCodeLine{00195\ \ \ \ \textcolor{keywordtype}{bool}\ single\_core\_barrier\_reached\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \textcolor{comment}{//\ Check\ if\ all\ cores\ have\ reached\ the\ barrier}}
+\DoxyCodeLine{00198\ \ \ \ \textcolor{comment}{//\ All\ least\ one\ core\ must\ have\ (sync\_time\ >\ m\_next\_barrier\_time)}}
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00200\ \ \ \ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ fastforward\ mode,\ it's\ enough\ that\ a\ core\ is\ waiting.\ In\ detailed\ mode,\ it\ needs\ to\ have\ advanced\ up\ to\ the\ predefined\ barrier\ time}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_barrier\_acquire\_list[core\_id])}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ At\ least\ one\ core\ has\ reached\ the\ barrier}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ single\_core\_barrier\_reached\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (isCoreRunning(core\_id))}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Core\ is\ running\ but\ hasn't\ checked\ in\ yet.\ Wait\ for\ it\ to\ sync.}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_core\_group[core\_id]\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ consider\ group\ masters}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (isCoreRunning(core\_id))}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_local\_clock\_list[core\_id]\ <\ m\_next\_barrier\_time)}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Core\ running\ on\ this\ core\ has\ not\ reached\ the\ barrier}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ it\ to\ sync}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ At\ least\ one\ core\ has\ reached\ the\ barrier}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ single\_core\_barrier\_reached\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00234\ \ \ \ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \textcolor{keywordflow}{return}\ single\_core\_barrier\_reached;}
+\DoxyCodeLine{00237\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00240\ BarrierSyncServer::barrierRelease(thread\_id\_t\ caller\_id,\ \textcolor{keywordtype}{bool}\ continue\_until\_release)}
+\DoxyCodeLine{00241\ \{}
+\DoxyCodeLine{00242\ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}Release\ (caller\ thread\ \%d)"{}},\ caller\_id);}
+\DoxyCodeLine{00243\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Sending\ 'BARRIER\_RELEASE'"{}});}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \textcolor{comment}{//\ All\ cores\ have\ reached\ the\ barrier}}
+\DoxyCodeLine{00246\ \ \ \ \textcolor{comment}{//\ Advance\ m\_next\_barrier\_time}}
+\DoxyCodeLine{00247\ \ \ \ \textcolor{comment}{//\ Release\ the\ Barrier}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ LOG\_ASSERT\_ERROR(m\_to\_release.size()\ ==\ 0,\ \textcolor{stringliteral}{"{}Reached\ the\ barrier\ while\ some\ threads\ haven't\ even\ restarted?"{}});}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00252\ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ fast-\/forward\ mode,\ skip\ over\ (potentially\ very\ many)\ timeslots}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_local\_clock\_list[core\_id]\ >\ m\_next\_barrier\_time)}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ m\_next\_barrier\_time\ =\ m\_local\_clock\_list[core\_id];}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00259\ \ \ \ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \textcolor{comment}{//\ If\ a\ core\ cannot\ be\ resumed,\ we\ have\ to\ advance\ the\ sync}}
+\DoxyCodeLine{00262\ \ \ \ \textcolor{comment}{//\ time\ till\ a\ core\ can\ be\ resumed.\ Then\ only,\ will\ we\ have}}
+\DoxyCodeLine{00263\ \ \ \ \textcolor{comment}{//\ forward\ progress}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \textcolor{keywordtype}{bool}\ core\_resumed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00266\ \ \ \ \textcolor{keywordtype}{bool}\ must\_wait\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00267\ \ \ \ \textcolor{keywordflow}{while}\ (!core\_resumed)}
+\DoxyCodeLine{00268\ \ \ \ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ m\_global\_time\ =\ m\_next\_barrier\_time;}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}Barrier\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}ns"{}},\ m\_next\_barrier\_time.getNS());}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_PERIODIC,\ \textcolor{keyword}{static\_cast<}subsecond\_time\_t\textcolor{keyword}{>}(m\_next\_barrier\_time).m\_time);}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (continue\_until\_release)}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ HOOK\_PERIODIC\ woke\ someone\ up,\ this\ thread\ can\ safely\ go\ to\ sleep}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>anyThreadRunning())}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(Sim()-\/>getSyscallServer()-\/>getNextTimeout(m\_global\_time)\ <\ SubsecondTime::MaxTime(),\ \textcolor{stringliteral}{"{}No\ threads\ running,\ no\ timeout.\ Application\ has\ deadlocked..."{}});}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ barrier\ was\ disabled\ from\ HOOK\_PERIODIC\ (for\ instance,\ if\ roi-\/end\ was\ triggered\ from\ a\ script),\ break}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_disable)}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ m\_next\_barrier\_time\ +=\ m\_barrier\_interval;}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}m\_next\_barrier\_time\ updated\ to\ (\%s)"{}},\ itostr(m\_next\_barrier\_time).c\_str());}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_local\_clock\_list[core\_id]\ <\ m\_next\_barrier\_time)}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ this\ core\ was\ running.\ If\ yes,\ release\ that\ core}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_barrier\_acquire\_list[core\_id]\ ==\ \textcolor{keyword}{true})}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//LOG\_ASSERT\_ERROR(core-\/>getState()\ ==\ Core::RUNNING\ ||\ core-\/>getState()\ ==\ Core::INITIALIZING,\ "{}(\%i)\ has\ acquired\ barrier,\ local\_clock(\%s),\ m\_next\_barrier\_time(\%s),\ but\ not\ initializing\ or\ running"{},\ core\_id,\ itostr(m\_local\_clock\_list[core\_id]).c\_str(),\ itostr(m\_next\_barrier\_time).c\_str());}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_barrier\_acquire\_list[core\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_resumed\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_thread[core\_id]\ ==\ caller\_id)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ must\_wait\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>barrierExit();}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_to\_release.push\_back(core\_id);}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \textcolor{comment}{//\ To\ avoid\ overwhelming\ the\ OS\ scheduler,\ we\ only\ release\ N\ threads\ at\ a\ time\ (N\ \string~=\ host\ cores).}}
+\DoxyCodeLine{00316\ \ \ \ \textcolor{comment}{//\ Once\ a\ thread\ is\ done\ (stops\ executing\ because\ it\ completed\ the\ next\ barrier\ quantum,\ or\ due\ to\ thread\ stall),}}
+\DoxyCodeLine{00317\ \ \ \ \textcolor{comment}{//\ one\ more\ thread\ is\ released\ so\ we\ always\ have\ at\ most\ N\ running\ threads.}}
+\DoxyCodeLine{00318\ \ \ \ std::random\_shuffle(m\_to\_release.begin(),\ m\_to\_release.end());}
+\DoxyCodeLine{00319\ \ \ \ doRelease(m\_fastforward\ ?\ -\/1\ :\ Sim()-\/>getConfig()-\/>getNumHostCores());}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \textcolor{keywordflow}{return}\ must\_wait;}
+\DoxyCodeLine{00322\ \}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00325\ BarrierSyncServer::doRelease(\textcolor{keywordtype}{int}\ n)}
+\DoxyCodeLine{00326\ \{}
+\DoxyCodeLine{00327\ \ \ \ \textcolor{comment}{//\ Release\ up\ to\ n\ threads\ from\ the\ list.}}
+\DoxyCodeLine{00328\ \ \ \ \textcolor{comment}{//\ When\ n\ ==\ -\/1,\ all\ threads\ are\ released}}
+\DoxyCodeLine{00329\ \ \ \ \textcolor{keywordflow}{while}(m\_to\_release.size()\ \&\&\ n-\/-\/)}
+\DoxyCodeLine{00330\ \ \ \ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ core\_id\_t\ core\_id\ =\ m\_to\_release.back();}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ m\_to\_release.pop\_back();}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ m\_core\_cond[core\_id]-\/>signal();}
+\DoxyCodeLine{00334\ \ \ \ \}}
+\DoxyCodeLine{00335\ \}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00338\ BarrierSyncServer::abortBarrier()}
+\DoxyCodeLine{00339\ \{}
+\DoxyCodeLine{00340\ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}Abort"{}});}
+\DoxyCodeLine{00341\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00342\ \ \ \ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ this\ core\ was\ running.\ If\ yes,\ release\ that\ core}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_barrier\_acquire\_list[core\_id]\ ==\ \textcolor{keyword}{true})}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ m\_barrier\_acquire\_list[core\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>barrierExit();}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ m\_core\_cond[core\_id]-\/>signal();}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ \ \ \ \}}
+\DoxyCodeLine{00353\ \}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00356\ BarrierSyncServer::setDisable(\textcolor{keywordtype}{bool}\ disable)}
+\DoxyCodeLine{00357\ \{}
+\DoxyCodeLine{00358\ \ \ \ this-\/>m\_disable\ =\ disable;}
+\DoxyCodeLine{00359\ \ \ \ \textcolor{keywordflow}{if}\ (disable)}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ abortBarrier();}
+\DoxyCodeLine{00361\ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00364\ BarrierSyncServer::setGroup(core\_id\_t\ core\_id,\ core\_id\_t\ master\_core\_id)}
+\DoxyCodeLine{00365\ \{}
+\DoxyCodeLine{00366\ \ \ \ \textcolor{keywordflow}{if}\ (master\_core\_id\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_barrier\_acquire\_list[core\_id]\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Core(\%d)\ is\ in\ the\ barrier,\ cannot\ set\ participate\ to\ false"{}},\ core\_id);}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ m\_core\_group[core\_id]\ =\ master\_core\_id;}
+\DoxyCodeLine{00370\ \}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00373\ BarrierSyncServer::setFastForward(\textcolor{keywordtype}{bool}\ fastforward,\ SubsecondTime\ next\_barrier\_time)}
+\DoxyCodeLine{00374\ \{}
+\DoxyCodeLine{00375\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\ !=\ fastforward)}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ CLOG(\textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}FastForward\ \%d\ >\ \%d"{}},\ m\_fastforward,\ fastforward);}
+\DoxyCodeLine{00377\ \ \ \ m\_fastforward\ =\ fastforward;}
+\DoxyCodeLine{00378\ \ \ \ \textcolor{keywordflow}{if}\ (next\_barrier\_time\ !=\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00379\ \ \ \ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ m\_next\_barrier\_time\ =\ std::max(m\_next\_barrier\_time,\ next\_barrier\_time);}
+\DoxyCodeLine{00381\ \ \ \ \}}
+\DoxyCodeLine{00382\ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00385\ BarrierSyncServer::printState(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00386\ \{}
+\DoxyCodeLine{00387\ \ \ \ printf(\textcolor{stringliteral}{"{}Barrier\ state:"{}});}
+\DoxyCodeLine{00388\ \ \ \ \textcolor{keywordflow}{for}(core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00389\ \ \ \ \{}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_group[core\_id]\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ ."{}});}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_barrier\_acquire\_list[core\_id]\ ==\ \textcolor{keyword}{true})}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_local\_clock\_list[core\_id]\ >=\ m\_next\_barrier\_time)}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \string^"{}});}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ A"{}});}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (isCoreRunning(core\_id))}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ R"{}});}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \_"{}});}
+\DoxyCodeLine{00403\ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00405\ \}}
+
+\end{DoxyCode}

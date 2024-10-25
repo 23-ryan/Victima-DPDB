@@ -1,0 +1,88 @@
+\doxysection{section.\+hpp}
+\label{section_8hpp_source}\index{common/config/section.hpp@{common/config/section.hpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ BL\_SECTION\_HPP}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ BL\_SECTION\_HPP}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}key.hpp"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keyword}{class\ }Section;}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{typedef}\ std::map\ <\ String,\ Section*\ >\ SectionList;}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{typedef}\ std::map\ <\ String,\ Key*\ >\ KeyList;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ default\ value}}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{typedef}\ std::map\ <\ String,\ std::vector<Key*\ >\ >\ KeyArrayList;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ overriding\ values}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{class\ }Section}
+\DoxyCodeLine{00030\ \ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }Config;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ Section(\textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keywordtype}{bool}\ case\_sensitive);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ Section(Section\ \textcolor{keyword}{const}\ \&\ parent,\ \textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keywordtype}{bool}\ case\_sensitive);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \string~Section();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isRoot()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_isroot;\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasKey(\textcolor{keyword}{const}\ String\ \&name,\ UInt64\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasSection(\textcolor{keyword}{const}\ String\ \&name)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SectionList\ \&\ getSubsections()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_subSections;\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ KeyList\ \&\ getKeys()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_keys;\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ KeyArrayList\ \&\ getArrayKeys()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_array\_keys;\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ String\ getName()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_name;\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ getKey(\textcolor{keyword}{const}\ String\ \&\ name,\ uint64\_t\ index\ =\ UINT64\_MAX);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ Section\ \&\ addSubsection(\textcolor{keyword}{const}\ String\ \&\ name);}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ addKey(\textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keyword}{const}\ String\ \&\ value,\ UInt64\ index\ =\ UINT64\_MAX)\ \{\ \textcolor{keywordflow}{return}\ addKeyInternal(name,\ value,\ index);\ \}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ addKey(\textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keyword}{const}\ SInt64\ \&\ value,\ UInt64\ index\ =\ UINT64\_MAX)\ \{\ \textcolor{keywordflow}{return}\ addKeyInternal(name,\ value,\ index);\ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ addKey(\textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&\ value,\ UInt64\ index\ =\ UINT64\_MAX)\ \{\ \textcolor{keywordflow}{return}\ addKeyInternal(name,\ value,\ index);\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Section\ \&\ getSection(\textcolor{keyword}{const}\ String\ \&\ name);}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ String\ getFullPath()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Section\ \&\ getParent()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_parent;\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ V>}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ addKeyInternal(\textcolor{keyword}{const}\ String\ \&\ name,\ \textcolor{keyword}{const}\ V\ \&\ value,\ UInt64\ index\ =\ UINT64\_MAX);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clear()\ \{\ m\_subSections.clear();\ \}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ Section\ \&\ getSection\_unsafe(\textcolor{keyword}{const}\ String\ \&\ name);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ String\ m\_name;}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ SectionList\ m\_subSections;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ KeyList\ m\_keys;}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ KeyArrayList\ m\_array\_keys;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ Section\ \textcolor{keyword}{const}\ \&\ m\_parent;}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_isroot;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_case\_sensitive;}
+\DoxyCodeLine{00125\ \ \ \ \ \};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \}\textcolor{comment}{//end\ of\ namespace\ bl}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//SECTION\_HPP}}
+
+\end{DoxyCode}

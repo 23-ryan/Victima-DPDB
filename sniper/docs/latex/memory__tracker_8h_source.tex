@@ -1,0 +1,114 @@
+\doxysection{memory\+\_\+tracker.\+h}
+\label{memory__tracker_8h_source}\index{common/system/memory\_tracker.h@{common/system/memory\_tracker.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_MEMORY\_TRACKER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_MEMORY\_TRACKER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}cache\_efficiency\_tracker.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ Define\ to\ add\ a\ slow\ checker\ for\ finding\ allocation\ sites\ by\ address}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\#define\ ASSERT\_FIND\_OWNER}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }MemoryTracker}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{comment}{//\ A\ light\ routine\ tracer\ that\ will\ activate\ the\ RoutineTracer\ infrastructure\ and\ allow\ us\ to\ get\ call\ stacks}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keyword}{class\ }RoutineTracerThread\ :\ \textcolor{keyword}{public}\ ::RoutineTracerThread}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ RoutineTracerThread(Thread\ *thread)\ :\ ::RoutineTracerThread(thread)\ \{\}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CallStack\&\ getCallsiteStack()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_callsite\_stack;\ \}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionEnter(IntPtr\ eip,\ IntPtr\ callEip);}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionExit(IntPtr\ eip);}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionChildEnter(IntPtr\ eip,\ IntPtr\ eip\_child)\ \{\}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionChildExit(IntPtr\ eip,\ IntPtr\ eip\_child)\ \{\}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ CallStack\ m\_callsite\_stack;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keyword}{class\ }RoutineTracer\ :\ \textcolor{keyword}{public}\ ::RoutineTracer}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ RoutineTracer();}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~RoutineTracer();}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ RoutineTracerThread*\ getThreadHandler(Thread\ *thread)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ RoutineTracerThread(thread);\ \}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ hasRoutine(IntPtr\ eip);}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ Routine*\ getRoutineInfo(IntPtr\ eip)\ \{\ \textcolor{keywordflow}{return}\ m\_routines.count(eip)\ ?\ m\_routines[eip]\ :\ NULL;\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,\ RoutineTracer::Routine*>\ RoutineMap;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ RoutineMap\ m\_routines;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ MemoryTracker();}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \string~MemoryTracker();}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ logMalloc(thread\_id\_t\ thread\_id,\ UInt64\ eip,\ UInt64\ address,\ UInt64\ size);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ logFree(thread\_id\_t\ thread\_id,\ UInt64\ eip,\ UInt64\ address);}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ doMemAlloc();}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }AllocationSite}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ AllocationSite()}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ :\ num\_allocations(0),\ total\_size(0),\ total\_loads(0),\ total\_stores(0)}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ hit\_where\_load(HitWhere::NUM\_HITWHERES,\ 0)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ hit\_where\_store(HitWhere::NUM\_HITWHERES,\ 0)}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ UInt64\ num\_allocations;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ UInt64\ total\_size;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ UInt64\ total\_loads,\ total\_stores;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ std::vector<UInt64>\ hit\_where\_load,\ hit\_where\_store;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ std::unordered\_map<AllocationSite*,\ UInt64>\ evicted\_by;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<CallStack,\ AllocationSite*>\ AllocationSites;}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Allocation}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ Allocation()\ :\ size(0),\ site(NULL)\ \{\}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ Allocation(UInt64\ \_size,\ AllocationSite*\ \_site)\ :\ size(\_size),\ site(\_site)\ \{\}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ UInt64\ size;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ AllocationSite\ *site;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::map<UInt64,\ Allocation>\ Allocations;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ }
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ Allocations\ m\_allocations;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ AllocationSites\ m\_allocation\_sites;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ASSERT\_FIND\_OWNER}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ std::unordered\_map<UInt64,\ AllocationSite*>\ m\_allocations\_slow;}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ UInt64\ ce\_get\_owner(core\_id\_t\ core\_id,\ UInt64\ address);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ ce\_notify\_access(UInt64\ owner,\ Core::mem\_op\_t\ mem\_op\_type,\ HitWhere::where\_t\ hit\_where);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ ce\_notify\_evict(\textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ \_\_ce\_get\_owner(UInt64\ user,\ core\_id\_t\ core\_id,\ UInt64\ address)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((MemoryTracker*)user)-\/>ce\_get\_owner(core\_id,\ address);\ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_ce\_notify\_access(UInt64\ user,\ UInt64\ owner,\ Core::mem\_op\_t\ mem\_op\_type,\ HitWhere::where\_t\ hit\_where)}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \{\ ((MemoryTracker*)user)-\/>ce\_notify\_access(owner,\ mem\_op\_type,\ hit\_where);\ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_ce\_notify\_evict(UInt64\ user,\ \textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \{\ ((MemoryTracker*)user)-\/>ce\_notify\_evict(on\_roi\_end,\ owner,\ evictor,\ bits\_used,\ bits\_total);\ \}}
+\DoxyCodeLine{00106\ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_MEMORY\_TRACKER\_H}}
+
+\end{DoxyCode}

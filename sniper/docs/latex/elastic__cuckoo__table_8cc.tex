@@ -1,0 +1,635 @@
+\doxysection{common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/cuckoo/elastic\+\_\+cuckoo\+\_\+table.cc File Reference}
+\label{elastic__cuckoo__table_8cc}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/elastic\_cuckoo\_table.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/elastic\_cuckoo\_table.cc}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include "{}elastic\+\_\+cuckoo\+\_\+table.\+h"{}}\newline
+Include dependency graph for elastic\+\_\+cuckoo\+\_\+table.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ HASH\+\_\+\+SIZE}~8
+\item 
+\#define \textbf{ MAX\+\_\+\+RETRIES}~64
+\item 
+\#define \textbf{ EXTEND}~1.\+25
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ hash\+\_\+size} (\textbf{ uint64\+\_\+t} size)
+\item 
+void \textbf{ create} (\textbf{ uint32\+\_\+t} d, \textbf{ uint64\+\_\+t} size, \textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable, char $\ast$hash\+\_\+func)
+\item 
+void \textbf{ create\+\_\+elastic} (\textbf{ uint32\+\_\+t} d, \textbf{ uint64\+\_\+t} size, \textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable, char $\ast$hash\+\_\+func, float rehash\+\_\+threshold, \textbf{ uint32\+\_\+t} scale, \textbf{ uint32\+\_\+t} swaps, uint8\+\_\+t priority)
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ rehash} (\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable, \textbf{ uint64\+\_\+t} swaps)
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ evaluate\+\_\+elasticity} (\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable, uint8\+\_\+t complete)
+\item 
+void \textbf{ destroy} (\textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+void \textbf{ destroy\+\_\+elastic} (\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ insert\+\_\+recursion} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable, \textbf{ uint32\+\_\+t} nest, \textbf{ uint32\+\_\+t} tries)
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ insert} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ insert\+\_\+elastic} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable, uint8\+\_\+t bias, uint16\+\_\+t bias\+\_\+nest)
+\item 
+void \textbf{ delete\+\_\+normal} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+void \textbf{ delete\+\_\+elastic} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+std\+::vector$<$ \textbf{ elem\+\_\+t} $>$ \textbf{ find} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+std\+::vector$<$ \textbf{ elem\+\_\+t} $>$ \textbf{ find\+\_\+elastic\+\_\+ptw} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+\textbf{ elem\+\_\+t} $\ast$ \textbf{ find\+\_\+elastic} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ gen\+\_\+hash} (\textbf{ elem\+\_\+t} $\ast$elem, \textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable, \textbf{ uint32\+\_\+t} nest)
+\item 
+void \textbf{ update\+\_\+occupancy} (\textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\item 
+void \textbf{ print\+Table} (\textbf{ cuckoo\+Table\+\_\+t} $\ast$hashtable)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!EXTEND@{EXTEND}}
+\index{EXTEND@{EXTEND}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{EXTEND}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a06d80569ecd509f0d4a9a128221cbcce} 
+\#define EXTEND~1.\+25}
+
+
+
+Definition at line \textbf{ 16} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!HASH\_SIZE@{HASH\_SIZE}}
+\index{HASH\_SIZE@{HASH\_SIZE}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{HASH\_SIZE}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_ad6074dd11ab3c97c8135c43aab03ae95} 
+\#define HASH\+\_\+\+SIZE~8}
+
+
+
+Definition at line \textbf{ 14} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+Referenced by \textbf{ gen\+\_\+hash()}.
+
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!MAX\_RETRIES@{MAX\_RETRIES}}
+\index{MAX\_RETRIES@{MAX\_RETRIES}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{MAX\_RETRIES}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_aecf13b8dc783db2202ca5c34fe117fc3} 
+\#define MAX\+\_\+\+RETRIES~64}
+
+
+
+Definition at line \textbf{ 15} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+Referenced by \textbf{ insert()}, \textbf{ insert\+\_\+elastic()}, and \textbf{ insert\+\_\+recursion()}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!create@{create}}
+\index{create@{create}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{create()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_ad1da8266d691ebea9f43d0aea5c06920} 
+void create (\begin{DoxyParamCaption}\item[{\textbf{ uint32\+\_\+t}}]{d}{, }\item[{\textbf{ uint64\+\_\+t}}]{size}{, }\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{char $\ast$}]{hash\+\_\+func}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 20} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ cuckoo\+Table\+\_\+t\+::hash\+\_\+func}, \textbf{ cuckoo\+Table\+\_\+t\+::hash\+\_\+size}, \textbf{ hash\+\_\+size()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ cuckoo\+Table\+\_\+t\+::keys}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ cuckoo\+Table\+\_\+t\+::occupancy}, \textbf{ cuckoo\+Table\+\_\+t\+::rehashed}, \textbf{ cuckoo\+Table\+\_\+t\+::size}, \textbf{ uint64\+\_\+t}, \textbf{ cuckoo\+Table\+\_\+t\+::util}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ create\+\_\+elastic()}, \textbf{ evaluate\+\_\+elasticity()}, and \textbf{ Trace\+Manager\+::get\+Fifo\+Name()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=183pt]{elastic__cuckoo__table_8cc_ad1da8266d691ebea9f43d0aea5c06920_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_ad1da8266d691ebea9f43d0aea5c06920_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!create\_elastic@{create\_elastic}}
+\index{create\_elastic@{create\_elastic}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{create\_elastic()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a35b456fdd34d8fe065ff86fd8e2b310b} 
+void create\+\_\+elastic (\begin{DoxyParamCaption}\item[{\textbf{ uint32\+\_\+t}}]{d}{, }\item[{\textbf{ uint64\+\_\+t}}]{size}{, }\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{char $\ast$}]{hash\+\_\+func}{, }\item[{float}]{rehash\+\_\+threshold}{, }\item[{\textbf{ uint32\+\_\+t}}]{scale}{, }\item[{\textbf{ uint32\+\_\+t}}]{swaps}{, }\item[{uint8\+\_\+t}]{priority}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 71} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ create()}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::curr\+\_\+size}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::d}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::hash\+\_\+func}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::priority}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehash\+\_\+elems}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehash\+\_\+probes}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehash\+\_\+threshold}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehashing}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::scale}, and \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::swaps}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::\+Page\+Table\+Walker\+Cuckoo()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=295pt]{elastic__cuckoo__table_8cc_a35b456fdd34d8fe065ff86fd8e2b310b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{elastic__cuckoo__table_8cc_a35b456fdd34d8fe065ff86fd8e2b310b_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!delete\_elastic@{delete\_elastic}}
+\index{delete\_elastic@{delete\_elastic}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{delete\_elastic()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a404eb3e0746b29573c90b26133d246ce} 
+void delete\+\_\+elastic (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 387} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehashing}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ update\+\_\+occupancy()}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a404eb3e0746b29573c90b26133d246ce_cgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!delete\_normal@{delete\_normal}}
+\index{delete\_normal@{delete\_normal}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{delete\_normal()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a144707e0f9f43bedd50a06f9acf70556} 
+void delete\+\_\+normal (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 368} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ update\+\_\+occupancy()}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a144707e0f9f43bedd50a06f9acf70556_cgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!destroy@{destroy}}
+\index{destroy@{destroy}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{destroy()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_af7569c704004e8ea9023f9c6083ce793} 
+void destroy (\begin{DoxyParamCaption}\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 181} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ cuckoo\+Table\+\_\+t\+::keys}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ uint32\+\_\+t}, and \textbf{ cuckoo\+Table\+\_\+t\+::util}.
+
+
+
+Referenced by \textbf{ destroy\+\_\+elastic()}, and \textbf{ evaluate\+\_\+elasticity()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_af7569c704004e8ea9023f9c6083ce793_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!destroy\_elastic@{destroy\_elastic}}
+\index{destroy\_elastic@{destroy\_elastic}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{destroy\_elastic()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_abec10bd8ba29825585a8cfa6bef6c064} 
+void destroy\+\_\+elastic (\begin{DoxyParamCaption}\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 193} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ destroy()}, and \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=209pt]{elastic__cuckoo__table_8cc_abec10bd8ba29825585a8cfa6bef6c064_cgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!evaluate\_elasticity@{evaluate\_elasticity}}
+\index{evaluate\_elasticity@{evaluate\_elasticity}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{evaluate\_elasticity()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a197abfda4fb5af930b145b101d7c0220} 
+\textbf{ uint64\+\_\+t} evaluate\+\_\+elasticity (\begin{DoxyParamCaption}\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{uint8\+\_\+t}]{complete}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 143} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ create()}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::curr\+\_\+size}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::d}, \textbf{ destroy()}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::hash\+\_\+func}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ cuckoo\+Table\+\_\+t\+::occupancy}, \textbf{ rehash()}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehash\+\_\+threshold}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehashing}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::scale}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::swaps}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::access\+Table()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::init\+\_\+walk\+\_\+functional()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a197abfda4fb5af930b145b101d7c0220_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a197abfda4fb5af930b145b101d7c0220_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!find@{find}}
+\index{find@{find}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{find()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a3576209faea29c9ae94ce96f85b7ffd1} 
+std\+::vector$<$ \textbf{ elem\+\_\+t} $>$ find (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 414} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ insert()}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ Fast\+Nehalem\+::\+Cache$<$ assoc, size\+\_\+kb $>$\+::access()}, \textbf{ Ghb\+Prefetcher\+::get\+Next\+Address()}, \textbf{ Allocation\+Manager\+::handle\+Calloc()}, \textbf{ Allocation\+Manager\+::handle\+Free()}, \textbf{ Allocation\+Manager\+::handle\+Malloc()}, \textbf{ Allocation\+Manager\+::handle\+Realloc()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, and \textbf{ Cache\+::peek\+Single\+Line()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a3576209faea29c9ae94ce96f85b7ffd1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a3576209faea29c9ae94ce96f85b7ffd1_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!find\_elastic@{find\_elastic}}
+\index{find\_elastic@{find\_elastic}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{find\_elastic()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a9c089c0016c4920db3acf94c7571ca64} 
+\textbf{ elem\+\_\+t} $\ast$ find\+\_\+elastic (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 472} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehashing}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a9c089c0016c4920db3acf94c7571ca64_cgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!find\_elastic\_ptw@{find\_elastic\_ptw}}
+\index{find\_elastic\_ptw@{find\_elastic\_ptw}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{find\_elastic\_ptw()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a6d23cf60329b512ef4ba22fc8967f91c} 
+std\+::vector$<$ \textbf{ elem\+\_\+t} $>$ find\+\_\+elastic\+\_\+ptw (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 441} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehashing}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::access\+Table()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::init\+\_\+walk\+\_\+functional()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::is\+Page\+Fault()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a6d23cf60329b512ef4ba22fc8967f91c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a6d23cf60329b512ef4ba22fc8967f91c_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!gen\_hash@{gen\_hash}}
+\index{gen\_hash@{gen\_hash}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{gen\_hash()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a940c35a8f6ce0de6703b29b1dfa0149f} 
+\textbf{ uint64\+\_\+t} gen\+\_\+hash (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{\textbf{ uint32\+\_\+t}}]{nest}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 495} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ blake2b()}, \textbf{ City\+Hash64\+With\+Seed()}, \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ cuckoo\+Table\+\_\+t\+::hash\+\_\+func}, \textbf{ HASH\+\_\+\+SIZE}, \textbf{ cuckoo\+Table\+\_\+t\+::hash\+\_\+size}, \textbf{ hmask}, \textbf{ cuckoo\+Table\+\_\+t\+::keys}, \textbf{ cuckoo\+Table\+\_\+t\+::size}, \textbf{ uint64\+\_\+t}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ delete\+\_\+elastic()}, \textbf{ delete\+\_\+normal()}, \textbf{ find()}, \textbf{ find\+\_\+elastic()}, \textbf{ find\+\_\+elastic\+\_\+ptw()}, \textbf{ insert()}, \textbf{ insert\+\_\+elastic()}, and \textbf{ insert\+\_\+recursion()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a940c35a8f6ce0de6703b29b1dfa0149f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a940c35a8f6ce0de6703b29b1dfa0149f_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!hash\_size@{hash\_size}}
+\index{hash\_size@{hash\_size}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{hash\_size()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_aba270e99ec78874033a7bb6c96e1a2f3} 
+\textbf{ uint64\+\_\+t} hash\+\_\+size (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 556} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ hash\+\_\+size()}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ create()}, and \textbf{ hash\+\_\+size()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=104pt]{elastic__cuckoo__table_8cc_aba270e99ec78874033a7bb6c96e1a2f3_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_aba270e99ec78874033a7bb6c96e1a2f3_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!insert@{insert}}
+\index{insert@{insert}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{insert()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a2b125c59b71e5d97b2a19173d68565cf} 
+\textbf{ uint32\+\_\+t} insert (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 238} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ MAX\+\_\+\+RETRIES}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ update\+\_\+occupancy()}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ find()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a2b125c59b71e5d97b2a19173d68565cf_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a2b125c59b71e5d97b2a19173d68565cf_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!insert\_elastic@{insert\_elastic}}
+\index{insert\_elastic@{insert\_elastic}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{insert\_elastic()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_afe42c4346e3d61de006e6125628b42aa} 
+\textbf{ uint32\+\_\+t} insert\+\_\+elastic (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{uint8\+\_\+t}]{bias}{, }\item[{uint16\+\_\+t}]{bias\+\_\+nest}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 295} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ MAX\+\_\+\+RETRIES}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehashing}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ update\+\_\+occupancy()}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::access\+Table()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::init\+\_\+walk\+\_\+functional()}, and \textbf{ rehash()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_afe42c4346e3d61de006e6125628b42aa_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_afe42c4346e3d61de006e6125628b42aa_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!insert\_recursion@{insert\_recursion}}
+\index{insert\_recursion@{insert\_recursion}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{insert\_recursion()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_aafa8c86b981cca5a8699807f2f1420f5} 
+\textbf{ uint32\+\_\+t} insert\+\_\+recursion (\begin{DoxyParamCaption}\item[{\textbf{ elem\+\_\+t} $\ast$}]{elem}{, }\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{\textbf{ uint32\+\_\+t}}]{nest}{, }\item[{\textbf{ uint32\+\_\+t}}]{tries}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 200} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ gen\+\_\+hash()}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ insert\+\_\+recursion()}, \textbf{ MAX\+\_\+\+RETRIES}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ uint64\+\_\+t}, \textbf{ update\+\_\+occupancy()}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ insert\+\_\+recursion()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_aafa8c86b981cca5a8699807f2f1420f5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=129pt]{elastic__cuckoo__table_8cc_aafa8c86b981cca5a8699807f2f1420f5_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!printTable@{printTable}}
+\index{printTable@{printTable}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{printTable()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_ab1330c15f69b2e0b497b4d7b45ace8df} 
+void print\+Table (\begin{DoxyParamCaption}\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 545} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ cuckoo\+Table\+\_\+t\+::size}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!rehash@{rehash}}
+\index{rehash@{rehash}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{rehash()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_afec6a2178f9c88911a5b6c41926881fb} 
+\textbf{ uint64\+\_\+t} rehash (\begin{DoxyParamCaption}\item[{\textbf{ elastic\+Cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{, }\item[{\textbf{ uint64\+\_\+t}}]{swaps}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 93} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::current}, \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ cuckoo\+Table\+\_\+t\+::hashtable}, \textbf{ insert\+\_\+elastic()}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::migrate}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::priority}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehash\+\_\+elems}, \textbf{ elastic\+Cuckoo\+Table\+\_\+t\+::rehash\+\_\+probes}, \textbf{ cuckoo\+Table\+\_\+t\+::rehashed}, \textbf{ cuckoo\+Table\+\_\+t\+::size}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, \textbf{ update\+\_\+occupancy()}, \textbf{ elem\+\_\+t\+::valid}, and \textbf{ elem\+\_\+t\+::value}.
+
+
+
+Referenced by \textbf{ evaluate\+\_\+elasticity()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_afec6a2178f9c88911a5b6c41926881fb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_afec6a2178f9c88911a5b6c41926881fb_icgraph}
+\end{center}
+\end{figure}
+\index{elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}!update\_occupancy@{update\_occupancy}}
+\index{update\_occupancy@{update\_occupancy}!elastic\_cuckoo\_table.cc@{elastic\_cuckoo\_table.cc}}
+\doxysubsubsection{update\_occupancy()}
+{\footnotesize\ttfamily \label{elastic__cuckoo__table_8cc_a3f4e5fe296befc10eb427d4ccecd0fe0} 
+void update\+\_\+occupancy (\begin{DoxyParamCaption}\item[{\textbf{ cuckoo\+Table\+\_\+t} $\ast$}]{hashtable}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 531} of file \textbf{ elastic\+\_\+cuckoo\+\_\+table.\+cc}.
+
+
+
+References \textbf{ cuckoo\+Table\+\_\+t\+::d}, \textbf{ cuckoo\+Table\+\_\+t\+::num\+\_\+elems}, \textbf{ cuckoo\+Table\+\_\+t\+::occupancy}, \textbf{ cuckoo\+Table\+\_\+t\+::size}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, and \textbf{ cuckoo\+Table\+\_\+t\+::util}.
+
+
+
+Referenced by \textbf{ delete\+\_\+elastic()}, \textbf{ delete\+\_\+normal()}, \textbf{ insert()}, \textbf{ insert\+\_\+elastic()}, \textbf{ insert\+\_\+recursion()}, and \textbf{ rehash()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{elastic__cuckoo__table_8cc_a3f4e5fe296befc10eb427d4ccecd0fe0_icgraph}
+\end{center}
+\end{figure}

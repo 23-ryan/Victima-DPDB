@@ -1,0 +1,1812 @@
+\doxysection{Core Class Reference}
+\label{classCore}\index{Core@{Core}}
+
+
+{\ttfamily \#include $<$core.\+h$>$}
+
+
+
+Collaboration diagram for Core\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ State} \{ \newline
+\textbf{ RUNNING} = 0
+, \textbf{ INITIALIZING}
+, \textbf{ STALLED}
+, \textbf{ SLEEPING}
+, \newline
+\textbf{ WAKING\+\_\+\+UP}
+, \textbf{ IDLE}
+, \textbf{ BROKEN}
+, \textbf{ NUM\+\_\+\+STATES}
+ \}
+\item 
+enum \textbf{ lock\+\_\+signal\+\_\+t} \{ \newline
+\textbf{ INVALID\+\_\+\+LOCK\+\_\+\+SIGNAL} = 0
+, \textbf{ MIN\+\_\+\+LOCK\+\_\+\+SIGNAL}
+, \textbf{ NONE} = MIN\+\_\+\+LOCK\+\_\+\+SIGNAL
+, \textbf{ LOCK}
+, \newline
+\textbf{ UNLOCK}
+, \textbf{ MAX\+\_\+\+LOCK\+\_\+\+SIGNAL} = UNLOCK
+, \textbf{ NUM\+\_\+\+LOCK\+\_\+\+SIGNAL\+\_\+\+TYPES} = MAX\+\_\+\+LOCK\+\_\+\+SIGNAL -\/ MIN\+\_\+\+LOCK\+\_\+\+SIGNAL + 1
+ \}
+\item 
+enum \textbf{ mem\+\_\+op\+\_\+t} \{ \newline
+\textbf{ INVALID\+\_\+\+MEM\+\_\+\+OP} = 0
+, \textbf{ MIN\+\_\+\+MEM\+\_\+\+OP}
+, \textbf{ READ} = MIN\+\_\+\+MEM\+\_\+\+OP
+, \textbf{ READ\+\_\+\+EX}
+, \newline
+\textbf{ WRITE}
+, \textbf{ MAX\+\_\+\+MEM\+\_\+\+OP} = WRITE
+, \textbf{ NUM\+\_\+\+MEM\+\_\+\+OP\+\_\+\+TYPES} = MAX\+\_\+\+MEM\+\_\+\+OP -\/ MIN\+\_\+\+MEM\+\_\+\+OP + 1
+ \}
+\item 
+enum \textbf{ mem\+\_\+origin\+\_\+t} \{ \textbf{ PAGE\+\_\+\+TABLE\+\_\+\+WALK} = 0
+, \textbf{ NORMAL}
+, \textbf{ NUM\+\_\+\+MEM\+\_\+\+ORIGINS}
+ \}
+\item 
+enum \textbf{ Mem\+Modeled} \{ \newline
+\textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}
+, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+COUNT}
+, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+COUNT\+\_\+\+TLBTIME}
+, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+TIME}
+, \newline
+\textbf{ MEM\+\_\+\+MODELED\+\_\+\+FENCED}
+, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+RETURN}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Core} (\textbf{ SInt32} id)
+\item 
+\textbf{ $\sim$\+Core} ()
+\item 
+bool \textbf{ access\+Branch\+Predictor} (\textbf{ Int\+Ptr} eip, bool taken, \textbf{ Int\+Ptr} target)
+\item 
+\textbf{ Memory\+Result} \textbf{ read\+Instruction\+Memory} (\textbf{ Int\+Ptr} address, \textbf{ UInt32} instruction\+\_\+size)
+\item 
+\textbf{ Memory\+Result} \textbf{ access\+Memory} (\textbf{ lock\+\_\+signal\+\_\+t} lock\+\_\+signal, \textbf{ mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} d\+\_\+addr, char $\ast$data\+\_\+buffer, \textbf{ UInt32} data\+\_\+size, \textbf{ Mem\+Modeled} modeled=\textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}, \textbf{ Int\+Ptr} eip=0, \textbf{ Subsecond\+Time} now=\textbf{ Subsecond\+Time\+::\+Max\+Time}(), bool is\+\_\+fault\+\_\+mask=false)
+\item 
+\textbf{ Memory\+Result} \textbf{ native\+Mem\+Op} (\textbf{ lock\+\_\+signal\+\_\+t} lock\+\_\+signal, \textbf{ mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} d\+\_\+addr, char $\ast$data\+\_\+buffer, \textbf{ UInt32} data\+\_\+size)
+\item 
+void \textbf{ access\+Memory\+Fast} (bool icache, \textbf{ mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} address)
+\item 
+void \textbf{ log\+Memory\+Hit} (bool icache, \textbf{ mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} address, \textbf{ Mem\+Modeled} modeled=\textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}, \textbf{ Int\+Ptr} eip=0)
+\item 
+bool \textbf{ count\+Instructions} (\textbf{ Int\+Ptr} address, \textbf{ UInt32} count)
+\item 
+void \textbf{ emulate\+Cpuid} (\textbf{ UInt32} eax, \textbf{ UInt32} ecx, \textbf{ cpuid\+\_\+result\+\_\+t} \&res) const
+\item 
+int \textbf{ get\+Id} () const
+\item 
+\textbf{ Thread} $\ast$ \textbf{ get\+Thread} () const
+\item 
+void \textbf{ set\+Thread} (\textbf{ Thread} $\ast$thread)
+\item 
+\textbf{ Network} $\ast$ \textbf{ get\+Network} ()
+\item 
+\textbf{ Performance\+Model} $\ast$ \textbf{ get\+Performance\+Model} ()
+\item 
+\textbf{ Clock\+Skew\+Minimization\+Client} $\ast$ \textbf{ get\+Clock\+Skew\+Minimization\+Client} () const
+\item 
+\textbf{ Memory\+Manager\+Base} $\ast$ \textbf{ get\+Memory\+Manager} ()
+\item 
+const \textbf{ Memory\+Manager\+Base} $\ast$ \textbf{ get\+Memory\+Manager} () const
+\item 
+\textbf{ Shmem\+Perf\+Model} $\ast$ \textbf{ get\+Shmem\+Perf\+Model} ()
+\item 
+const \textbf{ Component\+Period} $\ast$ \textbf{ get\+Dvfs\+Domain} () const
+\item 
+\textbf{ Topology\+Info} $\ast$ \textbf{ get\+Topology\+Info} ()
+\item 
+const \textbf{ Topology\+Info} $\ast$ \textbf{ get\+Topology\+Info} () const
+\item 
+const \textbf{ Cheetah\+Manager} $\ast$ \textbf{ get\+Cheetah\+Manager} () const
+\item 
+\textbf{ State} \textbf{ get\+State} () const
+\item 
+void \textbf{ set\+State} (\textbf{ State} core\+\_\+state)
+\item 
+\textbf{ UInt64} \textbf{ get\+Instruction\+Count} ()
+\item 
+\textbf{ Bbv\+Count} $\ast$ \textbf{ get\+Bbv\+Count} ()
+\item 
+\textbf{ UInt64} \textbf{ get\+Instructions\+Callback} ()
+\item 
+bool \textbf{ is\+Enabled\+Instructions\+Callback} ()
+\item 
+void \textbf{ set\+Instructions\+Callback} (\textbf{ UInt64} instructions)
+\item 
+void \textbf{ disable\+Instructions\+Callback} ()
+\item 
+void \textbf{ enable\+Performance\+Models} ()
+\item 
+void \textbf{ disable\+Performance\+Models} ()
+\item 
+void \textbf{ measure\+Cache\+Stats} ()
+\item 
+\textbf{ UInt64} $\ast$ \textbf{ get\+Utr\+Bitmap} ()
+\item 
+void \textbf{ update\+Spin\+Count} (\textbf{ UInt64} instructions, \textbf{ Subsecond\+Time} elapsed\+\_\+time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static const char $\ast$ \textbf{ Core\+State\+String} (\textbf{ State} state)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+instructions}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+instructions\+\_\+callback}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+instructions\+\_\+hpi\+\_\+callback}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+instructions\+\_\+hpi\+\_\+last}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ UInt64} \textbf{ g\+\_\+instructions\+\_\+hpi\+\_\+global} = 0
+\item 
+static \textbf{ UInt64} \textbf{ g\+\_\+instructions\+\_\+hpi\+\_\+global\+\_\+callback} = 0
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Memory\+Result} \textbf{ initiate\+Memory\+Access} (\textbf{ Mem\+Component\+::component\+\_\+t} mem\+\_\+component, \textbf{ lock\+\_\+signal\+\_\+t} lock\+\_\+signal, \textbf{ mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} address, \textbf{ Byte} $\ast$data\+\_\+buf, \textbf{ UInt32} data\+\_\+size, \textbf{ Mem\+Modeled} modeled, \textbf{ Int\+Ptr} eip, \textbf{ Subsecond\+Time} now)
+\item 
+void \textbf{ hook\+Periodic\+Ins\+Check} ()
+\item 
+void \textbf{ hook\+Periodic\+Ins\+Call} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ m\+\_\+core\+\_\+id}
+\item 
+const \textbf{ Component\+Period} $\ast$ \textbf{ m\+\_\+dvfs\+\_\+domain}
+\item 
+\textbf{ Memory\+Manager\+Base} $\ast$ \textbf{ m\+\_\+memory\+\_\+manager}
+\item 
+\textbf{ Thread} $\ast$ \textbf{ m\+\_\+thread}
+\item 
+\textbf{ Network} $\ast$ \textbf{ m\+\_\+network}
+\item 
+\textbf{ Performance\+Model} $\ast$ \textbf{ m\+\_\+performance\+\_\+model}
+\item 
+\textbf{ Clock\+Skew\+Minimization\+Client} $\ast$ \textbf{ m\+\_\+clock\+\_\+skew\+\_\+minimization\+\_\+client}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+mem\+\_\+lock}
+\item 
+\textbf{ Shmem\+Perf\+Model} $\ast$ \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}
+\item 
+\textbf{ Bbv\+Count} \textbf{ m\+\_\+bbv}
+\item 
+\textbf{ Topology\+Info} $\ast$ \textbf{ m\+\_\+topology\+\_\+info}
+\item 
+\textbf{ Cheetah\+Manager} $\ast$ \textbf{ m\+\_\+cheetah\+\_\+manager}
+\item 
+\textbf{ UInt64} $\ast$ \textbf{ utr\+\_\+bitmap}
+\item 
+\textbf{ State} \textbf{ m\+\_\+core\+\_\+state}
+\item 
+\textbf{ Int\+Ptr} \textbf{ m\+\_\+icache\+\_\+last\+\_\+block}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+spin\+\_\+loops}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+spin\+\_\+instructions}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+spin\+\_\+elapsed\+\_\+time}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Lock} \textbf{ m\+\_\+global\+\_\+core\+\_\+lock}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Instruction\+Modeling}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 33} of file \textbf{ core.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{Core@{Core}!lock\_signal\_t@{lock\_signal\_t}}
+\index{lock\_signal\_t@{lock\_signal\_t}!Core@{Core}}
+\doxysubsubsection{lock\_signal\_t}
+{\footnotesize\ttfamily \label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+enum \textbf{ Core\+::lock\+\_\+signal\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID\_LOCK\_SIGNAL@{INVALID\_LOCK\_SIGNAL}!Core@{Core}}\index{Core@{Core}!INVALID\_LOCK\_SIGNAL@{INVALID\_LOCK\_SIGNAL}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+INVALID\+\_\+\+LOCK\+\_\+\+SIGNAL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MIN\_LOCK\_SIGNAL@{MIN\_LOCK\_SIGNAL}!Core@{Core}}\index{Core@{Core}!MIN\_LOCK\_SIGNAL@{MIN\_LOCK\_SIGNAL}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+MIN\+\_\+\+LOCK\+\_\+\+SIGNAL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NONE@{NONE}!Core@{Core}}\index{Core@{Core}!NONE@{NONE}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+NONE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LOCK@{LOCK}!Core@{Core}}\index{Core@{Core}!LOCK@{LOCK}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+LOCK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{UNLOCK@{UNLOCK}!Core@{Core}}\index{Core@{Core}!UNLOCK@{UNLOCK}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+UNLOCK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MAX\_LOCK\_SIGNAL@{MAX\_LOCK\_SIGNAL}!Core@{Core}}\index{Core@{Core}!MAX\_LOCK\_SIGNAL@{MAX\_LOCK\_SIGNAL}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+MAX\+\_\+\+LOCK\+\_\+\+SIGNAL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_LOCK\_SIGNAL\_TYPES@{NUM\_LOCK\_SIGNAL\_TYPES}!Core@{Core}}\index{Core@{Core}!NUM\_LOCK\_SIGNAL\_TYPES@{NUM\_LOCK\_SIGNAL\_TYPES}}}\label{classCore_af5ca312ca9878b17f31ad66682e06784} 
+NUM\+\_\+\+LOCK\+\_\+\+SIGNAL\+\_\+\+TYPES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 49} of file \textbf{ core.\+h}.
+
+\index{Core@{Core}!mem\_op\_t@{mem\_op\_t}}
+\index{mem\_op\_t@{mem\_op\_t}!Core@{Core}}
+\doxysubsubsection{mem\_op\_t}
+{\footnotesize\ttfamily \label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+enum \textbf{ Core\+::mem\+\_\+op\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID\_MEM\_OP@{INVALID\_MEM\_OP}!Core@{Core}}\index{Core@{Core}!INVALID\_MEM\_OP@{INVALID\_MEM\_OP}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+INVALID\+\_\+\+MEM\+\_\+\+OP&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MIN\_MEM\_OP@{MIN\_MEM\_OP}!Core@{Core}}\index{Core@{Core}!MIN\_MEM\_OP@{MIN\_MEM\_OP}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+MIN\+\_\+\+MEM\+\_\+\+OP&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{READ@{READ}!Core@{Core}}\index{Core@{Core}!READ@{READ}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+READ&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{READ\_EX@{READ\_EX}!Core@{Core}}\index{Core@{Core}!READ\_EX@{READ\_EX}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+READ\+\_\+\+EX&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{WRITE@{WRITE}!Core@{Core}}\index{Core@{Core}!WRITE@{WRITE}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+WRITE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MAX\_MEM\_OP@{MAX\_MEM\_OP}!Core@{Core}}\index{Core@{Core}!MAX\_MEM\_OP@{MAX\_MEM\_OP}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+MAX\+\_\+\+MEM\+\_\+\+OP&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_MEM\_OP\_TYPES@{NUM\_MEM\_OP\_TYPES}!Core@{Core}}\index{Core@{Core}!NUM\_MEM\_OP\_TYPES@{NUM\_MEM\_OP\_TYPES}}}\label{classCore_a9980ff1cc8668dc21b24dcead71f9695} 
+NUM\+\_\+\+MEM\+\_\+\+OP\+\_\+\+TYPES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 60} of file \textbf{ core.\+h}.
+
+\index{Core@{Core}!mem\_origin\_t@{mem\_origin\_t}}
+\index{mem\_origin\_t@{mem\_origin\_t}!Core@{Core}}
+\doxysubsubsection{mem\_origin\_t}
+{\footnotesize\ttfamily \label{classCore_af7bc83087ed71dea3f419d5f1c5efcf2} 
+enum \textbf{ Core\+::mem\+\_\+origin\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PAGE\_TABLE\_WALK@{PAGE\_TABLE\_WALK}!Core@{Core}}\index{Core@{Core}!PAGE\_TABLE\_WALK@{PAGE\_TABLE\_WALK}}}\label{classCore_af7bc83087ed71dea3f419d5f1c5efcf2} 
+PAGE\+\_\+\+TABLE\+\_\+\+WALK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NORMAL@{NORMAL}!Core@{Core}}\index{Core@{Core}!NORMAL@{NORMAL}}}\label{classCore_af7bc83087ed71dea3f419d5f1c5efcf2} 
+NORMAL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_MEM\_ORIGINS@{NUM\_MEM\_ORIGINS}!Core@{Core}}\index{Core@{Core}!NUM\_MEM\_ORIGINS@{NUM\_MEM\_ORIGINS}}}\label{classCore_af7bc83087ed71dea3f419d5f1c5efcf2} 
+NUM\+\_\+\+MEM\+\_\+\+ORIGINS&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 71} of file \textbf{ core.\+h}.
+
+\index{Core@{Core}!MemModeled@{MemModeled}}
+\index{MemModeled@{MemModeled}!Core@{Core}}
+\doxysubsubsection{MemModeled}
+{\footnotesize\ttfamily \label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+enum \textbf{ Core\+::\+Mem\+Modeled}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MEM\_MODELED\_NONE@{MEM\_MODELED\_NONE}!Core@{Core}}\index{Core@{Core}!MEM\_MODELED\_NONE@{MEM\_MODELED\_NONE}}}\label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+MEM\+\_\+\+MODELED\+\_\+\+NONE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MEM\_MODELED\_COUNT@{MEM\_MODELED\_COUNT}!Core@{Core}}\index{Core@{Core}!MEM\_MODELED\_COUNT@{MEM\_MODELED\_COUNT}}}\label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+MEM\+\_\+\+MODELED\+\_\+\+COUNT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MEM\_MODELED\_COUNT\_TLBTIME@{MEM\_MODELED\_COUNT\_TLBTIME}!Core@{Core}}\index{Core@{Core}!MEM\_MODELED\_COUNT\_TLBTIME@{MEM\_MODELED\_COUNT\_TLBTIME}}}\label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+MEM\+\_\+\+MODELED\+\_\+\+COUNT\+\_\+\+TLBTIME&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MEM\_MODELED\_TIME@{MEM\_MODELED\_TIME}!Core@{Core}}\index{Core@{Core}!MEM\_MODELED\_TIME@{MEM\_MODELED\_TIME}}}\label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+MEM\+\_\+\+MODELED\+\_\+\+TIME&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MEM\_MODELED\_FENCED@{MEM\_MODELED\_FENCED}!Core@{Core}}\index{Core@{Core}!MEM\_MODELED\_FENCED@{MEM\_MODELED\_FENCED}}}\label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+MEM\+\_\+\+MODELED\+\_\+\+FENCED&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MEM\_MODELED\_RETURN@{MEM\_MODELED\_RETURN}!Core@{Core}}\index{Core@{Core}!MEM\_MODELED\_RETURN@{MEM\_MODELED\_RETURN}}}\label{classCore_a0e0a64f63e9bd78172492a41f8004f36} 
+MEM\+\_\+\+MODELED\+\_\+\+RETURN&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 79} of file \textbf{ core.\+h}.
+
+\index{Core@{Core}!State@{State}}
+\index{State@{State}!Core@{Core}}
+\doxysubsubsection{State}
+{\footnotesize\ttfamily \label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+enum \textbf{ Core\+::\+State}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{RUNNING@{RUNNING}!Core@{Core}}\index{Core@{Core}!RUNNING@{RUNNING}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+RUNNING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INITIALIZING@{INITIALIZING}!Core@{Core}}\index{Core@{Core}!INITIALIZING@{INITIALIZING}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+INITIALIZING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STALLED@{STALLED}!Core@{Core}}\index{Core@{Core}!STALLED@{STALLED}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+STALLED&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SLEEPING@{SLEEPING}!Core@{Core}}\index{Core@{Core}!SLEEPING@{SLEEPING}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+SLEEPING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{WAKING\_UP@{WAKING\_UP}!Core@{Core}}\index{Core@{Core}!WAKING\_UP@{WAKING\_UP}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+WAKING\+\_\+\+UP&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{IDLE@{IDLE}!Core@{Core}}\index{Core@{Core}!IDLE@{IDLE}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+IDLE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BROKEN@{BROKEN}!Core@{Core}}\index{Core@{Core}!BROKEN@{BROKEN}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+BROKEN&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_STATES@{NUM\_STATES}!Core@{Core}}\index{Core@{Core}!NUM\_STATES@{NUM\_STATES}}}\label{classCore_a6d8edbd01f8dcdff6a17f5ddf6b30591} 
+NUM\+\_\+\+STATES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 37} of file \textbf{ core.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{Core@{Core}!Core@{Core}}
+\index{Core@{Core}!Core@{Core}}
+\doxysubsubsection{Core()}
+{\footnotesize\ttfamily \label{classCore_ae85a84eb3995d52fd293665f1d75678f} 
+Core\+::\+Core (\begin{DoxyParamCaption}\item[{\textbf{ SInt32}}]{id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 67} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Clock\+Skew\+Minimization\+Client\+::create()}, \textbf{ Performance\+Model\+::create()}, \textbf{ Memory\+Manager\+Base\+::create\+MMU()}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+clock\+\_\+skew\+\_\+minimization\+\_\+client}, \textbf{ m\+\_\+instructions}, \textbf{ m\+\_\+memory\+\_\+manager}, \textbf{ m\+\_\+network}, \textbf{ m\+\_\+performance\+\_\+model}, \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}, \textbf{ m\+\_\+spin\+\_\+elapsed\+\_\+time}, \textbf{ m\+\_\+spin\+\_\+instructions}, \textbf{ m\+\_\+spin\+\_\+loops}, and \textbf{ register\+Stats\+Metric()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ae85a84eb3995d52fd293665f1d75678f_cgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!````~Core@{$\sim$Core}}
+\index{````~Core@{$\sim$Core}!Core@{Core}}
+\doxysubsubsection{$\sim$Core()}
+{\footnotesize\ttfamily \label{classCore_a776f8c46504b14183883c6273f93eaed} 
+Core\+::$\sim$\+Core (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ m\+\_\+cheetah\+\_\+manager}, \textbf{ m\+\_\+clock\+\_\+skew\+\_\+minimization\+\_\+client}, \textbf{ m\+\_\+memory\+\_\+manager}, \textbf{ m\+\_\+network}, \textbf{ m\+\_\+performance\+\_\+model}, \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}, and \textbf{ m\+\_\+topology\+\_\+info}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{Core@{Core}!accessBranchPredictor@{accessBranchPredictor}}
+\index{accessBranchPredictor@{accessBranchPredictor}!Core@{Core}}
+\doxysubsubsection{accessBranchPredictor()}
+{\footnotesize\ttfamily \label{classCore_a06b14c559db57234295c6d4e1c8d7817} 
+bool Core\+::access\+Branch\+Predictor (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{eip}{, }\item[{bool}]{taken}{, }\item[{\textbf{ Int\+Ptr}}]{target}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 201} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Performance\+Model\+::get\+Branch\+Predictor()}, \textbf{ get\+Performance\+Model()}, \textbf{ Branch\+Predictor\+::predict()}, and \textbf{ Branch\+Predictor\+::update()}.
+
+
+
+Referenced by \textbf{ Dynamic\+Instruction\+::get\+Branch\+Cost()}, \textbf{ handle\+Branch\+Warming()}, \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, and \textbf{ Trace\+Thread\+::handle\+Instruction\+Warmup()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a06b14c559db57234295c6d4e1c8d7817_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a06b14c559db57234295c6d4e1c8d7817_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!accessMemory@{accessMemory}}
+\index{accessMemory@{accessMemory}!Core@{Core}}
+\doxysubsubsection{accessMemory()}
+{\footnotesize\ttfamily \label{classCore_a25ee97ef5e6d01e92a5f454be720591d} 
+\textbf{ Memory\+Result} Core\+::access\+Memory (\begin{DoxyParamCaption}\item[{\textbf{ lock\+\_\+signal\+\_\+t}}]{lock\+\_\+signal}{, }\item[{\textbf{ mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{d\+\_\+addr}{, }\item[{char $\ast$}]{data\+\_\+buffer}{, }\item[{\textbf{ UInt32}}]{data\+\_\+size}{, }\item[{\textbf{ Mem\+Modeled}}]{modeled}{ = {\ttfamily \textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}}, }\item[{\textbf{ Int\+Ptr}}]{eip}{ = {\ttfamily 0}, }\item[{\textbf{ Subsecond\+Time}}]{now}{ = {\ttfamily \textbf{ Subsecond\+Time\+::\+Max\+Time}()}, }\item[{bool}]{is\+\_\+fault\+\_\+mask}{ = {\ttfamily false}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 471} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ initiate\+Memory\+Access()}, \textbf{ Mem\+Component\+::\+L1\+\_\+\+DCACHE}, \textbf{ m\+\_\+core\+\_\+id}, \textbf{ make\+Memory\+Result()}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}, \textbf{ native\+Mem\+Op()}, \textbf{ NONE}, \textbf{ Config\+::\+PINTOOL}, \textbf{ Config\+::\+STANDALONE}, \textbf{ Hit\+Where\+::\+UNKNOWN}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Dynamic\+Instruction\+::access\+Memory()}, \textbf{ Pthread\+Emu\+::\+Barrier\+Init()}, \textbf{ Pthread\+Emu\+::\+Barrier\+Wait()}, \textbf{ Pthread\+Emu\+::\+Cond\+Broadcast()}, \textbf{ Pthread\+Emu\+::\+Cond\+Signal()}, \textbf{ Pthread\+Emu\+::\+Cond\+Wait()}, \textbf{ Syscall\+Server\+::futex\+Do\+Op()}, \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, \textbf{ Syscall\+Server\+::handle\+Futex\+Call()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Warmup()}, \textbf{ lite\+::handle\+Memory\+Read\+Detailed\+Issue()}, \textbf{ lite\+::handle\+Memory\+Read\+Faultinjection()}, \textbf{ lite\+::handle\+Memory\+Write\+Detailed\+Issue()}, \textbf{ lite\+::handle\+Memory\+Write\+Faultinjection()}, \textbf{ Rob\+Smt\+Timer\+::issue\+Instruction()}, \textbf{ Rob\+Timer\+::issue\+Instruction()}, \textbf{ Interval\+Timer\+::issue\+Mem\+Op()}, \textbf{ Magic\+Server\+::\+Magic\+\_\+unlocked()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Lock()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Trylock()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Unlock()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ read\+Cstr()}, \textbf{ read\+Memory()}, and \textbf{ Syscall\+Mdl\+::run\+Enter()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a25ee97ef5e6d01e92a5f454be720591d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a25ee97ef5e6d01e92a5f454be720591d_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!accessMemoryFast@{accessMemoryFast}}
+\index{accessMemoryFast@{accessMemoryFast}!Core@{Core}}
+\doxysubsubsection{accessMemoryFast()}
+{\footnotesize\ttfamily \label{classCore_a5d21a8ac621a6b1231a7b884edfd3784} 
+void Core\+::access\+Memory\+Fast (\begin{DoxyParamCaption}\item[{bool}]{icache}{, }\item[{\textbf{ mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{address}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 270} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Cheetah\+Manager\+::access()}, \textbf{ Memory\+Manager\+Base\+::core\+Initiate\+Memory\+Access\+Fast()}, \textbf{ get\+Memory\+Manager()}, \textbf{ Performance\+Model\+::handle\+Memory\+Latency()}, \textbf{ m\+\_\+cheetah\+\_\+manager}, \textbf{ m\+\_\+performance\+\_\+model}, \textbf{ Hit\+Where\+::\+MISS}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::access\+Instruction\+Cache\+Warmup()}, \textbf{ lite\+::handle\+Memory\+Read()}, and \textbf{ lite\+::handle\+Memory\+Write()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a5d21a8ac621a6b1231a7b884edfd3784_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a5d21a8ac621a6b1231a7b884edfd3784_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!CoreStateString@{CoreStateString}}
+\index{CoreStateString@{CoreStateString}!Core@{Core}}
+\doxysubsubsection{CoreStateString()}
+{\footnotesize\ttfamily \label{classCore_a46ac7984230968762fd6534e4a006d29} 
+const char $\ast$ Core\+::\+Core\+State\+String (\begin{DoxyParamCaption}\item[{\textbf{ Core\+::\+State}}]{state}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 56} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ core\+\_\+state\+\_\+names}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ NUM\+\_\+\+STATES}.
+
+
+
+Referenced by \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a46ac7984230968762fd6534e4a006d29_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!countInstructions@{countInstructions}}
+\index{countInstructions@{countInstructions}!Core@{Core}}
+\doxysubsubsection{countInstructions()}
+{\footnotesize\ttfamily \label{classCore_a75fa1a380e207228c4cc6e5127f94887} 
+bool Core\+::count\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ UInt32}}]{count}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 144} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Bbv\+Count\+::count()}, \textbf{ Performance\+Model\+::count\+Instructions()}, \textbf{ disable\+Instructions\+Callback()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+INSTR\+\_\+\+COUNT}, \textbf{ hook\+Periodic\+Ins\+Check()}, \textbf{ is\+Enabled\+Instructions\+Callback()}, \textbf{ m\+\_\+bbv}, \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+instructions}, \textbf{ m\+\_\+instructions\+\_\+callback}, \textbf{ m\+\_\+performance\+\_\+model}, and \textbf{ Bbv\+Count\+::sample()}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::count\+Instructions()}, \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, and \textbf{ Trace\+Thread\+::run()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a75fa1a380e207228c4cc6e5127f94887_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a75fa1a380e207228c4cc6e5127f94887_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!disableInstructionsCallback@{disableInstructionsCallback}}
+\index{disableInstructionsCallback@{disableInstructionsCallback}!Core@{Core}}
+\doxysubsubsection{disableInstructionsCallback()}
+{\footnotesize\ttfamily \label{classCore_a5a24595247bf607fd15e6be961ae49f9} 
+void Core\+::disable\+Instructions\+Callback (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 132} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+instructions\+\_\+callback}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}, and \textbf{ Sampling\+Manager\+::disable\+Fast\+Forward()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a5a24595247bf607fd15e6be961ae49f9_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!disablePerformanceModels@{disablePerformanceModels}}
+\index{disablePerformanceModels@{disablePerformanceModels}!Core@{Core}}
+\doxysubsubsection{disablePerformanceModels()}
+{\footnotesize\ttfamily \label{classCore_a0432a27e512246b644fa825bdb8b512c} 
+void Core\+::disable\+Performance\+Models (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 130} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Performance\+Model\+::disable()}, \textbf{ Shmem\+Perf\+Model\+::disable()}, \textbf{ Memory\+Manager\+Base\+::disable\+Models()}, \textbf{ Network\+::disable\+Models()}, \textbf{ get\+Memory\+Manager()}, \textbf{ get\+Network()}, \textbf{ get\+Performance\+Model()}, and \textbf{ get\+Shmem\+Perf\+Model()}.
+
+
+
+Referenced by \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a0432a27e512246b644fa825bdb8b512c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a0432a27e512246b644fa825bdb8b512c_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!emulateCpuid@{emulateCpuid}}
+\index{emulateCpuid@{emulateCpuid}!Core@{Core}}
+\doxysubsubsection{emulateCpuid()}
+{\footnotesize\ttfamily \label{classCore_ac10661e7c2ca4ed4a2b06e3ee360a1e2} 
+void Core\+::emulate\+Cpuid (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{eax}{, }\item[{\textbf{ UInt32}}]{ecx}{, }\item[{\textbf{ cpuid\+\_\+result\+\_\+t} \&}]{res}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 533} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Topology\+Info\+::apic\+\_\+id}, \textbf{ Topology\+Info\+::core\+\_\+count}, \textbf{ cpuid()}, \textbf{ cpuid\+\_\+result\+\_\+t\+::eax}, \textbf{ cpuid\+\_\+result\+\_\+t\+::ebx}, \textbf{ cpuid\+\_\+result\+\_\+t\+::ecx}, \textbf{ cpuid\+\_\+result\+\_\+t\+::edx}, \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+topology\+\_\+info}, \textbf{ Topology\+Info\+::\+PACKAGE\+\_\+\+SHIFT\+\_\+\+BITS}, \textbf{ Topology\+Info\+::smt\+\_\+count}, and \textbf{ Topology\+Info\+::\+SMT\+\_\+\+SHIFT\+\_\+\+BITS}.
+
+
+
+Referenced by \textbf{ handle\+Cpuid()}, and \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=219pt]{classCore_ac10661e7c2ca4ed4a2b06e3ee360a1e2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ac10661e7c2ca4ed4a2b06e3ee360a1e2_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!enablePerformanceModels@{enablePerformanceModels}}
+\index{enablePerformanceModels@{enablePerformanceModels}!Core@{Core}}
+\doxysubsubsection{enablePerformanceModels()}
+{\footnotesize\ttfamily \label{classCore_a05054ce80d05828621e74ba98a3fcfcb} 
+void Core\+::enable\+Performance\+Models (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 122} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Performance\+Model\+::enable()}, \textbf{ Shmem\+Perf\+Model\+::enable()}, \textbf{ Memory\+Manager\+Base\+::enable\+Models()}, \textbf{ Network\+::enable\+Models()}, \textbf{ get\+Memory\+Manager()}, \textbf{ get\+Network()}, \textbf{ get\+Performance\+Model()}, and \textbf{ get\+Shmem\+Perf\+Model()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a05054ce80d05828621e74ba98a3fcfcb_cgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getBbvCount@{getBbvCount}}
+\index{getBbvCount@{getBbvCount}!Core@{Core}}
+\doxysubsubsection{getBbvCount()}
+{\footnotesize\ttfamily \label{classCore_a453a8c61a39f6a5f1a04a309396ca702} 
+\textbf{ Bbv\+Count} $\ast$ Core\+::get\+Bbv\+Count (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 128} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+bbv}.
+
+\index{Core@{Core}!getCheetahManager@{getCheetahManager}}
+\index{getCheetahManager@{getCheetahManager}!Core@{Core}}
+\doxysubsubsection{getCheetahManager()}
+{\footnotesize\ttfamily \label{classCore_a3dd34697ee15d7cf774ee99b46480f67} 
+const \textbf{ Cheetah\+Manager} $\ast$ Core\+::get\+Cheetah\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 123} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+cheetah\+\_\+manager}.
+
+\index{Core@{Core}!getClockSkewMinimizationClient@{getClockSkewMinimizationClient}}
+\index{getClockSkewMinimizationClient@{getClockSkewMinimizationClient}!Core@{Core}}
+\doxysubsubsection{getClockSkewMinimizationClient()}
+{\footnotesize\ttfamily \label{classCore_a01e6f4d2b4a8d7bc55199bc5b9ac3359} 
+\textbf{ Clock\+Skew\+Minimization\+Client} $\ast$ Core\+::get\+Clock\+Skew\+Minimization\+Client (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 116} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+clock\+\_\+skew\+\_\+minimization\+\_\+client}.
+
+
+
+Referenced by \textbf{ Smt\+Timer\+::simulate()}, and \textbf{ Performance\+Model\+::synchronize()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a01e6f4d2b4a8d7bc55199bc5b9ac3359_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getDvfsDomain@{getDvfsDomain}}
+\index{getDvfsDomain@{getDvfsDomain}!Core@{Core}}
+\doxysubsubsection{getDvfsDomain()}
+{\footnotesize\ttfamily \label{classCore_af5180e4d17992c1a5f2115905d07958d} 
+const \textbf{ Component\+Period} $\ast$ Core\+::get\+Dvfs\+Domain (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 120} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+dvfs\+\_\+domain}.
+
+
+
+Referenced by \textbf{ Dynamic\+Instruction\+::access\+Memory()}, \textbf{ Periodic\+Sampling\+::callback\+Detailed()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Modrian\+Memory\+Manager\+::\+Find\+Permissions\+Recursive()}, \textbf{ Dynamic\+Instruction\+::get\+Branch\+Cost()}, \textbf{ Instruction\+::get\+Cost()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Modrian\+Memory\+Manager\+::init\+\_\+walk()}, \textbf{ Interval\+Timer\+::issue\+Mem\+Op()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Virtualized\+::\+Page\+Table\+Virtualized()}, \textbf{ Loop\+Tracer\+::trace\+Instruction()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+XMem\+Manager\+::\+XMem\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_af5180e4d17992c1a5f2115905d07958d_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getId@{getId}}
+\index{getId@{getId}!Core@{Core}}
+\doxysubsubsection{getId()}
+{\footnotesize\ttfamily \label{classCore_a9ba666f016e6b40fa0fcfe6204f78767} 
+int Core\+::get\+Id (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+core\+\_\+id}.
+
+
+
+Referenced by \textbf{ Trace\+Manager\+::access\+Memory()}, \textbf{ Smt\+Timer\+::barrier()}, \textbf{ Fast\+Nehalem\+::\+Cache$<$ assoc, size\+\_\+kb $>$\+::\+Cache()}, \textbf{ Routine\+Tracer\+Function\+Stats\+::\+Thread\+Stat\+Cpi\+Mem\+::callback()}, \textbf{ Thread\+Stat\+Named\+Stat\+::callback()}, \textbf{ Performance\+Model\+::create()}, \textbf{ Fast\+Nehalem\+::\+Dram\+::\+Dram()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Cntlr\+::\+Dram\+Cntlr()}, \textbf{ lite\+::emu\+Get\+CPU()}, \textbf{ Fastforward\+Performance\+Model\+::\+Fastforward\+Performance\+Model()}, \textbf{ Sampling\+Manager\+::get\+Core\+Historic\+CPI()}, \textbf{ Core\+Manager\+::get\+Current\+Core\+ID()}, \textbf{ Rob\+Smt\+Performance\+Model\+::get\+Rob\+Timer()}, \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}, \textbf{ handle\+Magic()}, \textbf{ handle\+Magic\+Instruction()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Hash\+Table\+PTW\+::\+Hash\+Table\+PTW()}, \textbf{ Rob\+Smt\+Timer\+::initialize\+Thread()}, \textbf{ Interval\+Contention\+Boom\+V1\+::\+Interval\+Contention\+Boom\+V1()}, \textbf{ Interval\+Contention\+Nehalem\+::\+Interval\+Contention\+Nehalem()}, \textbf{ Interval\+Timer\+::\+Interval\+Timer()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, \textbf{ Micro\+Op\+Performance\+Model\+::\+Micro\+Op\+Performance\+Model()}, \textbf{ Thread\+Manager\+::move\+Thread()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Lock()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Unlock()}, \textbf{ Network\+::net\+Pull\+From\+Transport()}, \textbf{ Network\+::net\+Recv()}, \textbf{ Network\+::net\+Send()}, \textbf{ Network\+::net\+Send()}, \textbf{ Network\+::\+Network()}, \textbf{ Network\+Model\+::\+Network\+Model()}, \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::\+Network\+Model\+EMesh\+Hop\+Counter()}, \textbf{ Fastforward\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, \textbf{ One\+IPCPerformance\+Model\+::\+One\+IPCPerformance\+Model()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Hash\+Dont\+Cache\+::\+Page\+Table\+Hash\+Dont\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Virtualized\+::\+Page\+Table\+Virtualized()}, \textbf{ Performance\+Model\+::\+Performance\+Model()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Cntlr\+::print\+Dram\+Access\+Count()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}, \textbf{ Pthread\+Emu\+::pthread\+Count()}, \textbf{ Core\+Manager\+::register\+Sim\+Thread()}, \textbf{ RLB\+::replace\+\_\+entry()}, \textbf{ Sampling\+Manager\+::reset\+Core\+Historic\+CPIs()}, \textbf{ RLB\+::\+RLB()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Smt\+Timer()}, \textbf{ Rob\+Timer\+::\+Rob\+Timer()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, \textbf{ Thread\+::set\+Core()}, \textbf{ Barrier\+Sync\+Client\+::synchronize()}, \textbf{ Instruction\+Tracer\+Print\+::trace\+Instruction()}, \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stats\+::update()}, \textbf{ Thread\+::update\+Core\+TLS()}, \textbf{ Pthread\+Emu\+::update\+State()}, \textbf{ Trace\+Thread\+::va2pa()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+XMem\+Manager\+::\+XMem\+Manager()}, and \textbf{ Rob\+Smt\+Performance\+Model\+::$\sim$\+Rob\+Smt\+Performance\+Model()}.
+
+\index{Core@{Core}!getInstructionCount@{getInstructionCount}}
+\index{getInstructionCount@{getInstructionCount}!Core@{Core}}
+\doxysubsubsection{getInstructionCount()}
+{\footnotesize\ttfamily \label{classCore_a11058b2e2b6dc9c3e37f300530b39ab3} 
+\textbf{ UInt64} Core\+::get\+Instruction\+Count (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+instructions}.
+
+
+
+Referenced by \textbf{ Spin\+Loop\+Detector\+::commit\+BCT()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::core\+Initiate\+Memory\+Access()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a11058b2e2b6dc9c3e37f300530b39ab3_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getInstructionsCallback@{getInstructionsCallback}}
+\index{getInstructionsCallback@{getInstructionsCallback}!Core@{Core}}
+\doxysubsubsection{getInstructionsCallback()}
+{\footnotesize\ttfamily \label{classCore_a6ada110e2ffca1206330efbe3d9641f8} 
+\textbf{ UInt64} Core\+::get\+Instructions\+Callback (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 129} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+instructions\+\_\+callback}.
+
+\index{Core@{Core}!getMemoryManager@{getMemoryManager}}
+\index{getMemoryManager@{getMemoryManager}!Core@{Core}}
+\doxysubsubsection{getMemoryManager()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classCore_ab15098ea7760297015508bf7d8029aac} 
+\textbf{ Memory\+Manager\+Base} $\ast$ Core\+::get\+Memory\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 117} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+memory\+\_\+manager}.
+
+
+
+Referenced by \textbf{ access\+Memory\+Fast()}, \textbf{ Network\+Model\+Bus\+::account\+Packet()}, \textbf{ disable\+Performance\+Models()}, \textbf{ enable\+Performance\+Models()}, \textbf{ Network\+::get\+Modeled\+Length()}, \textbf{ initiate\+Memory\+Access()}, \textbf{ log\+Memory\+Hit()}, \textbf{ measure\+Cache\+Stats()}, \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+Magic\+::process\+Received\+Packet()}, \textbf{ read\+Instruction\+Memory()}, and \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::route\+Packet()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ab15098ea7760297015508bf7d8029aac_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getMemoryManager@{getMemoryManager}}
+\index{getMemoryManager@{getMemoryManager}!Core@{Core}}
+\doxysubsubsection{getMemoryManager()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classCore_a5387f1dae81e175bb74fa16315f817bf} 
+const \textbf{ Memory\+Manager\+Base} $\ast$ Core\+::get\+Memory\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 118} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+memory\+\_\+manager}.
+
+\index{Core@{Core}!getNetwork@{getNetwork}}
+\index{getNetwork@{getNetwork}!Core@{Core}}
+\doxysubsubsection{getNetwork()}
+{\footnotesize\ttfamily \label{classCore_ae478d5614e2c1ee27f748eb2842311c4} 
+\textbf{ Network} $\ast$ Core\+::get\+Network (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 114} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+network}.
+
+
+
+Referenced by \textbf{ disable\+Performance\+Models()}, \textbf{ enable\+Performance\+Models()}, and \textbf{ Network\+::net\+Send()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ae478d5614e2c1ee27f748eb2842311c4_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getPerformanceModel@{getPerformanceModel}}
+\index{getPerformanceModel@{getPerformanceModel}!Core@{Core}}
+\doxysubsubsection{getPerformanceModel()}
+{\footnotesize\ttfamily \label{classCore_a3c62d0f1f6fe1b51aced0f89ff477ed3} 
+\textbf{ Performance\+Model} $\ast$ Core\+::get\+Performance\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+performance\+\_\+model}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}, \textbf{ Barrier\+Sync\+Server\+::abort\+Barrier()}, \textbf{ access\+Branch\+Predictor()}, \textbf{ Barrier\+Sync\+Server\+::barrier\+Release()}, \textbf{ Sync\+Client\+::barrier\+Wait()}, \textbf{ Periodic\+Sampling\+::callback\+Detailed()}, \textbf{ Spin\+Loop\+Detector\+::commit\+BCT()}, \textbf{ Sync\+Client\+::cond\+Broadcast()}, \textbf{ Sync\+Client\+::cond\+Signal()}, \textbf{ Sync\+Client\+::cond\+Wait()}, \textbf{ Memory\+Manager\+Base\+::core\+Initiate\+Memory\+Access\+Fast()}, \textbf{ Instruction\+Modeling\+::count\+Instructions()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}, \textbf{ Sampling\+Manager\+::disable\+Fast\+Forward()}, \textbf{ disable\+Performance\+Models()}, \textbf{ Interval\+Timer\+::dispatch\+Window()}, \textbf{ Rob\+Smt\+Timer\+::do\+Commit()}, \textbf{ Rob\+Timer\+::do\+Commit()}, \textbf{ lite\+::emu\+Clock\+Gettime()}, \textbf{ lite\+::emu\+Gettimeofday()}, \textbf{ enable\+Performance\+Models()}, \textbf{ Dynamic\+Instruction\+::get\+Branch\+Cost()}, \textbf{ Sampling\+Manager\+::get\+Core\+Historic\+CPI()}, \textbf{ Trace\+Thread\+::get\+Current\+Time()}, \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ handle\+Branch\+Warming()}, \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, \textbf{ handle\+Check\+Scheduled()}, \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}, \textbf{ Syscall\+Mdl\+::handle\+Futex\+Call()}, \textbf{ Instruction\+Modeling\+::handle\+Instruction()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Warmup()}, \textbf{ handle\+Rdtsc()}, \textbf{ initiate\+Memory\+Access()}, \textbf{ Thread\+Manager\+::join\+Thread()}, \textbf{ Thread\+Stats\+Manager\+::metric\+Callback()}, \textbf{ Sync\+Client\+::mutex\+Unlock()}, \textbf{ Network\+::net\+Recv()}, \textbf{ Network\+::net\+Send()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, \textbf{ lite\+::pthread\+After()}, \textbf{ lite\+::pthread\+Before()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::recalibrate\+Instructions\+Callback()}, \textbf{ Sampling\+Manager\+::recalibrate\+Instructions\+Callback()}, \textbf{ Thread\+::reschedule()}, \textbf{ Sampling\+Manager\+::reset\+Core\+Historic\+CPIs()}, \textbf{ Trace\+Thread\+::run()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, \textbf{ Thread\+Manager\+::spawn\+Thread()}, \textbf{ Barrier\+Sync\+Client\+::synchronize()}, \textbf{ Barrier\+Sync\+Server\+::synchronize()}, \textbf{ Scheduler\+Pinned\+Base\+::thread\+Set\+Affinity()}, \textbf{ Scheduler\+Pinned\+Base\+::thread\+Yield()}, \textbf{ Trace\+Thread\+::unblock()}, \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stats\+::update()}, and \textbf{ Pthread\+Emu\+::update\+State()}.
+
+\index{Core@{Core}!getShmemPerfModel@{getShmemPerfModel}}
+\index{getShmemPerfModel@{getShmemPerfModel}!Core@{Core}}
+\doxysubsubsection{getShmemPerfModel()}
+{\footnotesize\ttfamily \label{classCore_ad2ae2b469115c864bfb649d775393dc6} 
+\textbf{ Shmem\+Perf\+Model} $\ast$ Core\+::get\+Shmem\+Perf\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}.
+
+
+
+Referenced by \textbf{ disable\+Performance\+Models()}, \textbf{ enable\+Performance\+Models()}, and \textbf{ initiate\+Memory\+Access()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ad2ae2b469115c864bfb649d775393dc6_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getState@{getState}}
+\index{getState@{getState}!Core@{Core}}
+\doxysubsubsection{getState()}
+{\footnotesize\ttfamily \label{classCore_a9939066bf3375133927528e6336029dc} 
+\textbf{ State} Core\+::get\+State (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 125} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+core\+\_\+state}.
+
+
+
+Referenced by \textbf{ Barrier\+Sync\+Server\+::is\+Core\+Running()}, and \textbf{ Barrier\+Sync\+Server\+::synchronize()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a9939066bf3375133927528e6336029dc_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getThread@{getThread}}
+\index{getThread@{getThread}!Core@{Core}}
+\doxysubsubsection{getThread()}
+{\footnotesize\ttfamily \label{classCore_a6ec53107d96a8e09857e6e4b4709fd72} 
+\textbf{ Thread} $\ast$ Core\+::get\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread}.
+
+
+
+Referenced by \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}, \textbf{ Barrier\+Sync\+Server\+::is\+Core\+Running()}, \textbf{ Thread\+::set\+Core()}, and \textbf{ Barrier\+Sync\+Server\+::synchronize()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a6ec53107d96a8e09857e6e4b4709fd72_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getTopologyInfo@{getTopologyInfo}}
+\index{getTopologyInfo@{getTopologyInfo}!Core@{Core}}
+\doxysubsubsection{getTopologyInfo()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classCore_a52f8acd8fc73d47af888e55bdfa9f5f6} 
+\textbf{ Topology\+Info} $\ast$ Core\+::get\+Topology\+Info (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 121} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+topology\+\_\+info}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a52f8acd8fc73d47af888e55bdfa9f5f6_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!getTopologyInfo@{getTopologyInfo}}
+\index{getTopologyInfo@{getTopologyInfo}!Core@{Core}}
+\doxysubsubsection{getTopologyInfo()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classCore_a537a835a872ec5a02b5fbfddfdcb0d6c} 
+const \textbf{ Topology\+Info} $\ast$ Core\+::get\+Topology\+Info (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 122} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+topology\+\_\+info}.
+
+\index{Core@{Core}!getUtrBitmap@{getUtrBitmap}}
+\index{getUtrBitmap@{getUtrBitmap}!Core@{Core}}
+\doxysubsubsection{getUtrBitmap()}
+{\footnotesize\ttfamily \label{classCore_a3dc903f014aabaebfa485f5725ca21f2} 
+\textbf{ UInt64} $\ast$ Core\+::get\+Utr\+Bitmap (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 138} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ utr\+\_\+bitmap}.
+
+\index{Core@{Core}!hookPeriodicInsCall@{hookPeriodicInsCall}}
+\index{hookPeriodicInsCall@{hookPeriodicInsCall}!Core@{Core}}
+\doxysubsubsection{hookPeriodicInsCall()}
+{\footnotesize\ttfamily \label{classCore_a83a36951e30a0c065de0f6add48a5627} 
+void Core\+::hook\+Periodic\+Ins\+Call (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 186} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ g\+\_\+instructions\+\_\+hpi\+\_\+global}, \textbf{ g\+\_\+instructions\+\_\+hpi\+\_\+global\+\_\+callback}, and \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+PERIODIC\+\_\+\+INS}.
+
+
+
+Referenced by \textbf{ hook\+Periodic\+Ins\+Check()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a83a36951e30a0c065de0f6add48a5627_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!hookPeriodicInsCheck@{hookPeriodicInsCheck}}
+\index{hookPeriodicInsCheck@{hookPeriodicInsCheck}!Core@{Core}}
+\doxysubsubsection{hookPeriodicInsCheck()}
+{\footnotesize\ttfamily \label{classCore_a3afe260bbd16d974394187fbc33e5f75} 
+void Core\+::hook\+Periodic\+Ins\+Check (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 171} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ g\+\_\+instructions\+\_\+hpi\+\_\+global}, \textbf{ g\+\_\+instructions\+\_\+hpi\+\_\+global\+\_\+callback}, \textbf{ hook\+Periodic\+Ins\+Call()}, \textbf{ m\+\_\+instructions}, \textbf{ m\+\_\+instructions\+\_\+hpi\+\_\+callback}, and \textbf{ m\+\_\+instructions\+\_\+hpi\+\_\+last}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classCore_a3afe260bbd16d974394187fbc33e5f75_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a3afe260bbd16d974394187fbc33e5f75_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!initiateMemoryAccess@{initiateMemoryAccess}}
+\index{initiateMemoryAccess@{initiateMemoryAccess}!Core@{Core}}
+\doxysubsubsection{initiateMemoryAccess()}
+{\footnotesize\ttfamily \label{classCore_ac78144e40f94fad0c993f6e75ad3468d} 
+\textbf{ Memory\+Result} Core\+::initiate\+Memory\+Access (\begin{DoxyParamCaption}\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{mem\+\_\+component}{, }\item[{\textbf{ lock\+\_\+signal\+\_\+t}}]{lock\+\_\+signal}{, }\item[{\textbf{ mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Byte} $\ast$}]{data\+\_\+buf}{, }\item[{\textbf{ UInt32}}]{data\+\_\+size}{, }\item[{\textbf{ Mem\+Modeled}}]{modeled}{, }\item[{\textbf{ Int\+Ptr}}]{eip}{, }\item[{\textbf{ Subsecond\+Time}}]{now}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 282} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Shmem\+Perf\+Model\+::\+\_\+\+SIM\+\_\+\+THREAD}, \textbf{ Shmem\+Perf\+Model\+::\+\_\+\+USER\+\_\+\+THREAD}, \textbf{ Cheetah\+Manager\+::access()}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::acquire()}, \textbf{ Memory\+Manager\+Base\+::core\+Initiate\+Memory\+Access()}, \textbf{ Memory\+Manager\+Base\+::get\+Cache\+Block\+Size()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Shmem\+Perf\+Model\+::get\+Elapsed\+Time()}, \textbf{ get\+Memory\+Manager()}, \textbf{ get\+Performance\+Model()}, \textbf{ get\+Shmem\+Perf\+Model()}, \textbf{ Performance\+Model\+::handle\+Memory\+Latency()}, \textbf{ Shmem\+Perf\+Model\+::incr\+Total\+Memory\+Access\+Latency()}, \textbf{ iolock}, \textbf{ Performance\+Model\+::is\+Enabled()}, \textbf{ itostr()}, \textbf{ LOCK}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+cheetah\+\_\+manager}, \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+mem\+\_\+lock}, \textbf{ m\+\_\+performance\+\_\+model}, \textbf{ make\+Memory\+Result()}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+COUNT}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+COUNT\+\_\+\+TLBTIME}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+RETURN}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+TIME}, \textbf{ Modeled\+String()}, \textbf{ MYLOG}, \textbf{ Timer\+::now()}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ READ}, \textbf{ Operand\+::\+READ}, \textbf{ READ\+\_\+\+EX}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::release()}, \textbf{ Shmem\+Perf\+Model\+::set\+Elapsed\+Time()}, \textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ UNLOCK}, \textbf{ WRITE}, \textbf{ Operand\+::\+WRITE}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ access\+Memory()}, and \textbf{ read\+Instruction\+Memory()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ac78144e40f94fad0c993f6e75ad3468d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_ac78144e40f94fad0c993f6e75ad3468d_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!isEnabledInstructionsCallback@{isEnabledInstructionsCallback}}
+\index{isEnabledInstructionsCallback@{isEnabledInstructionsCallback}!Core@{Core}}
+\doxysubsubsection{isEnabledInstructionsCallback()}
+{\footnotesize\ttfamily \label{classCore_a76ea482a2d1bf615ffff146435ecb0f2} 
+bool Core\+::is\+Enabled\+Instructions\+Callback (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 130} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+instructions\+\_\+callback}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a76ea482a2d1bf615ffff146435ecb0f2_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!logMemoryHit@{logMemoryHit}}
+\index{logMemoryHit@{logMemoryHit}!Core@{Core}}
+\doxysubsubsection{logMemoryHit()}
+{\footnotesize\ttfamily \label{classCore_a0ac56c220460c6fabc35876c12d68971} 
+void Core\+::log\+Memory\+Hit (\begin{DoxyParamCaption}\item[{bool}]{icache}{, }\item[{\textbf{ mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Mem\+Modeled}}]{modeled}{ = {\ttfamily \textbf{ MEM\+\_\+\+MODELED\+\_\+\+NONE}}, }\item[{\textbf{ Int\+Ptr}}]{eip}{ = {\ttfamily 0}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 229} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Memory\+Manager\+Base\+::add\+L1\+Hits()}, and \textbf{ get\+Memory\+Manager()}.
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::handle\+Instruction\+Warmup()}, \textbf{ lite\+::handle\+Memory\+Write()}, \textbf{ lite\+::handle\+Memory\+Write\+Detailed()}, and \textbf{ lite\+::handle\+Memory\+Write\+Faultinjection()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=307pt]{classCore_a0ac56c220460c6fabc35876c12d68971_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a0ac56c220460c6fabc35876c12d68971_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!measureCacheStats@{measureCacheStats}}
+\index{measureCacheStats@{measureCacheStats}!Core@{Core}}
+\doxysubsubsection{measureCacheStats()}
+{\footnotesize\ttfamily \label{classCore_a100e6b9619b6af296b20dde747770366} 
+void Core\+::measure\+Cache\+Stats (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 592} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ get\+Memory\+Manager()}, and \textbf{ Memory\+Manager\+Base\+::measure\+Nuca\+Stats()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{classCore_a100e6b9619b6af296b20dde747770366_cgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!nativeMemOp@{nativeMemOp}}
+\index{nativeMemOp@{nativeMemOp}!Core@{Core}}
+\doxysubsubsection{nativeMemOp()}
+{\footnotesize\ttfamily \label{classCore_a6431862171e91ae4c9ed0c3fa70e1347} 
+\textbf{ Memory\+Result} Core\+::native\+Mem\+Op (\begin{DoxyParamCaption}\item[{\textbf{ lock\+\_\+signal\+\_\+t}}]{lock\+\_\+signal}{, }\item[{\textbf{ mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{d\+\_\+addr}{, }\item[{char $\ast$}]{data\+\_\+buffer}{, }\item[{\textbf{ UInt32}}]{data\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 495} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::acquire()}, \textbf{ application\+Mem\+Copy()}, \textbf{ LOCK}, \textbf{ m\+\_\+global\+\_\+core\+\_\+lock}, \textbf{ make\+Memory\+Result()}, \textbf{ READ}, \textbf{ READ\+\_\+\+EX}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::release()}, \textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ UNLOCK}, \textbf{ WRITE}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ access\+Memory()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a6431862171e91ae4c9ed0c3fa70e1347_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a6431862171e91ae4c9ed0c3fa70e1347_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!readInstructionMemory@{readInstructionMemory}}
+\index{readInstructionMemory@{readInstructionMemory}!Core@{Core}}
+\doxysubsubsection{readInstructionMemory()}
+{\footnotesize\ttfamily \label{classCore_a32e3ed622d781c6833d497f93b4b86f2} 
+\textbf{ Memory\+Result} Core\+::read\+Instruction\+Memory (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ UInt32}}]{instruction\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 235} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Memory\+Manager\+Base\+::get\+Cache\+Block\+Size()}, \textbf{ get\+Memory\+Manager()}, \textbf{ initiate\+Memory\+Access()}, \textbf{ Mem\+Component\+::\+L1\+\_\+\+ICACHE}, \textbf{ Hit\+Where\+::\+L1I}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+icache\+\_\+last\+\_\+block}, \textbf{ make\+Memory\+Result()}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ MEM\+\_\+\+MODELED\+\_\+\+COUNT\+\_\+\+TLBTIME}, \textbf{ NONE}, and \textbf{ READ}.
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, \textbf{ Micro\+Op\+Performance\+Model\+::handle\+Instruction()}, and \textbf{ Trace\+Thread\+::handle\+Instruction\+Warmup()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a32e3ed622d781c6833d497f93b4b86f2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a32e3ed622d781c6833d497f93b4b86f2_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!setInstructionsCallback@{setInstructionsCallback}}
+\index{setInstructionsCallback@{setInstructionsCallback}!Core@{Core}}
+\doxysubsubsection{setInstructionsCallback()}
+{\footnotesize\ttfamily \label{classCore_a97cdc718c1845f2ad014089b03eafa17} 
+void Core\+::set\+Instructions\+Callback (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{instructions}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+instructions}, and \textbf{ m\+\_\+instructions\+\_\+callback}.
+
+
+
+Referenced by \textbf{ Fast\+Forward\+Performance\+Manager\+::recalibrate\+Instructions\+Callback()}, and \textbf{ Sampling\+Manager\+::recalibrate\+Instructions\+Callback()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a97cdc718c1845f2ad014089b03eafa17_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!setState@{setState}}
+\index{setState@{setState}!Core@{Core}}
+\doxysubsubsection{setState()}
+{\footnotesize\ttfamily \label{classCore_a226b5bb8672fee78a4f37c65c7281bea} 
+void Core\+::set\+State (\begin{DoxyParamCaption}\item[{\textbf{ State}}]{core\+\_\+state}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 126} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+core\+\_\+state}.
+
+
+
+Referenced by \textbf{ Thread\+Manager\+::create\+Thread\+\_\+unlocked()}, \textbf{ Thread\+Manager\+::move\+Thread()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, and \textbf{ Thread\+Manager\+::on\+Thread\+Start()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a226b5bb8672fee78a4f37c65c7281bea_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!setThread@{setThread}}
+\index{setThread@{setThread}!Core@{Core}}
+\doxysubsubsection{setThread()}
+{\footnotesize\ttfamily \label{classCore_a4128ee4501ea80014c214a23fc8be86f} 
+void Core\+::set\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ Thread} $\ast$}]{thread}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 113} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread}.
+
+
+
+Referenced by \textbf{ Thread\+::set\+Core()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCore_a4128ee4501ea80014c214a23fc8be86f_icgraph}
+\end{center}
+\end{figure}
+\index{Core@{Core}!updateSpinCount@{updateSpinCount}}
+\index{updateSpinCount@{updateSpinCount}!Core@{Core}}
+\doxysubsubsection{updateSpinCount()}
+{\footnotesize\ttfamily \label{classCore_a8303116a6fa1032d013fbe6d04cbc7e9} 
+void Core\+::update\+Spin\+Count (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{instructions}{, }\item[{\textbf{ Subsecond\+Time}}]{elapsed\+\_\+time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 143} of file \textbf{ core.\+h}.
+
+
+
+References \textbf{ m\+\_\+spin\+\_\+elapsed\+\_\+time}, \textbf{ m\+\_\+spin\+\_\+instructions}, and \textbf{ m\+\_\+spin\+\_\+loops}.
+
+
+
+Referenced by \textbf{ Spin\+Loop\+Detector\+::commit\+BCT()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classCore_a8303116a6fa1032d013fbe6d04cbc7e9_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Friends And Related Symbol Documentation}
+\index{Core@{Core}!InstructionModeling@{InstructionModeling}}
+\index{InstructionModeling@{InstructionModeling}!Core@{Core}}
+\doxysubsubsection{InstructionModeling}
+{\footnotesize\ttfamily \label{classCore_a62a74d5bfb90af0ef22cd8011f1e136d} 
+friend class \textbf{ Instruction\+Modeling}\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 190} of file \textbf{ core.\+h}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{Core@{Core}!g\_instructions\_hpi\_global@{g\_instructions\_hpi\_global}}
+\index{g\_instructions\_hpi\_global@{g\_instructions\_hpi\_global}!Core@{Core}}
+\doxysubsubsection{g\_instructions\_hpi\_global}
+{\footnotesize\ttfamily \label{classCore_a4a89331ad3666959f13fb8e388316533} 
+\textbf{ UInt64} Core\+::g\+\_\+instructions\+\_\+hpi\+\_\+global = 0\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 199} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ hook\+Periodic\+Ins\+Call()}, and \textbf{ hook\+Periodic\+Ins\+Check()}.
+
+\index{Core@{Core}!g\_instructions\_hpi\_global\_callback@{g\_instructions\_hpi\_global\_callback}}
+\index{g\_instructions\_hpi\_global\_callback@{g\_instructions\_hpi\_global\_callback}!Core@{Core}}
+\doxysubsubsection{g\_instructions\_hpi\_global\_callback}
+{\footnotesize\ttfamily \label{classCore_a09e2e4bfd75e94875ef178971285fa81} 
+\textbf{ UInt64} Core\+::g\+\_\+instructions\+\_\+hpi\+\_\+global\+\_\+callback = 0\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 200} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ hook\+Periodic\+Ins\+Call()}, and \textbf{ hook\+Periodic\+Ins\+Check()}.
+
+\index{Core@{Core}!m\_bbv@{m\_bbv}}
+\index{m\_bbv@{m\_bbv}!Core@{Core}}
+\doxysubsubsection{m\_bbv}
+{\footnotesize\ttfamily \label{classCore_a2c5dbc6e465ff563cc7984a1d92b4719} 
+\textbf{ Bbv\+Count} Core\+::m\+\_\+bbv\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 160} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}, and \textbf{ get\+Bbv\+Count()}.
+
+\index{Core@{Core}!m\_cheetah\_manager@{m\_cheetah\_manager}}
+\index{m\_cheetah\_manager@{m\_cheetah\_manager}!Core@{Core}}
+\doxysubsubsection{m\_cheetah\_manager}
+{\footnotesize\ttfamily \label{classCore_aa33aee546f72e0bfbe27b9b55590d180} 
+\textbf{ Cheetah\+Manager}$\ast$ Core\+::m\+\_\+cheetah\+\_\+manager\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 162} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ access\+Memory\+Fast()}, \textbf{ get\+Cheetah\+Manager()}, \textbf{ initiate\+Memory\+Access()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!m\_clock\_skew\_minimization\_client@{m\_clock\_skew\_minimization\_client}}
+\index{m\_clock\_skew\_minimization\_client@{m\_clock\_skew\_minimization\_client}!Core@{Core}}
+\doxysubsubsection{m\_clock\_skew\_minimization\_client}
+{\footnotesize\ttfamily \label{classCore_ad5d614a6905d54f8ca3261c01b0e135f} 
+\textbf{ Clock\+Skew\+Minimization\+Client}$\ast$ Core\+::m\+\_\+clock\+\_\+skew\+\_\+minimization\+\_\+client\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 157} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, \textbf{ get\+Clock\+Skew\+Minimization\+Client()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!m\_core\_id@{m\_core\_id}}
+\index{m\_core\_id@{m\_core\_id}!Core@{Core}}
+\doxysubsubsection{m\_core\_id}
+{\footnotesize\ttfamily \label{classCore_a9209dec86e2947a63ed03b29c7bb9546} 
+\textbf{ core\+\_\+id\+\_\+t} Core\+::m\+\_\+core\+\_\+id\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 151} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ access\+Memory()}, \textbf{ count\+Instructions()}, \textbf{ emulate\+Cpuid()}, \textbf{ get\+Id()}, and \textbf{ initiate\+Memory\+Access()}.
+
+\index{Core@{Core}!m\_core\_state@{m\_core\_state}}
+\index{m\_core\_state@{m\_core\_state}!Core@{Core}}
+\doxysubsubsection{m\_core\_state}
+{\footnotesize\ttfamily \label{classCore_a8d344500136a5a01ddba86a9f2e86c4b} 
+\textbf{ State} Core\+::m\+\_\+core\+\_\+state\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 165} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ get\+State()}, and \textbf{ set\+State()}.
+
+\index{Core@{Core}!m\_dvfs\_domain@{m\_dvfs\_domain}}
+\index{m\_dvfs\_domain@{m\_dvfs\_domain}!Core@{Core}}
+\doxysubsubsection{m\_dvfs\_domain}
+{\footnotesize\ttfamily \label{classCore_ad1108b423ac620d775a401037f90c2cf} 
+const \textbf{ Component\+Period}$\ast$ Core\+::m\+\_\+dvfs\+\_\+domain\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 152} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ get\+Dvfs\+Domain()}.
+
+\index{Core@{Core}!m\_global\_core\_lock@{m\_global\_core\_lock}}
+\index{m\_global\_core\_lock@{m\_global\_core\_lock}!Core@{Core}}
+\doxysubsubsection{m\_global\_core\_lock}
+{\footnotesize\ttfamily \label{classCore_ab93928d5c3ddb9855f170fb0dcbc7539} 
+\textbf{ Lock} Core\+::m\+\_\+global\+\_\+core\+\_\+lock\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 167} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ native\+Mem\+Op()}.
+
+\index{Core@{Core}!m\_icache\_last\_block@{m\_icache\_last\_block}}
+\index{m\_icache\_last\_block@{m\_icache\_last\_block}!Core@{Core}}
+\doxysubsubsection{m\_icache\_last\_block}
+{\footnotesize\ttfamily \label{classCore_a6176462d48699d35e719e3459c8c737a} 
+\textbf{ Int\+Ptr} Core\+::m\+\_\+icache\+\_\+last\+\_\+block\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 182} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ read\+Instruction\+Memory()}.
+
+\index{Core@{Core}!m\_instructions@{m\_instructions}}
+\index{m\_instructions@{m\_instructions}!Core@{Core}}
+\doxysubsubsection{m\_instructions}
+{\footnotesize\ttfamily \label{classCore_ae036900820123fbae3e9ab75ee2dbbf8} 
+\textbf{ UInt64} Core\+::m\+\_\+instructions\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 194} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, \textbf{ count\+Instructions()}, \textbf{ get\+Instruction\+Count()}, \textbf{ hook\+Periodic\+Ins\+Check()}, and \textbf{ set\+Instructions\+Callback()}.
+
+\index{Core@{Core}!m\_instructions\_callback@{m\_instructions\_callback}}
+\index{m\_instructions\_callback@{m\_instructions\_callback}!Core@{Core}}
+\doxysubsubsection{m\_instructions\_callback}
+{\footnotesize\ttfamily \label{classCore_ab234a05dbcaa00288c968dcb8387d89a} 
+\textbf{ UInt64} Core\+::m\+\_\+instructions\+\_\+callback\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 195} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}, \textbf{ disable\+Instructions\+Callback()}, \textbf{ get\+Instructions\+Callback()}, \textbf{ is\+Enabled\+Instructions\+Callback()}, and \textbf{ set\+Instructions\+Callback()}.
+
+\index{Core@{Core}!m\_instructions\_hpi\_callback@{m\_instructions\_hpi\_callback}}
+\index{m\_instructions\_hpi\_callback@{m\_instructions\_hpi\_callback}!Core@{Core}}
+\doxysubsubsection{m\_instructions\_hpi\_callback}
+{\footnotesize\ttfamily \label{classCore_ac575be2ed3ca04353a665be8230f2ff7} 
+\textbf{ UInt64} Core\+::m\+\_\+instructions\+\_\+hpi\+\_\+callback\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 197} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ hook\+Periodic\+Ins\+Check()}.
+
+\index{Core@{Core}!m\_instructions\_hpi\_last@{m\_instructions\_hpi\_last}}
+\index{m\_instructions\_hpi\_last@{m\_instructions\_hpi\_last}!Core@{Core}}
+\doxysubsubsection{m\_instructions\_hpi\_last}
+{\footnotesize\ttfamily \label{classCore_a945dc417dad292d1a62ccb40fc21da25} 
+\textbf{ UInt64} Core\+::m\+\_\+instructions\+\_\+hpi\+\_\+last\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 198} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ hook\+Periodic\+Ins\+Check()}.
+
+\index{Core@{Core}!m\_mem\_lock@{m\_mem\_lock}}
+\index{m\_mem\_lock@{m\_mem\_lock}!Core@{Core}}
+\doxysubsubsection{m\_mem\_lock}
+{\footnotesize\ttfamily \label{classCore_a7610540804d711bf753b72d1df4aa751} 
+\textbf{ Lock} Core\+::m\+\_\+mem\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 158} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ initiate\+Memory\+Access()}.
+
+\index{Core@{Core}!m\_memory\_manager@{m\_memory\_manager}}
+\index{m\_memory\_manager@{m\_memory\_manager}!Core@{Core}}
+\doxysubsubsection{m\_memory\_manager}
+{\footnotesize\ttfamily \label{classCore_a5edf7e4baa67bd54c515fa753f34961c} 
+\textbf{ Memory\+Manager\+Base}$\ast$ Core\+::m\+\_\+memory\+\_\+manager\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 153} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, \textbf{ get\+Memory\+Manager()}, \textbf{ get\+Memory\+Manager()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!m\_network@{m\_network}}
+\index{m\_network@{m\_network}!Core@{Core}}
+\doxysubsubsection{m\_network}
+{\footnotesize\ttfamily \label{classCore_a5740710f364e397c8069f5580c1b63a1} 
+\textbf{ Network}$\ast$ Core\+::m\+\_\+network\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 155} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, \textbf{ get\+Network()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!m\_performance\_model@{m\_performance\_model}}
+\index{m\_performance\_model@{m\_performance\_model}!Core@{Core}}
+\doxysubsubsection{m\_performance\_model}
+{\footnotesize\ttfamily \label{classCore_aee20aa781a8c66847192c5c763b5de2c} 
+\textbf{ Performance\+Model}$\ast$ Core\+::m\+\_\+performance\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 156} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ access\+Memory\+Fast()}, \textbf{ Core()}, \textbf{ count\+Instructions()}, \textbf{ get\+Performance\+Model()}, \textbf{ initiate\+Memory\+Access()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!m\_shmem\_perf\_model@{m\_shmem\_perf\_model}}
+\index{m\_shmem\_perf\_model@{m\_shmem\_perf\_model}!Core@{Core}}
+\doxysubsubsection{m\_shmem\_perf\_model}
+{\footnotesize\ttfamily \label{classCore_a9f0e3be9603f341baffd89549d544471} 
+\textbf{ Shmem\+Perf\+Model}$\ast$ Core\+::m\+\_\+shmem\+\_\+perf\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 159} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, \textbf{ get\+Shmem\+Perf\+Model()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!m\_spin\_elapsed\_time@{m\_spin\_elapsed\_time}}
+\index{m\_spin\_elapsed\_time@{m\_spin\_elapsed\_time}!Core@{Core}}
+\doxysubsubsection{m\_spin\_elapsed\_time}
+{\footnotesize\ttfamily \label{classCore_a62c0174aa1f25261d0206f9875e5d177} 
+\textbf{ Subsecond\+Time} Core\+::m\+\_\+spin\+\_\+elapsed\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 186} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, and \textbf{ update\+Spin\+Count()}.
+
+\index{Core@{Core}!m\_spin\_instructions@{m\_spin\_instructions}}
+\index{m\_spin\_instructions@{m\_spin\_instructions}!Core@{Core}}
+\doxysubsubsection{m\_spin\_instructions}
+{\footnotesize\ttfamily \label{classCore_a989a238eff9d0d2597bd92c70ba2d69d} 
+\textbf{ UInt64} Core\+::m\+\_\+spin\+\_\+instructions\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 185} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, and \textbf{ update\+Spin\+Count()}.
+
+\index{Core@{Core}!m\_spin\_loops@{m\_spin\_loops}}
+\index{m\_spin\_loops@{m\_spin\_loops}!Core@{Core}}
+\doxysubsubsection{m\_spin\_loops}
+{\footnotesize\ttfamily \label{classCore_a3f1438a1b7b3a760527592099c7d41e7} 
+\textbf{ UInt64} Core\+::m\+\_\+spin\+\_\+loops\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 184} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ Core()}, and \textbf{ update\+Spin\+Count()}.
+
+\index{Core@{Core}!m\_thread@{m\_thread}}
+\index{m\_thread@{m\_thread}!Core@{Core}}
+\doxysubsubsection{m\_thread}
+{\footnotesize\ttfamily \label{classCore_a619364093406ecd06199143204f98a4a} 
+\textbf{ Thread}$\ast$ Core\+::m\+\_\+thread\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 154} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ get\+Thread()}, and \textbf{ set\+Thread()}.
+
+\index{Core@{Core}!m\_topology\_info@{m\_topology\_info}}
+\index{m\_topology\_info@{m\_topology\_info}!Core@{Core}}
+\doxysubsubsection{m\_topology\_info}
+{\footnotesize\ttfamily \label{classCore_afda53ba9ffba78cd9a4b4f5f7b74bb81} 
+\textbf{ Topology\+Info}$\ast$ Core\+::m\+\_\+topology\+\_\+info\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 161} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ emulate\+Cpuid()}, \textbf{ get\+Topology\+Info()}, \textbf{ get\+Topology\+Info()}, and \textbf{ $\sim$\+Core()}.
+
+\index{Core@{Core}!utr\_bitmap@{utr\_bitmap}}
+\index{utr\_bitmap@{utr\_bitmap}!Core@{Core}}
+\doxysubsubsection{utr\_bitmap}
+{\footnotesize\ttfamily \label{classCore_a36f5bc151ea4ab138c2dbf2bae950b6c} 
+\textbf{ UInt64}$\ast$ Core\+::utr\+\_\+bitmap\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 163} of file \textbf{ core.\+h}.
+
+
+
+Referenced by \textbf{ get\+Utr\+Bitmap()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/\textbf{ core.\+h}\item 
+common/core/\textbf{ core.\+cc}\end{DoxyCompactItemize}

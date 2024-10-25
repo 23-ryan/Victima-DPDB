@@ -1,0 +1,319 @@
+\doxysection{sync\+\_\+server.\+cc}
+\label{sync__server_8cc_source}\index{common/system/sync\_server.cc@{common/system/sync\_server.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}sync\_server.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}sync\_client.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ -\/-\/\ SimMutex\ -\/-\/\ //}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ SimMutex::SimMutex()}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ :\ m\_owner(NO\_OWNER)}
+\DoxyCodeLine{00012\ \{\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ SimMutex::\string~SimMutex()}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \ \#if\ 0\ }\textcolor{comment}{//\ Disabled:\ applications\ are\ not\ required\ to\ do\ proper\ cleanup}}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{if}\ (!\ m\_waiting.empty())\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}WARNING:\ Waiters\ remaining\ for\ SimMutex@\%p:\ "{}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!\ m\_waiting.empty())\ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%d\ "{}},\ m\_waiting.front());}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00024\ \ \ \ \}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keywordtype}{bool}\ SimMutex::isLocked(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{if}\ (m\_owner\ ==\ NO\_OWNER)}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_owner\ ==\ thread\_id)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ SubsecondTime\ SimMutex::lock(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{if}\ (m\_owner\ ==\ NO\_OWNER)}
+\DoxyCodeLine{00041\ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ m\_owner\ =\ thread\_id;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ time;}
+\DoxyCodeLine{00044\ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ m\_waiting.push(thread\_id);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadManager()-\/>stallThread(thread\_id,\ ThreadManager::STALL\_MUTEX,\ time);}
+\DoxyCodeLine{00049\ \ \ \ \}}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{bool}\ SimMutex::lock\_async(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time)}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{if}\ (m\_owner\ ==\ NO\_OWNER)}
+\DoxyCodeLine{00055\ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ m\_owner\ =\ thread\_id;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread(m\_owner,\ thread\_by,\ time);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00059\ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00061\ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ m\_waiting.push(thread\_id);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00064\ \ \ \ \}}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ thread\_id\_t\ SimMutex::unlock(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ \ assert(m\_owner\ ==\ thread\_id);}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keywordflow}{if}\ (m\_waiting.empty())}
+\DoxyCodeLine{00071\ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ m\_owner\ =\ NO\_OWNER;}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00075\ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ m\_waiting.front();}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ m\_owner\ =\ waiter;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread(m\_owner,\ thread\_id,\ time);}
+\DoxyCodeLine{00080\ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{return}\ m\_owner;}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ -\/-\/\ SimCond\ -\/-\/\ //}}
+\DoxyCodeLine{00085\ SimCond::SimCond()\ \{\}}
+\DoxyCodeLine{00086\ SimCond::\string~SimCond()}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\ \ \ \#if\ 0\ }\textcolor{comment}{//\ Disabled:\ applications\ are\ not\ required\ to\ do\ proper\ cleanup}}
+\DoxyCodeLine{00089\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_waiting.empty())\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Threads\ still\ waiting\ for\ SimCond@\%p:\ "{}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!m\_waiting.empty())\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%u\ "{}},\ m\_waiting.back().m\_thread\_id);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00096\ \ \ \ \}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00098\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ SubsecondTime\ SimCond::wait(thread\_id\_t\ thread\_id,\ SubsecondTime\ time,\ SimMutex\ *\ simMux)}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \ simMux-\/>unlock(thread\_id,\ time);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ m\_waiting.push(CondWaiter(thread\_id,\ simMux));}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadManager()-\/>stallThread(thread\_id,\ ThreadManager::STALL\_COND,\ time);}
+\DoxyCodeLine{00107\ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ thread\_id\_t\ SimCond::signal(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{comment}{//\ If\ there\ is\ a\ list\ of\ threads\ waiting,\ wake\ up\ one\ of\ them}}
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_waiting.empty())}
+\DoxyCodeLine{00113\ \ \ \ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ CondWaiter\ woken\ =\ m\_waiting.front();}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (woken.m\_mutex-\/>lock\_async(woken.m\_thread\_id,\ thread\_id,\ time))}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Woken\ up\ thread\ is\ able\ to\ grab\ lock\ immediately}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ woken.m\_thread\_id;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Woken\ up\ thread\ is\ *NOT*\ able\ to\ grab\ lock\ immediately}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \textcolor{comment}{//\ There\ are\ *NO*\ threads\ waiting\ on\ the\ condition\ variable}}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{keywordtype}{void}\ SimCond::broadcast(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00134\ \{}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{while}(!m\_waiting.empty())}
+\DoxyCodeLine{00136\ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ CondWaiter\ woken\ =\ m\_waiting.front();}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ woken.m\_mutex-\/>lock\_async(woken.m\_thread\_id,\ thread\_id,\ time);}
+\DoxyCodeLine{00140\ \ \ \ \}}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ -\/-\/\ SimBarrier\ -\/-\/\ //}}
+\DoxyCodeLine{00144\ SimBarrier::SimBarrier(UInt32\ count)}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ :\ m\_count(count)}
+\DoxyCodeLine{00146\ \{}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ SimBarrier::\string~SimBarrier()}
+\DoxyCodeLine{00150\ \{}
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_waiting.empty())\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Threads\ still\ waiting\ for\ SimBarrier@\%p:\ "{}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!m\_waiting.empty())\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%u\ "{}},\ m\_waiting.back());}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00158\ \ \ \ \}}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ SubsecondTime\ SimBarrier::wait(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00162\ \{}
+\DoxyCodeLine{00163\ \ \ \ \textcolor{comment}{//\ We\ are\ the\ last\ thread\ to\ reach\ the\ barrier}}
+\DoxyCodeLine{00164\ \ \ \ \textcolor{keywordflow}{if}\ (m\_waiting.size()\ ==\ m\_count\ -\/\ 1)}
+\DoxyCodeLine{00165\ \ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!\ m\_waiting.empty())}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Resuming\ all\ the\ threads\ stalled\ at\ the\ barrier}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ m\_waiting.front();}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ m\_waiting.pop();}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread(waiter,\ thread\_id,\ time);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ time;}
+\DoxyCodeLine{00175\ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00177\ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ m\_waiting.push(thread\_id);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadManager()-\/>stallThread(thread\_id,\ ThreadManager::STALL\_BARRIER,\ time);}
+\DoxyCodeLine{00180\ \ \ \ \}}
+\DoxyCodeLine{00181\ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ -\/-\/\ SyncServer\ -\/-\/\ //}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ SyncServer::SyncServer()}
+\DoxyCodeLine{00186\ \{}
+\DoxyCodeLine{00187\ \ \ \ m\_reschedule\_cost\ =\ SubsecondTime::NS()\ *\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/sync/reschedule\_cost"{}});}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ SyncServer::\string~SyncServer()}
+\DoxyCodeLine{00191\ \{\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ SimMutex\ *\ SyncServer::getMutex(carbon\_mutex\_t\ *mux,\ \textcolor{keywordtype}{bool}\ canCreate)}
+\DoxyCodeLine{00194\ \{}
+\DoxyCodeLine{00195\ \ \ \ \textcolor{comment}{//\ if\ mux\ is\ the\ address\ of\ a\ pthread\ mutex\ (with\ default\ initialization,\ not\ through\ pthread\_mutex\_init),}}
+\DoxyCodeLine{00196\ \ \ \ \textcolor{comment}{//\ look\ it\ up\ in\ m\_mutexes\ or\ create\ a\ new\ one\ if\ it's\ the\ first\ time\ we\ see\ it}}
+\DoxyCodeLine{00197\ \ \ \ \textcolor{keywordflow}{if}\ (m\_mutexes.count(mux))}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_mutexes[mux];}
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (canCreate)}
+\DoxyCodeLine{00200\ \ \ \ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ m\_mutexes[mux]\ =\ SimMutex();}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_mutexes[mux];}
+\DoxyCodeLine{00203\ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00205\ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Invalid\ mutex\ id\ passed"{}});}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00208\ \ \ \ \}}
+\DoxyCodeLine{00209\ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{keywordtype}{void}\ SyncServer::mutexInit(thread\_id\_t\ thread\_id,\ carbon\_mutex\_t\ *mux)}
+\DoxyCodeLine{00212\ \{}
+\DoxyCodeLine{00213\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00214\ \ \ \ getMutex(mux);}
+\DoxyCodeLine{00215\ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ std::pair<SubsecondTime,\ bool>\ SyncServer::mutexLock(thread\_id\_t\ thread\_id,\ carbon\_mutex\_t\ *mux,\ \textcolor{keywordtype}{bool}\ tryLock,\ SubsecondTime\ time)}
+\DoxyCodeLine{00218\ \{}
+\DoxyCodeLine{00219\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00220\ \ \ \ SimMutex\ *psimmux\ =\ getMutex(mux);}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \textcolor{keywordflow}{if}\ (tryLock\ \&\&\ psimmux-\/>isLocked(thread\_id))}
+\DoxyCodeLine{00223\ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \textcolor{comment}{//\ notify\ the\ owner\ of\ failure}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(time,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00226\ \ \ \ \}}
+\DoxyCodeLine{00227\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00228\ \ \ \ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ SubsecondTime\ time\_end\ =\ psimmux-\/>lock(thread\_id,\ time);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(time\_end\ +\ m\_reschedule\_cost,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00231\ \ \ \ \}}
+\DoxyCodeLine{00232\ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ SubsecondTime\ SyncServer::mutexUnlock(thread\_id\_t\ thread\_id,\ carbon\_mutex\_t\ *mux,\ SubsecondTime\ time)}
+\DoxyCodeLine{00235\ \{}
+\DoxyCodeLine{00236\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00237\ \ \ \ SimMutex\ *psimmux\ =\ getMutex(mux,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ thread\_id\_t\ new\_owner\ =\ psimmux-\/>unlock(thread\_id,\ time\ +\ m\_reschedule\_cost);}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ SubsecondTime\ new\_time\ =\ time\ +\ (new\_owner\ ==\ SimMutex::NO\_OWNER\ ?\ SubsecondTime::Zero()\ :\ m\_reschedule\_cost\ \textcolor{comment}{/*\ we\ had\ to\ call\ futex\_wake\ */});}
+\DoxyCodeLine{00242\ \ \ \ \textcolor{keywordflow}{return}\ new\_time;}
+\DoxyCodeLine{00243\ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{comment}{//\ -\/-\/\ Condition\ Variable\ Stuffs\ -\/-\/\ //}}
+\DoxyCodeLine{00246\ SimCond\ *\ SyncServer::getCond(carbon\_cond\_t\ *cond,\ \textcolor{keywordtype}{bool}\ canCreate)}
+\DoxyCodeLine{00247\ \{}
+\DoxyCodeLine{00248\ \ \ \ \textcolor{comment}{//\ if\ cond\ is\ the\ address\ of\ a\ pthread\ cond\ (with\ default\ initialization,\ not\ through\ pthread\_cond\_init),}}
+\DoxyCodeLine{00249\ \ \ \ \textcolor{comment}{//\ look\ it\ up\ in\ m\_conds\ or\ create\ a\ new\ one\ if\ it's\ the\ first\ time\ we\ see\ it}}
+\DoxyCodeLine{00250\ \ \ \ \textcolor{keywordflow}{if}\ (m\_conds.count(cond))}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_conds[cond];}
+\DoxyCodeLine{00252\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (canCreate)}
+\DoxyCodeLine{00253\ \ \ \ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ m\_conds[cond]\ =\ SimCond();}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_conds[cond];}
+\DoxyCodeLine{00256\ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00258\ \ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Invalid\ cond\ id\ passed"{}});}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00261\ \ \ \ \}}
+\DoxyCodeLine{00262\ \}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{keywordtype}{void}\ SyncServer::condInit(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond)}
+\DoxyCodeLine{00265\ \{}
+\DoxyCodeLine{00266\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00267\ \ \ \ getCond(cond);}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ SubsecondTime\ SyncServer::condWait(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond,\ carbon\_mutex\_t\ *mux,\ SubsecondTime\ time)}
+\DoxyCodeLine{00271\ \{}
+\DoxyCodeLine{00272\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00273\ \ \ \ SimMutex\ *psimmux\ =\ getMutex(mux);}
+\DoxyCodeLine{00274\ \ \ \ SimCond\ *psimcond\ =\ getCond(cond);}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \textcolor{keywordflow}{return}\ psimcond-\/>wait(thread\_id,\ time,\ psimmux);}
+\DoxyCodeLine{00277\ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ SubsecondTime\ SyncServer::condSignal(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond,\ SubsecondTime\ time)}
+\DoxyCodeLine{00280\ \{}
+\DoxyCodeLine{00281\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00282\ \ \ \ SimCond\ *psimcond\ =\ getCond(cond);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ psimcond-\/>signal(thread\_id,\ time);}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \textcolor{keywordflow}{return}\ time;}
+\DoxyCodeLine{00287\ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ SubsecondTime\ SyncServer::condBroadcast(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond,\ SubsecondTime\ time)}
+\DoxyCodeLine{00290\ \{}
+\DoxyCodeLine{00291\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00292\ \ \ \ SimCond\ *psimcond\ =\ getCond(cond);}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ psimcond-\/>broadcast(thread\_id,\ time);}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \textcolor{keywordflow}{return}\ time;}
+\DoxyCodeLine{00297\ \}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \textcolor{keywordtype}{void}\ SyncServer::barrierInit(thread\_id\_t\ thread\_id,\ carbon\_barrier\_t\ *barrier,\ UInt32\ count)}
+\DoxyCodeLine{00300\ \{}
+\DoxyCodeLine{00301\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ m\_barriers.push\_back(SimBarrier(count));}
+\DoxyCodeLine{00304\ \ \ \ *barrier\ =\ (carbon\_barrier\_t)m\_barriers.size()-\/1;}
+\DoxyCodeLine{00305\ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ SubsecondTime\ SyncServer::barrierWait(thread\_id\_t\ thread\_id,\ carbon\_barrier\_t\ *barrier,\ SubsecondTime\ time)}
+\DoxyCodeLine{00308\ \{}
+\DoxyCodeLine{00309\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00310\ \ \ \ SimBarrier\ *psimbarrier\ =\ \&m\_barriers[*barrier];}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \textcolor{keywordflow}{return}\ psimbarrier-\/>wait(thread\_id,\ time);}
+\DoxyCodeLine{00313\ \}}
+
+\end{DoxyCode}

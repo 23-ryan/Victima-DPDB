@@ -1,0 +1,57 @@
+\doxysection{cache\+\_\+perf\+\_\+model.\+cc}
+\label{cache__perf__model_8cc_source}\index{common/performance\_model/cache\_perf\_model.cc@{common/performance\_model/cache\_perf\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_perf\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache\_perf\_model\_parallel.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}cache\_perf\_model\_sequential.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ CachePerfModel::CachePerfModel(\textcolor{keyword}{const}\ ComponentLatency\&\ cache\_data\_access\_time,\ \textcolor{keyword}{const}\ ComponentLatency\&\ cache\_tags\_access\_time):}
+\DoxyCodeLine{00007\ \ \ \ m\_cache\_data\_access\_time(cache\_data\_access\_time),}
+\DoxyCodeLine{00008\ \ \ \ m\_cache\_tags\_access\_time(cache\_tags\_access\_time)}
+\DoxyCodeLine{00009\ \{\}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ CachePerfModel::\string~CachePerfModel()}
+\DoxyCodeLine{00012\ \{\}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ CachePerfModel*}
+\DoxyCodeLine{00015\ CachePerfModel::create(String\ cache\_perf\_model\_type,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentLatency\&\ cache\_data\_access\_time,\ \textcolor{keyword}{const}\ ComponentLatency\&\ cache\_tags\_access\_time)}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ PerfModel\_t\ perf\_model\ =\ parseModelType(cache\_perf\_model\_type);}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{switch}(perf\_model)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(CACHE\_PERF\_MODEL\_PARALLEL):}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CachePerfModelParallel(cache\_data\_access\_time,\ cache\_tags\_access\_time);}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(CACHE\_PERF\_MODEL\_SEQUENTIAL):}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CachePerfModelSequential(cache\_data\_access\_time,\ cache\_tags\_access\_time);}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Unsupported\ CachePerfModel\ type:\ \%s"{}},\ cache\_perf\_model\_type.c\_str());}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ CachePerfModel::PerfModel\_t}
+\DoxyCodeLine{00035\ CachePerfModel::parseModelType(String\ model\_type)}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{if}\ (model\_type\ ==\ \textcolor{stringliteral}{"{}parallel"{}})}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CACHE\_PERF\_MODEL\_PARALLEL;}
+\DoxyCodeLine{00040\ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (model\_type\ ==\ \textcolor{stringliteral}{"{}sequential"{}})}
+\DoxyCodeLine{00042\ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CACHE\_PERF\_MODEL\_SEQUENTIAL;}
+\DoxyCodeLine{00044\ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ CacheModel\ type:\ \%s"{}},\ model\_type.c\_str());}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NUM\_CACHE\_PERF\_MODELS;}
+\DoxyCodeLine{00049\ \ \ \ \}}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+
+\end{DoxyCode}

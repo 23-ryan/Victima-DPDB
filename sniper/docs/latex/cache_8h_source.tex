@@ -1,0 +1,149 @@
+\doxysection{cache.\+h}
+\label{cache_8h_source}\index{common/core/memory\_subsystem/cache/cache.h@{common/core/memory\_subsystem/cache/cache.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CACHE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CACHE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache\_base.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache\_block\_info.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}hash\_map\_set.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}cache\_perf\_model.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf\_model.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}fault\_injection.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ Define\ to\ enable\ the\ set\ usage\ histogram}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\#define\ ENABLE\_SET\_USAGE\_HIST}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{class\ }Cache\ :\ \textcolor{keyword}{public}\ CacheBase}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enabled;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{comment}{//\ Cache\ counters}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ UInt64\ m\_num\_accesses;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ UInt64\ m\_num\_hits;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{comment}{//\ Generic\ Cache\ Info}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ cache\_t\ m\_cache\_type;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ CacheSet**\ m\_sets;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ CacheSet**\ m\_fake\_sets;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ CacheSetInfo*\ m\_set\_info;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{int}*\ m\_pagesizes;\ \textcolor{comment}{//@kanellok\ TLB\ supported\ page\ size\ vector\ }}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ m\_number\_of\_page\_sizes;\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ FaultInjector\ *m\_fault\_injector;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_is\_tlb;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ reuse\_levels[3];}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ metadata\_passthrough\_loc;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ potm\_enabled;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ average\_data\_reuse;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ average\_metadata\_reuse;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ average\_tlb\_reuse;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ UInt64\ sum\_data\_reuse;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ UInt64\ sum\_data\_utilization;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ UInt64\ sum\_metadata\_reuse;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ UInt64\ sum\_metadata\_utilization;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ UInt64\ sum\_tlb\_reuse;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ UInt64\ sum\_tlb\_utilization;}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ UInt64\ number\_of\_data\_reuse;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ UInt64\ number\_of\_metadata\_reuse;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ UInt64\ number\_of\_tlb\_reuse;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \textcolor{comment}{/*\ Reuse\ prediction\ implementation\ */}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{comment}{/*\ 0,\ 1-\/2,\ 3-\/5,\ 5-\/10,\ >10\ */}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ UInt64\ data\_reuse[5];}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ UInt64\ metadata\_reuse[5];}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ UInt64\ tlb\_reuse[5];}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ UInt64\ data\_util[8];}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ UInt64\ metadata\_util[8];}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ UInt64\ tlb\_util[8];}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ENABLE\_SET\_USAGE\_HIST}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ UInt64*\ m\_set\_usage\_hist;}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ std::vector<uint64\_t>\ m\_page\_walk\_cacheblocks;\ \textcolor{comment}{/*\ timeseries\ stats\ */}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ std::vector<uint64\_t>\ m\_utopia\_cacheblocks;\ \textcolor{comment}{/*\ timeseries\ stats\ */}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ std::vector<uint64\_t>\ m\_security\_cacheblocks;\ \textcolor{comment}{/*\ timeseries\ stats\ */}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ std::vector<uint64\_t>\ m\_expressive\_cacheblocks;\ \textcolor{comment}{/*\ timeseries\ stats\ */}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ std::vector<uint64\_t>\ m\_tlb\_cacheblocks;\ \textcolor{comment}{/*\ timeseries\ stats\ */}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{comment}{//\ constructors/destructors}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ Cache(String\ name,}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ String\ cfgname,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ core\_id,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ num\_sets,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ String\ replacement\_policy,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ cache\_t\ cache\_type,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ hash\_t\ hash\ =\ CacheBase::HASH\_MASK,}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ FaultInjector\ *fault\_injector\ =\ NULL,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ AddressHomeLookup\ *ahl\ =\ NULL,\ \textcolor{keywordtype}{bool}\ is\_tlb\ =\ \textcolor{keyword}{false},\ \textcolor{keywordtype}{int}*\ page\_size\ =\ NULL,\ \textcolor{keywordtype}{int}\ number\_of\_page\_sizes\ =\ 0);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \string~Cache();}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ Lock\&\ getSetLock(IntPtr\ addr);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ invalidateSingleLine(IntPtr\ addr);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ CacheBlockInfo*\ accessSingleLine(IntPtr\ addr,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ access\_t\ access\_type,\ Byte*\ buff,\ UInt32\ bytes,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ update\_replacement,\ \textcolor{keywordtype}{bool}\ tlb\_entry=\textcolor{keyword}{false},\ \textcolor{keywordtype}{bool}\ is\_metadata=\textcolor{keyword}{false});}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ CacheBlockInfo*\ accessSingleLineTLB(IntPtr\ addr,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ access\_t\ access\_type,\ Byte*\ buff,\ UInt32\ bytes,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ update\_replacement);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ insertSingleLine(IntPtr\ addr,\ Byte*\ fill\_buff,}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ eviction,\ IntPtr*\ evict\_addr,}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ evict\_block\_info,\ Byte*\ evict\_buff,\ SubsecondTime\ now,\ CacheCntlr\ *cntlr\ =\ NULL,\ \ CacheBlockInfo::block\_type\_t\ btype\ =\ CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ insertSingleLineTLB(IntPtr\ addr,\ Byte*\ fill\_buff,}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ eviction,\ IntPtr*\ evict\_addr,}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ evict\_block\_info,\ Byte*\ evict\_buff,\ SubsecondTime\ now,\ CacheCntlr\ *cntlr\ =\ NULL,\ \ CacheBlockInfo::block\_type\_t\ btype\ =\ CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE,\ \textcolor{keywordtype}{int}\ page\_size\ =\ 12);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ CacheBlockInfo*\ peekSingleLine(IntPtr\ addr);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ CacheBlockInfo*\ peekBlock(UInt32\ set\_index,\ UInt32\ way)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sets[set\_index]-\/>peekBlock(way);\ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateSetReplacement(IntPtr\ addr);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ std::vector<uint64\_t>\ \ getPTWTranslationStats()\{\textcolor{keywordflow}{return}\ \ m\_page\_walk\_cacheblocks;\}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ std::vector<uint64\_t>\ \ getUtopiaTranslationStats()\{\textcolor{keywordflow}{return}\ \ m\_utopia\_cacheblocks;\}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ std::vector<uint64\_t>\ \ getSecurityTranslationStats()\{\textcolor{keywordflow}{return}\ \ m\_security\_cacheblocks;\}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ std::vector<uint64\_t>\ \ getExpressiveTranslationStats()\{\textcolor{keywordflow}{return}\ \ m\_expressive\_cacheblocks;\}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ std::vector<uint64\_t>\ \ getTLBStats()\{\textcolor{keywordflow}{return}\ \ m\_tlb\_cacheblocks;\}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ Cache\ Counters}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateCounters(\textcolor{keywordtype}{bool}\ cache\_hit);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateHits(Core::mem\_op\_t\ mem\_op\_type,\ UInt64\ hits);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enable()\ \{\ m\_enabled\ =\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disable()\ \{\ m\_enabled\ =\ \textcolor{keyword}{false};\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ CacheSet*\ getCacheSet(UInt32\ set\_index);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ measureStats();}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ markMetadata(IntPtr\ address,\ CacheBlockInfo::block\_type\_t\ blocktype);}
+\DoxyCodeLine{00135\ \};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00138\ UInt32\ moduloHashFn(T\ key,\ UInt32\ hash\_fn\_param,\ UInt32\ num\_buckets)}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \ \textcolor{keywordflow}{return}\ (key\ >>\ hash\_fn\_param)\ \%\ num\_buckets;}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CACHE\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

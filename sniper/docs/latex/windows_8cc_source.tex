@@ -1,0 +1,479 @@
+\doxysection{windows.\+cc}
+\label{windows_8cc_source}\index{common/performance\_model/performance\_models/interval\_performance\_model/windows.cc@{common/performance\_model/performance\_models/interval\_performance\_model/windows.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}windows.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}interval\_contention.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keywordtype}{void}\ Windows::WindowEntry::initialize(DynamicMicroOp*\ micro\_op)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>uop)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{comment}{//\ Delete\ our\ old\ DynamicMicroOp\ before\ we\ overwrite\ it}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ this-\/>uop;}
+\DoxyCodeLine{00024\ \ \ \ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ this-\/>uop\ =\ micro\_op;}
+\DoxyCodeLine{00027\ \ \ \ this-\/>execTime\ =\ 0;}
+\DoxyCodeLine{00028\ \ \ \ this-\/>dispatchTime\ =\ 0;}
+\DoxyCodeLine{00029\ \ \ \ this-\/>fetchTime\ =\ 0;}
+\DoxyCodeLine{00030\ \ \ \ this-\/>cpContr\ =\ 0;}
+\DoxyCodeLine{00031\ \ \ \ this-\/>cphead\ =\ 0;}
+\DoxyCodeLine{00032\ \ \ \ this-\/>cptail\ =\ 0;}
+\DoxyCodeLine{00033\ \ \ \ this-\/>maxProducer\ =\ 0;}
+\DoxyCodeLine{00034\ \ \ \ this-\/>overlapFlags\ =\ 0;}
+\DoxyCodeLine{00035\ \ \ \ this-\/>dependent\ =\ NO\_DEP;}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ Windows::Windows(\textcolor{keywordtype}{int}\ window\_size,\ \textcolor{keywordtype}{bool}\ doFunctionalUnitContention,\ Core\ *core,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model)}
+\DoxyCodeLine{00039\ \ \ \ :\ m\_core\_model(core\_model)}
+\DoxyCodeLine{00040\ \ \ \ ,\ m\_interval\_contention(core\_model-\/>createIntervalContentionModel(core))}
+\DoxyCodeLine{00041\ \ \ \ ,\ m\_double\_window(new\ WindowEntry[2*window\_size])}
+\DoxyCodeLine{00042\ \ \ \ ,\ m\_exec\_time\_map(new\ uint32\_t[2*window\_size])}
+\DoxyCodeLine{00043\ \ \ \ ,\ m\_do\_functional\_unit\_contention(doFunctionalUnitContention)}
+\DoxyCodeLine{00044\ \ \ \ ,\ m\_register\_dependencies(new\ RegisterDependencies())}
+\DoxyCodeLine{00045\ \ \ \ ,\ m\_memory\_dependencies(new\ MemoryDependencies())}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ m\_window\_size\ =\ window\_size;}
+\DoxyCodeLine{00048\ \ \ \ m\_double\_window\_size\ =\ 2*window\_size;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_double\_window\_size;\ i++)}
+\DoxyCodeLine{00051\ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ m\_double\_window[i].uop\ =\ NULL;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ m\_double\_window[i].setWindowIndex(i);}
+\DoxyCodeLine{00054\ \ \ \ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ clear();}
+\DoxyCodeLine{00057\ \ \ \ clearFunctionalUnitStats();}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ Windows::\string~Windows()}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_double\_window\_size;\ i++)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_double\_window[i].uop)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_double\_window[i].uop;}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keyword}{delete}[]\ m\_double\_window;}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keyword}{delete}[]\ m\_exec\_time\_map;}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keyword}{delete}\ m\_register\_dependencies;}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keyword}{delete}\ m\_memory\_dependencies;}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keywordtype}{void}\ Windows::clear()}
+\DoxyCodeLine{00072\ \{}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_double\_window\_size;\ i++)}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ m\_exec\_time\_map[i]\ =\ 0;}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ m\_next\_sequence\_number\ =\ 0;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ m\_register\_dependencies-\/>clear();}
+\DoxyCodeLine{00081\ \ \ \ m\_memory\_dependencies-\/>clear();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ m\_window\_head\_\_old\_window\_tail\ =\ m\_window\_tail\ =\ m\_old\_window\_head\ =\ 0;}
+\DoxyCodeLine{00084\ \ \ \ m\_window\_length\ =\ m\_old\_window\_length\ =\ 0;}
+\DoxyCodeLine{00085\ \ \ \ m\_critical\_path\_head\ =\ m\_critical\_path\_tail\ =\ 0;}
+\DoxyCodeLine{00086\ \ \ \ clearFunctionalUnitStats();}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keywordtype}{void}\ Windows::clearFunctionalUnitStats()}
+\DoxyCodeLine{00090\ \{}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ (\textcolor{keywordtype}{unsigned}\ int)CPCONTR\_TYPE\_SIZE;\ ++i)}
+\DoxyCodeLine{00092\ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ m\_cpcontr\_bytype[i]\ =\ 0;}
+\DoxyCodeLine{00094\ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ m\_cpcontr\_total\ =\ 0;}
+\DoxyCodeLine{00096\ \ \ \ m\_interval\_contention-\/>clearFunctionalUnitStats();}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keywordtype}{void}\ Windows::addFunctionalUnitStats(\textcolor{keyword}{const}\ WindowEntry\ \&uop)}
+\DoxyCodeLine{00100\ \{}
+\DoxyCodeLine{00101\ \ \ \ m\_cpcontr\_bytype[getCpContrType(uop)]\ +=\ uop.getCpContr();}
+\DoxyCodeLine{00102\ \ \ \ m\_cpcontr\_total\ +=\ uop.getCpContr();}
+\DoxyCodeLine{00103\ \ \ \ m\_interval\_contention-\/>addFunctionalUnitStats(uop.getDynMicroOp());}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keywordtype}{void}\ Windows::removeFunctionalUnitStats(\textcolor{keyword}{const}\ WindowEntry\ \&uop)}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \ m\_cpcontr\_bytype[getCpContrType(uop)]\ -\/=\ uop.getCpContr();}
+\DoxyCodeLine{00109\ \ \ \ m\_cpcontr\_total\ -\/=\ uop.getCpContr();}
+\DoxyCodeLine{00110\ \ \ \ m\_interval\_contention-\/>removeFunctionalUnitStats(uop.getDynMicroOp());}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keywordtype}{bool}\ Windows::wIsFull()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00114\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keywordflow}{return}\ m\_window\_length\ ==\ m\_window\_size;}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keywordtype}{bool}\ Windows::wIsEmpty()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00119\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{return}\ m\_window\_length\ ==\ 0;}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{int}\ Windows::incrementIndex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00124\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordflow}{return}\ (index\ +\ 1)\ \%\ m\_double\_window\_size;}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{int}\ Windows::decrementIndex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00129\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keywordflow}{return}\ (index\ +\ m\_double\_window\_size\ -\/\ 1)\ \%\ m\_double\_window\_size;}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{keywordtype}{int}\ Windows::windowIndex(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00134\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{return}\ ((index\ \%\ m\_double\_window\_size)\ +\ m\_double\_window\_size)\ \%\ m\_double\_window\_size;}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00141\ \textcolor{keywordtype}{void}\ Windows::add(DynamicMicroOp*\ micro\_op)}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \ LOG\_ASSERT\_ERROR(!wIsFull(),\ \textcolor{stringliteral}{"{}Window\ is\ full"{}});}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ WindowEntry\&\ entry\ =\ getInstructionByIndex(m\_window\_tail);}
+\DoxyCodeLine{00146\ \ \ \ m\_window\_tail\ =\ incrementIndex(m\_window\_tail);}
+\DoxyCodeLine{00147\ \ \ \ m\_window\_length++;}
+\DoxyCodeLine{00148\ \ \ \ micro\_op-\/>setSequenceNumber(m\_next\_sequence\_number);}
+\DoxyCodeLine{00149\ \ \ \ m\_next\_sequence\_number++;}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ entry.initialize(micro\_op);}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ uint64\_t\ lowestValidSequenceNumber\ =\ getInstructionByIndex(m\_old\_window\_head).getSequenceNumber();}
+\DoxyCodeLine{00154\ \ \ \ m\_register\_dependencies-\/>setDependencies(*micro\_op,\ lowestValidSequenceNumber);}
+\DoxyCodeLine{00155\ \ \ \ m\_memory\_dependencies-\/>setDependencies(*micro\_op,\ lowestValidSequenceNumber);}
+\DoxyCodeLine{00156\ \}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ Windows::WindowEntry\&\ Windows::getInstructionByIndex(\textcolor{keywordtype}{int}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00159\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00160\ \ \ \ LOG\_ASSERT\_ERROR(index\ >=\ 0\ \&\&\ index\ <\ m\_double\_window\_size,\ \textcolor{stringliteral}{"{}Index\ is\ out\ of\ bounds"{}});}
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordflow}{return}\ m\_double\_window[index];}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ Windows::WindowEntry\&\ Windows::getInstruction(uint64\_t\ sequenceNumber)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00165\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00166\ \ \ \ Windows::WindowEntry\&\ windowHead\ =\ getInstructionByIndex(m\_window\_head\_\_old\_window\_tail);}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordtype}{int}\ distance\ =\ windowHead.getSequenceNumber()\ -\/\ sequenceNumber;}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordtype}{int}\ index\ =\ windowIndex(windowHead.getWindowIndex()\ -\/\ distance);}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ Windows::WindowEntry\&\ ret\ =\ getInstructionByIndex(index);}
+\DoxyCodeLine{00171\ \ \ \ \textcolor{keywordflow}{if}\ (ret.getSequenceNumber()\ ==\ sequenceNumber)}
+\DoxyCodeLine{00172\ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00174\ \ \ \ \}}
+\DoxyCodeLine{00175\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00176\ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Getting\ an\ instruction\ that\ is\ not\ in\ the\ window\ !!!\ That's\ it,\ I'm\ out\ of\ here\ !"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ exit(0);}
+\DoxyCodeLine{00179\ \ \ \ \}}
+\DoxyCodeLine{00180\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ Windows::WindowEntry\&\ Windows::getLastAdded()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00183\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00184\ \ \ \ \textcolor{keywordflow}{return}\ getInstructionByIndex(decrementIndex(m\_window\_tail));}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ Windows::WindowEntry\&\ Windows::getInstructionToDispatch()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00188\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{keywordflow}{return}\ getInstructionByIndex(m\_window\_head\_\_old\_window\_tail);}
+\DoxyCodeLine{00190\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ Windows::WindowEntry\&\ Windows::getOldestInstruction()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00193\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00194\ \ \ \ \textcolor{keywordflow}{return}\ getInstructionByIndex(m\_old\_window\_head);}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ uint64\_t\ Windows::getEffectiveCriticalPathLength(uint64\_t\ critical\_path\_length,\ \textcolor{keywordtype}{bool}\ update\_reason)}
+\DoxyCodeLine{00198\ \{}
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_do\_functional\_unit\_contention)}
+\DoxyCodeLine{00200\ \ \ \ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ critical\_path\_length;}
+\DoxyCodeLine{00202\ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00204\ \ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_interval\_contention-\/>getEffectiveCriticalPathLength(critical\_path\_length,\ update\_reason);}
+\DoxyCodeLine{00206\ \ \ \ \}}
+\DoxyCodeLine{00207\ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{keywordtype}{void}\ Windows::dispatchInstruction()}
+\DoxyCodeLine{00210\ \{}
+\DoxyCodeLine{00211\ \ \ \ \textcolor{keywordflow}{if}\ (m\_old\_window\_length\ ==\ m\_window\_size)}
+\DoxyCodeLine{00212\ \ \ \ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \textcolor{comment}{//\ No\ longer\ keep\ track\ of\ instructions\ leaving\ the\ old\ window}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ removeFunctionalUnitStats(getInstructionByIndex(m\_old\_window\_head));}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \textcolor{comment}{/*\ Recalculate\ critical\ path:\ new\ m\_old\_window\_head\ */}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ m\_critical\_path\_head\ =\ std::max(m\_critical\_path\_head,\ getInstructionByIndex(m\_old\_window\_head).getExecTime());}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ m\_old\_window\_head\ =\ incrementIndex(m\_old\_window\_head);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ m\_old\_window\_length-\/-\/;}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \textcolor{comment}{//\ Keep\ track\ of\ the\ just\ dispatched\ instruction}}
+\DoxyCodeLine{00223\ \ \ \ \textcolor{comment}{//\ Determine\ if\ this\ new\ instruction\ will\ cause\ the\ use\ of\ too\ many\ resources}}
+\DoxyCodeLine{00224\ \ \ \ addFunctionalUnitStats(getInstructionByIndex(m\_window\_head\_\_old\_window\_tail));}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ m\_window\_head\_\_old\_window\_tail\ =\ incrementIndex(m\_window\_head\_\_old\_window\_tail);}
+\DoxyCodeLine{00227\ \ \ \ m\_window\_length-\/-\/;}
+\DoxyCodeLine{00228\ \ \ \ m\_old\_window\_length++;}
+\DoxyCodeLine{00229\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \textcolor{keywordtype}{void}\ Windows::clearOldWindow(uint64\_t\ newCpHead)}
+\DoxyCodeLine{00232\ \{}
+\DoxyCodeLine{00233\ \ \ \ m\_critical\_path\_head\ =\ m\_critical\_path\_tail\ =\ newCpHead;}
+\DoxyCodeLine{00234\ \ \ \ m\_old\_window\_length\ =\ 0;}
+\DoxyCodeLine{00235\ \ \ \ m\_old\_window\_head\ =\ m\_window\_head\_\_old\_window\_tail;}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ clearFunctionalUnitStats();}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{keywordtype}{bool}\ Windows::windowContains(uint64\_t\ sequenceNumber)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00241\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00242\ \ \ \ uint64\_t\ lowestValid\ =\ getInstructionByIndex(m\_window\_head\_\_old\_window\_tail).getSequenceNumber();}
+\DoxyCodeLine{00243\ \ \ \ uint64\_t\ highestValid\ =\ getInstructionByIndex(decrementIndex(m\_window\_tail)).getSequenceNumber();}
+\DoxyCodeLine{00244\ \ \ \ \textcolor{keywordflow}{return}\ sequenceNumber\ >=\ lowestValid\ \&\&\ sequenceNumber\ <=\ highestValid;}
+\DoxyCodeLine{00245\ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keywordtype}{bool}\ Windows::oldWindowContains(uint64\_t\ sequenceNumber)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00248\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00249\ \ \ \ uint64\_t\ lowestValid\ =\ getInstructionByIndex(m\_old\_window\_head).getSequenceNumber();}
+\DoxyCodeLine{00250\ \ \ \ uint64\_t\ highestValid\ =\ getInstructionByIndex(decrementIndex(m\_window\_head\_\_old\_window\_tail)).getSequenceNumber();}
+\DoxyCodeLine{00251\ \ \ \ \textcolor{keywordflow}{return}\ sequenceNumber\ >=\ lowestValid\ \&\&\ sequenceNumber\ <=\ highestValid;}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{keywordtype}{int}\ Windows::getOldWindowLength()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00255\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00256\ \ \ \ \textcolor{keywordflow}{return}\ m\_old\_window\_length;}
+\DoxyCodeLine{00257\ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ uint64\_t\ Windows::getCriticalPathHead()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00260\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00261\ \ \ \ \textcolor{keywordflow}{return}\ m\_critical\_path\_head;}
+\DoxyCodeLine{00262\ \}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ uint64\_t\ Windows::getCriticalPathTail()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00265\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00266\ \ \ \ \textcolor{keywordflow}{return}\ m\_critical\_path\_tail;}
+\DoxyCodeLine{00267\ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \textcolor{keywordtype}{int}\ Windows::getCriticalPathLength()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00270\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00271\ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ (m\_critical\_path\_head\ <=\ m\_critical\_path\_tail)\ )}
+\DoxyCodeLine{00272\ \ \ \ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}Warning:\ Windows::getCriticalPathLength()\ -\/\ head:\%lu\ >\ tail:\%lu"{}},\ m\_critical\_path\_head,\ m\_critical\_path\_tail);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00275\ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \textcolor{keywordflow}{return}\ (m\_critical\_path\_tail\ -\/\ m\_critical\_path\_head);}
+\DoxyCodeLine{00277\ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ uint64\_t\ Windows::longLatencyOperationLatency(WindowEntry\&\ uop)}
+\DoxyCodeLine{00280\ \{}
+\DoxyCodeLine{00281\ \ \ \ \textcolor{keywordflow}{if}\ (uop.getExecTime()\ <\ m\_critical\_path\_tail)}
+\DoxyCodeLine{00282\ \ \ \ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{comment}{//\ No\ critical\ path\ extension}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00285\ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop.getExecTime()\ -\/\ m\_critical\_path\_tail\ <\ m\_core\_model-\/>getLongLatencyCutoff())}
+\DoxyCodeLine{00287\ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \textcolor{comment}{//\ Extension\ smaller\ than\ LLL\ cutoff}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00290\ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00292\ \ \ \ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \textcolor{comment}{//\ Critical\ path\ extension\ longer\ than\ LLL\ cutoff}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00295\ \ \ \ \}}
+\DoxyCodeLine{00296\ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ uint64\_t\ Windows::updateCriticalPathTail(WindowEntry\&\ uop)}
+\DoxyCodeLine{00299\ \{}
+\DoxyCodeLine{00300\ \ \ \ uint64\_t\ execTime\ =\ uop.getExecTime();}
+\DoxyCodeLine{00301\ \ \ \ \textcolor{keywordflow}{if}\ (execTime\ >\ m\_critical\_path\_tail)\ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (execTime\ -\/\ m\_critical\_path\_tail\ >\ m\_core\_model-\/>getLongLatencyCutoff())\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extending\ the\ critical\ path\ by\ huge\ amounts\ isn't\ healthy\ (see\ Redmine\ \#113).}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Instead,\ the\ caller\ should\ add\ the\ long\ latency\ directly\ (and\ attribute\ it)\ and\ call\ clearOldWindow()}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}Warning:\ Updating\ the\ critical\ path\ by\ \%lu\ >\ \%u\ cycles"{}},\ execTime\ -\/\ m\_critical\_path\_tail,\ m\_core\_model-\/>getLongLatencyCutoff());}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ uop.setCpContr(execTime\ -\/\ m\_critical\_path\_tail);}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ m\_critical\_path\_tail\ =\ execTime;}
+\DoxyCodeLine{00309\ \ \ \ \}}
+\DoxyCodeLine{00310\ \ \ \ \textcolor{keywordflow}{return}\ m\_critical\_path\_tail;}
+\DoxyCodeLine{00311\ \}}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \textcolor{keywordtype}{int}\ Windows::getMinimalFlushLatency(\textcolor{keywordtype}{int}\ width)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00314\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00315\ \ \ \ \textcolor{keywordflow}{return}\ (m\_old\_window\_length+(width-\/1))/width;}
+\DoxyCodeLine{00316\ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ uint64\_t\ Windows::getCpContrFraction(CpContrType\ type,\ uint64\_t\ effective\_cp\_length)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00319\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00320\ \ \ \ assert(m\_cpcontr\_bytype[type]\ <=\ m\_cpcontr\_total);}
+\DoxyCodeLine{00321\ \ \ \ \textcolor{keywordflow}{if}\ (m\_cpcontr\_total\ >\ 0)}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1000000\ *\ m\_cpcontr\_bytype[type]\ /\ effective\_cp\_length;}
+\DoxyCodeLine{00323\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00325\ \}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ Windows::Iterator::Iterator(\textcolor{keyword}{const}\ Windows*\ \textcolor{keyword}{const}\ windows,\ \textcolor{keywordtype}{int}\ start,\ \textcolor{keywordtype}{int}\ stop):\ index(start),\ stop(stop),\ windows(windows)\ \{\ \}}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \textcolor{keywordtype}{bool}\ Windows::Iterator::hasNext()}
+\DoxyCodeLine{00330\ \{}
+\DoxyCodeLine{00331\ \ \ \ \textcolor{keywordflow}{return}\ index\ !=\ stop;}
+\DoxyCodeLine{00332\ \}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ Windows::WindowEntry\&\ Windows::Iterator::next()}
+\DoxyCodeLine{00335\ \{}
+\DoxyCodeLine{00336\ \ \ \ Windows::WindowEntry\&\ ret\ =\ windows-\/>getInstructionByIndex(index);}
+\DoxyCodeLine{00337\ \ \ \ index\ =\ windows-\/>incrementIndex(index);}
+\DoxyCodeLine{00338\ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00339\ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ Windows::Iterator\ Windows::getWindowIterator()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00342\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00343\ \ \ \ \textcolor{keywordflow}{return}\ Iterator(\textcolor{keyword}{this},\ m\_window\_head\_\_old\_window\_tail,\ m\_window\_tail);}
+\DoxyCodeLine{00344\ \}}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ Windows::Iterator\ Windows::getOldWindowIterator()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00347\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00348\ \ \ \ \textcolor{keywordflow}{return}\ Iterator(\textcolor{keyword}{this},\ m\_old\_window\_head,\ m\_window\_head\_\_old\_window\_tail);}
+\DoxyCodeLine{00349\ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \textcolor{keywordtype}{int}\ Windows::calculateBranchResolutionLatency()}
+\DoxyCodeLine{00352\ \{}
+\DoxyCodeLine{00353\ \ \ \ Windows::WindowEntry\&\ micro\_op\ =\ getInstructionToDispatch();}
+\DoxyCodeLine{00354\ \ \ \ uint32\_t\ br\_resolution\_latency\ =\ 0;}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \textcolor{comment}{//\ The\ m\_exec\_time\_map\ is\ empty\ when\ the\ algorithm\ starts\ !}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ \textcolor{comment}{//\ Mark\ direct\ producers\ of\ this\ instruction}}
+\DoxyCodeLine{00359\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ micro\_op.getDynMicroOp()-\/>getDependenciesLength();\ i++)}
+\DoxyCodeLine{00360\ \ \ \ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (oldWindowContains(micro\_op.getDynMicroOp()-\/>getDependency(i)))}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ Windows::WindowEntry\&\ producer\ =\ getInstruction(micro\_op.getDynMicroOp()-\/>getDependency(i));}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ m\_exec\_time\_map[producer.getWindowIndex()]\ =\ producer.getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00366\ \ \ \ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \textcolor{comment}{//\ Find/mark\ producers\ of\ producers}}
+\DoxyCodeLine{00369\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ windowIndex(m\_window\_head\_\_old\_window\_tail\ -\/\ 1),\ j\ =\ 0;\ j\ <\ m\_old\_window\_length;\ i\ =\ windowIndex(i\ -\/\ 1),\ j++)}
+\DoxyCodeLine{00370\ \ \ \ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_exec\_time\_map[i])}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ There\ is\ a\ path\ to\ the\ committed\ branch:\ check\ the\ dependencies}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ Windows::WindowEntry\&\ op\ =\ getInstructionByIndex(i);}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ k\ =\ 0;\ k\ <\ op.getDynMicroOp()-\/>getDependenciesLength();\ k++)}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (oldWindowContains(op.getDynMicroOp()-\/>getDependency(k)))}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Windows::WindowEntry\&\ producer\ =\ getInstruction(op.getDynMicroOp()-\/>getDependency(k));}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_exec\_time\_map[producer.getWindowIndex()]\ =\ std::max((producer.getDynMicroOp()-\/>getExecLatency()\ +\ m\_exec\_time\_map[i]),\ m\_exec\_time\_map[producer.getWindowIndex()]);}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ br\_resolution\_latency\ =\ std::max(br\_resolution\_latency,\ m\_exec\_time\_map[i]);}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ m\_exec\_time\_map\ entry}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ m\_exec\_time\_map[i]\ =\ 0;}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00388\ \ \ \ \}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \textcolor{keywordflow}{return}\ br\_resolution\_latency;}
+\DoxyCodeLine{00391\ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ String\ Windows::toString()}
+\DoxyCodeLine{00394\ \{}
+\DoxyCodeLine{00395\ \ \ \ std::ostringstream\ out;}
+\DoxyCodeLine{00396\ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}|"{}};}
+\DoxyCodeLine{00397\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_double\_window\_size;\ i++)}
+\DoxyCodeLine{00398\ \ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ m\_old\_window\_head)}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}OH"{}};}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ m\_window\_head\_\_old\_window\_tail)}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}WH"{}};}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ m\_window\_tail)}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ out\ <<\ \textcolor{stringliteral}{"{}WT"{}};}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ out\ <<\ std::setfill(\textcolor{charliteral}{'\ '})\ <<\ std::setw(5)\ <<\ getInstructionByIndex(i).getWindowIndex()\ <<\ \textcolor{stringliteral}{"{}|"{}};}
+\DoxyCodeLine{00406\ \ \ \ \}}
+\DoxyCodeLine{00407\ \ \ \ out\ <<\ std::endl\ <<\ \textcolor{stringliteral}{"{}|"{}};}
+\DoxyCodeLine{00408\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_double\_window\_size;\ i++)}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ out\ <<\ std::setfill(\textcolor{charliteral}{'\ '})\ <<\ std::setw(7)\ <<\ getInstructionByIndex(i).getSequenceNumber()\ <<\ \textcolor{stringliteral}{"{}|"{}};}
+\DoxyCodeLine{00410\ \ \ \ out\ <<\ std::endl;}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_double\_window\_size;\ i++)}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ out\ <<\ getInstructionByIndex(i).getMicroOp()-\/>toString()\ <<\ std::endl;}
+\DoxyCodeLine{00414\ \ \ \ \textcolor{keywordflow}{return}\ String(out.str().c\_str());}
+\DoxyCodeLine{00415\ \}}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ CpContrType\ getCpContrType(\textcolor{keyword}{const}\ Windows::WindowEntry\&\ entry)}
+\DoxyCodeLine{00418\ \{}
+\DoxyCodeLine{00419\ \ \ \ \textcolor{keyword}{const}\ MicroOp\ \&uop\ =\ *entry.getMicroOp();}
+\DoxyCodeLine{00420\ \ \ \ \textcolor{keywordflow}{switch}(uop.getSubtype())\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_FP\_ADDSUB:}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_FP\_ADDSUB;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_FP\_MULDIV:}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_FP\_MULDIV;}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_LOAD:}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(entry.getDynMicroOp()-\/>getDCacheHitWhere())\ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HitWhere::L1\_OWN:}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_LOAD\_L1;}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HitWhere::L2\_OWN:}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HitWhere::L1\_SIBLING:}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HitWhere::L2\_SIBLING:}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_LOAD\_L2;}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HitWhere::L3\_OWN:}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HitWhere::L3\_SIBLING:}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_LOAD\_L3;}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_LOAD\_LX;}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_STORE:}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_STORE;}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_GENERIC:}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_GENERIC;}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MicroOp::UOP\_SUBTYPE\_BRANCH:}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CPCONTR\_TYPE\_BRANCH;}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ uop\_subtype\ \%d"{}},\ uop.getSubtype());}
+\DoxyCodeLine{00447\ \ \ \ \}}
+\DoxyCodeLine{00448\ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00449\ \}}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ String\ CpContrTypeString(CpContrType\ type)}
+\DoxyCodeLine{00452\ \{}
+\DoxyCodeLine{00453\ \ \ \ \textcolor{keywordflow}{switch}(type)\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_FP\_ADDSUB:}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}fp\_addsub"{}};}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_FP\_MULDIV:}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}fp\_muldiv"{}};}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_LOAD\_L1:}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}load\_l1"{}};}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_LOAD\_L2:}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}load\_l2"{}};}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_LOAD\_L3:}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}load\_l3"{}};}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_LOAD\_LX:}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}load\_other"{}};}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_STORE:}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}store"{}};}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_GENERIC:}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}generic"{}};}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CPCONTR\_TYPE\_BRANCH:}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}branch"{}};}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ CpContrType\ \%u"{}},\ type);}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}unknown"{}};}
+\DoxyCodeLine{00475\ \ \ \ \}}
+\DoxyCodeLine{00476\ \}}
+
+\end{DoxyCode}

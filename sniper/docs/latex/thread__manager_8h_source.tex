@@ -1,0 +1,114 @@
+\doxysection{thread\+\_\+manager.\+h}
+\label{thread__manager_8h_source}\index{common/system/thread\_manager.h@{common/system/thread\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ THREAD\_MANAGER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ THREAD\_MANAGER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}semaphore.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }TLS;}
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }Scheduler;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }ThreadManager}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ *(*thread\_func\_t)(\textcolor{keywordtype}{void}\ *);}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{enum}\ stall\_type\_t\ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ STALL\_UNSCHEDULED,\ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ not\ scheduled\ on\ any\ core}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ STALL\_BROKEN,\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ on\ a\ core\ that\ suffered\ hardware\ failure}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ STALL\_JOIN,\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ calling\ pthread\_join}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ STALL\_MUTEX,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ calling\ pthread\_mutex\_lock}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ STALL\_COND,\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ calling\ pthread\_cond\_wait}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ STALL\_BARRIER,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ calling\ pthread\_barrier\_wait}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ STALL\_FUTEX,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ is\ calling\ syscall(SYS\_futex,\ FUTEX\_WAIT)}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ STALL\_PAUSE,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ pause\ system\ call}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ STALL\_SLEEP,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sleep\ system\ call}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ STALL\_SYSCALL,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ blocking\ system\ call}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ STALL\_TYPES\_MAX,}
+\DoxyCodeLine{00034\ \ \ \ \};}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ stall\_type\_names[];}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ ThreadManager();}
+\DoxyCodeLine{00038\ \ \ \ \string~ThreadManager();}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ Lock\ \&getLock()\ \{\ \textcolor{keywordflow}{return}\ m\_thread\_lock;\ \}}
+\DoxyCodeLine{00041\ \ \ \ Scheduler\ *getScheduler()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_scheduler;\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ Thread*\ createThread(app\_id\_t\ app\_id,\ thread\_id\_t\ creator\_thread\_id);}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ Thread\ *getThreadFromID(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00046\ \ \ \ Thread\ *getCurrentThread(\textcolor{keywordtype}{int}\ threadIndex\ =\ -\/1);}
+\DoxyCodeLine{00047\ \ \ \ UInt64\ getNumThreads()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_threads.size();\ \}}
+\DoxyCodeLine{00048\ \ \ \ Core::State\ getThreadState(thread\_id\_t\ thread\_id)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thread\_state.at(thread\_id).status;\ \}}
+\DoxyCodeLine{00049\ \ \ \ stall\_type\_t\ getThreadStallReason(thread\_id\_t\ thread\_id)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thread\_state.at(thread\_id).stalled\_reason;\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ Thread\ *findThreadByTid(pid\_t\ tid);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{comment}{//\ services}}
+\DoxyCodeLine{00054\ \ \ \ thread\_id\_t\ spawnThread(thread\_id\_t\ thread\_id,\ app\_id\_t\ app\_id);}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordtype}{void}\ joinThread(thread\_id\_t\ thread\_id,\ thread\_id\_t\ join\_thread\_id);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ thread\_id\_t\ getThreadToSpawn(SubsecondTime\ \&time);}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordtype}{void}\ waitForThreadStart(thread\_id\_t\ thread\_id,\ thread\_id\_t\ wait\_thread\_id);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \textcolor{comment}{//\ events}}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordtype}{void}\ onThreadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordtype}{void}\ onThreadExit(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \textcolor{comment}{//\ misc}}
+\DoxyCodeLine{00065\ \ \ \ SubsecondTime\ stallThread(thread\_id\_t\ thread\_id,\ stall\_type\_t\ reason,\ SubsecondTime\ time);}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordtype}{void}\ stallThread\_async(thread\_id\_t\ thread\_id,\ stall\_type\_t\ reason,\ SubsecondTime\ time);}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordtype}{void}\ resumeThread(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_id\_by,\ SubsecondTime\ time,\ \textcolor{keywordtype}{void}\ *msg\ =\ NULL);}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordtype}{void}\ resumeThread\_async(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_id\_by,\ SubsecondTime\ time,\ \textcolor{keywordtype}{void}\ *msg\ =\ NULL);}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordtype}{bool}\ isThreadRunning(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keywordtype}{bool}\ isThreadInitializing(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordtype}{bool}\ anyThreadRunning();}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordtype}{void}\ moveThread(thread\_id\_t\ thread\_id,\ core\_id\_t\ core\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordtype}{bool}\ areAllCoresRunning();}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keyword}{struct\ }ThreadSpawnRequest}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ thread\_id\_t\ thread\_by;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ thread\_id\_t\ thread\_id;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ SubsecondTime\ time;}
+\DoxyCodeLine{00083\ \ \ \ \};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keyword}{struct\ }ThreadState}
+\DoxyCodeLine{00086\ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ Core::State\ status;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ stall\_type\_t\ stalled\_reason;\ \textcolor{comment}{//<\ If\ status\ ==\ Core::STALLED,\ why?}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ thread\_id\_t\ waiter;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ ThreadState()\ :\ status(Core::IDLE),\ waiter(INVALID\_THREAD\_ID)\ \{\}}
+\DoxyCodeLine{00092\ \ \ \ \};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ Lock\ m\_thread\_lock;}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ std::vector<ThreadState>\ m\_thread\_state;}
+\DoxyCodeLine{00097\ \ \ \ std::queue<ThreadSpawnRequest>\ m\_thread\_spawn\_list;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ std::vector<Thread*>\ m\_threads;}
+\DoxyCodeLine{00100\ \ \ \ TLS\ *m\_thread\_tls;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ Scheduler\ *m\_scheduler;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ Thread*\ createThread\_unlocked(app\_id\_t\ app\_id,\ thread\_id\_t\ creator\_thread\_id);}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordtype}{void}\ wakeUpWaiter(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00106\ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ THREAD\_MANAGER\_H}}
+
+\end{DoxyCode}

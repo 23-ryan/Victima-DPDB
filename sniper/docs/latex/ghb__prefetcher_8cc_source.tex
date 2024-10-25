@@ -1,0 +1,143 @@
+\doxysection{ghb\+\_\+prefetcher.\+cc}
+\label{ghb__prefetcher_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ghb\_prefetcher.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ghb\_prefetcher.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}ghb\_prefetcher.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ GhbPrefetcher::GhbPrefetcher(String\ configName,\ core\_id\_t\ core\_id)}
+\DoxyCodeLine{00008\ \ \ \ :\ m\_prefetchWidth(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ghb/width"{}},\ core\_id))}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_prefetchDepth(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ghb/depth"{}},\ core\_id))}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_lastAddress(INVALID\_ADDRESS)}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_ghbSize(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ghb/ghb\_size"{}},\ core\_id))}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_ghbHead(0)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_generation(0)}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_ghb(m\_ghbSize)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_tableSize(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ghb/ghb\_table\_size"{}},\ core\_id))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_tableHead(0)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_ghbTable(m\_tableSize)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ GhbPrefetcher::\string~GhbPrefetcher()}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ std::vector<IntPtr>}
+\DoxyCodeLine{00026\ GhbPrefetcher::getNextAddress(IntPtr\ currentAddress,\ core\_id\_t\ core\_id,Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ IntPtr\ eip)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ std::vector<IntPtr>\ prefetchList;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{comment}{//deal\ with\ prefether\ initialization}}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{if}\ (m\_lastAddress\ ==\ INVALID\_ADDRESS)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ m\_lastAddress\ =\ currentAddress;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ prefetchList;}
+\DoxyCodeLine{00035\ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{comment}{//determine\ the\ delta\ with\ the\ last\ address}}
+\DoxyCodeLine{00038\ \ \ \ SInt64\ delta\ =\ currentAddress\ -\/\ m\_lastAddress;}
+\DoxyCodeLine{00039\ \ \ \ m\_lastAddress\ =\ currentAddress;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{comment}{//look\ for\ the\ current\ delta\ in\ the\ table}}
+\DoxyCodeLine{00042\ \ \ \ UInt32\ i\ =\ 0;}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{while}\ (i\ <\ m\_tableSize\ \&\&}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].delta\ !=\ INVALID\_DELTA\ \&\&}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].delta\ !=\ delta)}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ ++i;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ m\_tableSize\ \&\&}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ m\_ghbTable[i].delta\ ==\ delta\ \&\&}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ m\_ghbTable[i].generation\ ==\ m\_ghb[m\_ghbTable[i].ghbIndex].generation)\ \textcolor{comment}{//check\ if\ the\ table\ still\ points\ to\ the\ current\ GHB\ 'generation'}}
+\DoxyCodeLine{00051\ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ UInt32\ width\ =\ 0;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ UInt32\ ghbIndex\ =\ m\_ghbTable[i].ghbIndex;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(width\ <\ m\_prefetchWidth\ \&\&\ ghbIndex\ !=\ INVALID\_INDEX)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ UInt32\ depth\ =\ 0;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ IntPtr\ newAddress\ =\ currentAddress;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (depth\ <\ m\_prefetchDepth\ \&\&}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_ghb[(ghbIndex\ +\ depth)\%m\_ghbSize].delta\ !=\ INVALID\_DELTA)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ newAddress\ +=\ m\_ghb[(ghbIndex\ +\ depth)\%m\_ghbSize].delta;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//add\ address\ to\ the\ list\ if\ it\ wasn't\ in\ there\ already}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (find(prefetchList.begin(),\ prefetchList.end(),\ newAddress)\ ==\ prefetchList.end())}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ prefetchList.push\_back(newAddress);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ ++depth;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ ++width;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ UInt32\ nextIndex\ =\ m\_ghb[ghbIndex].nextIndex;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((nextIndex\ >\ ghbIndex\ ||\ \ \ \textcolor{comment}{//if\ we\ circle\ the\ GHB}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ghbIndex\ >\ m\_ghbHead)\ \&\&\ \ \textcolor{comment}{//OR\ we\ were\ already\ larger\ than\ the\ head\ pointer}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nextIndex\ <\ m\_ghbHead)\ \ \ \ \textcolor{comment}{//AND\ the\ nextIndex\ has\ been\ overwritten\ by\ new\ entries}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ ghbIndex\ =\ INVALID\_INDEX;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ ghbIndex\ =\ nextIndex;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \textcolor{comment}{//add\ new\ delta\ to\ the\ ghb\ and\ table}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ m\_ghb[m\_ghbHead].delta\ =\ delta;}
+\DoxyCodeLine{00088\ \ \ \ m\_ghb[m\_ghbHead].nextIndex\ =\ INVALID\_INDEX;}
+\DoxyCodeLine{00089\ \ \ \ m\_ghb[m\_ghbHead].generation\ =\ m\_generation;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ UInt32\ prevHead\ =\ m\_ghbHead\ >\ 0\ ?\ m\_ghbHead\ -\/\ 1\ :\ m\_ghbSize\ -\/\ 1;}
+\DoxyCodeLine{00092\ \ \ \ SInt64\ prevDelta\ =\ m\_ghb[prevHead].delta;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{if}\ (prevDelta\ !=\ INVALID\_DELTA)}
+\DoxyCodeLine{00095\ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ i\ =\ 0;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (i\ <\ m\_tableSize\ \&\&}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].delta\ !=\ INVALID\_DELTA\ \&\&}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].delta\ !=\ prevDelta)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ ++i;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ m\_tableSize\ \&\&}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].delta\ ==\ prevDelta)}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \{\ \textcolor{comment}{//update\ existing\ entry}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//if\ the\ current\ table\ entry\ refers\ to\ a\ live\ ghb\ entry,}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//have\ the\ new\ entry\ link\ to\ the\ live\ entry}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//otherwise,\ refer\ to\ INVALID\_INDEX}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ghbTable[i].generation\ ==\ m\_ghb[m\_ghbTable[i].ghbIndex].generation)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ghb[m\_ghbHead].nextIndex\ =\ m\_ghbTable[i].ghbIndex;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ghb[m\_ghbHead].nextIndex\ =\ INVALID\_INDEX;}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].ghbIndex\ =\ m\_ghbHead;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ m\_ghbTable[i].generation\ =\ m\_generation;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \{\ \textcolor{comment}{//prevDelta\ not\ found\ ==>\ add\ entry\ to\ table}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ m\_ghbTable[m\_tableHead].delta\ =\ prevDelta;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ m\_ghbTable[m\_tableHead].ghbIndex\ =\ m\_ghbHead;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ m\_ghbTable[m\_tableHead].generation\ =\ m\_generation;}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ m\_tableHead\ =\ (m\_tableHead\ +\ 1)\ \%\ m\_tableSize;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ ++m\_ghbHead;}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keywordflow}{if}\ (m\_ghbHead\ ==\ m\_ghbSize)}
+\DoxyCodeLine{00131\ \ \ \ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ m\_ghbHead\ =\ 0;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ m\_generation\ =\ (m\_generation\ +\ 1)\ \%\ 4;}
+\DoxyCodeLine{00134\ \ \ \ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordflow}{return}\ prefetchList;}
+\DoxyCodeLine{00137\ \}}
+
+\end{DoxyCode}

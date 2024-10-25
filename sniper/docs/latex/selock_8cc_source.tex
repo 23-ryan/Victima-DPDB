@@ -1,0 +1,160 @@
+\doxysection{selock.\+cc}
+\label{selock_8cc_source}\index{common/misc/selock.cc@{common/misc/selock.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}selock.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ SELock::SELock(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00005\ \ \ \ :\ m\_write(false)}
+\DoxyCodeLine{00006\ \ \ \ ,\ m\_writers(0)}
+\DoxyCodeLine{00007\ \ \ \ ,\ m\_readers(0)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00010\ \ \ \ \_timer\ =\ TotalTimer::getTimerByStacktrace(\textcolor{stringliteral}{"{}selock@"{}}\ +\ itostr(\textcolor{keyword}{this}));}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00012\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#define\ WAIT\_WHILE(condition)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\ \ \ }\textcolor{comment}{/*\ First\ busy\ wait\ a\ little\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \ for(int\ i\ =\ 0;\ i\ <\ 10000\ \&\&\ (condition);\ ++i)\ ;\ \(\backslash\)}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\ \ \ while(condition)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\ \ \ \ \ \ }\textcolor{comment}{/*\ Then\ reschedule\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\ \ \ \ \ \ sched\_yield();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\ \ \ \}}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ Acquire\ exclusive\ access}}
+\DoxyCodeLine{00023\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00024\ SELock::acquire\_exclusive(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00027\ \ \ \ ScopedTimer\ tt(*\_timer);}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{comment}{//\ Tell\ everyone\ we\ want\ to\ write}}
+\DoxyCodeLine{00031\ \ \ \ \_\_sync\_add\_and\_fetch(\&m\_writers,\ 1);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ the\ current\ writer\ and\ all\ readers\ have\ left}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ WAIT\_WHILE(m\_write\ ||\ m\_readers);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{comment}{//\ No\ readers\ can\ come\ in,\ but\ another\ writer\ may\ have\ beaten\ us}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_\_sync\_lock\_test\_and\_set(\&m\_write,\ 1)\ ==\ 1)\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Yep,\ someone\ was\ there\ already,\ retry}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{comment}{//\ m\_write\ was\ already\ set\ by\ the\ test\_and\_set\ above}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ ourselves\ from\ the\ waiting\ writers\ count}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \_\_sync\_sub\_and\_fetch(\&m\_writers,\ 1);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00048\ \ \ \ \}}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ Release\ exclusive\ access}}
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00053\ SELock::release\_exclusive(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ assert(m\_write\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ m\_write\ =\ 0;}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ Acquire\ shared\ access}}
+\DoxyCodeLine{00061\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00062\ SELock::acquire\_shared(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIME\_LOCKS}}
+\DoxyCodeLine{00065\ \ \ \ ScopedTimer\ tt(*\_timer);}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ the\ current\ writer\ has\ left}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ WAIT\_WHILE(m\_write);}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{comment}{//\ Now\ increment\ m\_readers,\ but\ we\ need\ to\ be\ sure\ no\ writer\ comes\ in\ inbetween}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{comment}{//\ Thus,\ make\ ourselves\ writer\ for\ a\ bit}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{comment}{//\ Note\ that\ we\ did\ not\ wait\ for\ m\_readers\ ==\ 0,\ so\ there\ is\ no(t\ much)\ extra\ delay}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_\_sync\_lock\_test\_and\_set(\&m\_write,\ 1)\ ==\ 1)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ writer\ already\ came\ in,\ retry}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{comment}{//\ Increment\ the\ readers\ count}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \_\_sync\_add\_and\_fetch(\&m\_readers,\ 1);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ m\_write\ =\ 0;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00086\ \ \ \ \}}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ Release\ shared\ access}}
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00091\ SELock::release\_shared(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \ assert(m\_readers\ >\ 0);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \_\_sync\_sub\_and\_fetch(\&m\_readers,\ 1);}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00099\ SELock::upgrade(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00100\ \{}
+\DoxyCodeLine{00101\ \ \ \ assert(m\_readers\ >\ 0);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \textcolor{comment}{//\ Tell\ everyone\ we\ want\ to\ write}}
+\DoxyCodeLine{00104\ \ \ \ UInt64\ prev\_writers\ =\ \_\_sync\_add\_and\_fetch(\&m\_writers,\ 1);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordflow}{if}\ (prev\_writers)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{comment}{//\ Someone\ is\ waiting\ to\ write.\ Release\ our\ read\ lock,\ and\ go\ the\ long\ way\ (same\ as\ acquire\_exclusive)}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \_\_sync\_sub\_and\_fetch(\&m\_readers,\ 1);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ the\ current\ writer\ and\ all\ readers\ have\ left}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ WAIT\_WHILE(m\_write\ ||\ m\_readers);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ readers\ can\ come\ in,\ but\ another\ writer\ may\ have\ beaten\ us}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_\_sync\_lock\_test\_and\_set(\&m\_write,\ 1)\ ==\ 1)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Yep,\ someone\ was\ there\ already,\ retry}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ m\_write\ was\ already\ set\ by\ the\ test\_and\_set\ above}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ ourselves\ from\ the\ waiting\ writers\ count}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \_\_sync\_sub\_and\_fetch(\&m\_writers,\ 1);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{comment}{//\ There\ were\ no\ previous\ waiting\ writers.\ We\ don't\ need\ to\ release\ the\ shared\ lock\ we\ already\ have}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ the\ current\ writer\ and\ all\ readers\ have\ left}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ WAIT\_WHILE(m\_write\ ||\ m\_readers);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \textcolor{comment}{//\ No\ readers\ can\ come\ in,\ nor\ any\ other\ writer\ since\ we\ kept\ our\ readers\ count}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ m\_write\ =\ 1;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{comment}{//\ Now\ remove\ ourselves\ from\ the\ readers}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \_\_sync\_sub\_and\_fetch(\&m\_readers,\ 1);}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{comment}{//\ m\_write\ was\ already\ set\ by\ the\ test\_and\_set\ above}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ ourselves\ from\ the\ waiting\ writers\ count}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \_\_sync\_sub\_and\_fetch(\&m\_writers,\ 1);}
+\DoxyCodeLine{00142\ \ \ \ \}}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00146\ SELock::downgrade(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00147\ \{}
+\DoxyCodeLine{00148\ \ \ \ assert(m\_write\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \textcolor{comment}{//\ First\ make\ ourselves\ a\ reader,\ so\ no\ other\ potential\ writer\ may\ come\ in\ yet\ (until\ we\ fully\ release)}}
+\DoxyCodeLine{00151\ \ \ \ \_\_sync\_add\_and\_fetch(\&m\_readers,\ 1);}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ m\_write\ =\ 0;}
+\DoxyCodeLine{00154\ \}}
+
+\end{DoxyCode}

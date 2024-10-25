@@ -1,0 +1,49 @@
+\doxysection{tags.\+cc}
+\label{tags_8cc_source}\index{common/misc/tags.cc@{common/misc/tags.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}tags.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Parse\ initial\ tag\ values\ from\ the\ configuration}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Example:}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ \ [tags]}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ objname/tagname=1,0,1,0}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ The\ tags\ gets\ added\ to\ the\ obj\ only\ if\ it\ is\ valid\ (Key::getBool()\ ==\ true)}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ We\ currently\ do\ not\ support\ assigning\ tag\ values\ via\ the\ configuration\ variables,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ but\ it's\ value\ is\ initialized\ to\ 1.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ TagsManager::TagsManager(config::Config\ *config)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{const}\ config::Section\ \&section\ =\ config-\/>getSection(\textcolor{stringliteral}{"{}tags"{}});}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{const}\ config::SectionList\ \&objs\ =\ section.getSubsections();}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{for}\ (config::SectionList::const\_iterator\ obj\ =\ objs.begin()\ ;\ obj\ !=\ objs.end()\ ;\ ++obj)}
+\DoxyCodeLine{00024\ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ String\ objname\ =\ (*obj).first;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{comment}{//\ Default\ configuration\ values\ are\ not\ supported,\ only\ array\ lists}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{const}\ config::KeyArrayList\ \&tags\_keys\ =\ (*obj).second-\/>getArrayKeys();}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (config::KeyArrayList::const\_iterator\ tag\_keys\ =\ tags\_keys.begin()\ ;\ tag\_keys\ !=\ tags\_keys.end()\ ;\ ++tag\_keys)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ String\ \&tag\ =\ (*tag\_keys).first;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<config::Key*>\ ids\ =\ (*tag\_keys).second;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ 0\ ;\ \textcolor{keywordtype}{id}\ <\ ids.size()\ ;\ \textcolor{keywordtype}{id}++)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ valid\ =\ ids[id]-\/>getBool();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (valid)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addTag(objname,\ \textcolor{keywordtype}{id},\ tag,\ valid);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ \}}
+
+\end{DoxyCode}

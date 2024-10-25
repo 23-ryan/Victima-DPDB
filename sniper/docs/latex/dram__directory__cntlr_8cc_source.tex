@@ -1,0 +1,1297 @@
+\doxysection{dram\+\_\+directory\+\_\+cntlr.\+cc}
+\label{dram__directory__cntlr_8cc_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cntlr.cc@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cntlr.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dram\_directory\_cntlr.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}nuca\_cache.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}coherency\_protocol.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{extern}\ Lock\ iolock;}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#\ \ include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#\ \ include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#\ \ define\ MYLOG(...)\ \{\ ScopedLock\ l(iolock);\ fflush(stdout);\ printf("{}[\%s]\ \%d\%cdd\ \%-\/25s@\%3u:\ "{},\ itostr(getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD)).c\_str(),\ getMemoryManager()-\/>getCore()-\/>getId(),\ Sim()-\/>getCoreManager()-\/>amiUserThread()\ ?\ '\string^'\ :\ '\_',\ \_\_FUNCTION\_\_,\ \_\_LINE\_\_);\ printf(\_\_VA\_ARGS\_\_);\ printf("{}\(\backslash\)n"{});\ fflush(stdout);\ \}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#\ \ define\ MYLOG(...)\ \{\}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }PrL1PrL2DramDirectoryMSI}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{char}\ DStateString(DirectoryState::dstate\_t\ state)\ \{}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{switch}(state)}
+\DoxyCodeLine{00024\ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::UNCACHED:\ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'U'};}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::SHARED:\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'S'};}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::EXCLUSIVE:\ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'E'};}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::OWNED:\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'O'};}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::MODIFIED:\ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'M'};}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'?'};}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ DramDirectoryCntlr::DramDirectoryCntlr(core\_id\_t\ core\_id,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ MemoryManagerBase*\ memory\_manager,}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ AddressHomeLookup*\ dram\_controller\_home\_lookup,}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ NucaCache*\ nuca\_cache,}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ UInt32\ dram\_directory\_total\_entries,}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ UInt32\ dram\_directory\_associativity,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ UInt32\ dram\_directory\_max\_num\_sharers,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ UInt32\ dram\_directory\_max\_hw\_sharers,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ String\ dram\_directory\_type\_str,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ ComponentLatency\ dram\_directory\_cache\_access\_time,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model):}
+\DoxyCodeLine{00046\ \ \ \ m\_memory\_manager(memory\_manager),}
+\DoxyCodeLine{00047\ \ \ \ m\_dram\_controller\_home\_lookup(dram\_controller\_home\_lookup),}
+\DoxyCodeLine{00048\ \ \ \ m\_nuca\_cache(nuca\_cache),}
+\DoxyCodeLine{00049\ \ \ \ m\_core\_id(core\_id),}
+\DoxyCodeLine{00050\ \ \ \ m\_cache\_block\_size(cache\_block\_size),}
+\DoxyCodeLine{00051\ \ \ \ m\_shmem\_perf\_model(shmem\_perf\_model),}
+\DoxyCodeLine{00052\ \ \ \ forward(0),}
+\DoxyCodeLine{00053\ \ \ \ forward\_failed(0)}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ m\_dram\_directory\_cache\ =\ \textcolor{keyword}{new}\ DramDirectoryCache(}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ core\_id,}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ dram\_directory\_type\_str,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ dram\_directory\_total\_entries,}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ dram\_directory\_associativity,}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ cache\_block\_size,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ dram\_directory\_max\_hw\_sharers,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ dram\_directory\_max\_num\_sharers,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ dram\_directory\_cache\_access\_time,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model);}
+\DoxyCodeLine{00065\ \ \ \ m\_dram\_directory\_req\_queue\_list\ =\ \textcolor{keyword}{new}\ ReqQueueList();}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{for}(DirectoryState::dstate\_t\ state\ =\ DirectoryState::dstate\_t(0);\ state\ <\ DirectoryState::NUM\_DIRECTORY\_STATES;\ state\ =\ DirectoryState::dstate\_t(\textcolor{keywordtype}{int}(state)+1))}
+\DoxyCodeLine{00067\ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (state\ !=\ DirectoryState::UNCACHED)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ evict[state]\ =\ 0;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}directory"{}},\ core\_id,\ String(\textcolor{stringliteral}{"{}evict-\/"{}})+DStateString(state),\ \&evict[state]);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}directory"{}},\ core\_id,\ \textcolor{stringliteral}{"{}forward"{}},\ \&forward);}
+\DoxyCodeLine{00075\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}directory"{}},\ core\_id,\ \textcolor{stringliteral}{"{}forward-\/failed"{}},\ \&forward\_failed);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ String\ protocol\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}caching\_protocol/variant"{}});}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{if}\ (protocol\ ==\ \textcolor{stringliteral}{"{}msi"{}})}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ m\_protocol\ =\ CoherencyProtocol::MSI;}
+\DoxyCodeLine{00081\ \ \ \ \}}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (protocol\ ==\ \textcolor{stringliteral}{"{}mesi"{}})}
+\DoxyCodeLine{00083\ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ m\_protocol\ =\ CoherencyProtocol::MESI;}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (protocol\ ==\ \textcolor{stringliteral}{"{}mesif"{}})}
+\DoxyCodeLine{00087\ \ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ m\_protocol\ =\ CoherencyProtocol::MESIF;}
+\DoxyCodeLine{00089\ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ coherency\ protocol\ \%s,\ must\ be\ msi,\ mesi\ or\ mesif"{}},\ protocol.c\_str());}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ DramDirectoryCntlr::\string~DramDirectoryCntlr()}
+\DoxyCodeLine{00097\ \{}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keyword}{delete}\ m\_dram\_directory\_cache;}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keyword}{delete}\ m\_dram\_directory\_req\_queue\_list;}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00103\ DramDirectoryCntlr::handleMsgFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{00104\ \{}
+\DoxyCodeLine{00105\ \ \ \ ShmemMsg::msg\_t\ shmem\_msg\_type\ =\ shmem\_msg-\/>getMsgType();}
+\DoxyCodeLine{00106\ \ \ \ SubsecondTime\ msg\_time\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00107\ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{comment}{//std::cout<<shmem\_msg-\/>getBlockType()<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{comment}{//std::cout<<"{}Handle\ Message\ From\ L2\ Cache\ with\ Address:\ "{}<<address<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00110\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}begin\ for\ address\ \%lx,\ \%d\ in\ queue"{}},\ address,\ m\_dram\_directory\_req\_queue\_list-\/>size(address));}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \textcolor{comment}{//\ Look\ up\ line\ state\ in\ the\ tag\ directory}}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{comment}{//\ This\ is\ just\ for\ modeling\ the\ TD\ lookup\ time\ (this\ is\ the\ only\ place\ where\ we\ call\ getDirectoryEntry\ with\ modeled==true),}}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{comment}{//\ elsewhere\ we\ assume\ outstanding\ requests\ are\ stored\ in\ a\ fast\ MSHR-\/like\ structure}}
+\DoxyCodeLine{00115\ \ \ \ m\_dram\_directory\_cache-\/>getDirectoryEntry(address,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00116\ \ \ \ updateShmemPerf(shmem\_msg,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{comment}{//std::cout<<address<<"{}\ "{}<<shmem\_msg\_type<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keywordflow}{switch}\ (shmem\_msg\_type)}
+\DoxyCodeLine{00119\ \ \ \ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::EX\_REQ:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}E\ REQ<\%u\ @\ \%lx"{}},\ sender,\ address);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ request\ onto\ a\ queue}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ \textcolor{keyword}{new}\ ShmemReq(shmem\_msg,\ msg\_time);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ m\_dram\_directory\_req\_queue\_list-\/>enqueue(address,\ shmem\_req);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}ENqueued\ E\ REQ\ for\ address\ \%lx"{}},\ address\ );}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_dram\_directory\_req\_queue\_list-\/>size(address)\ ==\ 1)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ExReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ processExReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}E\ REQ\ (\%lx)\ not\ handled\ yet\ because\ of\ outstanding\ request\ in\ the\ queue"{}},\ address);}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::SH\_REQ:}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}S\ REQ<\%u\ @\ \%lx"{}},\ sender,\ address);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ request\ onto\ a\ queue}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ \textcolor{keyword}{new}\ ShmemReq(shmem\_msg,\ msg\_time);}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ m\_dram\_directory\_req\_queue\_list-\/>enqueue(address,\ shmem\_req);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}ENqueued\ S\ REQ\ for\ address\ \%lx"{}},\ address\ );}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_dram\_directory\_req\_queue\_list-\/>size(address)\ ==\ 1)}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ShReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ processShReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}S\ REQ\ (\%lx)\ not\ handled\ because\ of\ outstanding\ request\ in\ the\ queue"{}},\ address);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::INV\_REP:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}INV\ REP<\%u\ @\ \%lx"{}},\ sender,\ address);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ processInvRepFromL2Cache(sender,\ shmem\_msg);}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::FLUSH\_REP:}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}FLUSH\ REP<\%u\ @\ \%lx"{}},\ sender,\ address);}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ processFlushRepFromL2Cache(sender,\ shmem\_msg);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::WB\_REP:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}WB\ REP<\%u\ @\ \%lx"{}},\ sender,\ address);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ processWbRepFromL2Cache(sender,\ shmem\_msg);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Shmem\ Msg\ Type:\ \%u"{}},\ shmem\_msg\_type);}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::UPGRADE\_REQ:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}UPGR\ REQ<\%u\ @\ \%lx"{}},\ sender,\ address);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ request\ onto\ a\ queue}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ \textcolor{keyword}{new}\ ShmemReq(shmem\_msg,\ msg\_time);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ m\_dram\_directory\_req\_queue\_list-\/>enqueue(address,\ shmem\_req);}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}ENqueued\ \ UPGRADE\ REQ\ for\ address\ \%lx"{}},\ \ address\ );}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_dram\_directory\_req\_queue\_list-\/>size(address)\ ==\ 1)}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ processUpgradeReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}UPGRADE\ REQ\ (\%lx)\ not\ handled\ because\ of\ outstanding\ request\ in\ the\ queue"{}},\ address);}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \}}
+\DoxyCodeLine{00200\ MYLOG(\textcolor{stringliteral}{"{}done\ for\ \%lx"{}},\ address);}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00204\ DramDirectoryCntlr::handleMsgFromDRAM(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{00205\ \{}
+\DoxyCodeLine{00206\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start"{}});}
+\DoxyCodeLine{00207\ \ \ \ ShmemMsg::msg\_t\ shmem\_msg\_type\ =\ shmem\_msg-\/>getMsgType();}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \textcolor{keywordflow}{switch}\ (shmem\_msg\_type)}
+\DoxyCodeLine{00210\ \ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::DRAM\_READ\_REP:}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ processDRAMReply(sender,\ shmem\_msg);}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Shmem\ Msg\ Type:\ \%u"{}},\ shmem\_msg\_type);}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00218\ \ \ \ \}}
+\DoxyCodeLine{00219\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End"{}});}
+\DoxyCodeLine{00220\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00223\ DramDirectoryCntlr::processNextReqFromL2Cache(IntPtr\ address)}
+\DoxyCodeLine{00224\ \{}
+\DoxyCodeLine{00225\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ processNextReqFromL2Cache(\%lx):\ \%d\ in\ Queue"{}},\ address,\ m\_dram\_directory\_req\_queue\_list-\/>size(address)\ );}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}about\ to\ dequeue\ request\ for\ address\ \%lx"{}},\ address\ );}
+\DoxyCodeLine{00228\ \ \ \ assert(m\_dram\_directory\_req\_queue\_list-\/>size(address)\ >=\ 1);}
+\DoxyCodeLine{00229\ \ \ \ ShmemReq*\ completed\_shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>dequeue(address);}
+\DoxyCodeLine{00230\ \ \ \ \textcolor{keyword}{delete}\ completed\_shmem\_req;}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \textcolor{keywordflow}{if}\ (!\ m\_dram\_directory\_req\_queue\_list-\/>empty(address))}
+\DoxyCodeLine{00233\ \ \ \ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}A\ new\ shmem\ req\ for\ address(\%lx)\ found"{}},\ address);}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>front(address);}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ the\ Shared\ Mem\ Cycle\ Counts\ appropriately}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_SIM\_THREAD,\ shmem\_req-\/>getTime());}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::EX\_REQ)}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}A\ new\ EX\_REQ\ for\ address(\%lx)\ found"{}},\ address);}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ExReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ processExReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::SH\_REQ)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}A\ new\ SH\_REQ\ for\ address(\%lx)\ found"{}},\ address);}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ShReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ processShReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::UPGRADE\_REQ)}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}A\ new\ UPGRADE\_REQ\ for\ address(\%lx)\ found"{}},\ address);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ processUpgradeReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Request(\%u)"{}},\ shmem\_req-\/>getShmemMsg()-\/>getMsgType());}
+\DoxyCodeLine{00260\ \ \ \ \}}
+\DoxyCodeLine{00261\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ processNextReqFromL2Cache(\%lx)"{}},\ address);}
+\DoxyCodeLine{00262\ \}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ DirectoryEntry*}
+\DoxyCodeLine{00265\ DramDirectoryCntlr::processDirectoryEntryAllocationReq(ShmemReq*\ shmem\_req)}
+\DoxyCodeLine{00266\ \{}
+\DoxyCodeLine{00267\ \ \ \ IntPtr\ address\ =\ shmem\_req-\/>getShmemMsg()-\/>getAddress();}
+\DoxyCodeLine{00268\ \ \ \ core\_id\_t\ requester\ =\ shmem\_req-\/>getShmemMsg()-\/>getRequester();}
+\DoxyCodeLine{00269\ \ \ \ SubsecondTime\ msg\_time\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ std::vector<DirectoryEntry*>\ replacement\_candidate\_list;}
+\DoxyCodeLine{00274\ \ \ \ m\_dram\_directory\_cache-\/>getReplacementCandidates(address,\ replacement\_candidate\_list);}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ std::vector<DirectoryEntry*>::iterator\ it;}
+\DoxyCodeLine{00277\ \ \ \ std::vector<DirectoryEntry*>::iterator\ replacement\_candidate\ =\ replacement\_candidate\_list.end();}
+\DoxyCodeLine{00278\ \ \ \ \textcolor{keywordflow}{for}\ (it\ =\ replacement\_candidate\_list.begin();\ it\ !=\ replacement\_candidate\_list.end();\ it++)}
+\DoxyCodeLine{00279\ \ \ \ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (\ (replacement\_candidate\ ==\ replacement\_candidate\_list.end())\ ||}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ ((*replacement\_candidate)-\/>getNumSharers()\ >\ (*it)-\/>getNumSharers())}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \&\&}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ (m\_dram\_directory\_req\_queue\_list-\/>size((*it)-\/>getAddress())\ ==\ 0)}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ replacement\_candidate\ =\ it;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00289\ \ \ \ \}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ LOG\_ASSERT\_ERROR(replacement\_candidate\ !=\ replacement\_candidate\_list.end(),}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Cannot\ find\ a\ directory\ entry\ to\ be\ replaced\ with\ a\ non-\/zero\ request\ list\ (see\ Redmine\ \#175)"{}});}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ DirectoryState::dstate\_t\ curr\_dstate\ =\ (*replacement\_candidate)-\/>getDirectoryBlockInfo()-\/>getDState();}
+\DoxyCodeLine{00295\ \ \ \ evict[curr\_dstate]++;}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ IntPtr\ replaced\_address\ =\ (*replacement\_candidate)-\/>getAddress();}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \textcolor{comment}{//\ We\ get\ the\ entry\ with\ the\ lowest\ number\ of\ sharers}}
+\DoxyCodeLine{00300\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>replaceDirectoryEntry(replaced\_address,\ address,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ ShmemMsg\ nullify\_msg(ShmemMsg::NULLIFY\_REQ,\ MemComponent::TAG\_DIR,\ MemComponent::TAG\_DIR,\ requester,\ replaced\_address,\ NULL,\ 0,\ \&m\_dummy\_shmem\_perf,CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE);}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ ShmemReq*\ nullify\_req\ =\ \textcolor{keyword}{new}\ ShmemReq(\&nullify\_msg,\ msg\_time);}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ m\_dram\_directory\_req\_queue\_list-\/>enqueue(replaced\_address,\ nullify\_req);}
+\DoxyCodeLine{00307\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}ENqueued\ NULLIFY\ request\ for\ address\ \%lx"{}},\ replaced\_address\ );}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ assert(m\_dram\_directory\_req\_queue\_list-\/>size(replaced\_address)\ ==\ 1);}
+\DoxyCodeLine{00310\ \ \ \ \textcolor{comment}{//std::cout<<"{}Nullify\ Request:\ "{}<<\_\_LINE\_\_<<std::endl;}}
+\DoxyCodeLine{00311\ \ \ \ processNullifyReq(nullify\_req);}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \textcolor{keywordflow}{return}\ directory\_entry;}
+\DoxyCodeLine{00316\ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00319\ DramDirectoryCntlr::processNullifyReq(ShmemReq*\ shmem\_req)}
+\DoxyCodeLine{00320\ \{}
+\DoxyCodeLine{00321\ \ \ \ IntPtr\ address\ =\ shmem\_req-\/>getShmemMsg()-\/>getAddress();}
+\DoxyCodeLine{00322\ \ \ \ core\_id\_t\ requester\ =\ shmem\_req-\/>getShmemMsg()-\/>getRequester();}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \textcolor{comment}{//\ NOTE:\ no\ ShmemPerf\ accounting\ for\ nullify\ requests\ as\ they\ may\ happen\ *after*\ core\ requests\ are\ completed}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00329\ \ \ \ assert(directory\_entry);}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{00332\ \ \ \ DirectoryState::dstate\_t\ curr\_dstate\ =\ directory\_block\_info-\/>getDState();}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \textcolor{keywordflow}{switch}\ (curr\_dstate)}
+\DoxyCodeLine{00335\ \ \ \ \{}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::EXCLUSIVE:}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::MODIFIED:}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Nullify\ request:\ "{}\ <<\ \_\_LINE\_\_\ <<\ "{}\ with\ address\ \ =\ "{}\ <<\ address\ <<\ std::endl;}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::FLUSH\_REQ,}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ directory\_entry-\/>getOwner()\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&m\_dummy\_shmem\_perf,}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,\ shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::SHARED:}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ std::pair<bool,\ std::vector<SInt32>\ >\ sharers\_list\_pair\ =\ directory\_entry-\/>getSharersList();}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sharers\_list\_pair.first\ ==\ \textcolor{keyword}{true})}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Broadcast\ Invalidation\ Request\ to\ all\ cores}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (irrespective\ of\ whether\ they\ are\ sharers\ or\ not)}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>broadcastMsg(ShmemMsg::INV\_REQ,}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ Invalidation\ Request\ to\ only\ a\ specific\ set\ of\ sharers}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ sharers\_list\_pair.second.size();\ i++)}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::INV\_REQ,}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sharers\_list\_pair.second[i]\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&m\_dummy\_shmem\_perf,}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::UNCACHED:}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ m\_dram\_directory\_cache-\/>invalidateDirectoryEntry(address);}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Process\ Next\ Request}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ processNextReqFromL2Cache(address);}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Directory\ State:\ \%u"{}},\ curr\_dstate);}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00399\ \ \ \ \}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00402\ \}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00405\ DramDirectoryCntlr::processExReqFromL2Cache(ShmemReq*\ shmem\_req,\ Byte*\ cached\_data\_buf)}
+\DoxyCodeLine{00406\ \{}
+\DoxyCodeLine{00407\ \ \ \ IntPtr\ address\ =\ shmem\_req-\/>getShmemMsg()-\/>getAddress();}
+\DoxyCodeLine{00408\ \ \ \ core\_id\_t\ requester\ =\ shmem\_req-\/>getShmemMsg()-\/>getRequester();}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00411\ \ \ \ updateShmemPerf(shmem\_req);}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00414\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry\ ==\ NULL)}
+\DoxyCodeLine{00415\ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Process\ Directory\ Entry\ Allocation\ Req\ :\ "{}<<\_\_LINE\_\_<<std::endl;}}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ directory\_entry\ =\ processDirectoryEntryAllocationReq(shmem\_req);}
+\DoxyCodeLine{00418\ \ \ \ \}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{00421\ \ \ \ DirectoryState::dstate\_t\ curr\_dstate\ =\ directory\_block\_info-\/>getDState();}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \textcolor{keywordflow}{switch}\ (curr\_dstate)}
+\DoxyCodeLine{00426\ \ \ \ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::EXCLUSIVE:\ \textcolor{comment}{//\ Cache\ may\ have\ done\ a\ silent\ upgrade\ to\ MODIFIED,\ so\ send\ a\ FLUSH\ (dirty\ data)\ rather\ than\ an\ INV\ (data\ clean)}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::MODIFIED:}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ assert(cached\_data\_buf\ ==\ NULL);}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Dram\ request:\ "{}\ <<\ \_\_LINE\_\_\ <<std::endl;}}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Send\ FLUSH\_REQ>\%d\ for\ \%lx"{}},\ directory\_entry-\/>getOwner(),\ address\ )}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::FLUSH\_REQ,}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ directory\_entry-\/>getOwner()\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_req-\/>getShmemMsg()-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::SHARED:}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ assert(cached\_data\_buf\ ==\ NULL);}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ std::pair<bool,\ std::vector<SInt32>\ >\ sharers\_list\_pair\ =\ directory\_entry-\/>getSharersList();}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sharers\_list\_pair.first\ ==\ \textcolor{keyword}{true})}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Broadcast\ Invalidation\ Request\ to\ all\ cores}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (irrespective\ of\ whether\ they\ are\ sharers\ or\ not)}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>broadcastMsg(ShmemMsg::INV\_REQ,}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ \textcolor{comment}{//\ No\ ShmemPerf\ on\ broadcast}}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ Invalidation\ Request\ to\ only\ a\ specific\ set\ of\ sharers}}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ sharers\_list\_pair.second.size();\ i++)}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Send\ INV\_REQ>\%d\ for\ \%lx"{}},\ sharers\_list\_pair.second[i],\ address\ )}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::INV\_REQ,}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sharers\_list\_pair.second[i]\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i\ ==\ 0\ ?\ shmem\_req-\/>getShmemMsg()-\/>getPerf()\ :\ \&m\_dummy\_shmem\_perf,}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::UNCACHED:}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Modifiy\ the\ directory\ entry\ contents}}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ add\_result\ =\ directory\_entry-\/>addSharer(requester,\ m\_dram\_directory\_cache-\/>getMaxHwSharers());}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ assert(add\_result\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ directory\_entry-\/>setOwner(requester);}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::MODIFIED);}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ retrieveDataAndSendToL2Cache(ShmemMsg::EX\_REP,\ requester,\ address,\ cached\_data\_buf,\ shmem\_req-\/>getShmemMsg());}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Directory\ State:\ \%u"{}},\ curr\_dstate);}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00494\ \ \ \ \}}
+\DoxyCodeLine{00495\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00496\ \}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00499\ DramDirectoryCntlr::processShReqFromL2Cache(ShmemReq*\ shmem\_req,\ Byte*\ cached\_data\_buf)}
+\DoxyCodeLine{00500\ \{}
+\DoxyCodeLine{00501\ \ \ \ IntPtr\ address\ =\ shmem\_req-\/>getShmemMsg()-\/>getAddress();}
+\DoxyCodeLine{00502\ \ \ \ core\_id\_t\ requester\ =\ shmem\_req-\/>getShmemMsg()-\/>getRequester();}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00505\ \ \ \ updateShmemPerf(shmem\_req);}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00508\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry\ ==\ NULL)}
+\DoxyCodeLine{00509\ \ \ \ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Process\ Directory\ Entry\ Allocation\ Req\ :\ "{}<<\_\_LINE\_\_<<std::endl;}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ directory\_entry\ =\ processDirectoryEntryAllocationReq(shmem\_req);}
+\DoxyCodeLine{00512\ \ \ \ \}}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{00515\ \ \ \ DirectoryState::dstate\_t\ curr\_dstate\ =\ directory\_block\_info-\/>getDState();}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{00518\ }
+\DoxyCodeLine{00519\ \ \ \ \textcolor{keywordflow}{switch}\ (curr\_dstate)}
+\DoxyCodeLine{00520\ \ \ \ \{}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::EXCLUSIVE:}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ assert\ (requester\ !=\ directory\_entry-\/>getOwner());}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}WB\_REQ>\%d\ for\ \%lx"{}},\ directory\_entry-\/>getOwner(),\ address\ \ )}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(cached\_data\_buf\ ==\ NULL);}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::WB\_REQ,}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ directory\_entry-\/>getOwner()\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_req-\/>getShmemMsg()-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::MODIFIED:}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}WB\_REQ>\%d\ for\ \%lx"{}},\ directory\_entry-\/>getOwner(),\ address\ \ )}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ assert(cached\_data\_buf\ ==\ NULL);}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::WB\_REQ,}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ directory\_entry-\/>getOwner()\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_req-\/>getShmemMsg()-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::SHARED:}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>hasSharer(requester))}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}got\ a\ WB/INV\ REP\ from\ the\ forwarder\ and\ now\ handling\ the\ original\ SH\ REQ"{}});}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ ++forward;}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cached\_data\_buf\ ==\ NULL)}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Forwarder\ evicted\ the\ data\ while\ we\ requested\ it.\ Will\ have\ to\ get\ it\ from\ DRAM\ anyway.}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++forward\_failed;}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \ \ \ \ retrieveDataAndSendToL2Cache(ShmemMsg::SH\_REP,\ requester,\ address,\ cached\_data\_buf,\ shmem\_req-\/>getShmemMsg());}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ add\_result\ =\ directory\_entry-\/>addSharer(requester,\ m\_dram\_directory\_cache-\/>getMaxHwSharers());}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (add\_result\ ==\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ sharer\_id\ =\ directory\_entry-\/>getOneSharer();}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ a\ message\ to\ another\ sharer\ to\ invalidate\ that}}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}INV\_REQ>\%d\ for\ \%lx\ because\ I\ could\ not\ add\ sharer"{}},\ directory\_entry-\/>getOwner(),\ address\ \ )}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::INV\_REQ,}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sharer\_id\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_req-\/>getShmemMsg()-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}SHARED\ state,\ retrieve\ data\ and\ send"{}})}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ retrieveDataAndSendToL2Cache(ShmemMsg::SH\_REP,\ requester,\ address,\ cached\_data\_buf,\ shmem\_req-\/>getShmemMsg());}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::UNCACHED:}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}was\ UNCACHED,\ is\ now\ EXCLUSIVE"{}})}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Modifiy\ the\ directory\ entry\ contents}}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ add\_result\ =\ directory\_entry-\/>addSharer(requester,\ m\_dram\_directory\_cache-\/>getMaxHwSharers());}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ assert(add\_result\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ directory\_entry-\/>setOwner(requester);}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_protocol\ ==\ CoherencyProtocol::MSI)}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::SHARED);}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ retrieveDataAndSendToL2Cache(ShmemMsg::SH\_REP,\ requester,\ address,\ cached\_data\_buf,\ shmem\_req-\/>getShmemMsg());}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::EXCLUSIVE);}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ retrieveDataAndSendToL2Cache(ShmemMsg::EX\_REP,\ requester,\ address,\ cached\_data\_buf,\ shmem\_req-\/>getShmemMsg());}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Directory\ State:\ \%u"{}},\ curr\_dstate);}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00614\ \ \ \ \}}
+\DoxyCodeLine{00615\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00616\ \}}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00619\ DramDirectoryCntlr::retrieveDataAndSendToL2Cache(ShmemMsg::msg\_t\ reply\_msg\_type,}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ core\_id\_t\ receiver,\ IntPtr\ address,\ Byte*\ cached\_data\_buf,\ ShmemMsg\ *orig\_shmem\_msg)}
+\DoxyCodeLine{00621\ \{}
+\DoxyCodeLine{00622\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00623\ \ \ \ assert(directory\_entry\ !=\ NULL);}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00625\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00626\ \ \ \ \textcolor{keywordflow}{if}\ (cached\_data\_buf\ !=\ NULL)}
+\DoxyCodeLine{00627\ \ \ \ \{}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \textcolor{comment}{//\ Forwarder\ state\ moves\ to\ the\ last\ cache\ receiving\ a\ copy,}}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \textcolor{comment}{//\ assuming\ this\ one\ is\ the\ least\ likely\ to\ evict\ it\ early.}}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ directory\_entry-\/>setForwarder(receiver);}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \textcolor{comment}{//\ I\ already\ have\ the\ data\ I\ need\ cached}}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Already\ have\ the\ data\ that\ I\ need\ cached"{}});}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Dram\ request:\ "{}\ <<\ \_\_LINE\_\_\ <<std::endl;}}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(reply\_msg\_type,}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ receiver\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ receiver\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ cached\_data\_buf,\ getCacheBlockSize(),}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::CACHE\_REMOTE\ \textcolor{comment}{/*\ cached\_data\_buf\ was\ filled\ by\ a\ WB\_REQ\ or\ FLUSH\_REQ\ */},}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ orig\_shmem\_msg-\/>getPerf(),}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,orig\_shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \textcolor{comment}{//\ Process\ Next\ Request}}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ processNextReqFromL2Cache(address);}
+\DoxyCodeLine{00647\ \ \ \ \}}
+\DoxyCodeLine{00648\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00649\ \ \ \ \{}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_nuca\_cache)}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ SubsecondTime\ nuca\_latency;}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ HitWhere::where\_t\ hit\_where;}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ Byte\ nuca\_data\_buf[getCacheBlockSize()];}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \ boost::tie(nuca\_latency,\ hit\_where)\ =\ m\_nuca\_cache-\/>read(address,\ nuca\_data\_buf,\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD),\ orig\_shmem\_msg-\/>getPerf(),\ \textcolor{keyword}{true},orig\_shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00656\ }
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>incrElapsedTime(nuca\_latency,\ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit\_where\ !=\ HitWhere::MISS)}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(reply\_msg\_type,}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ receiver\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ receiver\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nuca\_data\_buf,\ getCacheBlockSize(),}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::NUCA\_CACHE,}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ orig\_shmem\_msg-\/>getPerf(),}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,orig\_shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Process\ Next\ Request}}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ processNextReqFromL2Cache(address);}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \ \ \ \ \ assert(m\_dram\_directory\_req\_queue\_list-\/>size(address)\ >\ 0);}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>front(address);}
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \textcolor{comment}{//\ MESIF\ protocol:\ get\ data\ from\ a\ sharing\ cache}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_protocol\ ==\ CoherencyProtocol::MESIF}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \&\&\ shmem\_req-\/>getForwardingFrom()\ ==\ INVALID\_CORE\_ID\ \textcolor{comment}{//\ If\ forwarding\ already\ failed\ once,\ don't\ try\ again}}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \&\&\ directory\_entry-\/>getDirectoryBlockInfo()-\/>getDState()\ ==\ DirectoryState::SHARED}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \&\&\ directory\_entry-\/>getForwarder()\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ core\_id\_t\ forwarder\ =\ directory\_entry-\/>getForwarder();}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ shmem\_req-\/>setForwardingFrom(forwarder);}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ WB\_REQ\ to\ forwarder\ to\ have\ it\ send\ us\ the\ data}}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::WB\_REQ,}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ receiver\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ forwarder\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_req-\/>getShmemMsg()-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00701\ }
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ the\ data\ from\ DRAM}}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ could\ be\ directly\ forwarded\ to\ the\ cache\ or\ passed}}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \textcolor{comment}{//\ through\ the\ Dram\ Directory\ Controller}}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::UPGRADE\_REQ)}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Have\ to\ get\ data\ from\ DRAM\ while\ doing\ an\ UPGRADE\_REQ:\ lost\ data\ somehow\(\backslash\)n"{}});}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00710\ }
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \textcolor{comment}{//\ Remember\ that\ this\ request\ is\ waiting\ for\ data,\ and\ should\ not\ be\ woken\ up\ by\ voluntary\ invalidates}}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ shmem\_req-\/>setWaitForData(\textcolor{keyword}{true});}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \ \ \ \ \ \ core\_id\_t\ dram\_node\ =\ m\_dram\_controller\_home\_lookup-\/>getHome(address);}
+\DoxyCodeLine{00715\ }
+\DoxyCodeLine{00716\ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Sending\ request\ to\ DRAM\ for\ the\ data"{}});}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::DRAM\_READ\_REQ,}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::DRAM,}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ receiver\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ dram\_node\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ orig\_shmem\_msg-\/>getPerf(),}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,orig\_shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00726\ \ \ \ \}}
+\DoxyCodeLine{00727\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00728\ \}}
+\DoxyCodeLine{00729\ }
+\DoxyCodeLine{00730\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00731\ DramDirectoryCntlr::processDRAMReply(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{00732\ \{}
+\DoxyCodeLine{00733\ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{00734\ }
+\DoxyCodeLine{00735\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00736\ \ \ \ \textcolor{comment}{//\ Data\ received\ from\ DRAM}}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00738\ \ \ \ \textcolor{comment}{//\ \ \ Which\ node\ to\ reply\ to?}}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \ assert(m\_dram\_directory\_req\_queue\_list-\/>size(address)\ >=\ 1);}
+\DoxyCodeLine{00741\ \ \ \ ShmemReq*\ shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>front(address);}
+\DoxyCodeLine{00742\ \ \ \ updateShmemPerf(shmem\_req);}
+\DoxyCodeLine{00743\ }
+\DoxyCodeLine{00744\ \ \ \ \textcolor{comment}{//\ \ \ Which\ reply\ type\ to\ use?}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \ ShmemMsg::msg\_t\ reply\_msg\_type;}
+\DoxyCodeLine{00747\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00748\ \ \ \ assert(directory\_entry);}
+\DoxyCodeLine{00749\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{00750\ \ \ \ DirectoryState::dstate\_t\ curr\_dstate\ =\ directory\_block\_info-\/>getDState();}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{00753\ }
+\DoxyCodeLine{00754\ \ \ \ \textcolor{keywordflow}{switch}(shmem\_req-\/>getShmemMsg()-\/>getMsgType())}
+\DoxyCodeLine{00755\ \ \ \ \{}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::SH\_REQ:}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \ assert(curr\_dstate\ ==\ DirectoryState::SHARED\ ||\ curr\_dstate\ ==\ DirectoryState::EXCLUSIVE);}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (curr\_dstate\ ==\ DirectoryState::EXCLUSIVE)}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \ \ \ \ reply\_msg\_type\ =\ ShmemMsg::EX\_REP;}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ \ \ reply\_msg\_type\ =\ ShmemMsg::SH\_REP;}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::EX\_REQ:}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ \ reply\_msg\_type\ =\ ShmemMsg::EX\_REP;}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \ assert(curr\_dstate\ ==\ DirectoryState::MODIFIED);}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ShmemMsg::UPGRADE\_REQ:}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ we\ had\ to\ get\ the\ data\ from\ DRAM,\ nobody\ has\ it\ anymore:\ send\ EX\_REP}}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \ reply\_msg\_type\ =\ ShmemMsg::EX\_REP;}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ request\ type:\ \%u"{}},\ shmem\_req-\/>getShmemMsg()-\/>getMsgType());}
+\DoxyCodeLine{00779\ \ \ \ \}}
+\DoxyCodeLine{00780\ }
+\DoxyCodeLine{00781\ \ \ \ \textcolor{comment}{//\ \ \ Which\ HitWhere\ to\ report?}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \ \ \ HitWhere::where\_t\ hit\_where\ =\ shmem\_msg-\/>getWhere();}
+\DoxyCodeLine{00784\ \ \ \ \textcolor{keywordflow}{if}\ (hit\_where\ ==\ HitWhere::DRAM)}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ hit\_where\ =\ (sender\ ==\ shmem\_msg-\/>getRequester())\ ?\ HitWhere::DRAM\_LOCAL\ :\ HitWhere::DRAM\_REMOTE;}
+\DoxyCodeLine{00786\ }
+\DoxyCodeLine{00787\ \ \ \ \textcolor{comment}{//\ \ \ Send\ reply}}
+\DoxyCodeLine{00788\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}MSG\ DRAM>\%d\ for\ \%lx"{}},\ shmem\_req-\/>getShmemMsg()-\/>getRequester(),\ address\ )}
+\DoxyCodeLine{00789\ \ \ \ getMemoryManager()-\/>sendMsg(reply\_msg\_type,}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ shmem\_req-\/>getShmemMsg()-\/>getRequester()\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \ shmem\_req-\/>getShmemMsg()-\/>getRequester()\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \ shmem\_msg-\/>getDataBuf(),\ getCacheBlockSize(),}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \ hit\_where,}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ shmem\_req-\/>getShmemMsg()-\/>getPerf(),}
+\DoxyCodeLine{00797\ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,shmem\_req-\/>getBlockType());}
+\DoxyCodeLine{00798\ }
+\DoxyCodeLine{00799\ \ \ \ \textcolor{comment}{//\ Keep\ a\ copy\ in\ NUCA}}
+\DoxyCodeLine{00800\ \ \ \ sendDataToNUCA(address,\ shmem\_req-\/>getShmemMsg()-\/>getRequester(),\ shmem\_msg-\/>getDataBuf(),\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD),\ \textcolor{keyword}{false},shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \ \ \ \textcolor{comment}{//\ Process\ Next\ Request}}
+\DoxyCodeLine{00803\ \ \ \ processNextReqFromL2Cache(address);}
+\DoxyCodeLine{00804\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ \}}
+\DoxyCodeLine{00807\ }
+\DoxyCodeLine{00808\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00809\ DramDirectoryCntlr::processInvRepFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{00810\ \{}
+\DoxyCodeLine{00811\ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{00812\ }
+\DoxyCodeLine{00813\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00814\ }
+\DoxyCodeLine{00815\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00816\ \ \ \ assert(directory\_entry);}
+\DoxyCodeLine{00817\ }
+\DoxyCodeLine{00818\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{00819\ \ \ \ LOG\_ASSERT\_ERROR(directory\_block\_info-\/>getDState()\ ==\ DirectoryState::SHARED\ ||\ directory\_block\_info-\/>getDState()\ ==\ DirectoryState::EXCLUSIVE,\ \textcolor{stringliteral}{"{}Ooops\ (\%lx)"{}},\ address);}
+\DoxyCodeLine{00820\ \ \ \ assert(directory\_block\_info-\/>getDState()\ ==\ DirectoryState::SHARED\ ||\ directory\_block\_info-\/>getDState()\ ==\ DirectoryState::EXCLUSIVE);}
+\DoxyCodeLine{00821\ }
+\DoxyCodeLine{00822\ \ \ \ directory\_entry-\/>removeSharer(sender);}
+\DoxyCodeLine{00823\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>getForwarder()\ ==\ sender)}
+\DoxyCodeLine{00824\ \ \ \ \{}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ directory\_entry-\/>setForwarder(INVALID\_CORE\_ID);}
+\DoxyCodeLine{00826\ \ \ \ \}}
+\DoxyCodeLine{00827\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>getNumSharers()\ ==\ 0)}
+\DoxyCodeLine{00828\ \ \ \ \{}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::UNCACHED);}
+\DoxyCodeLine{00830\ \ \ \ \}}
+\DoxyCodeLine{00831\ }
+\DoxyCodeLine{00832\ \ \ \ \textcolor{keywordflow}{if}\ (m\_dram\_directory\_req\_queue\_list-\/>size(address)\ >\ 0)}
+\DoxyCodeLine{00833\ \ \ \ \{}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}More\ requests\ outstanding\ for\ address\ \%lx"{}},\ address);}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>front(address);}
+\DoxyCodeLine{00836\ }
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ Times\ in\ the\ Shmem\ Perf\ Model\ and\ the\ Shmem\ Req}}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ shmem\_req-\/>updateTime(getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD));}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ getShmemPerfModel()-\/>updateElapsedTime(shmem\_req-\/>getTime(),\ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{00840\ }
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::EX\_REQ)}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ An\ ShmemMsg::EX\_REQ\ caused\ the\ invalidation}}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (directory\_block\_info-\/>getDState()\ ==\ DirectoryState::UNCACHED)}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::INV\_IMBALANCE);}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ExReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ processExReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::UPGRADE\_REQ)}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}as\ part\ of\ UPGR:\ got\ INV\_REP\ from\ \%d,\ \%d\ sharers\ left"{}},\ sender,directory\_entry-\/>getNumSharers()\ )}
+\DoxyCodeLine{00854\ }
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ An\ ShmemMsg::UPGRADE\_REQ\ caused\ the\ invalidation:\ additional\ action\ is\ only\ required}}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ when\ all\ SHARED\ copies\ have\ been\ invalided}}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>getNumSharers()\ ==\ 1)}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ requester\ =\ shmem\_req-\/>getShmemMsg()-\/>getRequester();}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>hasSharer(requester))}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ all\ Shared\ copies\ have\ been\ invalidated,\ UPGRADE\_REQ\ can\ be\ completed\ now.}}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}UPGRADE\_REQ:\ all\ OTHER\ shared\ copies\ have\ been\ invalided:\ complete\ upgrade\ req.\(\backslash\)n"{}});}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::INV\_IMBALANCE);}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ processUpgradeReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \ (directory\_entry-\/>getNumSharers()\ ==\ 0)}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}UPGRADE\_REQ:\ all\ shared\ copies\ have\ been\ invalided,\ requester\ has\ no\ copy\ anymore.\(\backslash\)n"{}});}
+\DoxyCodeLine{00871\ }
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::UNCACHED);}
+\DoxyCodeLine{00873\ }
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::INV\_IMBALANCE);}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ \ \ \ \ \ \ processUpgradeReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00877\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}could\ not\ do\ complete\ UPGRADE\_REQ\ because\ there\ are\ still\ multiple\ sharers"{}});}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::SH\_REQ)}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getWaitForData())}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ a\ voluntary\ invalidate\ (probably\ part\ of\ an\ upgrade\ or\ eviction),}}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ next\ request\ should\ only\ be\ woken\ up\ once\ its\ data\ arrives\ from\ DRAM.}}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>isForwarding()\ \&\&\ sender\ !=\ shmem\_req-\/>getForwardingFrom())}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ a\ voluntary\ invalidate\ (probably\ part\ of\ an\ upgrade\ or\ eviction),}}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ next\ request\ should\ only\ be\ woken\ up\ once\ its\ data\ arrives\ from\ the\ forwarder.}}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ ShmemMsg::SH\_REQ\ caused\ the\ invalidation}}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::INV\_IMBALANCE);}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ShReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \ \ processShReqFromL2Cache(shmem\_req);}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::NULLIFY\_REQ}}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (directory\_block\_info-\/>getDState()\ ==\ DirectoryState::UNCACHED)}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::INV\_IMBALANCE);}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Nullify\ Request:\ "{}<<\_\_LINE\_\_<<std::endl;}}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ processNullifyReq(shmem\_req);}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00911\ \ \ \ \}}
+\DoxyCodeLine{00912\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{00913\ \}}
+\DoxyCodeLine{00914\ }
+\DoxyCodeLine{00915\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00916\ DramDirectoryCntlr::processUpgradeReqFromL2Cache(ShmemReq*\ shmem\_req,\ Byte*\ cached\_data\_buf)}
+\DoxyCodeLine{00917\ \{}
+\DoxyCodeLine{00918\ \ \ \ ShmemMsg*\ shmem\_msg\ =\ shmem\_req-\/>getShmemMsg();}
+\DoxyCodeLine{00919\ }
+\DoxyCodeLine{00920\ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{00921\ \ \ \ core\_id\_t\ requester\ =\ shmem\_msg-\/>getRequester();}
+\DoxyCodeLine{00922\ \ \ \ updateShmemPerf(shmem\_req);}
+\DoxyCodeLine{00923\ }
+\DoxyCodeLine{00924\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}processUpgradeReqFromL2Cache\ for\ address:\ \%lx,\ requester=\ \%d"{}},\ address,\ requester);}
+\DoxyCodeLine{00925\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{00926\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry\ ==\ NULL)}
+\DoxyCodeLine{00927\ \ \ \ \{}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Process\ Directory\ Entry\ Allocation\ Req\ :\ "{}<<\_\_LINE\_\_<<std::endl;}}
+\DoxyCodeLine{00929\ \ \ \ \ \ \ directory\_entry\ =\ processDirectoryEntryAllocationReq(shmem\_req);}
+\DoxyCodeLine{00930\ \ \ \ \}}
+\DoxyCodeLine{00931\ \ \ \ assert(directory\_entry);}
+\DoxyCodeLine{00932\ }
+\DoxyCodeLine{00933\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{00934\ }
+\DoxyCodeLine{00935\ \ \ \ std::pair<bool,\ std::vector<SInt32>\ >\ sharers\_list\_pair\ =\ directory\_entry-\/>getSharersList();}
+\DoxyCodeLine{00936\ }
+\DoxyCodeLine{00937\ \ \ \ DirectoryState::dstate\_t\ curr\_dstate\ =\ directory\_block\_info-\/>getDState();}
+\DoxyCodeLine{00938\ }
+\DoxyCodeLine{00939\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}state=\%d\ ::\ "{}},\ curr\_dstate);}
+\DoxyCodeLine{00940\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}owner=\%d"{}}\ ,\ directory\_entry-\/>getOwner());}
+\DoxyCodeLine{00941\ \ \ \ \textcolor{keywordflow}{if}\ (!sharers\_list\_pair.first)}
+\DoxyCodeLine{00942\ \ \ \ \{}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ sharers\_list\_pair.second.size();\ i++)}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}sharer:\ \%d"{}},sharers\_list\_pair.second[i]);}
+\DoxyCodeLine{00946\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00947\ \ \ \ \}}
+\DoxyCodeLine{00948\ }
+\DoxyCodeLine{00949\ \ \ \ updateShmemPerf(shmem\_msg,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{00950\ }
+\DoxyCodeLine{00951\ \ \ \ \textcolor{keywordflow}{switch}\ (curr\_dstate)}
+\DoxyCodeLine{00952\ \ \ \ \{}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::EXCLUSIVE:}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::MODIFIED:}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sharers\_list\_pair.second[0]\ ==\ requester)}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}upgrade\ request\ immediately\ finished,\ sending\ UPGRADE\_REP\ to\ \%d"{}},\ requester);}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ \ \ \ \ assert\ (directory\_entry-\/>getOwner()\ ==\ requester);}
+\DoxyCodeLine{00960\ }
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::UPGRADE\_REP,}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00966\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00967\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_msg-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00968\ }
+\DoxyCodeLine{00969\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::MODIFIED);}
+\DoxyCodeLine{00970\ }
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ \ \ \ \ processNextReqFromL2Cache(address);}
+\DoxyCodeLine{00972\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00973\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00974\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00975\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ FLUSH\_REQ\ to\ the\ current\ owner}}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Dram\ request:\ "{}\ <<\ \_\_LINE\_\_\ <<std::endl;}}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}FLUSH\ REQ\ (UPGR)>\%u\ @\ \%lx"{}},sharers\_list\_pair.second[0]\ ,\ address);}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::FLUSH\_REQ,}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{00980\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ directory\_entry-\/>getOwner()\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{00983\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{00984\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_msg-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00986\ }
+\DoxyCodeLine{00987\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00988\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00989\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::SHARED:}
+\DoxyCodeLine{00990\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00991\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((sharers\_list\_pair.second.size()\ ==\ 1)\ \&\&\ (sharers\_list\_pair.second[0]\ ==\ requester))}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00993\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Let\ the\ requester\ know\ it\ can\ take\ ownership}}
+\DoxyCodeLine{00994\ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}sending\ UPGRADE\_REP>\%d"{}},\ requester\ )}
+\DoxyCodeLine{00995\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_entry-\/>setOwner(requester);}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::MODIFIED);}
+\DoxyCodeLine{00997\ }
+\DoxyCodeLine{00998\ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(ShmemMsg::UPGRADE\_REP,}
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,\ shmem\_msg-\/>getPerf(),\ ShmemPerfModel::\_SIM\_THREAD,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{01005\ }
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \ \ \ \ \ \ processNextReqFromL2Cache(address);}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ requesterHasCopy\ =\ directory\_entry-\/>hasSharer(requester);}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!requesterHasCopy)}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}UPGRADE\_REQ:\ \%lu\ sharer(s),\ but\ the\ requester\ isn't\ holding\ a\ copy!?"{}},\ sharers\_list\_pair.second.size());}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01015\ }
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ send\ inv\_req\ to\ all\ sharers}}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sharers\_list\_pair.first\ ==\ \textcolor{keyword}{true})}
+\DoxyCodeLine{01018\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01019\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Broadcast\ Invalidation\ Request\ to\ all\ cores}}
+\DoxyCodeLine{01020\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (irrespective\ of\ whether\ they\ are\ sharers\ or\ not)}}
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>broadcastMsg(ShmemMsg::INV\_REQ,}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{01024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{01026\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ \textcolor{comment}{//\ No\ ShmemPerf\ on\ broadcast}}
+\DoxyCodeLine{01027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01030\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ shmem\_perf\_sent\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ Invalidation\ Request\ to\ only\ a\ specific\ set\ of\ sharers}}
+\DoxyCodeLine{01033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ sharers\_list\_pair.second.size();\ i++)}
+\DoxyCodeLine{01034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sharers\_list\_pair.second[i]\ !=\ requester)}
+\DoxyCodeLine{01036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}INV\ REQ\ (UPGR)>\%u\ @\ \%lx"{}},sharers\_list\_pair.second[i]\ ,\ shmem\_msg-\/>getAddress());}
+\DoxyCodeLine{01038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ avoid\ having\ to\ fetch\ the\ data\ from\ DRAM,\ so\ ask\ at\ least\ one\ core\ to\ FLUSH\ instead\ of\ INV}}
+\DoxyCodeLine{01039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Dram\ request:\ "{}\ <<\ \_\_LINE\_\_\ <<std::endl;}}
+\DoxyCodeLine{01040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemMsg::msg\_t\ msg\_type\ =\ (!requesterHasCopy\ \&\&\ i==0)\ ?\ ShmemMsg::FLUSH\_REQ\ :\ ShmemMsg::INV\_REQ;}
+\DoxyCodeLine{01041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(msg\_type==ShmemMsg::INV\_REQ)\{}
+\DoxyCodeLine{01042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Dram\ request:\ "{}\ <<\ \_\_LINE\_\_\ <<std::endl;}}
+\DoxyCodeLine{01043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{01045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//ShmemMsg::msg\_t\ msg\_type\ =\ ShmemMsg::INV\_REQ;}}
+\DoxyCodeLine{01046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(\ msg\_type,\ \textcolor{comment}{//ShmemMsg::INV\_REQ,}}
+\DoxyCodeLine{01047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::L2\_CACHE,}
+\DoxyCodeLine{01048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sharers\_list\_pair.second[i]\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{01050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{01051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 0,}
+\DoxyCodeLine{01052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ shmem\_perf\_sent\ ==\ \textcolor{keyword}{false}\ ?\ shmem\_msg-\/>getPerf()\ :\ \&m\_dummy\_shmem\_perf,}
+\DoxyCodeLine{01054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{01055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ shmem\_perf\_sent\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DirectoryState::UNCACHED:}
+\DoxyCodeLine{01063\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01064\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}\%lx\ is\ UNCACHED"{}},\ address);}
+\DoxyCodeLine{01065\ \ \ \ \ \ \ \ \ \ assert\ (sharers\_list\_pair.second.size()\ ==\ 0);}
+\DoxyCodeLine{01066\ }
+\DoxyCodeLine{01067\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Modifiy\ the\ directory\ entry\ contents}}
+\DoxyCodeLine{01068\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ add\_result\ =\ directory\_entry-\/>addSharer(requester,\ m\_dram\_directory\_cache-\/>getMaxHwSharers());}
+\DoxyCodeLine{01069\ \ \ \ \ \ \ \ \ \ assert(add\_result\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{01070\ \ \ \ \ \ \ \ \ \ directory\_entry-\/>setOwner(requester);}
+\DoxyCodeLine{01071\ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::MODIFIED);}
+\DoxyCodeLine{01072\ }
+\DoxyCodeLine{01073\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cached\_data\_buf\ ==\ NULL)}
+\DoxyCodeLine{01074\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ maybe\ the\ data\ is\ stored\ in\ the\ msg\ already?}}
+\DoxyCodeLine{01076\ \ \ \ \ \ \ \ \ \ \ \ \ cached\_data\_buf\ =\ shmem\_msg-\/>getDataBuf();}
+\DoxyCodeLine{01077\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ \ retrieveDataAndSendToL2Cache(ShmemMsg::EX\_REP,\ requester,\ address,\ cached\_data\_buf,\ shmem\_msg);}
+\DoxyCodeLine{01079\ }
+\DoxyCodeLine{01080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01081\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01082\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01083\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01084\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Directory\ State:\ \%u"{}},\ curr\_dstate);}
+\DoxyCodeLine{01085\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01086\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01087\ \ \ \ \}}
+\DoxyCodeLine{01088\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01089\ \}}
+\DoxyCodeLine{01090\ }
+\DoxyCodeLine{01091\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01092\ DramDirectoryCntlr::processFlushRepFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{01093\ \{}
+\DoxyCodeLine{01094\ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{01095\ \ \ \ SubsecondTime\ now\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{01096\ }
+\DoxyCodeLine{01097\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01098\ }
+\DoxyCodeLine{01099\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{01100\ \ \ \ assert(directory\_entry);}
+\DoxyCodeLine{01101\ }
+\DoxyCodeLine{01102\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{01103\ }
+\DoxyCodeLine{01104\ \ \ \ assert(directory\_entry-\/>hasSharer(sender));}
+\DoxyCodeLine{01105\ \ \ \ directory\_entry-\/>removeSharer(sender);}
+\DoxyCodeLine{01106\ \ \ \ directory\_entry-\/>setForwarder(INVALID\_CORE\_ID);}
+\DoxyCodeLine{01107\ \ \ \ directory\_entry-\/>setOwner(INVALID\_CORE\_ID);}
+\DoxyCodeLine{01108\ }
+\DoxyCodeLine{01109\ \ \ \ \textcolor{comment}{//\ could\ be\ that\ this\ is\ a\ FLUSH\ to\ force\ a\ core\ with\ S-\/state\ to\ to\ write\ back\ clean\ data}}
+\DoxyCodeLine{01110\ \ \ \ \textcolor{comment}{//\ to\ avoid\ a\ memory\ access}}
+\DoxyCodeLine{01111\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>getNumSharers()\ ==\ 0)}
+\DoxyCodeLine{01112\ \ \ \ \{}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::UNCACHED);}
+\DoxyCodeLine{01114\ \ \ \ \}}
+\DoxyCodeLine{01115\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01116\ \ \ \ \{}
+\DoxyCodeLine{01117\ \ \ \ \ \ \ assert(directory\_block\_info-\/>getDState()\ ==\ DirectoryState::SHARED);}
+\DoxyCodeLine{01118\ \ \ \ \}}
+\DoxyCodeLine{01119\ }
+\DoxyCodeLine{01120\ \ \ \ \textcolor{keywordflow}{if}\ (m\_dram\_directory\_req\_queue\_list-\/>size(address)\ !=\ 0)}
+\DoxyCodeLine{01121\ \ \ \ \{}
+\DoxyCodeLine{01122\ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>front(address);}
+\DoxyCodeLine{01123\ }
+\DoxyCodeLine{01124\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ times}}
+\DoxyCodeLine{01125\ \ \ \ \ \ \ shmem\_req-\/>updateTime(now);}
+\DoxyCodeLine{01126\ \ \ \ \ \ \ getShmemPerfModel()-\/>updateElapsedTime(shmem\_req-\/>getTime(),\ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{01127\ }
+\DoxyCodeLine{01128\ \ \ \ \ \ \ shmem\_req-\/>getShmemMsg()-\/>getPerf()-\/>updateTime(now);}
+\DoxyCodeLine{01129\ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{01130\ }
+\DoxyCodeLine{01131\ \ \ \ \ \ \ \textcolor{comment}{//\ An\ involuntary/voluntary\ Flush}}
+\DoxyCodeLine{01132\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::EX\_REQ)}
+\DoxyCodeLine{01133\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01134\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ExReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \ \ \ processExReqFromL2Cache(shmem\_req,\ shmem\_msg-\/>getDataBuf());}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::SH\_REQ)}
+\DoxyCodeLine{01138\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ Data\ to\ Dram}}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ \ \ \ sendDataToDram(address,\ shmem\_msg-\/>getRequester(),\ shmem\_msg-\/>getDataBuf(),\ now,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ShReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ \ \ \ processShReqFromL2Cache(shmem\_req,\ shmem\_msg-\/>getDataBuf());}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01144\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::UPGRADE\_REQ)}
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01146\ \ \ \ \ \ \ \ \ \ MYLOG(\textcolor{stringliteral}{"{}as\ part\ of\ UPGR:\ got\ FLUSH\_REP\ from\ \%d,\ \%d\ sharers\ left"{}},\ sender,directory\_entry-\/>getNumSharers()\ );}
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ there\ should\ be\ only\ one\ M\ copy\ that\ is\ written\ back}}
+\DoxyCodeLine{01148\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (directory\_entry-\/>getNumSharers()\ ==\ 0\ )}
+\DoxyCodeLine{01149\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ only\ M\ copy\ has\ been\ invalidated\ (WB),\ UPGRADE\_REQ\ can\ be\ completed\ now.}}
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ \ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::UNCACHED);}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ \ \ \ \ processUpgradeReqFromL2Cache(shmem\_req,\ shmem\_msg-\/>getDataBuf());}
+\DoxyCodeLine{01153\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01155\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ part\ of\ a\ UPGRADE\ REQ\ where\ the\ requester\ did\ not\ have\ a\ copy\ anymore}}
+\DoxyCodeLine{01157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ One\ of\ the\ sharers\ whas\ FLUSHed\ instead\ of\ INV\ to\ get\ the\ data.\ This\ is\ it's\ reply}}
+\DoxyCodeLine{01158\ }
+\DoxyCodeLine{01159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ store\ the\ data\ that\ was\ FLUSHed}}
+\DoxyCodeLine{01160\ \ \ \ \ \ \ \ \ \ \ \ \ shmem\_req-\/>getShmemMsg()-\/>setDataBuf(shmem\_msg-\/>getDataBuf());}
+\DoxyCodeLine{01161\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Nothing\ else\ to\ do,\ there\ are\ still\ S\ copies.}}
+\DoxyCodeLine{01162\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01163\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01164\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::NULLIFY\_REQ}}
+\DoxyCodeLine{01165\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01166\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ Data\ To\ Dram}}
+\DoxyCodeLine{01167\ \ \ \ \ \ \ \ \ \ sendDataToDram(address,\ shmem\_msg-\/>getRequester(),\ shmem\_msg-\/>getDataBuf(),\ now,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{01168\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Nullify\ Request:\ "{}<<\_\_LINE\_\_<<std::endl;}}
+\DoxyCodeLine{01169\ \ \ \ \ \ \ \ \ \ processNullifyReq(shmem\_req);}
+\DoxyCodeLine{01170\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01171\ \ \ \ \}}
+\DoxyCodeLine{01172\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01173\ \ \ \ \{}
+\DoxyCodeLine{01174\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ was\ just\ an\ eviction}}
+\DoxyCodeLine{01175\ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ Data\ to\ Dram}}
+\DoxyCodeLine{01176\ \ \ \ \ \ \ sendDataToDram(address,\ shmem\_msg-\/>getRequester(),\ shmem\_msg-\/>getDataBuf(),\ now,shmem\_msg-\/>getBlockType());}
+\DoxyCodeLine{01177\ \ \ \ \}}
+\DoxyCodeLine{01178\ }
+\DoxyCodeLine{01179\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01180\ \}}
+\DoxyCodeLine{01181\ }
+\DoxyCodeLine{01182\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01183\ DramDirectoryCntlr::processWbRepFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg)}
+\DoxyCodeLine{01184\ \{}
+\DoxyCodeLine{01185\ \ \ \ IntPtr\ address\ =\ shmem\_msg-\/>getAddress();}
+\DoxyCodeLine{01186\ \ \ \ SubsecondTime\ now\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{01187\ }
+\DoxyCodeLine{01188\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01189\ }
+\DoxyCodeLine{01190\ \ \ \ DirectoryEntry*\ directory\_entry\ =\ m\_dram\_directory\_cache-\/>getDirectoryEntry(address);}
+\DoxyCodeLine{01191\ \ \ \ assert(directory\_entry);}
+\DoxyCodeLine{01192\ }
+\DoxyCodeLine{01193\ \ \ \ DirectoryBlockInfo*\ directory\_block\_info\ =\ directory\_entry-\/>getDirectoryBlockInfo();}
+\DoxyCodeLine{01194\ }
+\DoxyCodeLine{01195\ \ \ \ \textcolor{comment}{//assert(directory\_block\_info-\/>getDState()\ ==\ DirectoryState::MODIFIED);}}
+\DoxyCodeLine{01196\ \ \ \ assert(directory\_entry-\/>hasSharer(sender));}
+\DoxyCodeLine{01197\ }
+\DoxyCodeLine{01198\ \ \ \ directory\_entry-\/>setOwner(INVALID\_CORE\_ID);}
+\DoxyCodeLine{01199\ \ \ \ directory\_block\_info-\/>setDState(DirectoryState::SHARED);}
+\DoxyCodeLine{01200\ }
+\DoxyCodeLine{01201\ \ \ \ \textcolor{keywordflow}{if}\ (m\_dram\_directory\_req\_queue\_list-\/>size(address)\ !=\ 0)}
+\DoxyCodeLine{01202\ \ \ \ \{}
+\DoxyCodeLine{01203\ \ \ \ \ \ \ ShmemReq*\ shmem\_req\ =\ m\_dram\_directory\_req\_queue\_list-\/>front(address);}
+\DoxyCodeLine{01204\ }
+\DoxyCodeLine{01205\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ Time}}
+\DoxyCodeLine{01206\ \ \ \ \ \ \ shmem\_req-\/>updateTime(now);}
+\DoxyCodeLine{01207\ \ \ \ \ \ \ getShmemPerfModel()-\/>updateElapsedTime(shmem\_req-\/>getTime(),\ ShmemPerfModel::\_SIM\_THREAD);}
+\DoxyCodeLine{01208\ }
+\DoxyCodeLine{01209\ \ \ \ \ \ \ shmem\_req-\/>getShmemMsg()-\/>getPerf()-\/>updateTime(now);}
+\DoxyCodeLine{01210\ \ \ \ \ \ \ updateShmemPerf(shmem\_req,\ ShmemPerf::TD\_ACCESS);}
+\DoxyCodeLine{01211\ }
+\DoxyCodeLine{01212\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(shmem\_req-\/>getShmemMsg()-\/>getMsgType()\ ==\ ShmemMsg::SH\_REQ,}
+\DoxyCodeLine{01213\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Address(0x\%x),\ Req(\%u)"{}},}
+\DoxyCodeLine{01214\ \ \ \ \ \ \ \ \ \ \ \ \ address,\ shmem\_req-\/>getShmemMsg()-\/>getMsgType());}
+\DoxyCodeLine{01215\ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}ShReq\ :\ "{}<<\_\_LINE\_\_<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{01216\ \ \ \ \ \ \ processShReqFromL2Cache(shmem\_req,\ shmem\_msg-\/>getDataBuf());}
+\DoxyCodeLine{01217\ \ \ \ \}}
+\DoxyCodeLine{01218\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01219\ \ \ \ \{}
+\DoxyCodeLine{01220\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Should\ not\ reach\ here"{}});}
+\DoxyCodeLine{01221\ \ \ \ \}}
+\DoxyCodeLine{01222\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01223\ \}}
+\DoxyCodeLine{01224\ }
+\DoxyCodeLine{01225\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01226\ DramDirectoryCntlr::sendDataToNUCA(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ count,\ CacheBlockInfo::block\_type\_t\ block\_type)}
+\DoxyCodeLine{01227\ \{}
+\DoxyCodeLine{01228\ \ \ \ \textcolor{keywordflow}{if}\ (m\_nuca\_cache)}
+\DoxyCodeLine{01229\ \ \ \ \{}
+\DoxyCodeLine{01230\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction;}
+\DoxyCodeLine{01231\ \ \ \ \ \ \ IntPtr\ evict\_address;}
+\DoxyCodeLine{01232\ \ \ \ \ \ \ Byte\ evict\_buf[getCacheBlockSize()];}
+\DoxyCodeLine{01233\ \ \ \ \ \ \ m\_nuca\_cache-\/>write(}
+\DoxyCodeLine{01234\ \ \ \ \ \ \ \ \ \ address,\ data\_buf,}
+\DoxyCodeLine{01235\ \ \ \ \ \ \ \ \ \ eviction,\ evict\_address,\ evict\_buf,}
+\DoxyCodeLine{01236\ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD),}
+\DoxyCodeLine{01237\ \ \ \ \ \ \ \ \ \ count,block\_type}
+\DoxyCodeLine{01238\ \ \ \ \ \ \ );}
+\DoxyCodeLine{01239\ }
+\DoxyCodeLine{01240\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eviction)}
+\DoxyCodeLine{01241\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01242\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ data\ to\ Dram}}
+\DoxyCodeLine{01243\ \ \ \ \ \ \ \ \ \ core\_id\_t\ dram\_node\ =\ m\_dram\_controller\_home\_lookup-\/>getHome(evict\_address);}
+\DoxyCodeLine{01244\ }
+\DoxyCodeLine{01245\ \ \ \ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::DRAM\_WRITE\_REQ,}
+\DoxyCodeLine{01246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::DRAM,}
+\DoxyCodeLine{01247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_core\_id\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{01248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dram\_node\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{01249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ evict\_address,}
+\DoxyCodeLine{01250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ evict\_buf,\ getCacheBlockSize(),}
+\DoxyCodeLine{01251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{01252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&m\_dummy\_shmem\_perf,}
+\DoxyCodeLine{01253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,}
+\DoxyCodeLine{01254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ block\_type);}
+\DoxyCodeLine{01255\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01256\ \ \ \ \}}
+\DoxyCodeLine{01257\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End"{}});}
+\DoxyCodeLine{01258\ \}}
+\DoxyCodeLine{01259\ }
+\DoxyCodeLine{01260\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01261\ DramDirectoryCntlr::sendDataToDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ CacheBlockInfo::block\_type\_t\ block\_type)}
+\DoxyCodeLine{01262\ \{}
+\DoxyCodeLine{01263\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}Start\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01264\ }
+\DoxyCodeLine{01265\ \ \ \ \textcolor{keywordflow}{if}\ (m\_nuca\_cache)}
+\DoxyCodeLine{01266\ \ \ \ \{}
+\DoxyCodeLine{01267\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ have\ a\ NUCA\ cache:\ write\ it\ there,\ it\ will\ be\ written\ to\ DRAM\ on\ eviction}}
+\DoxyCodeLine{01268\ }
+\DoxyCodeLine{01269\ \ \ \ \ \ \ sendDataToNUCA(address,\ requester,\ data\_buf,\ now,\ \textcolor{keyword}{true},\ block\_type);}
+\DoxyCodeLine{01270\ \ \ \ \}}
+\DoxyCodeLine{01271\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01272\ \ \ \ \{}
+\DoxyCodeLine{01273\ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ data\ to\ Dram}}
+\DoxyCodeLine{01274\ \ \ \ \ \ \ core\_id\_t\ dram\_node\ =\ m\_dram\_controller\_home\_lookup-\/>getHome(address);}
+\DoxyCodeLine{01275\ }
+\DoxyCodeLine{01276\ \ \ \ \ \ \ getMemoryManager()-\/>sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::DRAM\_WRITE\_REQ,}
+\DoxyCodeLine{01277\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::TAG\_DIR,\ MemComponent::DRAM,}
+\DoxyCodeLine{01278\ \ \ \ \ \ \ \ \ \ \ \ \ requester\ \textcolor{comment}{/*\ requester\ */},}
+\DoxyCodeLine{01279\ \ \ \ \ \ \ \ \ \ \ \ \ dram\_node\ \textcolor{comment}{/*\ receiver\ */},}
+\DoxyCodeLine{01280\ \ \ \ \ \ \ \ \ \ \ \ \ address,}
+\DoxyCodeLine{01281\ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf,\ getCacheBlockSize(),}
+\DoxyCodeLine{01282\ \ \ \ \ \ \ \ \ \ \ \ \ HitWhere::UNKNOWN,}
+\DoxyCodeLine{01283\ \ \ \ \ \ \ \ \ \ \ \ \ \&m\_dummy\_shmem\_perf,}
+\DoxyCodeLine{01284\ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel::\_SIM\_THREAD,block\_type);}
+\DoxyCodeLine{01285\ }
+\DoxyCodeLine{01286\ \ \ \ \ \ \ \textcolor{comment}{//\ DRAM\ latency\ is\ ignored\ on\ write}}
+\DoxyCodeLine{01287\ \ \ \ \}}
+\DoxyCodeLine{01288\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}End\ @\ \%lx"{}},\ address);}
+\DoxyCodeLine{01289\ \}}
+\DoxyCodeLine{01290\ }
+\DoxyCodeLine{01291\ \}}
+
+\end{DoxyCode}

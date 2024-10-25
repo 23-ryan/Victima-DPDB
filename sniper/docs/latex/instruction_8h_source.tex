@@ -1,0 +1,250 @@
+\doxysection{instruction.\+h}
+\label{instruction_8h_source}\index{common/performance\_model/instruction.h@{common/performance\_model/instruction.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ INSTRUCTION\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ INSTRUCTION\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}operand.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }MicroOp;}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{enum}\ InstructionType}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ INST\_GENERIC,}
+\DoxyCodeLine{00016\ \ \ \ INST\_ADD,}
+\DoxyCodeLine{00017\ \ \ \ INST\_SUB,}
+\DoxyCodeLine{00018\ \ \ \ INST\_MUL,}
+\DoxyCodeLine{00019\ \ \ \ INST\_DIV,}
+\DoxyCodeLine{00020\ \ \ \ INST\_FADD,}
+\DoxyCodeLine{00021\ \ \ \ INST\_FSUB,}
+\DoxyCodeLine{00022\ \ \ \ INST\_FMUL,}
+\DoxyCodeLine{00023\ \ \ \ INST\_FDIV,}
+\DoxyCodeLine{00024\ \ \ \ INST\_JMP,}
+\DoxyCodeLine{00025\ \ \ \ INST\_BRANCH,}
+\DoxyCodeLine{00026\ \ \ \ INST\_PSEUDO\_MISC,\ \textcolor{comment}{//\ All\ instructions\ above\ and\ including\ this\ one\ are\ dynamic}}
+\DoxyCodeLine{00027\ \ \ \ INST\_RECV,}
+\DoxyCodeLine{00028\ \ \ \ INST\_SYNC,}
+\DoxyCodeLine{00029\ \ \ \ INST\_SPAWN,}
+\DoxyCodeLine{00030\ \ \ \ INST\_TLB\_MISS,}
+\DoxyCodeLine{00031\ \ \ \ INST\_MEM\_ACCESS,\ \textcolor{comment}{//\ Not\ a\ regular\ memory\ access.\ \ These\ are\ added\ latencies\ and\ do\ not\ correspond\ to\ a\ particular\ instruction.\ \ Dynamic\ Instruction}}
+\DoxyCodeLine{00032\ \ \ \ INST\_DELAY,}
+\DoxyCodeLine{00033\ \ \ \ INST\_UNKNOWN,}
+\DoxyCodeLine{00034\ \ \ \ MAX\_INSTRUCTION\_COUNT}
+\DoxyCodeLine{00035\ \};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \_\_attribute\_\_\ ((unused))\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ INSTRUCTION\_NAMES\ []\ =}
+\DoxyCodeLine{00038\ \{\textcolor{stringliteral}{"{}generic"{}},\textcolor{stringliteral}{"{}add"{}},\textcolor{stringliteral}{"{}sub"{}},\textcolor{stringliteral}{"{}mul"{}},\textcolor{stringliteral}{"{}div"{}},\textcolor{stringliteral}{"{}fadd"{}},\textcolor{stringliteral}{"{}fsub"{}},\textcolor{stringliteral}{"{}fmul"{}},\textcolor{stringliteral}{"{}fdiv"{}},\textcolor{stringliteral}{"{}jmp"{}},\textcolor{stringliteral}{"{}branch"{}},\ \textcolor{stringliteral}{"{}dynamic\_misc"{}},\textcolor{stringliteral}{"{}recv"{}},\textcolor{stringliteral}{"{}sync"{}},\textcolor{stringliteral}{"{}spawn"{}},\textcolor{stringliteral}{"{}tlb\_miss"{}},\textcolor{stringliteral}{"{}mem\_access"{}},\textcolor{stringliteral}{"{}delay"{}},\textcolor{stringliteral}{"{}unknown"{}}\};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{class\ }Instruction}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ \ \ \ Instruction(InstructionType\ type,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ OperandList\ \&operands);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ Instruction(InstructionType\ type);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keyword}{virtual}\ \string~Instruction()\ \{\ \};}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ getCost(Core\ *core)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ InstructionType\ getType()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00052\ \ \ \ String\ getTypeName()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordtype}{bool}\ isPseudo()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00054\ \textcolor{keyword}{\ \ \ }\{\ \textcolor{keywordflow}{return}\ getType()\ >=\ INST\_PSEUDO\_MISC;\ \}}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordtype}{bool}\ isIdle()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{\ \ \ }\{\ \textcolor{keywordflow}{return}\ getType()\ ==\ INST\_SYNC\ ||\ getType()\ ==\ INST\_DELAY\ ||\ getType()\ ==\ INST\_RECV;\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ initializeStaticInstructionModel();}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keyword}{const}\ OperandList\&\ getOperands()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00061\ \textcolor{keyword}{\ \ \ }\{\ \textcolor{keywordflow}{return}\ m\_operands;\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordtype}{void}\ setAddress(IntPtr\ addr)\ \{\ m\_addr\ =\ addr;\ \}}
+\DoxyCodeLine{00064\ \ \ \ IntPtr\ getAddress()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_addr;\ \}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordtype}{void}\ setSize(UInt32\ size)\ \{\ m\_size\ =\ size;\ \}}
+\DoxyCodeLine{00066\ \ \ \ UInt32\ getSize()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_size;\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordtype}{void}\ setAtomic(\textcolor{keywordtype}{bool}\ atomic)\ \{\ m\_atomic\ =\ atomic;\ \}}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordtype}{bool}\ isAtomic()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_atomic;\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordtype}{void}\ setDisassembly(String\ str)\ \{\ m\_disas\ =\ str;\ \}}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keyword}{const}\ String\&\ getDisassembly(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_disas;\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordtype}{void}\ setMicroOps(\textcolor{keyword}{const}\ std::vector<const\ MicroOp\ *>\ *uops)}
+\DoxyCodeLine{00075\ \ \ \ \{\ m\_uops\ =\ uops;\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keyword}{const}\ std::vector<const\ MicroOp\ *>*\ getMicroOps(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00078\ \textcolor{keyword}{\ \ \ }\{\ \textcolor{keywordflow}{return}\ m\_uops;\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keyword}{typedef}\ std::vector<unsigned\ int>\ StaticInstructionCosts;}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keyword}{static}\ StaticInstructionCosts\ m\_instruction\_costs;}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ InstructionType\ m\_type;}
+\DoxyCodeLine{00085\ \ \ \ String\ m\_disas;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \textcolor{keyword}{const}\ std::vector<const\ MicroOp\ *>\ *m\_uops;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ IntPtr\ m\_addr;}
+\DoxyCodeLine{00090\ \ \ \ UInt32\ m\_size;}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordtype}{bool}\ m\_atomic;}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00094\ \ \ \ OperandList\ m\_operands;}
+\DoxyCodeLine{00095\ \};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{class\ }GenericInstruction\ :\ \textcolor{keyword}{public}\ Instruction}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00100\ \ \ \ GenericInstruction(OperandList\ \&operands)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ :\ Instruction(INST\_GENERIC,\ operands)}
+\DoxyCodeLine{00102\ \ \ \ \{\}}
+\DoxyCodeLine{00103\ \};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keyword}{class\ }ArithInstruction\ :\ \textcolor{keyword}{public}\ Instruction}
+\DoxyCodeLine{00106\ \{}
+\DoxyCodeLine{00107\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00108\ \ \ \ ArithInstruction(InstructionType\ type,\ OperandList\ \&operands)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ :\ Instruction(type,\ operands)}
+\DoxyCodeLine{00110\ \ \ \ \{\}}
+\DoxyCodeLine{00111\ \};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{class\ }JmpInstruction\ :\ \textcolor{keyword}{public}\ Instruction}
+\DoxyCodeLine{00114\ \{}
+\DoxyCodeLine{00115\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00116\ \ \ \ JmpInstruction(OperandList\ \&dest)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ :\ Instruction(INST\_JMP,\ dest)}
+\DoxyCodeLine{00118\ \ \ \ \{\}}
+\DoxyCodeLine{00119\ \};}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ for\ operations\ not\ associated\ with\ the\ binary\ -\/-\/\ such\ as\ processing}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ a\ packet}}
+\DoxyCodeLine{00123\ \textcolor{keyword}{class\ }PseudoInstruction\ :\ \textcolor{keyword}{public}\ Instruction}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00126\ \ \ \ PseudoInstruction(SubsecondTime\ cost,\ InstructionType\ type\ =\ INST\_PSEUDO\_MISC);}
+\DoxyCodeLine{00127\ \ \ \ \string~PseudoInstruction();}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ SubsecondTime\ getCost(Core\ *core)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00132\ \ \ \ SubsecondTime\ m\_cost;}
+\DoxyCodeLine{00133\ \};}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{keyword}{class\ }RecvInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00136\ \{}
+\DoxyCodeLine{00137\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00138\ \ \ \ RecvInstruction(SubsecondTime\ cost)}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ :\ PseudoInstruction(cost,\ INST\_RECV)}
+\DoxyCodeLine{00140\ \ \ \ \{\}}
+\DoxyCodeLine{00141\ \};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{comment}{//\ wake\ up\ after\ synchronization}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ we\ may\ have\ been\ rescheduled,\ so\ this\ sets\ an\ absolute\ time}}
+\DoxyCodeLine{00145\ \textcolor{keyword}{class\ }SyncInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00146\ \{}
+\DoxyCodeLine{00147\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00148\ \ \ \ \textcolor{keyword}{enum}\ sync\_type\_t\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ FUTEX,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ PTHREAD\_MUTEX,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ PTHREAD\_COND,}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ PTHREAD\_BARRIER,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ JOIN,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ PAUSE,}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ SLEEP,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ SYSCALL,}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ UNSCHEDULED,}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ NUM\_TYPES}
+\DoxyCodeLine{00159\ \ \ \ \};}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ SyncInstruction(SubsecondTime\ time,\ sync\_type\_t\ sync\_type);}
+\DoxyCodeLine{00162\ \ \ \ SubsecondTime\ getCost(Core\ *core)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00163\ \ \ \ SubsecondTime\ getTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time;\ \}}
+\DoxyCodeLine{00164\ \ \ \ sync\_type\_t\ getSyncType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sync\_type;\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00167\ \ \ \ SubsecondTime\ m\_time;}
+\DoxyCodeLine{00168\ \ \ \ sync\_type\_t\ m\_sync\_type;}
+\DoxyCodeLine{00169\ \};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{comment}{//\ set\ clock\ to\ particular\ time}}
+\DoxyCodeLine{00172\ \textcolor{keyword}{class\ }SpawnInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00173\ \{}
+\DoxyCodeLine{00174\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00175\ \ \ \ SpawnInstruction(SubsecondTime\ time);}
+\DoxyCodeLine{00176\ \ \ \ SubsecondTime\ getCost(Core\ *core)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00177\ \ \ \ SubsecondTime\ getTime()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00180\ \ \ \ SubsecondTime\ m\_time;}
+\DoxyCodeLine{00181\ \};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ conditional\ branches}}
+\DoxyCodeLine{00184\ \textcolor{keyword}{class\ }BranchInstruction\ :\ \textcolor{keyword}{public}\ Instruction}
+\DoxyCodeLine{00185\ \{}
+\DoxyCodeLine{00186\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00187\ \ \ \ BranchInstruction(OperandList\ \&l);}
+\DoxyCodeLine{00188\ \};}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \textcolor{comment}{//\ TLB\ misses}}
+\DoxyCodeLine{00191\ \textcolor{keyword}{class\ }TLBMissInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00192\ \{}
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keywordtype}{bool}\ m\_is\_ifetch;}
+\DoxyCodeLine{00194\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00195\ \ \ \ TLBMissInstruction(SubsecondTime\ cost,\ \textcolor{keywordtype}{bool}\ is\_ifetch)}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ :\ PseudoInstruction(cost,\ INST\_TLB\_MISS)}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ ,\ m\_is\_ifetch(is\_ifetch)}
+\DoxyCodeLine{00198\ \ \ \ \{\}}
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordtype}{bool}\ isIfetch()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_is\_ifetch;\ \}}
+\DoxyCodeLine{00200\ \};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \textcolor{keyword}{class\ }MemAccessInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00203\ \{}
+\DoxyCodeLine{00204\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00205\ \ \ \ IntPtr\ m\_address;}
+\DoxyCodeLine{00206\ \ \ \ UInt32\ m\_data\_size;}
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keywordtype}{bool}\ m\_is\_fence;}
+\DoxyCodeLine{00208\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00209\ \ \ \ MemAccessInstruction(SubsecondTime\ cost,\ IntPtr\ address,\ UInt32\ data\_size,\ \textcolor{keywordtype}{bool}\ is\_fence)}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ :\ PseudoInstruction(cost,\ INST\_MEM\_ACCESS)}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ ,\ m\_address(address)}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ ,\ m\_data\_size(data\_size)}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ ,\ m\_is\_fence(is\_fence)}
+\DoxyCodeLine{00214\ \ \ \ \{\}}
+\DoxyCodeLine{00215\ \ \ \ IntPtr\ getDataAddress()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_address;\ \}}
+\DoxyCodeLine{00216\ \ \ \ UInt32\ getDataSize()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_data\_size;\ \}}
+\DoxyCodeLine{00217\ \ \ \ \textcolor{keywordtype}{bool}\ isFence()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_is\_fence;\ \}}
+\DoxyCodeLine{00218\ \};}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \textcolor{keyword}{class\ }DelayInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00221\ \{}
+\DoxyCodeLine{00222\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00223\ \ \ \ \textcolor{keyword}{enum}\ delay\_type\_t\ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ DVFS\_TRANSITION,}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ NUM\_TYPES}
+\DoxyCodeLine{00226\ \ \ \ \};}
+\DoxyCodeLine{00227\ \ \ \ DelayInstruction(SubsecondTime\ cost,\ delay\_type\_t\ delay\_type)}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ :\ PseudoInstruction(cost,\ INST\_DELAY)}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ ,\ m\_delay\_type(delay\_type)}
+\DoxyCodeLine{00230\ \ \ \ \{\ \}}
+\DoxyCodeLine{00231\ \ \ \ delay\_type\_t\ getDelayType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_delay\_type;\ \}}
+\DoxyCodeLine{00232\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00233\ \ \ \ delay\_type\_t\ m\_delay\_type;}
+\DoxyCodeLine{00234\ \};}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{keyword}{class\ }UnknownInstruction\ :\ \textcolor{keyword}{public}\ PseudoInstruction}
+\DoxyCodeLine{00237\ \{}
+\DoxyCodeLine{00238\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00239\ \ \ \ UnknownInstruction(SubsecondTime\ cost)}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ :\ PseudoInstruction(cost,\ INST\_UNKNOWN)}
+\DoxyCodeLine{00241\ \ \ \ \{\ \}}
+\DoxyCodeLine{00242\ \};}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

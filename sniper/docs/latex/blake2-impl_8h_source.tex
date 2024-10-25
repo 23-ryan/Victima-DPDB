@@ -1,0 +1,147 @@
+\doxysection{blake2-\/impl.h}
+\label{blake2-impl_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/blake2-\/impl.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/blake2-\/impl.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ BLAKE2\ reference\ source\ code\ package\ -\/\ reference\ C\ implementations}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ Copyright\ 2012,\ Samuel\ Neves\ <sneves@dei.uc.pt>.\ \ You\ may\ use\ this\ under\ the}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ terms\ of\ the\ CC0,\ the\ OpenSSL\ Licence,\ or\ the\ Apache\ Public\ License\ 2.0,\ at}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ your\ option.\ \ The\ terms\ of\ these\ licenses\ can\ be\ found\ at:}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ -\/\ CC0\ 1.0\ Universal\ :\ http://creativecommons.org/publicdomain/zero/1.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ \ \ -\/\ OpenSSL\ license\ \ \ :\ https://www.openssl.org/source/license.html}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ -\/\ Apache\ 2.0\ \ \ \ \ \ \ \ :\ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00011\ \textcolor{comment}{}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ More\ information\ about\ the\ BLAKE2\ hash\ function\ can\ be\ found\ at}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ https://blake2.net.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#ifndef\ BLAKE2\_IMPL\_H}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#define\ BLAKE2\_IMPL\_H}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#if\ !defined(\_\_cplusplus)\ \&\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \ (!defined(\_\_STDC\_VERSION\_\_)\ ||\ \_\_STDC\_VERSION\_\_\ <\ 199901L)}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ BLAKE2\_INLINE\ \_\_inline}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#elif\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ BLAKE2\_INLINE\ \_\_inline\_\_}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ BLAKE2\_INLINE}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ BLAKE2\_INLINE\ inline}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ uint32\_t\ load32(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src)\ \{}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#if\ defined(NATIVE\_LITTLE\_ENDIAN)}}
+\DoxyCodeLine{00036\ \ \ uint32\_t\ w;}
+\DoxyCodeLine{00037\ \ \ memcpy(\&w,\ src,\ \textcolor{keyword}{sizeof}\ w);}
+\DoxyCodeLine{00038\ \ \ \textcolor{keywordflow}{return}\ w;}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00040\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *p\ =\ (\textcolor{keyword}{const}\ uint8\_t\ *)src;}
+\DoxyCodeLine{00041\ \ \ \textcolor{keywordflow}{return}\ ((uint32\_t)(p[0])\ <<\ 0)\ |\ ((uint32\_t)(p[1])\ <<\ 8)\ |}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ ((uint32\_t)(p[2])\ <<\ 16)\ |\ ((uint32\_t)(p[3])\ <<\ 24);}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ uint64\_t\ load64(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src)\ \{}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#if\ defined(NATIVE\_LITTLE\_ENDIAN)}}
+\DoxyCodeLine{00048\ \ \ uint64\_t\ w;}
+\DoxyCodeLine{00049\ \ \ memcpy(\&w,\ src,\ \textcolor{keyword}{sizeof}\ w);}
+\DoxyCodeLine{00050\ \ \ \textcolor{keywordflow}{return}\ w;}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *p\ =\ (\textcolor{keyword}{const}\ uint8\_t\ *)src;}
+\DoxyCodeLine{00053\ \ \ \textcolor{keywordflow}{return}\ ((uint64\_t)(p[0])\ <<\ 0)\ |\ ((uint64\_t)(p[1])\ <<\ 8)\ |}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ ((uint64\_t)(p[2])\ <<\ 16)\ |\ ((uint64\_t)(p[3])\ <<\ 24)\ |}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ ((uint64\_t)(p[4])\ <<\ 32)\ |\ ((uint64\_t)(p[5])\ <<\ 40)\ |}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ ((uint64\_t)(p[6])\ <<\ 48)\ |\ ((uint64\_t)(p[7])\ <<\ 56);}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ uint16\_t\ load16(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src)\ \{}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#if\ defined(NATIVE\_LITTLE\_ENDIAN)}}
+\DoxyCodeLine{00062\ \ \ uint16\_t\ w;}
+\DoxyCodeLine{00063\ \ \ memcpy(\&w,\ src,\ \textcolor{keyword}{sizeof}\ w);}
+\DoxyCodeLine{00064\ \ \ \textcolor{keywordflow}{return}\ w;}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00066\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *p\ =\ (\textcolor{keyword}{const}\ uint8\_t\ *)src;}
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordflow}{return}\ (uint16\_t)(((uint32\_t)(p[0])\ <<\ 0)\ |\ ((uint32\_t)(p[1])\ <<\ 8));}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ \textcolor{keywordtype}{void}\ store16(\textcolor{keywordtype}{void}\ *dst,\ uint16\_t\ w)\ \{}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#if\ defined(NATIVE\_LITTLE\_ENDIAN)}}
+\DoxyCodeLine{00073\ \ \ memcpy(dst,\ \&w,\ \textcolor{keyword}{sizeof}\ w);}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00075\ \ \ uint8\_t\ *p\ =\ (uint8\_t\ *)dst;}
+\DoxyCodeLine{00076\ \ \ *p++\ =\ (uint8\_t)w;}
+\DoxyCodeLine{00077\ \ \ w\ >>=\ 8;}
+\DoxyCodeLine{00078\ \ \ *p++\ =\ (uint8\_t)w;}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ \textcolor{keywordtype}{void}\ store32(\textcolor{keywordtype}{void}\ *dst,\ uint32\_t\ w)\ \{}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#if\ defined(NATIVE\_LITTLE\_ENDIAN)}}
+\DoxyCodeLine{00084\ \ \ memcpy(dst,\ \&w,\ \textcolor{keyword}{sizeof}\ w);}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00086\ \ \ uint8\_t\ *p\ =\ (uint8\_t\ *)dst;}
+\DoxyCodeLine{00087\ \ \ p[0]\ =\ (uint8\_t)(w\ >>\ 0);}
+\DoxyCodeLine{00088\ \ \ p[1]\ =\ (uint8\_t)(w\ >>\ 8);}
+\DoxyCodeLine{00089\ \ \ p[2]\ =\ (uint8\_t)(w\ >>\ 16);}
+\DoxyCodeLine{00090\ \ \ p[3]\ =\ (uint8\_t)(w\ >>\ 24);}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ \textcolor{keywordtype}{void}\ store64(\textcolor{keywordtype}{void}\ *dst,\ uint64\_t\ w)\ \{}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#if\ defined(NATIVE\_LITTLE\_ENDIAN)}}
+\DoxyCodeLine{00096\ \ \ memcpy(dst,\ \&w,\ \textcolor{keyword}{sizeof}\ w);}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00098\ \ \ uint8\_t\ *p\ =\ (uint8\_t\ *)dst;}
+\DoxyCodeLine{00099\ \ \ p[0]\ =\ (uint8\_t)(w\ >>\ 0);}
+\DoxyCodeLine{00100\ \ \ p[1]\ =\ (uint8\_t)(w\ >>\ 8);}
+\DoxyCodeLine{00101\ \ \ p[2]\ =\ (uint8\_t)(w\ >>\ 16);}
+\DoxyCodeLine{00102\ \ \ p[3]\ =\ (uint8\_t)(w\ >>\ 24);}
+\DoxyCodeLine{00103\ \ \ p[4]\ =\ (uint8\_t)(w\ >>\ 32);}
+\DoxyCodeLine{00104\ \ \ p[5]\ =\ (uint8\_t)(w\ >>\ 40);}
+\DoxyCodeLine{00105\ \ \ p[6]\ =\ (uint8\_t)(w\ >>\ 48);}
+\DoxyCodeLine{00106\ \ \ p[7]\ =\ (uint8\_t)(w\ >>\ 56);}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ uint64\_t\ load48(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src)\ \{}
+\DoxyCodeLine{00111\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *p\ =\ (\textcolor{keyword}{const}\ uint8\_t\ *)src;}
+\DoxyCodeLine{00112\ \ \ \textcolor{keywordflow}{return}\ ((uint64\_t)(p[0])\ <<\ 0)\ |\ ((uint64\_t)(p[1])\ <<\ 8)\ |}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ ((uint64\_t)(p[2])\ <<\ 16)\ |\ ((uint64\_t)(p[3])\ <<\ 24)\ |}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ ((uint64\_t)(p[4])\ <<\ 32)\ |\ ((uint64\_t)(p[5])\ <<\ 40);}
+\DoxyCodeLine{00115\ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ \textcolor{keywordtype}{void}\ store48(\textcolor{keywordtype}{void}\ *dst,\ uint64\_t\ w)\ \{}
+\DoxyCodeLine{00118\ \ \ uint8\_t\ *p\ =\ (uint8\_t\ *)dst;}
+\DoxyCodeLine{00119\ \ \ p[0]\ =\ (uint8\_t)(w\ >>\ 0);}
+\DoxyCodeLine{00120\ \ \ p[1]\ =\ (uint8\_t)(w\ >>\ 8);}
+\DoxyCodeLine{00121\ \ \ p[2]\ =\ (uint8\_t)(w\ >>\ 16);}
+\DoxyCodeLine{00122\ \ \ p[3]\ =\ (uint8\_t)(w\ >>\ 24);}
+\DoxyCodeLine{00123\ \ \ p[4]\ =\ (uint8\_t)(w\ >>\ 32);}
+\DoxyCodeLine{00124\ \ \ p[5]\ =\ (uint8\_t)(w\ >>\ 40);}
+\DoxyCodeLine{00125\ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ uint32\_t\ rotr32(\textcolor{keyword}{const}\ uint32\_t\ w,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
+\DoxyCodeLine{00128\ \ \ \textcolor{keywordflow}{return}\ (w\ >>\ c)\ |\ (w\ <<\ (32\ -\/\ c));}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ uint64\_t\ rotr64(\textcolor{keyword}{const}\ uint64\_t\ w,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
+\DoxyCodeLine{00132\ \ \ \textcolor{keywordflow}{return}\ (w\ >>\ c)\ |\ (w\ <<\ (64\ -\/\ c));}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{/*\ prevents\ compiler\ optimizing\ out\ memset()\ */}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{static}\ BLAKE2\_INLINE\ \textcolor{keywordtype}{void}\ secure\_zero\_memory(\textcolor{keywordtype}{void}\ *v,\ \textcolor{keywordtype}{size\_t}\ n)\ \{}
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ *(*\textcolor{keyword}{const}\ \textcolor{keyword}{volatile}\ memset\_v)(\textcolor{keywordtype}{void}\ *,\ \textcolor{keywordtype}{int},\ \textcolor{keywordtype}{size\_t})\ =\ \&memset;}
+\DoxyCodeLine{00138\ \ \ memset\_v(v,\ 0,\ n);}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -1,0 +1,86 @@
+\doxysection{branch\+\_\+predictor.\+cc}
+\label{branch__predictor_8cc_source}\index{common/performance\_model/branch\_predictor.cc@{common/performance\_model/branch\_predictor.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}one\_bit\_branch\_predictor.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}pentium\_m\_branch\_predictor.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ BranchPredictor::BranchPredictor()}
+\DoxyCodeLine{00009\ \ \ \ :\ m\_correct\_predictions(0)}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_incorrect\_predictions(0)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ BranchPredictor::BranchPredictor(String\ name,\ core\_id\_t\ core\_id)}
+\DoxyCodeLine{00015\ \ \ \ :\ m\_correct\_predictions(0)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_incorrect\_predictions(0)}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}num-\/correct"{}},\ \&m\_correct\_predictions);}
+\DoxyCodeLine{00019\ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}num-\/incorrect"{}},\ \&m\_incorrect\_predictions);}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ BranchPredictor::\string~BranchPredictor()}
+\DoxyCodeLine{00023\ \{\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ UInt64\ BranchPredictor::m\_mispredict\_penalty;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ BranchPredictor*\ BranchPredictor::create(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00030\ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ config::Config\ *cfg\ =\ Sim()-\/>getCfg();}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ assert(cfg);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ m\_mispredict\_penalty\ =\ cfg-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/mispredict\_penalty"{}},\ core\_id);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ String\ type\ =\ cfg-\/>getStringArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/type"{}},\ core\_id);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}none"{}})}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}one\_bit"{}})}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ UInt32\ size\ =\ cfg-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/size"{}},\ core\_id);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ OneBitBranchPredictor(\textcolor{stringliteral}{"{}branch\_predictor"{}},\ core\_id,\ size);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}pentium\_m"{}})}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ PentiumMBranchPredictor(\textcolor{stringliteral}{"{}branch\_predictor"{}},\ core\_id);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ branch\ predictor\ type."{}});}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00057\ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Config\ info\ not\ available\ while\ constructing\ branch\ predictor."{}});}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00060\ \ \ \ \}}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ UInt64\ BranchPredictor::getMispredictPenalty()}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{return}\ m\_mispredict\_penalty;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}\ BranchPredictor::resetCounters()}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ m\_correct\_predictions\ =\ 0;}
+\DoxyCodeLine{00071\ \ \ m\_incorrect\_predictions\ =\ 0;}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{void}\ BranchPredictor::updateCounters(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual)}
+\DoxyCodeLine{00075\ \{}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{if}\ (predicted\ ==\ actual)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ ++m\_correct\_predictions;}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ ++m\_incorrect\_predictions;}
+\DoxyCodeLine{00080\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,70 @@
+\doxysection{simple\+\_\+prefetcher.\+cc}
+\label{simple__prefetcher_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/simple\_prefetcher.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/simple\_prefetcher.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simple\_prefetcher.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{const}\ IntPtr\ PAGE\_SIZE\ =\ 4096;}
+\DoxyCodeLine{00008\ \textcolor{keyword}{const}\ IntPtr\ PAGE\_MASK\ =\ \string~(PAGE\_SIZE-\/1);}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ SimplePrefetcher::SimplePrefetcher(String\ configName,\ core\_id\_t\ \_core\_id,\ UInt32\ \_shared\_cores)}
+\DoxyCodeLine{00011\ \ \ \ :\ core\_id(\_core\_id)}
+\DoxyCodeLine{00012\ \ \ \ ,\ shared\_cores(\_shared\_cores)}
+\DoxyCodeLine{00013\ \ \ \ ,\ n\_flows(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/simple/flows"{}},\ core\_id))}
+\DoxyCodeLine{00014\ \ \ \ ,\ flows\_per\_core(Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/simple/flows\_per\_core"{}},\ core\_id))}
+\DoxyCodeLine{00015\ \ \ \ ,\ num\_prefetches(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/simple/num\_prefetches"{}},\ core\_id))}
+\DoxyCodeLine{00016\ \ \ \ ,\ stop\_at\_page(Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/simple/stop\_at\_page\_boundary"{}},\ core\_id))}
+\DoxyCodeLine{00017\ \ \ \ ,\ n\_flow\_next(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_prev\_address(flows\_per\_core\ ?\ shared\_cores\ :\ 1)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{for}(UInt32\ idx\ =\ 0;\ idx\ <\ (flows\_per\_core\ ?\ shared\_cores\ :\ 1);\ ++idx)}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ m\_prev\_address.at(idx).resize(n\_flows);}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ std::vector<IntPtr>}
+\DoxyCodeLine{00025\ SimplePrefetcher::getNextAddress(IntPtr\ current\_address,\ core\_id\_t\ \_core\_id,Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ IntPtr\ eip)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ std::vector<IntPtr>\ \&prev\_address\ =\ m\_prev\_address.at(flows\_per\_core\ ?\ \_core\_id\ -\/\ core\_id\ :\ 0);}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ UInt32\ n\_flow\ =\ n\_flow\_next;}
+\DoxyCodeLine{00030\ \ \ \ IntPtr\ min\_dist\ =\ PAGE\_SIZE;}
+\DoxyCodeLine{00031\ \ \ \ n\_flow\_next\ =\ (n\_flow\_next\ +\ 1)\ \%\ n\_flows;\ \textcolor{comment}{//\ Round\ robin\ replacement}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//\ Find\ the\ nearest\ address\ in\ our\ list\ of\ previous\ addresses}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 0;\ i\ <\ n\_flows;\ ++i)}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ IntPtr\ dist\ =\ abs(\textcolor{keyword}{static\_cast<}SInt64\textcolor{keyword}{>}(current\_address)\ -\/\ \textcolor{keyword}{static\_cast<}SInt64\textcolor{keyword}{>}(prev\_address[i]));}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\ <\ min\_dist)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ n\_flow\ =\ i;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ min\_dist\ =\ dist;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{comment}{//\ Now,\ n\_flow\ points\ to\ the\ previous\ address\ of\ the\ best\ matching\ flow}}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{comment}{//\ (Or,\ if\ none\ matched,\ the\ round-\/robin\ determined\ one\ to\ replace)}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//\ Simple\ linear\ stride\ prefetcher}}
+\DoxyCodeLine{00048\ \ \ \ IntPtr\ stride\ =\ current\_address\ -\/\ prev\_address[n\_flow];}
+\DoxyCodeLine{00049\ \ \ \ prev\_address[n\_flow]\ =\ current\_address;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ std::vector<IntPtr>\ addresses;}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{if}\ (stride\ !=\ 0)}
+\DoxyCodeLine{00053\ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ num\_prefetches;\ ++i)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ IntPtr\ prefetch\_address\ =\ current\_address\ +\ i\ *\ stride;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ But\ stay\ within\ the\ page\ if\ requested}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!stop\_at\_page\ ||\ ((prefetch\_address\ \&\ PAGE\_MASK)\ ==\ (current\_address\ \&\ PAGE\_MASK)))}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ addresses.push\_back(prefetch\_address);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{return}\ addresses;}
+\DoxyCodeLine{00064\ \}}
+
+\end{DoxyCode}

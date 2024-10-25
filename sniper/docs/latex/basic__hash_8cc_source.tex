@@ -1,0 +1,65 @@
+\doxysection{basic\+\_\+hash.\+cc}
+\label{basic__hash_8cc_source}\index{common/misc/basic\_hash.cc@{common/misc/basic\_hash.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}basic\_hash.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ BasicHash::BasicHash(UInt64\ size):\ array(new\ Bucket[size]),\ size(size)}
+\DoxyCodeLine{00004\ \{}
+\DoxyCodeLine{00005\ \}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ BasicHash::\string~BasicHash()}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keyword}{delete}[]\ array;}
+\DoxyCodeLine{00010\ \}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ std::pair<bool,\ UInt64>\ BasicHash::find(UInt64\ key)}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ UInt64\ index\ =\ key\ \%\ size;}
+\DoxyCodeLine{00016\ \ \ \ Bucket\&\ bucket\ =\ array[index];}
+\DoxyCodeLine{00017\ \ \ \ Bucket::iterator\ it\ =\ bucket.find(key);}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ bucket.end())}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{comment}{//\ condition\ to\ assert\ no\ collision}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ assert(bucket.size()\ ==\ 0);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{false},\ \string~0);}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{true},\ it-\/>second);}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keywordtype}{bool}\ BasicHash::insert(UInt64\ key,\ UInt64\ value)}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ UInt64\ index\ =\ key\ \%\ size;}
+\DoxyCodeLine{00030\ \ \ \ Bucket\&\ bucket\ =\ array[index];}
+\DoxyCodeLine{00031\ \ \ \ std::pair<Bucket::iterator,\ bool>\ res\ =\ bucket.insert(std::make\_pair(key,\ value));}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//\ condition\ to\ assert\ no\ collision}}
+\DoxyCodeLine{00034\ \ \ \ assert(bucket.size()\ ==\ 1);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{return}\ res.second;}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#ifdef\ DEBUG\_BASIC\_HASH}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{int}\ main(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}*\ argv[])}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ BasicHash\ hash(100);}
+\DoxyCodeLine{00045\ \ \ \ UInt64\ ids[4]\ =\ \{1001,\ 1050,\ 1011,\ 1099\};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 4;\ i++)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ hash.insert(ids[i],\ i);}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 3;\ i\ >=\ 0;\ i-\/-\/)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ assert(hash.find(ids[i]).first\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ cerr\ <<\ \textcolor{stringliteral}{"{}All\ tests\ passed"{}}\ <<\ endl;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

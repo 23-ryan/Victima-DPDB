@@ -1,0 +1,94 @@
+\doxysection{pentium\+\_\+m\+\_\+branch\+\_\+predictor.\+cc}
+\label{pentium__m__branch__predictor_8cc_source}\index{common/performance\_model/branch\_predictors/pentium\_m\_branch\_predictor.cc@{common/performance\_model/branch\_predictors/pentium\_m\_branch\_predictor.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pentium\_m\_branch\_predictor.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ PentiumMBranchPredictor::PentiumMBranchPredictor(String\ name,\ core\_id\_t\ core\_id)}
+\DoxyCodeLine{00006\ \ \ \ :\ BranchPredictor(name,\ core\_id)}
+\DoxyCodeLine{00007\ \ \ \ ,\ m\_pir(0)}
+\DoxyCodeLine{00008\ \ \ \ ,\ m\_last\_gp\_hit(false)}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_last\_lpb\_hit(false)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ PentiumMBranchPredictor::\string~PentiumMBranchPredictor()}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{bool}\ PentiumMBranchPredictor::predict(IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ BranchPredictorReturnValue\ global\_pred\_out\ =\ m\_global\_predictor.lookup(ip,\ target,\ m\_pir);}
+\DoxyCodeLine{00020\ \ \ \ BranchPredictorReturnValue\ btb\_out\ =\ m\_btb.lookup(ip,\ target);}
+\DoxyCodeLine{00021\ \ \ \ BranchPredictorReturnValue\ lpb\_out\ =\ m\_lpb.lookup(ip,\ target);}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordtype}{bool}\ bimodal\_out\ =\ m\_bimodal\_table.predict(ip,\ target);}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ m\_last\_gp\_hit\ =\ global\_pred\_out.hit;}
+\DoxyCodeLine{00025\ \ \ \ m\_last\_bm\_pred\ =\ bimodal\_out;}
+\DoxyCodeLine{00026\ \ \ \ m\_last\_lpb\_hit\ =\ lpb\_out.hit\ \&\ btb\_out.hit;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \textcolor{comment}{//\ Outcome\ prediction\ logic}}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordtype}{bool}\ result;}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{if}\ (global\_pred\_out.hit)}
+\DoxyCodeLine{00031\ \ \ \ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ result\ =\ global\_pred\_out.prediction;}
+\DoxyCodeLine{00033\ \ \ \ \}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (lpb\_out.hit\ \&\ btb\_out.hit)}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ result\ =\ lpb\_out.prediction;}
+\DoxyCodeLine{00037\ \ \ \ \}}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00039\ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ result\ =\ bimodal\_out;}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \textcolor{comment}{//\ TODO\ FIXME:\ Failed\ matches\ against\ the\ target\ address\ should\ force\ a\ branch\ or\ fetch\ miss}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keywordtype}{void}\ PentiumMBranchPredictor::update(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ updateCounters(predicted,\ actual);}
+\DoxyCodeLine{00051\ \ \ \ m\_btb.update(predicted,\ actual,\ ip,\ target);}
+\DoxyCodeLine{00052\ \ \ \ m\_lpb.update(predicted,\ actual,\ ip,\ target);}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_last\_gp\_hit\ \&\&\ !m\_last\_lpb\_hit)\ \textcolor{comment}{//\ Update\ bimodal\ predictor\ only\ when\ global\ and\ loop\ predictors\ missed}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ m\_bimodal\_table.update(predicted,\ actual,\ ip,\ target);}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordtype}{bool}\ lpb\_or\_bm\_hit\ =\ m\_last\_lpb\_hit\ ||\ m\_last\_bm\_pred\ ==\ actual;\ \textcolor{comment}{//\ Global\ should\ only\ allocate\ when\ no\ loop\ predictor\ hit\ and\ bimodal\ was\ wrong}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{if}\ (m\_last\_gp\_hit)}
+\DoxyCodeLine{00057\ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (predicted\ !=\ actual\ \&\&\ lpb\_or\_bm\_hit)\ \textcolor{comment}{//\ Evict\ from\ global\ when\ mispredict\ and\ loop\ or\ bimodal\ hit}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ m\_global\_predictor.evict(ip,\ m\_pir);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ m\_global\_predictor.update(predicted,\ actual,\ ip,\ target,\ m\_pir);}
+\DoxyCodeLine{00062\ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (predicted\ !=\ actual\ \&\&\ (m\_last\_gp\_hit\ ||\ !lpb\_or\_bm\_hit))\ \textcolor{comment}{//\ Update\ on\ mispredict,\ but\ don't\ allocate\ when\ loop\ or\ bimodal\ hit}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ m\_global\_predictor.update(predicted,\ actual,\ ip,\ target,\ m\_pir);}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{comment}{//\ TODO\ FIXME:\ Properly\ propagate\ the\ branch\ type\ information\ from\ the\ decoder\ (IndirectBranch\ information)}}
+\DoxyCodeLine{00066\ \ \ \ update\_pir(actual,\ ip,\ target,\ BranchPredictorReturnValue::ConditionalBranch);}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keywordtype}{void}\ PentiumMBranchPredictor::update\_pir(\textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target,\ BranchPredictorReturnValue::BranchType\ branch\_type)}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \ IntPtr\ rhs;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ ((branch\_type\ ==\ BranchPredictorReturnValue::ConditionalBranch)\ \&\ actual)}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ rhs\ =\ ip\ >>\ 4;}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (branch\_type\ ==\ BranchPredictorReturnValue::IndirectBranch)}
+\DoxyCodeLine{00078\ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ rhs\ =\ (ip\ >>\ 4)\ |\ target;}
+\DoxyCodeLine{00080\ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{comment}{//\ No\ PIR\ update}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ m\_pir\ =\ ((m\_pir\ <<\ 2)\ \string^\ rhs)\ \&\ 0x7fff;}
+\DoxyCodeLine{00088\ \}}
+
+\end{DoxyCode}

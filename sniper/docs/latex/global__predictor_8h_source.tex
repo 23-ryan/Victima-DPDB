@@ -1,0 +1,165 @@
+\doxysection{global\+\_\+predictor.\+h}
+\label{global__predictor_8h_source}\index{common/performance\_model/branch\_predictors/global\_predictor.h@{common/performance\_model/branch\_predictors/global\_predictor.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ GLOBAL\_PREDICTOR\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ GLOBAL\_PREDICTOR\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor\_return\_value.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}saturating\_predictor.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }GlobalPredictor\ :\ BranchPredictor}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ GlobalPredictor(UInt32\ entries,\ UInt32\ tag\_bitwidth,\ UInt32\ ways)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ :\ m\_lru\_use\_count(0)}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ ,\ m\_num\_ways(ways)}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ ,\ m\_ways(ways,\ Way(entries/ways,\ 6))}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordtype}{bool}\ predict(IntPtr\ ip,\ IntPtr\ target)\ \{\ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Need\ pir"{}});\ \}}
+\DoxyCodeLine{00025\ \ \ \ BranchPredictorReturnValue\ lookup(IntPtr\ ip,\ IntPtr\ target)\ \{\ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Need\ pir"{}});\ \}}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target)\ \{\ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Need\ pir"{}});\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordtype}{bool}\ predict(IntPtr\ ip,\ IntPtr\ target,\ IntPtr\ pir)}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ UInt32\ index,\ tag;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ gen\_index\_tag(ip,\ pir,\ index,\ tag);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ w\ =\ 0\ ;\ w\ <\ m\_num\_ways\ ;\ ++w\ )}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_valid[index]\ \&\&\ m\_ways[w].m\_tags[index]\ ==\ tag)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ BranchPredictorReturnValue\ lookup(IntPtr\ ip,\ IntPtr\ target,\ IntPtr\ pir)}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ UInt32\ index,\ tag;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ BranchPredictorReturnValue\ ret\ =\ \{\ 0,\ 0,\ 0,\ BranchPredictorReturnValue::InvalidBranch\ \};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ gen\_index\_tag(ip,\ pir,\ index,\ tag);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ w\ =\ 0\ ;\ w\ <\ m\_num\_ways\ ;\ ++w\ )}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_valid[index]\ \&\&\ m\_ways[w].m\_tags[index]\ ==\ tag)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ ret.hit\ =\ 1;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ ret.prediction\ =\ m\_ways[w].m\_predictors[index].predict();}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00063\ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target,\ IntPtr\ pir)}
+\DoxyCodeLine{00066\ \ \ \ \{}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ UInt32\ index,\ tag,\ lru\_way;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ gen\_index\_tag(ip,\ pir,\ index,\ tag);}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{comment}{//\ Start\ with\ way\ 0\ as\ the\ least\ recently\ used}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ lru\_way\ =\ 0;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ w\ =\ 0\ ;\ w\ <\ m\_num\_ways\ ;\ ++w\ )}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_valid[index]\ \&\&\ m\_ways[w].m\_tags[index]\ ==\ tag)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_predictors[index].update(actual);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_lru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Once\ we\ have\ a\ tag\ match\ and\ have\ updated\ the\ LRU\ information,}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ can\ return}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ track\ of\ the\ LRU\ in\ case\ we\ do\ not\ have\ a\ tag\ match}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_lru[index]\ <\ m\_ways[lru\_way].m\_lru[index])}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ lru\_way\ =\ w;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ will\ get\ here\ only\ if\ we\ have\ not\ matched\ the\ tag}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ that\ is\ the\ case,\ select\ the\ LRU\ entry,\ and\ update\ the\ tag}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{comment}{//\ appropriately}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ m\_ways[lru\_way].m\_valid[index]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ m\_ways[lru\_way].m\_tags[index]\ =\ tag;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ miss\ with\ the\ tag,\ so\ reset\ instead\ of\ updating}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ m\_ways[lru\_way].m\_predictors[index].reset(actual);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ m\_ways[lru\_way].m\_lru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00101\ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \textcolor{keywordtype}{void}\ evict(IntPtr\ ip,\ IntPtr\ pir)}
+\DoxyCodeLine{00104\ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ UInt32\ index,\ tag;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ gen\_index\_tag(ip,\ pir,\ index,\ tag);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ w\ =\ 0\ ;\ w\ <\ m\_num\_ways\ ;\ ++w\ )}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_valid[index]\ \&\&\ m\_ways[w].m\_tags[index]\ ==\ tag)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_valid[index]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00118\ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \textcolor{keyword}{class\ }Way}
+\DoxyCodeLine{00123\ \ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \ \ Way(UInt32\ entries,\ UInt32\ tag\_bitwidth)}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ :\ m\_valid(entries,\ false)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ ,\ m\_tags(entries,\ 0)}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ ,\ m\_predictors(entries,\ SaturatingPredictor<2>(0))}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ ,\ m\_lru(entries,\ 0)}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ ,\ m\_num\_entries(entries)}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ ,\ m\_tag\_bitwidth(tag\_bitwidth)}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ assert(tag\_bitwidth\ <=\ 8);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ std::vector<bool>\ m\_valid;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ std::vector<uint8\_t>\ m\_tags;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ std::vector<SaturatingPredictor<2>\ >\ m\_predictors;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ std::vector<UInt64>\ m\_lru;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ UInt32\ m\_num\_entries;}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ UInt32\ m\_tag\_bitwidth;}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \};}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \textcolor{comment}{//\ Pentium\ M-\/specific\ indexing\ and\ tag\ values}}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keywordtype}{void}\ gen\_index\_tag(IntPtr\ ip,\ IntPtr\ pir,\ UInt32\&\ index,\ UInt32\ \&tag)}
+\DoxyCodeLine{00148\ \ \ \ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ index\ =\ ((ip\ >>\ 4)\ \string^\ (pir\ >>\ 6))\ \&\ 0x1FF;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ tag\ =\ ((ip\ >>\ 13)\ \string^\ pir)\ \&\ 0x3F;}
+\DoxyCodeLine{00151\ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ UInt64\ m\_lru\_use\_count;}
+\DoxyCodeLine{00154\ \ \ \ UInt32\ m\_num\_ways;}
+\DoxyCodeLine{00155\ \ \ \ std::vector<Way>\ m\_ways;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ GLOBAL\_PREDICTOR\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

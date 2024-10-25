@@ -1,0 +1,73 @@
+\doxysection{memory\+\_\+manager\+\_\+fast.\+h}
+\label{memory__manager__fast_8h_source}\index{common/core/memory\_subsystem/memory\_manager\_fast.h@{common/core/memory\_subsystem/memory\_manager\_fast.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_MEMORY\_MANAGER\_FAST\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_MEMORY\_MANAGER\_FAST\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }MemoryManagerFast\ :\ \textcolor{keyword}{public}\ MemoryManagerBase}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ CACHE\_LINE\_BITS\ =\ 6;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ CACHE\_LINE\_SIZE\ =\ 1\ <<\ CACHE\_LINE\_BITS;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ MemoryManagerFast(Core*\ core,\ Network*\ network,\ ShmemPerfModel*\ shmem\_perf\_model)}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ :\ MemoryManagerBase(core,\ network,\ shmem\_perf\_model)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~MemoryManagerFast()\ \{\}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \ \ HitWhere::where\_t\ coreInitiateMemoryAccess(}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,\ UInt32\ offset,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ Core::MemModeled\ modeled)}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emulate\ slow\ interface\ by\ calling\ into\ fast\ interface}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ assert(data\_buf\ ==\ NULL);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency\ =\ coreInitiateMemoryAccessFast(mem\_component\ ==\ MemComponent::L1\_ICACHE\ ?\ \textcolor{keyword}{true}\ :\ \textcolor{keyword}{false},\ mem\_op\_type,\ address);}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>incrElapsedTime(latency,\ \ ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (latency\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ HitWhere::MISS;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ HitWhere::where\_t(mem\_component);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ coreInitiateMemoryAccessFast(}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ icache,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address)\ =\ 0;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMsgFromNetwork(NetPacket\&\ packet)\ \{\ assert(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enableModels()\ \{\}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disableModels()\ \{\}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ core\_id\_t\ getShmemRequester(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ pkt\_data)\ \{\ assert(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ UInt32\ getModeledLength(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ pkt\_data)\ \{\ assert(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifndef\ OPT\_CACHEBLOCKSIZE}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ UInt64\ getCacheBlockSize()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ CACHE\_LINE\_SIZE;\ \}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ msg\_type,\ MemComponent::component\_t\ sender\_mem\_component,\ MemComponent::component\_t\ receiver\_mem\_component,\ core\_id\_t\ requester,\ core\_id\_t\ receiver,\ IntPtr\ address,\ Byte*\ data\_buf\ =\ NULL,\ UInt32\ data\_length\ =\ 0,\ HitWhere::where\_t\ where\ =\ HitWhere::UNKNOWN,\ ShmemPerf\ *perf\ =\ NULL,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS,\ CacheBlockInfo::block\_type\_t\ block\_type\ =\ CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE)\ \{\ assert(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ broadcastMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ msg\_type,\ MemComponent::component\_t\ sender\_mem\_component,\ MemComponent::component\_t\ receiver\_mem\_component,\ core\_id\_t\ requester,\ IntPtr\ address,\ Byte*\ data\_buf\ =\ NULL,\ UInt32\ data\_length\ =\ 0,\ ShmemPerf\ *perf\ =\ NULL,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS)\ \{\ assert(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ SubsecondTime\ getL1HitLatency(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();\ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addL1Hits(\textcolor{keywordtype}{bool}\ icache,\ Core::mem\_op\_t\ mem\_op\_type,\ UInt64\ hits)\ \{\}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//\ @override}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ measureNucaStats()\ \{\}}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_MEMORY\_MANAGER\_FAST\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,426 @@
+\doxysection{Allocation\+Manager Class Reference}
+\label{classAllocationManager}\index{AllocationManager@{AllocationManager}}
+
+
+{\ttfamily \#include $<$allocation\+\_\+manager.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Allocation\+Manager} (bool \textbf{ eager}, int \textbf{ large\+\_\+page\+\_\+percentage})
+\item 
+\textbf{ $\sim$\+Allocation\+Manager} ()
+\item 
+int \textbf{ default\+Page\+Fault\+Handler} ()
+\item 
+void \textbf{ page\+Fault\+Handler} (\textbf{ Int\+Ptr} vpn, \textbf{ uint64\+\_\+t} core\+\_\+id)
+\item 
+bool \textbf{ exists\+\_\+in\+\_\+range\+\_\+table} (\textbf{ Int\+Ptr} vpn, int core\+\_\+id)
+\item 
+\textbf{ Range} \textbf{ access\+\_\+range\+\_\+table} (\textbf{ Int\+Ptr} vpn, int core\+\_\+id)
+\item 
+int \textbf{ get\+Number\+Of\+Ranges} (int cored\+\_\+id)
+\item 
+void \textbf{ print\+Page\+Map} ()
+\item 
+void \textbf{ print\+Virtual\+Map} ()
+\item 
+void \textbf{ print\+Range\+Table} (std\+::vector$<$ \textbf{ Range} $>$ \textbf{ range\+\_\+table})
+\item 
+void \textbf{ handle\+Malloc} (\textbf{ uint64\+\_\+t} pointer, \textbf{ uint64\+\_\+t} size, int core\+\_\+id)
+\item 
+void \textbf{ handle\+Calloc} (\textbf{ uint64\+\_\+t} pointer, \textbf{ uint64\+\_\+t} size, int core\+\_\+id)
+\item 
+void \textbf{ handle\+Realloc} (\textbf{ uint64\+\_\+t} init\+\_\+pointer, \textbf{ uint64\+\_\+t} pointer, \textbf{ uint64\+\_\+t} size, int core\+\_\+id)
+\item 
+void \textbf{ handle\+Free} (\textbf{ uint64\+\_\+t} pointer, int core\+\_\+id)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::vector$<$ std\+::unordered\+\_\+map$<$ \textbf{ uint64\+\_\+t}, \textbf{ uint64\+\_\+t} $>$ $>$ \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}
+\item 
+std\+::vector$<$ std\+::unordered\+\_\+map$<$ \textbf{ Int\+Ptr}, \textbf{ uint64\+\_\+t} $>$ $>$ \textbf{ virtual\+\_\+to\+\_\+physical\+\_\+map}
+\item 
+std\+::vector$<$ std\+::unordered\+\_\+map$<$ \textbf{ Int\+Ptr}, \textbf{ uint64\+\_\+t} $>$ $>$ \textbf{ vpn\+\_\+map\+\_\+per\+\_\+core}
+\item 
+\textbf{ range\+Table} \textbf{ range\+\_\+table}
+\item 
+bool \textbf{ eager}
+\item 
+int \textbf{ large\+\_\+page\+\_\+percentage}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 20} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{AllocationManager@{AllocationManager}!AllocationManager@{AllocationManager}}
+\index{AllocationManager@{AllocationManager}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{AllocationManager()}
+{\footnotesize\ttfamily \label{classAllocationManager_ae458e2bf422bd7af701e132be8165686} 
+Allocation\+Manager\+::\+Allocation\+Manager (\begin{DoxyParamCaption}\item[{bool}]{eager}{, }\item[{int}]{large\+\_\+page\+\_\+percentage}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 17} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}, \textbf{ Config\+::get\+Singleton()}, \textbf{ Config\+::get\+Total\+Cores()}, \textbf{ range\+\_\+table}, \textbf{ virtual\+\_\+to\+\_\+physical\+\_\+map}, and \textbf{ vpn\+\_\+map\+\_\+per\+\_\+core}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{classAllocationManager_ae458e2bf422bd7af701e132be8165686_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!````~AllocationManager@{$\sim$AllocationManager}}
+\index{````~AllocationManager@{$\sim$AllocationManager}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{$\sim$AllocationManager()}
+{\footnotesize\ttfamily \label{classAllocationManager_a43fe4518b7c5d83aadadda581ac04e46} 
+Allocation\+Manager\+::$\sim$\+Allocation\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{AllocationManager@{AllocationManager}!access\_range\_table@{access\_range\_table}}
+\index{access\_range\_table@{access\_range\_table}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{access\_range\_table()}
+{\footnotesize\ttfamily \label{classAllocationManager_aa8bde07633358aa175c2e0292625f91e} 
+\textbf{ Range} Allocation\+Manager\+::access\+\_\+range\+\_\+table (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{vpn}{, }\item[{int}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ range\+\_\+table}.
+
+\index{AllocationManager@{AllocationManager}!defaultPageFaultHandler@{defaultPageFaultHandler}}
+\index{defaultPageFaultHandler@{defaultPageFaultHandler}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{defaultPageFaultHandler()}
+{\footnotesize\ttfamily \label{classAllocationManager_a055eb800238b5382fbcbe33fa4ccdb56} 
+int Allocation\+Manager\+::default\+Page\+Fault\+Handler (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 78} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ large\+\_\+page\+\_\+percentage}.
+
+\index{AllocationManager@{AllocationManager}!exists\_in\_range\_table@{exists\_in\_range\_table}}
+\index{exists\_in\_range\_table@{exists\_in\_range\_table}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{exists\_in\_range\_table()}
+{\footnotesize\ttfamily \label{classAllocationManager_a3cab29b201f9cb4c66341051381dcd93} 
+bool Allocation\+Manager\+::exists\+\_\+in\+\_\+range\+\_\+table (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{vpn}{, }\item[{int}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 117} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ range\+\_\+table}.
+
+
+
+Referenced by \textbf{ page\+Fault\+Handler()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=291pt]{classAllocationManager_a3cab29b201f9cb4c66341051381dcd93_icgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!getNumberOfRanges@{getNumberOfRanges}}
+\index{getNumberOfRanges@{getNumberOfRanges}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{getNumberOfRanges()}
+{\footnotesize\ttfamily \label{classAllocationManager_ab7bea0f3671aa49a9bf2097a5ed69391} 
+int Allocation\+Manager\+::get\+Number\+Of\+Ranges (\begin{DoxyParamCaption}\item[{int}]{cored\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ range\+\_\+table}.
+
+\index{AllocationManager@{AllocationManager}!handleCalloc@{handleCalloc}}
+\index{handleCalloc@{handleCalloc}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{handleCalloc()}
+{\footnotesize\ttfamily \label{classAllocationManager_aa698cea2a96421ae401e0beef617889a} 
+void Allocation\+Manager\+::handle\+Calloc (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{pointer}{, }\item[{\textbf{ uint64\+\_\+t}}]{size}{, }\item[{int}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 178} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}, \textbf{ Range\+::bounds}, \textbf{ eager}, \textbf{ find()}, \textbf{ range\+\_\+table}, \textbf{ uint64\+\_\+t}, \textbf{ Range\+::vpn}, and \textbf{ vpn\+\_\+map\+\_\+per\+\_\+core}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classAllocationManager_aa698cea2a96421ae401e0beef617889a_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!handleFree@{handleFree}}
+\index{handleFree@{handleFree}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{handleFree()}
+{\footnotesize\ttfamily \label{classAllocationManager_a8fd80bc9770ff1635a09f5bf2e21e293} 
+void Allocation\+Manager\+::handle\+Free (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{pointer}{, }\item[{int}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 240} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}, and \textbf{ find()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classAllocationManager_a8fd80bc9770ff1635a09f5bf2e21e293_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!handleMalloc@{handleMalloc}}
+\index{handleMalloc@{handleMalloc}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{handleMalloc()}
+{\footnotesize\ttfamily \label{classAllocationManager_a81402a5595eb3a1932865b1b4945ca93} 
+void Allocation\+Manager\+::handle\+Malloc (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{pointer}{, }\item[{\textbf{ uint64\+\_\+t}}]{size}{, }\item[{int}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 142} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}, \textbf{ Range\+::bounds}, \textbf{ eager}, \textbf{ find()}, \textbf{ range\+\_\+table}, \textbf{ uint64\+\_\+t}, \textbf{ Range\+::vpn}, and \textbf{ vpn\+\_\+map\+\_\+per\+\_\+core}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classAllocationManager_a81402a5595eb3a1932865b1b4945ca93_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!handleRealloc@{handleRealloc}}
+\index{handleRealloc@{handleRealloc}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{handleRealloc()}
+{\footnotesize\ttfamily \label{classAllocationManager_a8b12ca9a8e060c8c3b4680c254f5a195} 
+void Allocation\+Manager\+::handle\+Realloc (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{init\+\_\+pointer}{, }\item[{\textbf{ uint64\+\_\+t}}]{pointer}{, }\item[{\textbf{ uint64\+\_\+t}}]{size}{, }\item[{int}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 208} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}, \textbf{ Range\+::bounds}, \textbf{ eager}, \textbf{ find()}, \textbf{ range\+\_\+table}, \textbf{ uint64\+\_\+t}, \textbf{ Range\+::vpn}, and \textbf{ vpn\+\_\+map\+\_\+per\+\_\+core}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classAllocationManager_a8b12ca9a8e060c8c3b4680c254f5a195_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!pageFaultHandler@{pageFaultHandler}}
+\index{pageFaultHandler@{pageFaultHandler}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{pageFaultHandler()}
+{\footnotesize\ttfamily \label{classAllocationManager_a493ac206becabc1b468a060b40450e87} 
+void Allocation\+Manager\+::page\+Fault\+Handler (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{vpn}{, }\item[{\textbf{ uint64\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ exists\+\_\+in\+\_\+range\+\_\+table()}, \textbf{ uint64\+\_\+t}, and \textbf{ virtual\+\_\+to\+\_\+physical\+\_\+map}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=291pt]{classAllocationManager_a493ac206becabc1b468a060b40450e87_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!printPageMap@{printPageMap}}
+\index{printPageMap@{printPageMap}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{printPageMap()}
+{\footnotesize\ttfamily \label{classAllocationManager_ae2f6769ede0fcf2ae3f53150ee66e6c9} 
+void Allocation\+Manager\+::print\+Page\+Map (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 93} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Config\+::get\+Singleton()}, \textbf{ Config\+::get\+Total\+Cores()}, and \textbf{ virtual\+\_\+to\+\_\+physical\+\_\+map}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{classAllocationManager_ae2f6769ede0fcf2ae3f53150ee66e6c9_cgraph}
+\end{center}
+\end{figure}
+\index{AllocationManager@{AllocationManager}!printRangeTable@{printRangeTable}}
+\index{printRangeTable@{printRangeTable}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{printRangeTable()}
+{\footnotesize\ttfamily \label{classAllocationManager_a363edbf4fe24a6a2fd2eb9c63135a880} 
+void Allocation\+Manager\+::print\+Range\+Table (\begin{DoxyParamCaption}\item[{std\+::vector$<$ \textbf{ Range} $>$}]{range\+\_\+table}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 107} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ range\+\_\+table}.
+
+\index{AllocationManager@{AllocationManager}!printVirtualMap@{printVirtualMap}}
+\index{printVirtualMap@{printVirtualMap}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{printVirtualMap()}
+{\footnotesize\ttfamily \label{classAllocationManager_ac17b55c4ad4e938f236ebfba4f2117a2} 
+void Allocation\+Manager\+::print\+Virtual\+Map (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ allocation\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ allocation\+\_\+map\+\_\+per\+\_\+core}, \textbf{ Config\+::get\+Singleton()}, and \textbf{ Config\+::get\+Total\+Cores()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{classAllocationManager_ac17b55c4ad4e938f236ebfba4f2117a2_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{AllocationManager@{AllocationManager}!allocation\_map\_per\_core@{allocation\_map\_per\_core}}
+\index{allocation\_map\_per\_core@{allocation\_map\_per\_core}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{allocation\_map\_per\_core}
+{\footnotesize\ttfamily \label{classAllocationManager_a12b78b62dae990e0d1f3c91dccc89efc} 
+std\+::vector$<$std\+::unordered\+\_\+map$<$\textbf{ uint64\+\_\+t},\textbf{ uint64\+\_\+t}$>$ $>$ Allocation\+Manager\+::allocation\+\_\+map\+\_\+per\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 24} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ Allocation\+Manager()}, \textbf{ handle\+Calloc()}, \textbf{ handle\+Free()}, \textbf{ handle\+Malloc()}, \textbf{ handle\+Realloc()}, and \textbf{ print\+Virtual\+Map()}.
+
+\index{AllocationManager@{AllocationManager}!eager@{eager}}
+\index{eager@{eager}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{eager}
+{\footnotesize\ttfamily \label{classAllocationManager_a446c9821ff8f4eeb66b84e5e561e5784} 
+bool Allocation\+Manager\+::eager\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Calloc()}, \textbf{ handle\+Malloc()}, and \textbf{ handle\+Realloc()}.
+
+\index{AllocationManager@{AllocationManager}!large\_page\_percentage@{large\_page\_percentage}}
+\index{large\_page\_percentage@{large\_page\_percentage}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{large\_page\_percentage}
+{\footnotesize\ttfamily \label{classAllocationManager_a33cb1623674e306993738314f90f2302} 
+int Allocation\+Manager\+::large\+\_\+page\+\_\+percentage\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ default\+Page\+Fault\+Handler()}.
+
+\index{AllocationManager@{AllocationManager}!range\_table@{range\_table}}
+\index{range\_table@{range\_table}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{range\_table}
+{\footnotesize\ttfamily \label{classAllocationManager_a5eff3133874ed691f778b0edea34d78f} 
+\textbf{ range\+Table} Allocation\+Manager\+::range\+\_\+table\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ access\+\_\+range\+\_\+table()}, \textbf{ Allocation\+Manager()}, \textbf{ exists\+\_\+in\+\_\+range\+\_\+table()}, \textbf{ get\+Number\+Of\+Ranges()}, \textbf{ handle\+Calloc()}, \textbf{ handle\+Malloc()}, \textbf{ handle\+Realloc()}, and \textbf{ print\+Range\+Table()}.
+
+\index{AllocationManager@{AllocationManager}!virtual\_to\_physical\_map@{virtual\_to\_physical\_map}}
+\index{virtual\_to\_physical\_map@{virtual\_to\_physical\_map}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{virtual\_to\_physical\_map}
+{\footnotesize\ttfamily \label{classAllocationManager_af595560e8309d8f96058c490136db305} 
+std\+::vector$<$std\+::unordered\+\_\+map$<$\textbf{ Int\+Ptr},\textbf{ uint64\+\_\+t}$>$ $>$ Allocation\+Manager\+::virtual\+\_\+to\+\_\+physical\+\_\+map\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ Allocation\+Manager()}, \textbf{ page\+Fault\+Handler()}, and \textbf{ print\+Page\+Map()}.
+
+\index{AllocationManager@{AllocationManager}!vpn\_map\_per\_core@{vpn\_map\_per\_core}}
+\index{vpn\_map\_per\_core@{vpn\_map\_per\_core}!AllocationManager@{AllocationManager}}
+\doxysubsubsection{vpn\_map\_per\_core}
+{\footnotesize\ttfamily \label{classAllocationManager_a0d44b1ff10064113ffc822f80ece0e86} 
+std\+::vector$<$std\+::unordered\+\_\+map$<$\textbf{ Int\+Ptr},\textbf{ uint64\+\_\+t}$>$ $>$ Allocation\+Manager\+::vpn\+\_\+map\+\_\+per\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ allocation\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ Allocation\+Manager()}, \textbf{ handle\+Calloc()}, \textbf{ handle\+Malloc()}, and \textbf{ handle\+Realloc()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ allocation\+\_\+manager.\+h}\item 
+common/system/\textbf{ allocation\+\_\+manager.\+cc}\end{DoxyCompactItemize}

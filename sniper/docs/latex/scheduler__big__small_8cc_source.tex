@@ -1,0 +1,167 @@
+\doxysection{scheduler\+\_\+big\+\_\+small.\+cc}
+\label{scheduler__big__small_8cc_source}\index{common/scheduler/scheduler\_big\_small.cc@{common/scheduler/scheduler\_big\_small.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}scheduler\_big\_small.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}misc/tags.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}rng.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Example\ random\ big-\/small\ scheduler\ using\ thread\ affinity}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ The\ hardware\ consists\ of\ B\ big\ cores\ and\ S\ small\ cores}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ This\ scheduler\ selects\ B\ threads\ that\ have\ affinity\ to\ (all)\ big\ cores,}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ while\ the\ other\ threads\ have\ affinity\ to\ the\ small\ cores.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ Periodically,\ or\ when\ threads\ on\ a\ big\ core\ stall/end,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ new\ threads\ are\ promoted\ to\ run\ on\ the\ big\ core(s)}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ This\ scheduler\ uses\ only\ setThreadAffinity(),\ and\ leaves\ all\ messy}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ low-\/level\ details\ that\ govern\ thread\ stalls\ etc.\ to\ the\ implementation}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ of\ SchedulerPinnedBase}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ SchedulerBigSmall::SchedulerBigSmall(ThreadManager\ *thread\_manager)}
+\DoxyCodeLine{00023\ \ \ \ :\ SchedulerPinnedBase(thread\_manager,\ SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}scheduler/big\_small/quantum"{}})))}
+\DoxyCodeLine{00024\ \ \ \ ,\ m\_debug\_output(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}scheduler/big\_small/debug"{}}))}
+\DoxyCodeLine{00025\ \ \ \ ,\ m\_last\_reshuffle(SubsecondTime::Zero())}
+\DoxyCodeLine{00026\ \ \ \ ,\ m\_rng(rng\_seed(42))}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{comment}{//\ Figure\ out\ big\ and\ small\ cores,\ and\ create\ affinity\ masks\ for\ the\ set\ of\ big\ cores\ and\ the\ set\ of\ small\ cores,\ respectively}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ m\_num\_big\_cores\ =\ 0;}
+\DoxyCodeLine{00031\ \ \ \ CPU\_ZERO(\&m\_mask\_big);}
+\DoxyCodeLine{00032\ \ \ \ CPU\_ZERO(\&m\_mask\_small);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ coreId\ =\ 0;\ coreId\ <\ (core\_id\_t)\ Sim()-\/>getConfig()-\/>getApplicationCores();\ coreId++)}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isBig\ =\ Sim()-\/>getTagsManager()-\/>hasTag(\textcolor{stringliteral}{"{}core"{}},\ coreId,\ \textcolor{stringliteral}{"{}big"{}});}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (isBig)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ ++m\_num\_big\_cores;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ CPU\_SET(coreId,\ \&m\_mask\_big);}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ CPU\_SET(coreId,\ \&m\_mask\_small);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::threadSetInitialAffinity(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{comment}{//\ All\ threads\ start\ out\ on\ the\ small\ core(s)}}
+\DoxyCodeLine{00052\ \ \ \ moveToSmall(thread\_id);}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{comment}{//\ When\ a\ thread\ on\ the\ big\ core\ stalls,\ promote\ another\ thread\ to\ the\ big\ core(s)}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{if}\ (m\_debug\_output)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[SchedulerBigSmall]\ thread\ "{}}\ <<\ thread\_id\ <<\ \textcolor{stringliteral}{"{}\ stalled"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_isbig[thread\_id])}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{comment}{//\ Pick\ a\ new\ thread\ to\ run\ on\ the\ big\ core(s)}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ pickBigThread();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ this\ thread\ to\ the\ small\ core(s)}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ moveToSmall(thread\_id);}
+\DoxyCodeLine{00068\ \ \ \ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \textcolor{comment}{//\ Call\ threadStall()\ in\ parent\ class}}
+\DoxyCodeLine{00071\ \ \ \ SchedulerPinnedBase::threadStall(thread\_id,\ reason,\ time);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ (m\_debug\_output)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ printState();}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{comment}{//\ When\ a\ thread\ on\ the\ big\ core\ ends,\ promote\ another\ thread\ to\ the\ big\ core(s)}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{if}\ (m\_debug\_output)}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[SchedulerBigSmall]\ thread\ "{}}\ <<\ thread\_id\ <<\ \textcolor{stringliteral}{"{}\ ended"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_isbig[thread\_id])}
+\DoxyCodeLine{00085\ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{comment}{//\ Pick\ a\ new\ thread\ to\ run\ on\ the\ big\ core(s)}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ pickBigThread();}
+\DoxyCodeLine{00088\ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{comment}{//\ Call\ threadExit()\ in\ parent\ class}}
+\DoxyCodeLine{00091\ \ \ \ SchedulerPinnedBase::threadExit(thread\_id,\ time);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordflow}{if}\ (m\_debug\_output)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ printState();}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::periodic(SubsecondTime\ time)}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordtype}{bool}\ print\_state\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ m\_last\_reshuffle\ +\ m\_quantum)}
+\DoxyCodeLine{00102\ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \textcolor{comment}{//\ First\ move\ all\ threads\ back\ to\ the\ small\ cores}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_isbig[thread\_id])}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ moveToSmall(thread\_id);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{comment}{//\ Now\ promote\ as\ many\ threads\ to\ the\ big\ core\ pool\ as\ there\ are\ big\ cores}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt64\ i\ =\ 0;\ i\ <\ std::min(m\_num\_big\_cores,\ Sim()-\/>getThreadManager()-\/>getNumThreads());\ ++i)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ pickBigThread();}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ m\_last\_reshuffle\ =\ time;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ print\_state\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00117\ \ \ \ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ Call\ periodic()\ in\ parent\ class}}
+\DoxyCodeLine{00120\ \ \ \ SchedulerPinnedBase::periodic(time);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \textcolor{keywordflow}{if}\ (print\_state\ \&\&\ m\_debug\_output)}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ printState();}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::moveToSmall(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00127\ \{}
+\DoxyCodeLine{00128\ \ \ \ threadSetAffinity(INVALID\_THREAD\_ID,\ thread\_id,\ \textcolor{keyword}{sizeof}(m\_mask\_small),\ \&m\_mask\_small);}
+\DoxyCodeLine{00129\ \ \ \ m\_thread\_isbig[thread\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::moveToBig(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \ threadSetAffinity(INVALID\_THREAD\_ID,\ thread\_id,\ \textcolor{keyword}{sizeof}(m\_mask\_big),\ \&m\_mask\_big);}
+\DoxyCodeLine{00135\ \ \ \ m\_thread\_isbig[thread\_id]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{void}\ SchedulerBigSmall::pickBigThread()}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \ \textcolor{comment}{//\ Randomly\ select\ one\ thread\ to\ promote\ from\ the\ small\ to\ the\ big\ core\ pool}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \textcolor{comment}{//\ First\ build\ a\ list\ of\ all\ eligible\ cores}}
+\DoxyCodeLine{00143\ \ \ \ std::vector<thread\_id\_t>\ eligible;}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00145\ \ \ \ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_isbig[thread\_id]\ ==\ \textcolor{keyword}{false}\ \&\&\ m\_threads\_runnable[thread\_id])}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ eligible.push\_back(thread\_id);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \ \ \ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{if}\ (eligible.size()\ >\ 0)}
+\DoxyCodeLine{00153\ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \textcolor{comment}{//\ Randomly\ select\ a\ thread\ from\ our\ list}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ thread\_id\_t\ thread\_id\ =\ eligible[rng\_next(m\_rng)\ \%\ eligible.size()];}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ moveToBig(thread\_id);}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_debug\_output)}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[SchedulerBigSmall]\ thread\ "{}}\ <<\ thread\_id\ <<\ \textcolor{stringliteral}{"{}\ promoted\ to\ big\ core"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00160\ \ \ \ \}}
+\DoxyCodeLine{00161\ \}}
+
+\end{DoxyCode}

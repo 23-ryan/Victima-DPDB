@@ -1,0 +1,556 @@
+\doxysection{Syscall\+Mdl Class Reference}
+\label{classSyscallMdl}\index{SyscallMdl@{SyscallMdl}}
+
+
+{\ttfamily \#include $<$syscall\+\_\+model.\+h$>$}
+
+
+
+Collaboration diagram for Syscall\+Mdl\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ futex\+\_\+counters\+\_\+t}
+\item 
+struct \textbf{ Hook\+Syscall\+Enter}
+\item 
+struct \textbf{ Hook\+Syscall\+Exit}
+\item 
+struct \textbf{ syscall\+\_\+args\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Syscall\+Mdl} (\textbf{ Thread} $\ast$thread)
+\item 
+\textbf{ $\sim$\+Syscall\+Mdl} ()
+\item 
+bool \textbf{ run\+Enter} (\textbf{ Int\+Ptr} syscall\+\_\+number, \textbf{ syscall\+\_\+args\+\_\+t} \&args)
+\item 
+\textbf{ Int\+Ptr} \textbf{ run\+Exit} (\textbf{ Int\+Ptr} old\+\_\+return)
+\item 
+bool \textbf{ is\+Emulated} () const
+\item 
+bool \textbf{ in\+Syscall} () const
+\item 
+\textbf{ Int\+Ptr} \textbf{ get\+Current\+Syscall\+Number} () const
+\item 
+const \textbf{ syscall\+\_\+args\+\_\+t} \textbf{ get\+Current\+Syscall\+Arguments} () const
+\item 
+String \textbf{ format\+Syscall} () const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Int\+Ptr} \textbf{ handle\+Futex\+Call} (\textbf{ syscall\+\_\+args\+\_\+t} \&args)
+\item 
+void \textbf{ futex\+Count} (\textbf{ uint32\+\_\+t} function, \textbf{ Subsecond\+Time} delay)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ Syscall\+Mdl\+::futex\+\_\+counters\+\_\+t} $\ast$ \textbf{ futex\+\_\+counters}
+\item 
+\textbf{ Thread} $\ast$ \textbf{ m\+\_\+thread}
+\item 
+\textbf{ Int\+Ptr} \textbf{ m\+\_\+syscall\+\_\+number}
+\item 
+bool \textbf{ m\+\_\+emulated}
+\item 
+bool \textbf{ m\+\_\+stalled}
+\item 
+\textbf{ Int\+Ptr} \textbf{ m\+\_\+ret\+\_\+val}
+\item 
+bool \textbf{ m\+\_\+in\+\_\+syscall}
+\item 
+\textbf{ syscall\+\_\+args\+\_\+t} \textbf{ m\+\_\+syscall\+\_\+args}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+stdout\+\_\+bytes}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+stderr\+\_\+bytes}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const char $\ast$ \textbf{ futex\+\_\+names} [$\,$]
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 11} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{SyscallMdl@{SyscallMdl}!SyscallMdl@{SyscallMdl}}
+\index{SyscallMdl@{SyscallMdl}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{SyscallMdl()}
+{\footnotesize\ttfamily \label{classSyscallMdl_af20ebfe222f804ceac65a158fb7cd923} 
+Syscall\+Mdl\+::\+Syscall\+Mdl (\begin{DoxyParamCaption}\item[{\textbf{ Thread} $\ast$}]{thread}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ \+\_\+\+\_\+attribute\+\_\+\+\_\+()}, \textbf{ Syscall\+Mdl\+::futex\+\_\+counters\+\_\+t\+::count}, \textbf{ Syscall\+Mdl\+::futex\+\_\+counters\+\_\+t\+::delay}, \textbf{ futex\+\_\+counters}, \textbf{ futex\+\_\+names}, \textbf{ Thread\+::get\+Id()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+stderr\+\_\+bytes}, \textbf{ m\+\_\+stdout\+\_\+bytes}, and \textbf{ register\+Stats\+Metric()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=294pt]{classSyscallMdl_af20ebfe222f804ceac65a158fb7cd923_cgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!````~SyscallMdl@{$\sim$SyscallMdl}}
+\index{````~SyscallMdl@{$\sim$SyscallMdl}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{$\sim$SyscallMdl()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a848ededf5daecd76da70d1284e06573c} 
+Syscall\+Mdl\+::$\sim$\+Syscall\+Mdl (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 58} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ futex\+\_\+counters}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{SyscallMdl@{SyscallMdl}!formatSyscall@{formatSyscall}}
+\index{formatSyscall@{formatSyscall}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{formatSyscall()}
+{\footnotesize\ttfamily \label{classSyscallMdl_aed58672e187eef6cd47a3c9a85bd966f} 
+String Syscall\+Mdl\+::format\+Syscall (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 396} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg0}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg1}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg2}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg3}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg4}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg5}, \textbf{ itostr()}, \textbf{ m\+\_\+syscall\+\_\+args}, \textbf{ m\+\_\+syscall\+\_\+number}, and \textbf{ syscall\+\_\+string()}.
+
+
+
+Referenced by \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=282pt]{classSyscallMdl_aed58672e187eef6cd47a3c9a85bd966f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_aed58672e187eef6cd47a3c9a85bd966f_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!futexCount@{futexCount}}
+\index{futexCount@{futexCount}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{futexCount()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a6ca65cb54c6bc1379c6bc0249d2c9fad} 
+void Syscall\+Mdl\+::futex\+Count (\begin{DoxyParamCaption}\item[{\textbf{ uint32\+\_\+t}}]{function}{, }\item[{\textbf{ Subsecond\+Time}}]{delay}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 351} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Syscall\+Mdl\+::futex\+\_\+counters\+\_\+t\+::count}, \textbf{ Syscall\+Mdl\+::futex\+\_\+counters\+\_\+t\+::delay}, and \textbf{ futex\+\_\+counters}.
+
+
+
+Referenced by \textbf{ handle\+Futex\+Call()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a6ca65cb54c6bc1379c6bc0249d2c9fad_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!getCurrentSyscallArguments@{getCurrentSyscallArguments}}
+\index{getCurrentSyscallArguments@{getCurrentSyscallArguments}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{getCurrentSyscallArguments()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a93e472eed4c8a922315a2da2be668bfa} 
+const \textbf{ syscall\+\_\+args\+\_\+t} Syscall\+Mdl\+::get\+Current\+Syscall\+Arguments (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+syscall\+\_\+args}.
+
+\index{SyscallMdl@{SyscallMdl}!getCurrentSyscallNumber@{getCurrentSyscallNumber}}
+\index{getCurrentSyscallNumber@{getCurrentSyscallNumber}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{getCurrentSyscallNumber()}
+{\footnotesize\ttfamily \label{classSyscallMdl_aeafeb877e8071c189517ba44692c5552} 
+\textbf{ Int\+Ptr} Syscall\+Mdl\+::get\+Current\+Syscall\+Number (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+syscall\+\_\+number}.
+
+
+
+Referenced by \textbf{ lite\+::syscall\+Exit\+Run\+Model()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_aeafeb877e8071c189517ba44692c5552_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!handleFutexCall@{handleFutexCall}}
+\index{handleFutexCall@{handleFutexCall}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{handleFutexCall()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a2bfedd9cb5cb6ff63e7a105296867415} 
+\textbf{ Int\+Ptr} Syscall\+Mdl\+::handle\+Futex\+Call (\begin{DoxyParamCaption}\item[{\textbf{ syscall\+\_\+args\+\_\+t} \&}]{args}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 357} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg0}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg1}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg2}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg3}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg4}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg5}, \textbf{ Sync\+Instruction\+::\+FUTEX}, \textbf{ FUTEX\+\_\+\+CMD\+\_\+\+MASK}, \textbf{ FUTEX\+\_\+\+PRIVATE\+\_\+\+FLAG}, \textbf{ futex\+Count()}, \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Thread\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+thread}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::op}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Thread\+::reschedule()}, \textbf{ Pthread\+Emu\+::\+STATE\+\_\+\+RUNNING}, \textbf{ Pthread\+Emu\+::\+STATE\+\_\+\+WAITING}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::timeout}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::uaddr}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::uaddr2}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::val}, \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::val2}, and \textbf{ Syscall\+Server\+::futex\+\_\+args\+\_\+t\+::val3}.
+
+
+
+Referenced by \textbf{ run\+Enter()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a2bfedd9cb5cb6ff63e7a105296867415_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a2bfedd9cb5cb6ff63e7a105296867415_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!inSyscall@{inSyscall}}
+\index{inSyscall@{inSyscall}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{inSyscall()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a25da9454aedea24e4ce900b66ea90f8f} 
+bool Syscall\+Mdl\+::in\+Syscall (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+in\+\_\+syscall}.
+
+
+
+Referenced by \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a25da9454aedea24e4ce900b66ea90f8f_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!isEmulated@{isEmulated}}
+\index{isEmulated@{isEmulated}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{isEmulated()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a012f5a19c702aeb4c5deca2c34bdc691} 
+bool Syscall\+Mdl\+::is\+Emulated (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+emulated}.
+
+
+
+Referenced by \textbf{ lite\+::syscall\+Enter\+Run\+Model()}, and \textbf{ lite\+::syscall\+Exit\+Run\+Model()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a012f5a19c702aeb4c5deca2c34bdc691_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!runEnter@{runEnter}}
+\index{runEnter@{runEnter}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{runEnter()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a892a03b16a5b4b17c8a9e6bec736c004} 
+bool Syscall\+Mdl\+::run\+Enter (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{syscall\+\_\+number}{, }\item[{\textbf{ syscall\+\_\+args\+\_\+t} \&}]{args}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 63} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg0}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg1}, \textbf{ Syscall\+Mdl\+::syscall\+\_\+args\+\_\+t\+::arg2}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Enter\+::args}, \textbf{ CLOCK\+\_\+\+MONOTONIC\+\_\+\+COARSE}, \textbf{ CLOCK\+\_\+\+MONOTONIC\+\_\+\+RAW}, \textbf{ CLOG}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Enter\+::core\+\_\+id}, \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Thread\+::get\+Id()}, \textbf{ Subsecond\+Time\+::get\+NS()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ handle\+Futex\+Call()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+SYSCALL\+\_\+\+ENTER}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+emulated}, \textbf{ m\+\_\+in\+\_\+syscall}, \textbf{ m\+\_\+ret\+\_\+val}, \textbf{ m\+\_\+stalled}, \textbf{ m\+\_\+stderr\+\_\+bytes}, \textbf{ m\+\_\+stdout\+\_\+bytes}, \textbf{ m\+\_\+syscall\+\_\+args}, \textbf{ m\+\_\+syscall\+\_\+number}, \textbf{ m\+\_\+thread}, \textbf{ Core\+::\+NONE}, \textbf{ Subsecond\+Time\+::\+NS()}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Core\+::\+READ}, \textbf{ Thread\+::reschedule()}, \textbf{ Subsecond\+Time\+::\+SEC()}, \textbf{ Sync\+Instruction\+::\+SLEEP}, \textbf{ Thread\+Manager\+::\+STALL\+\_\+\+PAUSE}, \textbf{ Thread\+Manager\+::\+STALL\+\_\+\+SYSCALL}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Enter\+::syscall\+\_\+number}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Enter\+::thread\+\_\+id}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Enter\+::time}, \textbf{ Sync\+Instruction\+::\+UNSCHEDULED}, and \textbf{ Core\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ lite\+::handle\+Syscall()}, and \textbf{ Trace\+Thread\+::handle\+Syscall\+Func()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a892a03b16a5b4b17c8a9e6bec736c004_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a892a03b16a5b4b17c8a9e6bec736c004_icgraph}
+\end{center}
+\end{figure}
+\index{SyscallMdl@{SyscallMdl}!runExit@{runExit}}
+\index{runExit@{runExit}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{runExit()}
+{\footnotesize\ttfamily \label{classSyscallMdl_a22fb3775478fe86dcfc86babd70cb32e} 
+\textbf{ Int\+Ptr} Syscall\+Mdl\+::run\+Exit (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{old\+\_\+return}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 304} of file \textbf{ syscall\+\_\+model.\+cc}.
+
+
+
+References \textbf{ CLOG}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Exit\+::core\+\_\+id}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Exit\+::emulated}, \textbf{ Thread\+::get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Thread\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+SYSCALL\+\_\+\+EXIT}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+emulated}, \textbf{ m\+\_\+in\+\_\+syscall}, \textbf{ m\+\_\+ret\+\_\+val}, \textbf{ m\+\_\+stalled}, \textbf{ m\+\_\+syscall\+\_\+number}, \textbf{ m\+\_\+thread}, \textbf{ Sync\+Instruction\+::\+PAUSE}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Thread\+::reschedule()}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Exit\+::ret\+\_\+val}, \textbf{ Sync\+Instruction\+::\+SYSCALL}, \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Exit\+::thread\+\_\+id}, and \textbf{ Syscall\+Mdl\+::\+Hook\+Syscall\+Exit\+::time}.
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::handle\+Syscall\+Func()}, \textbf{ lite\+::syscall\+Exit\+Run\+Model()}, and \textbf{ Trace\+Thread\+::unblock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a22fb3775478fe86dcfc86babd70cb32e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyscallMdl_a22fb3775478fe86dcfc86babd70cb32e_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{SyscallMdl@{SyscallMdl}!futex\_counters@{futex\_counters}}
+\index{futex\_counters@{futex\_counters}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{futex\_counters}
+{\footnotesize\ttfamily \label{classSyscallMdl_a0e7326250633ccafab3d5e4e650d40ae} 
+struct \textbf{ Syscall\+Mdl\+::futex\+\_\+counters\+\_\+t} $\ast$ Syscall\+Mdl\+::futex\+\_\+counters\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Referenced by \textbf{ futex\+Count()}, \textbf{ Syscall\+Mdl()}, and \textbf{ $\sim$\+Syscall\+Mdl()}.
+
+\index{SyscallMdl@{SyscallMdl}!futex\_names@{futex\_names}}
+\index{futex\_names@{futex\_names}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{futex\_names}
+{\footnotesize\ttfamily \label{classSyscallMdl_acb10f68d6bbe00bb64f476e63532ed2e} 
+const char $\ast$ Syscall\+Mdl\+::futex\+\_\+names\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}FUTEX\_WAIT"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAKE"{}},\ \textcolor{stringliteral}{"{}FUTEX\_FD"{}},\ \textcolor{stringliteral}{"{}FUTEX\_REQUEUE"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}FUTEX\_CMP\_REQUEUE"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAKE\_OP"{}},\ \textcolor{stringliteral}{"{}FUTEX\_LOCK\_PI"{}},\ \textcolor{stringliteral}{"{}FUTEX\_UNLOCK\_PI"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}FUTEX\_TRYLOCK\_PI"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAIT\_BITSET"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAKE\_BITSET"{}},\ \textcolor{stringliteral}{"{}FUTEX\_WAIT\_REQUEUE\_PI"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}FUTEX\_CMP\_REQUEUE\_PI"{}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 26} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ Syscall\+Mdl()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_emulated@{m\_emulated}}
+\index{m\_emulated@{m\_emulated}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_emulated}
+{\footnotesize\ttfamily \label{classSyscallMdl_abd26faed972fa171ba8c900bd271c146} 
+bool Syscall\+Mdl\+::m\+\_\+emulated\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 64} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ is\+Emulated()}, \textbf{ run\+Enter()}, and \textbf{ run\+Exit()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_in\_syscall@{m\_in\_syscall}}
+\index{m\_in\_syscall@{m\_in\_syscall}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_in\_syscall}
+{\footnotesize\ttfamily \label{classSyscallMdl_a6f0b0adb11b417efe6b03bc424125a7f} 
+bool Syscall\+Mdl\+::m\+\_\+in\+\_\+syscall\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 67} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ in\+Syscall()}, \textbf{ run\+Enter()}, and \textbf{ run\+Exit()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_ret\_val@{m\_ret\_val}}
+\index{m\_ret\_val@{m\_ret\_val}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_ret\_val}
+{\footnotesize\ttfamily \label{classSyscallMdl_ac3724176f0f360295b0b3474ecf384a8} 
+\textbf{ Int\+Ptr} Syscall\+Mdl\+::m\+\_\+ret\+\_\+val\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 66} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ run\+Enter()}, and \textbf{ run\+Exit()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_stalled@{m\_stalled}}
+\index{m\_stalled@{m\_stalled}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_stalled}
+{\footnotesize\ttfamily \label{classSyscallMdl_ac2f19875432c9b75100c97b19b468494} 
+bool Syscall\+Mdl\+::m\+\_\+stalled\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ run\+Enter()}, and \textbf{ run\+Exit()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_stderr\_bytes@{m\_stderr\_bytes}}
+\index{m\_stderr\_bytes@{m\_stderr\_bytes}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_stderr\_bytes}
+{\footnotesize\ttfamily \label{classSyscallMdl_a6de4625202ae91f6c1d56ccc725d9a1e} 
+\textbf{ UInt64} Syscall\+Mdl\+::m\+\_\+stderr\+\_\+bytes\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 71} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ run\+Enter()}, and \textbf{ Syscall\+Mdl()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_stdout\_bytes@{m\_stdout\_bytes}}
+\index{m\_stdout\_bytes@{m\_stdout\_bytes}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_stdout\_bytes}
+{\footnotesize\ttfamily \label{classSyscallMdl_ade422432b8741b8cb7f912491749750d} 
+\textbf{ UInt64} Syscall\+Mdl\+::m\+\_\+stdout\+\_\+bytes\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ run\+Enter()}, and \textbf{ Syscall\+Mdl()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_syscall\_args@{m\_syscall\_args}}
+\index{m\_syscall\_args@{m\_syscall\_args}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_syscall\_args}
+{\footnotesize\ttfamily \label{classSyscallMdl_a062cfd1abd5c78ef4305c4b5a96b6774} 
+\textbf{ syscall\+\_\+args\+\_\+t} Syscall\+Mdl\+::m\+\_\+syscall\+\_\+args\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ format\+Syscall()}, \textbf{ get\+Current\+Syscall\+Arguments()}, and \textbf{ run\+Enter()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_syscall\_number@{m\_syscall\_number}}
+\index{m\_syscall\_number@{m\_syscall\_number}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_syscall\_number}
+{\footnotesize\ttfamily \label{classSyscallMdl_a73719d9425d64d31b4f90e4e46f2dcf4} 
+\textbf{ Int\+Ptr} Syscall\+Mdl\+::m\+\_\+syscall\+\_\+number\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 63} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ format\+Syscall()}, \textbf{ get\+Current\+Syscall\+Number()}, \textbf{ run\+Enter()}, and \textbf{ run\+Exit()}.
+
+\index{SyscallMdl@{SyscallMdl}!m\_thread@{m\_thread}}
+\index{m\_thread@{m\_thread}!SyscallMdl@{SyscallMdl}}
+\doxysubsubsection{m\_thread}
+{\footnotesize\ttfamily \label{classSyscallMdl_a0db4e14ea6dadf92c6802bbb368cc086} 
+\textbf{ Thread}$\ast$ Syscall\+Mdl\+::m\+\_\+thread\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ syscall\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Futex\+Call()}, \textbf{ run\+Enter()}, and \textbf{ run\+Exit()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/\textbf{ syscall\+\_\+model.\+h}\item 
+common/core/\textbf{ syscall\+\_\+model.\+cc}\end{DoxyCompactItemize}

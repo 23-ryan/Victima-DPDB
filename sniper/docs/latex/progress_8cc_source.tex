@@ -1,0 +1,79 @@
+\doxysection{progress.\+cc}
+\label{progress_8cc_source}\index{common/misc/progress.cc@{common/misc/progress.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}progress.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}trace\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ Progress::Progress()}
+\DoxyCodeLine{00010\ \ \ \ :\ m\_enabled(false)}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_t\_last(0)}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_manual(false)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_manual\_value(0.f)}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ String\ filename\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}progress\_trace/filename"{}});}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{if}\ (!filename.empty())}
+\DoxyCodeLine{00018\ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ m\_fp\ =\ fopen(filename.c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ m\_enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PERIODIC\_INS,\ \_\_record,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ Progress::\string~Progress(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{if}\ (m\_enabled)}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ fclose(m\_fp);}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}\ Progress::setProgress(\textcolor{keywordtype}{float}\ progress)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ m\_manual\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00037\ \ \ \ m\_manual\_value\ =\ progress;}
+\DoxyCodeLine{00038\ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keywordtype}{void}\ Progress::record(UInt64\ simtime)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (m\_t\_last\ +\ m\_interval\ <\ time(NULL))}
+\DoxyCodeLine{00043\ \ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ m\_t\_last\ =\ time(NULL);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ UInt64\ expect\ =\ 0;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{comment}{//\ Always\ return\ global\ instruction\ count,\ so\ MIPS\ number\ as\ reported\ by\ job\ infrastructure\ is\ correct}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ UInt64\ progress\ =\ MagicServer::getGlobalInstructionCount();}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_manual\ \&\&\ m\_manual\_value\ >\ 0)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Re-\/compute\ expected\ completion\ based\ on\ current\ progress}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ expect\ =\ progress\ /\ m\_manual\_value;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getTraceManager())}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ UInt64\ \_expect\ =\ Sim()-\/>getTraceManager()-\/>getProgressExpect();}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ UInt64\ \_progress\ =\ Sim()-\/>getTraceManager()-\/>getProgressValue();}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Re-\/compute\ expected\ completion\ based\ on\ file-\/pointer\ based\ \%\ to\ completion,}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ the\ progress\ value\ (instruction\ count)\ we'll\ return}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_progress\ >\ 1)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ expect\ =\ progress\ *\ \_expect\ /\ \_progress;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ expect\ =\ 100000\ *\ progress;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ rewind(m\_fp);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ fprintf(m\_fp,\ \textcolor{stringliteral}{"{}\%u\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRId64,\ \textcolor{keywordtype}{unsigned}(time(NULL)),\ progress,\ expect);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ fflush(m\_fp);}
+\DoxyCodeLine{00072\ \ \ \ \}}
+\DoxyCodeLine{00073\ \}}
+
+\end{DoxyCode}

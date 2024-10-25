@@ -1,0 +1,161 @@
+\doxysection{tlb.\+h}
+\label{tlb_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/tlb.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/tlb.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ TLB\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ TLB\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <util.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}utopia.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}hash\_map\_set.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \textcolor{keyword}{class\ }TLB}
+\DoxyCodeLine{00017\ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{static}\ \ UInt32\ SIM\_PAGE\_SHIFT;\ \textcolor{comment}{//\ 4KB}}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{static}\ \ IntPtr\ SIM\_PAGE\_SIZE;}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{static}\ \ IntPtr\ SIM\_PAGE\_MASK;}
+\DoxyCodeLine{00022\ \ \ \ \ \textcolor{keyword}{static}\ ParametricDramDirectoryMSI::MemoryManager*\ m\_manager;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ static\ bool\ tlb\_caching;}}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keywordtype}{bool}\ tlb\_caching\_l1\_cache;}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{bool}\ tlb\_caching\_l2\_cache;}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{bool}\ victima\_enabled;}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{bool}\ victimize\_on\_ptw;}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{bool}\ potm\_enabled;}
+\DoxyCodeLine{00030\ \ \ \ \ }
+\DoxyCodeLine{00031\ \ \ \ \ PageTableWalker\ *ptw;}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordtype}{bool}\ ptw\_enabled;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ UInt32\ m\_size;}
+\DoxyCodeLine{00036\ \ \ \ \ UInt32\ m\_associativity;}
+\DoxyCodeLine{00037\ \ \ \ \ UInt32\ m\_num\_entries;}
+\DoxyCodeLine{00038\ \ \ \ \ }
+\DoxyCodeLine{00039\ \ \ \ \ Cache\ m\_cache;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ UInt64\ m\_access,\ m\_miss,\ m\_eviction;}
+\DoxyCodeLine{00042\ \ \ \ \ UInt64\ l1\_tlb\_cache\_hit,\ l2\_tlb\_cache\_hit,\ nuca\_tlb\_cache\_hit,\ victima\_alloc\_on\_eviction,\ victima\_alloc\_on\_ptw;}
+\DoxyCodeLine{00043\ \ \ \ \ SubsecondTime\ total\_potm\_latency;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_translation\_enabled;}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{const}\ UInt64\ util\_update\_thr\ =\ 10000;}
+\DoxyCodeLine{00048\ \ \ \ \ UInt64\ m\_last\_util\_update\ =\ 0;}
+\DoxyCodeLine{00049\ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00050\ \ \ \ \ Utopia\ *m\_utopia;}
+\DoxyCodeLine{00051\ \ \ \ \ UTR\ *m\_utr\_4KB;}
+\DoxyCodeLine{00052\ \ \ \ \ UTR\ *m\_utr\_2MB;}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{bool}\ track\_L2TLBmiss;}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{bool}\ track\_Accesses;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordtype}{char}*\ software\_tlb;\ \textcolor{comment}{//POTM-\/related\ parameter}}
+\DoxyCodeLine{00060\ \ \ \ \ SubsecondTime\ final\_potm\_latency;\ \textcolor{comment}{//POTM-\/related\ parameter}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ TLB\ *m\_next\_level;}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{int}\ level;}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_dtlb;}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_itlb;}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_stlb;}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_nested;}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_potm;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ UInt64\ *tlb\_address\_access;}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{int}\ m\_tlb\_address\_saved\_cnt;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{struct\ }features\{}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ page\_size;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ dram\_accesses;}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_table\_walks;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ll\_pwc\_hit;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ l2\_tlb\_hit;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ l2\_tlb\_miss;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accesses;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ l1\_tlb\_hit;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ SubsecondTime\ ptw\_latency;}
+\DoxyCodeLine{00088\ \ \ \ \ \};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,struct\ features>\ tlb\_features;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ tlb\_features\ m\_page\_features;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{struct\ }pair\_hash}
+\DoxyCodeLine{00095\ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T1,\ \textcolor{keyword}{class}\ T2>}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ std::size\_t\ operator\ ()\ (\textcolor{keyword}{const}\ std::pair<T1,T2>\ \&p)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00098\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ h1\ =\ std::hash<T1>\{\}(p.first);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ h2\ =\ std::hash<T2>\{\}(p.second);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ h1\ \string^\ h2;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/\ \ @kanellok\ UTOPIA-\/related\ parameters\ -\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{bool}\ utopia\_enabled;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ std::unordered\_map<UInt32,\ UInt32>\ tlb\_pressure\_cnt;}
+\DoxyCodeLine{00114\ \ \ \ \ std::unordered\_map<UInt64,\ UInt64>\ pte\_pressure\_cnt;}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{enum}\ where\_t}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ L1\ =\ 0,}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ L2,}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ POTM,}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ L1\_CACHE,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ L2\_CACHE,}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ NUCA\_CACHE,}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ UTR\_HIT,}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ MISS}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ }
+\DoxyCodeLine{00133\ \ \ \ \ TLB(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ ShmemPerfModel*\ m\_shmem\_perf\_model,\ UInt32\ num\_entries,UInt32\ pagesize,\ UInt32\ associativity,\ TLB\ *next\_level,\ \textcolor{keywordtype}{bool}\ \_utopia\_enableds,\textcolor{keywordtype}{bool}\ track\_misses,\ \textcolor{keywordtype}{bool}\ track\_accesses,\ \textcolor{keywordtype}{int}*\ page\_size\_list,\ \textcolor{keywordtype}{int}\ page\_sizes,\ PageTableWalker*\ ptw);}
+\DoxyCodeLine{00134\ \ \ \ \ TLB::where\_t\ lookup(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ allocate\_on\_miss,\ \textcolor{keywordtype}{int}\ level\ ,\ \textcolor{keywordtype}{bool}\ model\_count,\ Core::lock\_signal\_t\ lock);}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{void}\ allocate(IntPtr\ address,\ SubsecondTime\ now,\textcolor{keywordtype}{int}\ level,\ Core::lock\_signal\_t\ locksss);}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{void}\ setMemManager(ParametricDramDirectoryMSI::MemoryManager*\ \_m\_manager)\{\ TLB::m\_manager\ =\ \_m\_manager;\}}
+\DoxyCodeLine{00137\ \ \ \ \ std::unordered\_map<IntPtr,UInt64>\ access\_per\_page;}
+\DoxyCodeLine{00138\ \ \ \ \ std::unordered\_map<IntPtr,UInt64>\ L2TLB\_miss\_per\_page;}
+\DoxyCodeLine{00139\ \ \ \ \ std::unordered\_map<IntPtr,UInt64>\ getVPNaccesses()\{\ \textcolor{keywordflow}{return}\ access\_per\_page;\ \};}
+\DoxyCodeLine{00140\ \ \ \ \ std::unordered\_map<IntPtr,UInt64>\ getL2TLBmisses()\{\ \textcolor{keywordflow}{return}\ L2TLB\_miss\_per\_page;\ \};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{void}\ setPOTMDataStructure(\textcolor{keywordtype}{int}\ num\_entries)\{\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[VM]\ POTM:\ Setting\ up\ POTM\ data\ structure\ as\ L3\ TLB\ with\ "{}}\ <<\ num\_entries\ <<\ \textcolor{stringliteral}{"{}\ entries"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ software\_tlb\ =\ (\textcolor{keywordtype}{char}*)\ malloc(num\_entries*(8+8));\ \textcolor{comment}{//\ 8\ bytes\ for\ VPN\ and\ 8\ bytes\ for\ PPN}}
+\DoxyCodeLine{00146\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ SubsecondTime\ getPOTMlookupTime()\{\ \textcolor{keywordflow}{return}\ final\_potm\_latency;\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ ADDRESS\_REQUEST\_VEC\_MAX\ =\ 10000000;}
+\DoxyCodeLine{00151\ \ }
+\DoxyCodeLine{00152\ \ \ \};}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ TLB\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,116 @@
+\doxysection{oneipc\+\_\+performance\+\_\+model.\+cc}
+\label{oneipc__performance__model_8cc_source}\index{common/performance\_model/performance\_models/oneipc\_performance\_model.cc@{common/performance\_model/performance\_models/oneipc\_performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}oneipc\_performance\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}dynamic\_instruction.h"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{using\ }std::endl;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ OneIPCPerformanceModel::OneIPCPerformanceModel(Core\ *core)}
+\DoxyCodeLine{00016\ \ \ \ \ :\ PerformanceModel(core)}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{/*\ Maximum\ latency\ which\ is\ assumed\ to\ be\ completely\ overlapped.\ L1-\/D\ hit\ latency\ should\ be\ a\ good\ value.\ */}}
+\DoxyCodeLine{00019\ \ \ \ m\_latency\_cutoff\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/oneipc/latency\_cutoff"{}},\ core-\/>getId());}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}oneipc\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBase"{}},\ \&m\_cpiBase);}
+\DoxyCodeLine{00022\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}oneipc\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBranchPredictor"{}},\ \&m\_cpiBranchPredictor);}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ m\_cpiDataCache.resize(HitWhere::NUM\_HITWHERES,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00026\ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpiDataCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}oneipc\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiDataCache[h]));}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \}}
+\DoxyCodeLine{00033\ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ OneIPCPerformanceModel::\string~OneIPCPerformanceModel()}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keywordtype}{void}\ OneIPCPerformanceModel::handleInstruction(DynamicInstruction\ *dynins)}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{comment}{//\ compute\ cost}}
+\DoxyCodeLine{00042\ \ \ \ ComponentTime\ cost\ =\ m\_elapsed\_time.getLatencyGenerator();}
+\DoxyCodeLine{00043\ \ \ \ SubsecondTime\ *cpiComponent\ =\ NULL;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ dynins-\/>accessMemory(getCore());}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keyword}{const}\ OperandList\ \&ops\ =\ dynins-\/>instruction-\/>getOperands();}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ memidx\ =\ 0;}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ ops.size();\ i++)}
+\DoxyCodeLine{00050\ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Operand\ \&o\ =\ ops[i];}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (o.m\_type\ ==\ Operand::MEMORY)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(dynins-\/>num\_memory\ >\ memidx,\ \textcolor{stringliteral}{"{}Did\ not\ get\ enough\ memory\_info\ objects"{}});}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ DynamicInstruction::MemoryInfo\ \&info\ =\ dynins-\/>memory\_info[memidx++];}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(info.dir\ ==\ o.m\_direction,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Expected\ memory\ \%d\ info,\ got:\ \%d."{}},\ o.m\_direction,\ info.dir);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (o.m\_direction\ ==\ Operand::READ)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (info.latency}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ >\ ComponentLatency(getCore()-\/>getDvfsDomain(),\ m\_latency\_cutoff).getLatency())}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cost.addLatency(info.latency);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ignore\ address}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ignore\ write\ latency}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ignore\ address}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cpiComponent\ ==\ NULL)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ cpiComponent\ =\ \&m\_cpiDataCache[info.hit\_where];}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ SubsecondTime\ instruction\_cost\ =\ dynins-\/>instruction-\/>getCost(getCore());}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{if}\ (isModeled(dynins-\/>instruction))}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ cost.addLatency(instruction\_cost);}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ cost.addLatency(ComponentLatency(getCore()-\/>getDvfsDomain(),\ 1).getLatency());}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ LOG\_ASSERT\_ERROR((dynins-\/>instruction-\/>getType()\ !=\ INST\_SYNC\ \&\&\ dynins-\/>instruction-\/>getType()\ !=\ INST\_RECV),\ \textcolor{stringliteral}{"{}Unexpected\ non-\/idle\ instruction"{}});}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \textcolor{keywordflow}{if}\ (cpiComponent\ ==\ NULL)}
+\DoxyCodeLine{00088\ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dynins-\/>instruction-\/>getType()\ ==\ INST\_BRANCH)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ cpiComponent\ =\ \&m\_cpiBranchPredictor;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ cpiComponent\ =\ \&m\_cpiBase;}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \textcolor{comment}{//\ update\ counters}}
+\DoxyCodeLine{00096\ \ \ \ m\_instruction\_count++;}
+\DoxyCodeLine{00097\ \ \ \ m\_elapsed\_time.addLatency(cost);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ LOG\_ASSERT\_ERROR(cpiComponent\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ cpiComponent\ to\ be\ set"{}});}
+\DoxyCodeLine{00100\ \ \ \ *cpiComponent\ +=\ cost.getElapsedTime();}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keywordtype}{bool}\ OneIPCPerformanceModel::isModeled(Instruction\ \textcolor{keyword}{const}*\ instruction)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00104\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{comment}{//\ Arithmetic\ instructions\ etc.,\ are\ all\ "{}not\ modeled"{}\ ==\ unit\ cycle\ latency}}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{comment}{//\ Dynamic\ instructions\ (SYNC,\ MEMACCESS,\ etc.):\ normal\ latency}}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{comment}{//\ Mispredicted\ branches:\ penalty\ as\ defined\ by\ BranchPredictor::getMispredictPenalty()}}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{comment}{//\ TODO:\ Shouldn't\ we\ handle\ String\ instructions\ as\ well?}}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{return}\ instruction-\/>isPseudo()\ ||\ instruction-\/>getType()\ ==\ INST\_BRANCH;}
+\DoxyCodeLine{00110\ \}}
+
+\end{DoxyCode}

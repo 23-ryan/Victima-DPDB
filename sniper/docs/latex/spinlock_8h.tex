@@ -1,0 +1,221 @@
+\doxysection{common/misc/spinlock.h File Reference}
+\label{spinlock_8h}\index{common/misc/spinlock.h@{common/misc/spinlock.h}}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ raw\+\_\+spinlock\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ \+\_\+\+\_\+\+RAW\+\_\+\+SPIN\+\_\+\+LOCK\+\_\+\+UNLOCKED}
+\item 
+\#define \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+is\+\_\+locked}(x)
+\item 
+\#define \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+string}
+\item 
+\#define \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+string\+\_\+flags}
+\item 
+\#define \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock\+\_\+string}
+\item 
+\#define \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock\+\_\+wait}(lock)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock} (\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$lock)
+\item 
+static void \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+flags} (\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$lock, unsigned long flags)
+\item 
+static int \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+trylock} (\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$lock)
+\item 
+static void \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock} (\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$lock)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_is\_locked@{\_\_raw\_spin\_is\_locked}}
+\index{\_\_raw\_spin\_is\_locked@{\_\_raw\_spin\_is\_locked}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_is\_locked}
+{\footnotesize\ttfamily \label{spinlock_8h_a901184a57c37d4be8e3c1853625c5cd0} 
+\#define \+\_\+\+\_\+raw\+\_\+spin\+\_\+is\+\_\+locked(\begin{DoxyParamCaption}\item[{}]{x}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (*(\textcolor{keyword}{volatile}\ \textcolor{keywordtype}{signed}\ \textcolor{keywordtype}{char}\ *)(\&(x)-\/>slock)\ <=\ 0)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 10} of file \textbf{ spinlock.\+h}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_lock\_string@{\_\_raw\_spin\_lock\_string}}
+\index{\_\_raw\_spin\_lock\_string@{\_\_raw\_spin\_lock\_string}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_lock\_string}
+{\footnotesize\ttfamily \label{spinlock_8h_a184853ebb7ae97ea0f6cfa3a25c1a7f8} 
+\#define \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+string}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)n1:\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}lock\ ;\ decb\ \%0\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jns\ 3f\(\backslash\)n"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}2:\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}rep;nop\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cmpb\ \$0,\%0\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jle\ 2b\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jmp\ 1b\(\backslash\)n"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}3:\(\backslash\)n\(\backslash\)t"{}}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 13} of file \textbf{ spinlock.\+h}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_lock\_string\_flags@{\_\_raw\_spin\_lock\_string\_flags}}
+\index{\_\_raw\_spin\_lock\_string\_flags@{\_\_raw\_spin\_lock\_string\_flags}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_lock\_string\_flags}
+{\footnotesize\ttfamily \label{spinlock_8h_ab97906831bf0f554a7c293d0f7812eb6} 
+\#define \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+string\+\_\+flags}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\(\backslash\)n1:\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}lock\ ;\ decb\ \%0\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jns\ 5f\(\backslash\)n"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}2:\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}testl\ \$0x200,\ \%1\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jz\ 4f\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}sti\(\backslash\)n"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}3:\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}rep;nop\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cmpb\ \$0,\ \%0\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jle\ 3b\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cli\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jmp\ 1b\(\backslash\)n"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}4:\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}rep;nop\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cmpb\ \$0,\ \%0\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jg\ 1b\(\backslash\)n\(\backslash\)t"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jmp\ 4b\(\backslash\)n"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}5:\(\backslash\)n\(\backslash\)t"{}}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 29} of file \textbf{ spinlock.\+h}.
+
+
+
+Referenced by \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+trylock()}.
+
+\index{spinlock.h@{spinlock.h}!\_\_RAW\_SPIN\_LOCK\_UNLOCKED@{\_\_RAW\_SPIN\_LOCK\_UNLOCKED}}
+\index{\_\_RAW\_SPIN\_LOCK\_UNLOCKED@{\_\_RAW\_SPIN\_LOCK\_UNLOCKED}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_RAW\_SPIN\_LOCK\_UNLOCKED}
+{\footnotesize\ttfamily \label{spinlock_8h_a5f63f4aa79a32a7769a531f856754cd7} 
+\#define \+\_\+\+\_\+\+RAW\+\_\+\+SPIN\+\_\+\+LOCK\+\_\+\+UNLOCKED}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{\ 1\ \}\textcolor{comment}{/*}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ Your\ basic\ SMP\ spinlocks,\ allowing\ only\ a\ single\ CPU\ anywhere}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ Simple\ spin\ lock\ operations.\ \ There\ are\ two\ variants,\ one\ clears\ IRQ's}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ on\ the\ local\ processor,\ one\ does\ not.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ We\ make\ no\ fairness\ assumptions.\ They\ have\ a\ cost.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ (the\ type\ definitions\ are\ in\ asm/spinlock\_types.h)}}
+\DoxyCodeLine{\textcolor{comment}{\ */}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 8} of file \textbf{ spinlock.\+h}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_unlock\_string@{\_\_raw\_spin\_unlock\_string}}
+\index{\_\_raw\_spin\_unlock\_string@{\_\_raw\_spin\_unlock\_string}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_unlock\_string}
+{\footnotesize\ttfamily \label{spinlock_8h_a5c8f2ee3665e422195751bb4adb1b37c} 
+\#define \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock\+\_\+string}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}movb\ \$1,\%0"{}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\textcolor{stringliteral}{"{}+m"{}}\ (lock-\/>slock)\ :\ :\ \textcolor{stringliteral}{"{}memory"{}}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 86} of file \textbf{ spinlock.\+h}.
+
+
+
+Referenced by \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock()}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_unlock\_wait@{\_\_raw\_spin\_unlock\_wait}}
+\index{\_\_raw\_spin\_unlock\_wait@{\_\_raw\_spin\_unlock\_wait}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_unlock\_wait}
+{\footnotesize\ttfamily \label{spinlock_8h_aa120c4ca84078c33a3890f8420a09395} 
+\#define \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock\+\_\+wait(\begin{DoxyParamCaption}\item[{}]{lock}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{\ \textcolor{keywordflow}{while}\ (\_\_raw\_spin\_is\_locked(lock))\ cpu\_relax();\ \}\ \textcolor{keywordflow}{while}\ (0)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 116} of file \textbf{ spinlock.\+h}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_lock@{\_\_raw\_spin\_lock}}
+\index{\_\_raw\_spin\_lock@{\_\_raw\_spin\_lock}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_lock()}
+{\footnotesize\ttfamily \label{spinlock_8h_a4129f66a11d2b1c2765f33dcc0d7af52} 
+static void \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock (\begin{DoxyParamCaption}\item[{\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$}]{lock}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ spinlock.\+h}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_lock\_flags@{\_\_raw\_spin\_lock\_flags}}
+\index{\_\_raw\_spin\_lock\_flags@{\_\_raw\_spin\_lock\_flags}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_lock\_flags()}
+{\footnotesize\ttfamily \label{spinlock_8h_a5944df6df8860a10d99898342c472066} 
+static void \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+flags (\begin{DoxyParamCaption}\item[{\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$}]{lock}{, }\item[{unsigned long}]{flags}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 61} of file \textbf{ spinlock.\+h}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_trylock@{\_\_raw\_spin\_trylock}}
+\index{\_\_raw\_spin\_trylock@{\_\_raw\_spin\_trylock}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_trylock()}
+{\footnotesize\ttfamily \label{spinlock_8h_ad289201cb98e80987b87be3ffa312297} 
+static int \+\_\+\+\_\+raw\+\_\+spin\+\_\+trylock (\begin{DoxyParamCaption}\item[{\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$}]{lock}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 67} of file \textbf{ spinlock.\+h}.
+
+
+
+References \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+lock\+\_\+string\+\_\+flags}, and \textbf{ raw\+\_\+spinlock\+\_\+t\+::slock}.
+
+\index{spinlock.h@{spinlock.h}!\_\_raw\_spin\_unlock@{\_\_raw\_spin\_unlock}}
+\index{\_\_raw\_spin\_unlock@{\_\_raw\_spin\_unlock}!spinlock.h@{spinlock.h}}
+\doxysubsubsection{\_\_raw\_spin\_unlock()}
+{\footnotesize\ttfamily \label{spinlock_8h_ad98a51a6cc7cc4a3a58f63cd4238589b} 
+static void \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock (\begin{DoxyParamCaption}\item[{\textbf{ raw\+\_\+spinlock\+\_\+t} $\ast$}]{lock}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 91} of file \textbf{ spinlock.\+h}.
+
+
+
+References \textbf{ \+\_\+\+\_\+raw\+\_\+spin\+\_\+unlock\+\_\+string}.
+

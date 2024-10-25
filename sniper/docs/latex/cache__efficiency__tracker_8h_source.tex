@@ -1,0 +1,37 @@
+\doxysection{cache\+\_\+efficiency\+\_\+tracker.\+h}
+\label{cache__efficiency__tracker_8h_source}\index{common/system/cache\_efficiency\_tracker.h@{common/system/cache\_efficiency\_tracker.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_CACHE\_EFFICIENCY\_TRACKER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_CACHE\_EFFICIENCY\_TRACKER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache\_block\_info.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}hit\_where.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{namespace\ }CacheEfficiencyTracker}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{keyword}{typedef}\ UInt64\ (*CallbackGetOwner)(UInt64\ user,\ core\_id\_t\ core\_id,\ UInt64\ address);}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{typedef}\ void\ (*CallbackNotifyAccess)(UInt64\ user,\ UInt64\ owner,\ Core::mem\_op\_t\ mem\_op\_type,\ HitWhere::where\_t\ hit\_where);}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keyword}{typedef}\ void\ (*CallbackNotifyEvict)(UInt64\ user,\ \textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total);}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{struct\ }Callbacks}
+\DoxyCodeLine{00015\ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ CacheEfficiencyTracker::CallbackGetOwner\ get\_owner\_func;}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ CacheEfficiencyTracker::CallbackNotifyAccess\ notify\_access\_func;}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ CacheEfficiencyTracker::CallbackNotifyEvict\ notify\_evict\_func;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ UInt64\ user\_arg;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \ \ Callbacks()\ :\ get\_owner\_func(NULL),\ notify\_access\_func(NULL),\ notify\_evict\_func(NULL),\ user\_arg(0)\ \{\}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ UInt64\ call\_get\_owner(core\_id\_t\ core\_id,\ UInt64\ address)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ get\_owner\_func(user\_arg,\ core\_id,\ address);\ \}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ call\_notify\_access(UInt64\ owner,\ Core::mem\_op\_t\ mem\_op\_type,\ HitWhere::where\_t\ hit\_where)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{\ \ \ \ \ \ }\{\ notify\_access\_func(user\_arg,\ owner,\ mem\_op\_type,\ hit\_where);\ \}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ call\_notify\_evict(\textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{\ \ \ \ \ \ }\{\ notify\_evict\_func(user\_arg,\ on\_roi\_end,\ owner,\ evictor,\ bits\_used,\ bits\_total);\ \}}
+\DoxyCodeLine{00028\ \ \ \ \};}
+\DoxyCodeLine{00029\ \};}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_CACHE\_EFFICIENCY\_TRACKER\_H}}
+
+\end{DoxyCode}

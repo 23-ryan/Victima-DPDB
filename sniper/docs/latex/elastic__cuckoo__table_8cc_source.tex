@@ -1,0 +1,678 @@
+\doxysection{elastic\+\_\+cuckoo\+\_\+table.\+cc}
+\label{elastic__cuckoo__table_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/elastic\_cuckoo\_table.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/elastic\_cuckoo\_table.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ Author:\ Dimitrios\ Skarlatos}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Contact:\ skarlat2@illinois.edu\ -\/\ http://skarlat2.web.engr.illinois.edu/}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}elastic\_cuckoo\_table.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\#define\ DEBUG\ 1}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#define\ HASH\_SIZE\ 8}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#define\ MAX\_RETRIES\ 64}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#define\ EXTEND\ 1.25}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ uint64\_t\ hash\_size(uint64\_t\ size);}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keywordtype}{void}\ create(uint32\_t\ d,\ uint64\_t\ size,\ cuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *hash\_func)\ \{}
+\DoxyCodeLine{00022\ \ \ \textcolor{keywordtype}{size\_t}\ i,\ j;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ hashtable-\/>d\ =\ d;}
+\DoxyCodeLine{00025\ \ \ strcpy(hashtable-\/>hash\_func,\ hash\_func);}
+\DoxyCodeLine{00026\ \ \ \textcolor{keywordflow}{if}\ (strcmp(hashtable-\/>hash\_func,\ \textcolor{stringliteral}{"{}blake2"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00027\ \ \ \ \ hashtable-\/>hash\_size\ =\ hash\_size(size);}
+\DoxyCodeLine{00028\ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (strcmp(hashtable-\/>hash\_func,\ \textcolor{stringliteral}{"{}city"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ hashtable-\/>hash\_size\ =\ log2(size);}
+\DoxyCodeLine{00030\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ assert(1\ ==\ 0\ \&\&\ \textcolor{stringliteral}{"{}Unknown\ hash\ function\(\backslash\)n"{}});}
+\DoxyCodeLine{00032\ \ \ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ hashtable-\/>size\ =\ size;}
+\DoxyCodeLine{00035\ \ \ hashtable-\/>keys\ =\ (uint64\_t\ *)malloc(d\ *\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00036\ \ \ hashtable-\/>num\_elems\ =\ (uint64\_t\ *)malloc(d\ *\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00037\ \ \ hashtable-\/>rehashed\ =\ (uint64\_t\ *)malloc(d\ *\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00038\ \ \ hashtable-\/>util\ =\ (\textcolor{keywordtype}{float}\ *)malloc(d\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}));}
+\DoxyCodeLine{00039\ \ \ hashtable-\/>occupancy\ =\ 0.0;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ printf(\textcolor{stringliteral}{"{}Creating\ a\ \%u-\/ary\ Cuckoo\ hashtable\(\backslash\)n"{}},\ hashtable-\/>d);}
+\DoxyCodeLine{00043\ \ \ printf(\textcolor{stringliteral}{"{}Hash\ function\ \%s\(\backslash\)n"{}},\ hashtable-\/>hash\_func);}
+\DoxyCodeLine{00044\ \ \ printf(\textcolor{stringliteral}{"{}Total\ number\ of\ slots\ \%lu\(\backslash\)n"{}},\ hashtable-\/>size\ *\ d);}
+\DoxyCodeLine{00045\ \ \ printf(\textcolor{stringliteral}{"{}Hash-\/size\ \%lu\(\backslash\)n"{}},\ hashtable-\/>hash\_size);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ d;\ i++)\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ hashtable-\/>num\_elems[i]\ =\ 0;}
+\DoxyCodeLine{00050\ \ \ \ \ hashtable-\/>rehashed[i]\ =\ 0;}
+\DoxyCodeLine{00051\ \ \ \ \ hashtable-\/>util[i]\ =\ 0.0;}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ 10;\ j++)\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \_rdrand64\_step((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ *)\&hashtable-\/>keys[i]);}
+\DoxyCodeLine{00054\ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
+\DoxyCodeLine{00056\ \ \ \ \ printf(\textcolor{stringliteral}{"{}Key[\%lu]\ =\ \%lu\(\backslash\)n"{}},\ i,\ hashtable-\/>keys[i]);}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00058\ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ hashtable-\/>hashtable\ =\ (elem\_t\ **)malloc(d\ *\ \textcolor{keyword}{sizeof}(elem\_t\ *));}
+\DoxyCodeLine{00061\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ hashtable-\/>d;\ i++)\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ hashtable-\/>hashtable[i]\ =}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ (elem\_t\ *)malloc(hashtable-\/>size\ *\ \textcolor{keyword}{sizeof}(elem\_t));}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ hashtable-\/>size;\ j++)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ hashtable-\/>hashtable[i][j].valid\ =\ 0;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ hashtable-\/>hashtable[i][j].value\ =\ i;}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \}}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keywordtype}{void}\ create\_elastic(uint32\_t\ d,\ uint64\_t\ size,\ elasticCuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *hash\_func,\ \textcolor{keywordtype}{float}\ rehash\_threshold,\ uint32\_t\ scale,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ swaps,\ uint8\_t\ priority)\ \{}
+\DoxyCodeLine{00074\ \ \ hashtable-\/>current\ =\ (cuckooTable\_t\ *)malloc(\textcolor{keyword}{sizeof}(cuckooTable\_t));}
+\DoxyCodeLine{00075\ \ \ hashtable-\/>migrate\ =\ NULL;}
+\DoxyCodeLine{00076\ \ \ hashtable-\/>rehash\_threshold\ =\ rehash\_threshold;}
+\DoxyCodeLine{00077\ \ \ hashtable-\/>rehashing\ =\ 0;}
+\DoxyCodeLine{00078\ \ \ hashtable-\/>d\ =\ d;}
+\DoxyCodeLine{00079\ \ \ hashtable-\/>curr\_size\ =\ size;}
+\DoxyCodeLine{00080\ \ \ \textcolor{keywordflow}{if}\ (strcmp(hash\_func,\ \textcolor{stringliteral}{"{}blake2"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ hashtable-\/>scale\ =\ 256;}
+\DoxyCodeLine{00082\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ hashtable-\/>scale\ =\ scale;}
+\DoxyCodeLine{00084\ \ \ \}}
+\DoxyCodeLine{00085\ \ \ hashtable-\/>swaps\ =\ swaps;}
+\DoxyCodeLine{00086\ \ \ hashtable-\/>priority\ =\ priority;}
+\DoxyCodeLine{00087\ \ \ hashtable-\/>rehash\_probes\ =\ 0;}
+\DoxyCodeLine{00088\ \ \ hashtable-\/>rehash\_elems\ =\ 0;}
+\DoxyCodeLine{00089\ \ \ strcpy(hashtable-\/>hash\_func,\ hash\_func);}
+\DoxyCodeLine{00090\ \ \ create(d,\ size,\ hashtable-\/>current,\ hash\_func);}
+\DoxyCodeLine{00091\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ uint64\_t\ rehash(elasticCuckooTable\_t\ *hashtable,\ uint64\_t\ swaps)\ \{}
+\DoxyCodeLine{00094\ \ \ uint64\_t\ i\ =\ 0,\ j\ =\ 0,\ retries\ =\ 0;}
+\DoxyCodeLine{00095\ \ \ uint32\_t\ rehashed\ =\ 0;}
+\DoxyCodeLine{00096\ \ \ uint16\_t\ nest\ =\ 0,\ new\_nest\ =\ 0;}
+\DoxyCodeLine{00097\ \ \ cuckooTable\_t\ *current\ =\ hashtable-\/>current;}
+\DoxyCodeLine{00098\ \ \ elem\_t\ move;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \_rdrand16\_step(\&nest);}
+\DoxyCodeLine{00102\ \ \ \ \ nest\ =\ nest\ \%\ current-\/>d;}
+\DoxyCodeLine{00103\ \ \ \}\ \textcolor{keywordflow}{while}\ (current-\/>rehashed[nest]\ ==\ current-\/>size);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ swaps;\ i++)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{if}\ (current-\/>rehashed[nest]\ <\ current-\/>size)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current-\/>hashtable[nest][current-\/>rehashed[nest]].valid\ ==\ 1)\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ move.valid\ =\ 1;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ move.value\ =\ current-\/>hashtable[nest][current-\/>rehashed[nest]].value;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ current-\/>hashtable[nest][current-\/>rehashed[nest]].valid\ =\ 0;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ current-\/>rehashed[nest]++;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ current-\/>num\_elems[nest]-\/-\/;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>priority)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ will\ end\ up\ trying\ first\ the\ new\ hashtable}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ retries\ +=\ insert\_elastic(\&move,\ hashtable,\ 1,\ nest);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ perform\ a\ random\ walk}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ retries\ +=\ insert\_elastic(\&move,\ hashtable,\ 0,\ 0);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ hashtable-\/>rehash\_probes\ +=\ retries;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ hashtable-\/>rehash\_elems++;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ current-\/>rehashed[nest]++;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ current-\/>d;\ j++)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ rehashed\ +=\ current-\/>rehashed[j];}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rehashed\ ==\ current-\/>size\ *\ current-\/>d)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \_rdrand16\_step(\&new\_nest);}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ new\_nest\ =\ new\_nest\ \%\ current-\/>d;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (new\_nest\ ==\ nest\ \&\&\ current-\/>rehashed[nest]\ ==\ current-\/>size);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ nest\ =\ new\_nest;}
+\DoxyCodeLine{00136\ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \ \ \}}
+\DoxyCodeLine{00138\ \ \ update\_occupancy(current);}
+\DoxyCodeLine{00139\ \ \ update\_occupancy(hashtable-\/>migrate);}
+\DoxyCodeLine{00140\ \ \ \textcolor{keywordflow}{return}\ retries;}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ uint64\_t\ evaluate\_elasticity(elasticCuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ complete)\ \{}
+\DoxyCodeLine{00145\ \ \ uint64\_t\ retries\ =\ 0;}
+\DoxyCodeLine{00146\ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>current-\/>occupancy\ >\ hashtable-\/>rehash\_threshold\ \&\&}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ !hashtable-\/>rehashing)\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ hashtable-\/>rehashing\ =\ 1;}
+\DoxyCodeLine{00149\ \ \ \ \ hashtable-\/>migrate\ =\ (cuckooTable\_t\ *)malloc(\textcolor{keyword}{sizeof}(cuckooTable\_t));}
+\DoxyCodeLine{00150\ \ \ \ \ create(hashtable-\/>d,\ hashtable-\/>curr\_size\ *\ hashtable-\/>scale,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ hashtable-\/>migrate,\ hashtable-\/>hash\_func);}
+\DoxyCodeLine{00152\ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \textcolor{keywordflow}{if}\ (complete)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>rehashing)\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (hashtable-\/>current-\/>occupancy\ !=\ 0)\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ retries\ +=\ rehash(hashtable,\ hashtable-\/>swaps);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ hashtable-\/>rehashing\ =\ 0;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ destroy(hashtable-\/>current);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ hashtable-\/>current\ =\ hashtable-\/>migrate;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ hashtable-\/>migrate\ =\ NULL;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ hashtable-\/>curr\_size\ *=\ hashtable-\/>scale;}
+\DoxyCodeLine{00163\ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>rehashing)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ retries\ +=\ rehash(hashtable,\ hashtable-\/>swaps);}
+\DoxyCodeLine{00168\ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>current-\/>occupancy\ ==\ 0\ \&\&\ hashtable-\/>rehashing)\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ hashtable-\/>rehashing\ =\ 0;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ destroy(hashtable-\/>current);}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ hashtable-\/>current\ =\ hashtable-\/>migrate;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ hashtable-\/>migrate\ =\ NULL;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ hashtable-\/>curr\_size\ *=\ hashtable-\/>scale;}
+\DoxyCodeLine{00175\ \ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \textcolor{keywordflow}{return}\ retries;}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{keywordtype}{void}\ destroy(cuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00182\ \ \ uint32\_t\ i;}
+\DoxyCodeLine{00183\ \ \ free(hashtable-\/>keys);}
+\DoxyCodeLine{00184\ \ \ free(hashtable-\/>num\_elems);}
+\DoxyCodeLine{00185\ \ \ free(hashtable-\/>util);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ hashtable-\/>d;\ i++)\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ free(hashtable-\/>hashtable[i]);}
+\DoxyCodeLine{00189\ \ \ \}}
+\DoxyCodeLine{00190\ \ \ free(hashtable-\/>hashtable);}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{keywordtype}{void}\ destroy\_elastic(elasticCuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00194\ \ \ destroy(hashtable-\/>current);}
+\DoxyCodeLine{00195\ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>migrate\ !=\ NULL)\ \{}
+\DoxyCodeLine{00196\ \ \ \ \ destroy(hashtable-\/>migrate);}
+\DoxyCodeLine{00197\ \ \ \}}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ uint32\_t\ insert\_recursion(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable,\ uint32\_t\ nest,}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ tries)\ \{}
+\DoxyCodeLine{00202\ \ \ uint16\_t\ new\_nest;}
+\DoxyCodeLine{00203\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ tries++;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ hash\ =\ gen\_hash(elem,\ hashtable,\ nest);}
+\DoxyCodeLine{00208\ \ \ elem\_t\ tmp;}
+\DoxyCodeLine{00209\ \ \ tmp.valid\ =\ 0;}
+\DoxyCodeLine{00210\ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>hashtable[nest][hash].valid\ ==\ 1)\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ tmp.valid\ =\ hashtable-\/>hashtable[nest][hash].valid;}
+\DoxyCodeLine{00212\ \ \ \ \ tmp.value\ =\ hashtable-\/>hashtable[nest][hash].value;}
+\DoxyCodeLine{00213\ \ \ \ \ hashtable-\/>num\_elems[nest]-\/-\/;}
+\DoxyCodeLine{00214\ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ hashtable-\/>hashtable[nest][hash].valid\ =\ 1;}
+\DoxyCodeLine{00217\ \ \ hashtable-\/>hashtable[nest][hash].value\ =\ elem-\/>value;}
+\DoxyCodeLine{00218\ \ \ hashtable-\/>num\_elems[nest]++;}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \textcolor{comment}{//\ need\ to\ allocate\ the\ replaced\ element}}
+\DoxyCodeLine{00221\ \ \ \textcolor{keywordflow}{if}\ (tmp.valid)\ \{}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \_rdrand16\_step(\&new\_nest);}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ new\_nest\ =\ new\_nest\ \%\ hashtable-\/>d;}
+\DoxyCodeLine{00226\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (new\_nest\ ==\ nest);}
+\DoxyCodeLine{00227\ \ \ \ \ nest\ =\ new\_nest;}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{if}\ (tries\ >\ MAX\_RETRIES)\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tries;}
+\DoxyCodeLine{00231\ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{return}\ insert\_recursion(\&tmp,\ hashtable,\ nest,\ tries);}
+\DoxyCodeLine{00233\ \ \ \}}
+\DoxyCodeLine{00234\ \ \ update\_occupancy(hashtable);}
+\DoxyCodeLine{00235\ \ \ \textcolor{keywordflow}{return}\ tries;}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ uint32\_t\ insert(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00239\ \ \ uint32\_t\ tries\ =\ 0;}
+\DoxyCodeLine{00240\ \ \ uint16\_t\ nest\ =\ 0,\ new\_nest\ =\ 0;}
+\DoxyCodeLine{00241\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00242\ \ \ elem\_t\ old;}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \_rdrand16\_step(\&new\_nest);}
+\DoxyCodeLine{00246\ \ \ \ \ new\_nest\ =\ new\_nest\ \%\ hashtable-\/>d;}
+\DoxyCodeLine{00247\ \ \ \}\ \textcolor{keywordflow}{while}\ (new\_nest\ ==\ nest);}
+\DoxyCodeLine{00248\ \ \ nest\ =\ new\_nest;}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \textcolor{comment}{//\ try\ to\ insert\ until\ MAX\_RETRIES\ insertion\ attempts}}
+\DoxyCodeLine{00251\ \ \ \textcolor{keywordflow}{for}\ (tries\ =\ 0;\ tries\ <\ MAX\_RETRIES;\ tries++)\ \{}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
+\DoxyCodeLine{00254\ \ \ \ \ printf(\textcolor{stringliteral}{"{}Inserting\ element\ with\ value\ \%llu,\ nest\ \%u\(\backslash\)n"{}},\ elem-\/>value,\ nest);}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable,\ nest);}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ old.valid\ =\ 0;}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{comment}{//\ remove\ previous\ element\ if\ it\ exists}}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>hashtable[nest][hash].valid\ ==\ 1)\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ old.valid\ =\ hashtable-\/>hashtable[nest][hash].valid;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ old.value\ =\ hashtable-\/>hashtable[nest][hash].value;}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ hashtable-\/>num\_elems[nest]-\/-\/;}
+\DoxyCodeLine{00265\ \ \ \ \ \}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{comment}{//\ insert\ new\ element}}
+\DoxyCodeLine{00268\ \ \ \ \ hashtable-\/>hashtable[nest][hash].valid\ =\ 1;}
+\DoxyCodeLine{00269\ \ \ \ \ hashtable-\/>hashtable[nest][hash].value\ =\ elem-\/>value;}
+\DoxyCodeLine{00270\ \ \ \ \ hashtable-\/>num\_elems[nest]++;}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{comment}{//\ we\ removed\ an\ element\ and\ we\ have\ to\ put\ it\ back}}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordflow}{if}\ (old.valid)\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \textcolor{comment}{//\ copy\ old\ element}}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ elem-\/>value\ =\ old.value;}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ elem-\/>valid\ =\ 1;}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \textcolor{comment}{//\ pick\ new\ nest\ to\ try}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \_rdrand16\_step(\&new\_nest);}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ new\_nest\ =\ new\_nest\ \%\ hashtable-\/>d;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (new\_nest\ ==\ nest);}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ nest\ =\ new\_nest;}
+\DoxyCodeLine{00284\ \ \ \ \ \}}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ we\ are\ done}}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00288\ \ \ \ \ \}}
+\DoxyCodeLine{00289\ \ \ \}}
+\DoxyCodeLine{00290\ \ \ update\_occupancy(hashtable);}
+\DoxyCodeLine{00291\ \ \ \textcolor{comment}{//\ printf("{}Insert\ Tries\ \%lu\(\backslash\)n"{},tries+1);}}
+\DoxyCodeLine{00292\ \ \ \textcolor{keywordflow}{return}\ tries\ +\ 1;}
+\DoxyCodeLine{00293\ \}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ uint32\_t\ insert\_elastic(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ bias,\ uint16\_t\ bias\_nest)\ \{}
+\DoxyCodeLine{00297\ \ \ uint32\_t\ tries\ =\ 0,\ current\_inserts\ =\ 0,\ migrate\_inserts\ =\ 0;}
+\DoxyCodeLine{00298\ \ \ uint16\_t\ nest\ =\ 0,\ new\_nest\ =\ 0;}
+\DoxyCodeLine{00299\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00300\ \ \ elem\_t\ old;}
+\DoxyCodeLine{00301\ \ \ cuckooTable\_t\ *selectTable;}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordflow}{if}\ (bias)\ \{}
+\DoxyCodeLine{00304\ \ \ \ \ nest\ =\ bias\_nest;}
+\DoxyCodeLine{00305\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \_rdrand16\_step(\&nest);}
+\DoxyCodeLine{00307\ \ \ \ \ nest\ =\ nest\ \%\ hashtable-\/>current-\/>d;}
+\DoxyCodeLine{00308\ \ \ \}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \textcolor{comment}{//\ try\ to\ insert\ until\ MAX\_RETRIES\ insertion\ attempts}}
+\DoxyCodeLine{00311\ \ \ \textcolor{keywordflow}{for}\ (tries\ =\ 0;\ tries\ <\ MAX\_RETRIES;\ tries++)\ \{}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
+\DoxyCodeLine{00314\ \ \ \ \ printf(\textcolor{stringliteral}{"{}Inserting\ element\ with\ value\ \%llu,\ nest\ \%u\(\backslash\)n"{}},\ elem-\/>value,\ nest);}
+\DoxyCodeLine{00315\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>current,\ nest);}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>rehashing\ \&\&\ hash\ <\ hashtable-\/>current-\/>rehashed[nest])\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>migrate,\ nest);}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>migrate;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ migrate\_inserts++;}
+\DoxyCodeLine{00323\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>current;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ current\_inserts++;}
+\DoxyCodeLine{00326\ \ \ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ old.valid\ =\ 0;}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{comment}{//\ remove\ previous\ element\ if\ it\ exists}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordflow}{if}\ (selectTable-\/>hashtable[nest][hash].valid\ ==\ 1)\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ old.valid\ =\ selectTable-\/>hashtable[nest][hash].valid;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ old.value\ =\ selectTable-\/>hashtable[nest][hash].value;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ selectTable-\/>num\_elems[nest]-\/-\/;}
+\DoxyCodeLine{00334\ \ \ \ \ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{//\ insert\ new\ element}}
+\DoxyCodeLine{00337\ \ \ \ \ selectTable-\/>hashtable[nest][hash].valid\ =\ 1;}
+\DoxyCodeLine{00338\ \ \ \ \ selectTable-\/>hashtable[nest][hash].value\ =\ elem-\/>value;}
+\DoxyCodeLine{00339\ \ \ \ \ selectTable-\/>num\_elems[nest]++;}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ we\ removed\ an\ element\ and\ we\ have\ to\ put\ it\ back}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordflow}{if}\ (old.valid)\ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{comment}{//\ copy\ old\ element}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ elem-\/>value\ =\ old.value;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ elem-\/>valid\ =\ 1;}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \textcolor{comment}{//\ pick\ new\ nest\ to\ try}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \_rdrand16\_step(\&new\_nest);}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ new\_nest\ =\ new\_nest\ \%\ selectTable-\/>d;}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (new\_nest\ ==\ nest);}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ nest\ =\ new\_nest;}
+\DoxyCodeLine{00353\ \ \ \ \ \}}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{comment}{//\ we\ are\ done}}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00357\ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \textcolor{keywordflow}{if}\ (migrate\_inserts)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ update\_occupancy(hashtable-\/>migrate);}
+\DoxyCodeLine{00361\ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \textcolor{keywordflow}{if}\ (current\_inserts)\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ update\_occupancy(hashtable-\/>current);}
+\DoxyCodeLine{00364\ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \textcolor{keywordflow}{return}\ tries\ +\ 1;}
+\DoxyCodeLine{00366\ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{keywordtype}{void}\ delete\_normal\ (elem\_t\ *elem,\ cuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00369\ \ \ uint32\_t\ nest;}
+\DoxyCodeLine{00370\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \ \ \textcolor{keywordflow}{for}\ (nest\ =\ 0;\ nest\ <\ hashtable-\/>d;\ nest++)\ \{}
+\DoxyCodeLine{00373\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable,\ nest);}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>hashtable[nest][hash].valid\ ==\ 1\ \&\&}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ hashtable-\/>hashtable[nest][hash].value\ ==\ elem-\/>value)\ \{}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \ \ \ \ \ \ hashtable-\/>hashtable[nest][hash].valid\ =\ 0;}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ hashtable-\/>hashtable[nest][hash].value\ =\ 0;}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ hashtable-\/>num\_elems[nest]-\/-\/;}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ update\_occupancy(hashtable);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00383\ \ \ \ \ \}}
+\DoxyCodeLine{00384\ \ \ \}}
+\DoxyCodeLine{00385\ \}}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \textcolor{keywordtype}{void}\ delete\_elastic(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00388\ \ \ uint32\_t\ nest\ =\ 0;}
+\DoxyCodeLine{00389\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00390\ \ \ cuckooTable\_t\ *selectTable;}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \textcolor{keywordflow}{for}\ (nest\ =\ 0;\ nest\ <\ hashtable-\/>current-\/>d;\ nest++)\ \{}
+\DoxyCodeLine{00393\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>current,\ nest);}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>rehashing\ \&\&\ hash\ <\ hashtable-\/>current-\/>rehashed[nest])\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>migrate,\ nest);}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>migrate;}
+\DoxyCodeLine{00398\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>current;}
+\DoxyCodeLine{00400\ \ \ \ \ \}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{if}\ (selectTable-\/>hashtable[nest][hash].valid\ ==\ 1\ \&\&}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ selectTable-\/>hashtable[nest][hash].value\ ==\ elem-\/>value)\ \{}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ selectTable-\/>hashtable[nest][hash].valid\ =\ 0;}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ selectTable-\/>hashtable[nest][hash].value\ =\ 0;}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ selectTable-\/>num\_elems[nest]-\/-\/;}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ update\_occupancy(selectTable);}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00409\ \ \ \ \ \}}
+\DoxyCodeLine{00410\ \ \ \}}
+\DoxyCodeLine{00411\ \}}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \textcolor{comment}{//now\ returns\ all\ the\ addresses\ it\ accessed}}
+\DoxyCodeLine{00414\ std::vector<elem\_t>\ find(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00415\ \ \ uint32\_t\ nest\ =\ 0;}
+\DoxyCodeLine{00416\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \textcolor{keywordtype}{bool}\ found\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00419\ \ \ std::vector<elem\_t>\ accessedAddresses;}
+\DoxyCodeLine{00420\ \ \ \textcolor{keywordflow}{for}\ (nest\ =\ 0;\ nest\ <\ hashtable-\/>d;\ nest++)\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable,\ nest);}
+\DoxyCodeLine{00422\ \ \ \ \ elem\_t\ toAdd;}
+\DoxyCodeLine{00423\ \ \ \ \ toAdd.valid\ =\ 0;}
+\DoxyCodeLine{00424\ \ \ \ \ toAdd.value\ =\ (uint64\_t)\&hashtable-\/>hashtable[nest][hash];}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{comment}{//\ VPN:\ 0x000100}}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ accessedAddresses.push\_back(toAdd);}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>hashtable[nest][hash].valid\ ==\ 1\ \&\&}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ hashtable-\/>hashtable[nest][hash].value\ ==\ elem-\/>value)\ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ found\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ accessedAddresses.back().valid\ =\ 1;}
+\DoxyCodeLine{00433\ \ \ \ \ \}}
+\DoxyCodeLine{00434\ \ \ \}}
+\DoxyCodeLine{00435\ \ \ \textcolor{keywordflow}{if}(!found)}
+\DoxyCodeLine{00436\ \ \ \ \ insert(elem,\ hashtable);}
+\DoxyCodeLine{00437\ \ \ \textcolor{keywordflow}{return}\ accessedAddresses;}
+\DoxyCodeLine{00438\ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ std::vector<elem\_t>\ find\_elastic\_ptw(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00442\ \ \ uint32\_t\ nest\ =\ 0;}
+\DoxyCodeLine{00443\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00444\ \ \ cuckooTable\_t\ *selectTable;}
+\DoxyCodeLine{00445\ \ \ \textcolor{keywordtype}{bool}\ found\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00446\ \ \ std::vector<elem\_t>\ accessedAddresses;}
+\DoxyCodeLine{00447\ \ \ }
+\DoxyCodeLine{00448\ \ \ \textcolor{keywordflow}{for}\ (nest\ =\ 0;\ nest\ <\ hashtable-\/>current-\/>d;\ nest++)\ \{}
+\DoxyCodeLine{00449\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>current,\ nest);}
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{comment}{//printf("{}Searching\ nest\ \%d\ element\ in\ cuckoo\ \(\backslash\)n"{},\ nest);}}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>rehashing\ \&\&\ hash\ <\ hashtable-\/>current-\/>rehashed[nest])\ \{}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>migrate,\ nest);}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>migrate;}
+\DoxyCodeLine{00454\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>current;}
+\DoxyCodeLine{00456\ \ \ \ \ \}}
+\DoxyCodeLine{00457\ \ \ \ \ elem\_t\ toAdd;}
+\DoxyCodeLine{00458\ \ \ \ \ toAdd.valid\ =\ 0;}
+\DoxyCodeLine{00459\ \ \ \ \ toAdd.value\ =\ (uint64\_t)\&selectTable-\/>hashtable[nest][hash];}
+\DoxyCodeLine{00460\ \ \ \ \ accessedAddresses.push\_back(toAdd);}
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keywordflow}{if}\ (selectTable-\/>hashtable[nest][hash].valid\ ==\ 1\ \&\&}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ selectTable-\/>hashtable[nest][hash].value\ ==\ elem-\/>value)\ \{}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ found\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \textcolor{comment}{//printf("{}Found\ element\ in\ cuckoo\ \(\backslash\)n"{});}}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ accessedAddresses.back().valid\ =\ 1;}
+\DoxyCodeLine{00466\ \ \ \ \ \}}
+\DoxyCodeLine{00467\ \ \ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \textcolor{keywordflow}{return}\ accessedAddresses;}
+\DoxyCodeLine{00470\ \}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ elem\_t\ *find\_elastic(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00473\ \ \ uint32\_t\ nest\ =\ 0;}
+\DoxyCodeLine{00474\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00475\ \ \ cuckooTable\_t\ *selectTable;}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \textcolor{keywordflow}{for}\ (nest\ =\ 0;\ nest\ <\ hashtable-\/>current-\/>d;\ nest++)\ \{}
+\DoxyCodeLine{00478\ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>current,\ nest);}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \textcolor{keywordflow}{if}\ (hashtable-\/>rehashing\ \&\&\ hash\ <\ hashtable-\/>current-\/>rehashed[nest])\ \{}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ hash\ =\ gen\_hash(elem,\ hashtable-\/>migrate,\ nest);}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>migrate;}
+\DoxyCodeLine{00483\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ selectTable\ =\ hashtable-\/>current;}
+\DoxyCodeLine{00485\ \ \ \ \ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \ \textcolor{keywordflow}{if}\ (selectTable-\/>hashtable[nest][hash].valid\ ==\ 1\ \&\&}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ selectTable-\/>hashtable[nest][hash].value\ ==\ elem-\/>value)\ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&selectTable-\/>hashtable[nest][hash];}
+\DoxyCodeLine{00490\ \ \ \ \ \}}
+\DoxyCodeLine{00491\ \ \ \}}
+\DoxyCodeLine{00492\ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00493\ \}}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ uint64\_t\ gen\_hash(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable,\ uint32\_t\ nest)\ \{}
+\DoxyCodeLine{00496\ \ \ uint64\_t\ hash\ =\ 0;}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
+\DoxyCodeLine{00499\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ hashtable-\/>d;\ i++)\ \{}
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{keywordflow}{if}\ (strcmp(hashtable-\/>hash\_func,\ \textcolor{stringliteral}{"{}blake2"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ blake2b(\&hash,\ hashtable-\/>hash\_size\ /\ 8,\ \&elem-\/>value,\ HASH\_SIZE,}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&hashtable-\/>keys[i],\ 8);}
+\DoxyCodeLine{00503\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (strcmp(hashtable-\/>hash\_func,\ \textcolor{stringliteral}{"{}city"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ hash\ =\ CityHash64WithSeed(\&elem-\/>value,\ HASH\_SIZE,\ hashtable-\/>keys[i]);}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ hash\ =\ hash\ \&\ hmask((uint64\_t)hashtable-\/>hash\_size);}
+\DoxyCodeLine{00506\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ assert(1\ ==\ 0\ \&\&\ \textcolor{stringliteral}{"{}Unknown\ hash\ function\(\backslash\)n"{}});}
+\DoxyCodeLine{00508\ \ \ \ \ \}}
+\DoxyCodeLine{00509\ \ \ \ \ printf(\textcolor{stringliteral}{"{}Hash\ \%lu\(\backslash\)n"{}},\ hash);}
+\DoxyCodeLine{00510\ \ \ \}}
+\DoxyCodeLine{00511\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \textcolor{keywordflow}{if}\ (strcmp(hashtable-\/>hash\_func,\ \textcolor{stringliteral}{"{}blake2"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00514\ \ \ \ \ blake2b(\&hash,\ hashtable-\/>hash\_size\ /\ 8,\ \&elem-\/>value,\ HASH\_SIZE,}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \&hashtable-\/>keys[nest],\ 8);}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Hash\ \%lu\(\backslash\)n"{}},\ hash);}
+\DoxyCodeLine{00517\ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (strcmp(hashtable-\/>hash\_func,\ \textcolor{stringliteral}{"{}city"{}})\ ==\ 0)\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ hash\ =\ CityHash64WithSeed((\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *)\&elem-\/>value,\ HASH\_SIZE,}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hashtable-\/>keys[nest]);}
+\DoxyCodeLine{00520\ \ \ \ \ hash\ =\ hash\ \&\ hmask((uint64\_t)hashtable-\/>hash\_size);}
+\DoxyCodeLine{00521\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00522\ \ \ \ \ assert(1\ ==\ 0\ \&\&\ \textcolor{stringliteral}{"{}Unknown\ hash\ function\(\backslash\)n"{}});}
+\DoxyCodeLine{00523\ \ \ \}}
+\DoxyCodeLine{00524\ \ \ \textcolor{keywordflow}{if}\ (hash\ >\ hashtable-\/>size)\ \{}
+\DoxyCodeLine{00525\ \ \ \ \ printf(\textcolor{stringliteral}{"{}Hash\ value\ \%llu,\ size\ \%llu\(\backslash\)n"{}},\ hash,\ hashtable-\/>size);}
+\DoxyCodeLine{00526\ \ \ \ \ assert(1\ ==\ 0\ \&\&\ \textcolor{stringliteral}{"{}Hash\ value\ is\ larger\ than\ index\(\backslash\)n"{}});}
+\DoxyCodeLine{00527\ \ \ \}}
+\DoxyCodeLine{00528\ \ \ \textcolor{keywordflow}{return}\ hash;}
+\DoxyCodeLine{00529\ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \textcolor{keywordtype}{void}\ update\_occupancy(cuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00532\ \ \ uint32\_t\ i\ =\ 0;}
+\DoxyCodeLine{00533\ \ \ uint64\_t\ total\_elems\ =\ 0;}
+\DoxyCodeLine{00534\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ hashtable-\/>d;\ i++)\ \{}
+\DoxyCodeLine{00535\ \ \ \ \ hashtable-\/>util[i]\ =\ hashtable-\/>num\_elems[i]\ /\ (float)hashtable-\/>size;}
+\DoxyCodeLine{00536\ \ \ \ \ total\_elems\ +=\ hashtable-\/>num\_elems[i];}
+\DoxyCodeLine{00537\ \ \ \}}
+\DoxyCodeLine{00538\ \ \ hashtable-\/>occupancy\ =\ total\_elems\ /\ (float)(hashtable-\/>d\ *\ hashtable-\/>size);}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
+\DoxyCodeLine{00540\ \ \ printf(\textcolor{stringliteral}{"{}Total\ elements:\ \%lu\(\backslash\)n"{}},\ total\_elems);}
+\DoxyCodeLine{00541\ \ \ printf(\textcolor{stringliteral}{"{}Occupancy:\ \%f\(\backslash\)n"{}},\ hashtable-\/>occupancy);}
+\DoxyCodeLine{00542\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00543\ \}}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \textcolor{keywordtype}{void}\ printTable(cuckooTable\_t\ *hashtable)\ \{}
+\DoxyCodeLine{00546\ \ \ \textcolor{keywordtype}{size\_t}\ i,\ j;}
+\DoxyCodeLine{00547\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ hashtable-\/>d;\ i++)\ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ hashtable-\/>size;\ j++)\ \{}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}(\%u,\%llu)\ |\ "{}},\ hashtable-\/>hashtable[i][j].valid,}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \ hashtable-\/>hashtable[i][j].value);}
+\DoxyCodeLine{00551\ \ \ \ \ \}}
+\DoxyCodeLine{00552\ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00553\ \ \ \}}
+\DoxyCodeLine{00554\ \}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ uint64\_t\ hash\_size(uint64\_t\ size)\ \{}
+\DoxyCodeLine{00557\ \ \ uint64\_t\ hash\_size\ =\ 0;}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \ \ \textcolor{keywordflow}{while}\ (log2(size)\ >\ (\textcolor{keywordtype}{float})hash\_size)\ \{}
+\DoxyCodeLine{00560\ \ \ \ \ hash\_size\ +=\ 8;}
+\DoxyCodeLine{00561\ \ \ \}}
+\DoxyCodeLine{00562\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
+\DoxyCodeLine{00563\ \ \ printf(\textcolor{stringliteral}{"{}hashtable\ size\ =\ \%lu,\ requested\ size\ =\ \%lu\(\backslash\)n"{}},\ hash\_size,\ size);}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00565\ \ \ \textcolor{keywordflow}{return}\ hash\_size;}
+\DoxyCodeLine{00566\ \}}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \textcolor{comment}{//\ void\ simple\_example(uint32\_t\ d,\ uint64\_t\ size,\ char\ *hash\_func,\ uint8\ elastic,}}
+\DoxyCodeLine{00569\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ oneshot,\ float\ rehash\_threshold,\ uint8\_t\ scale,}}
+\DoxyCodeLine{00570\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ swaps,\ uint8\_t\ priority)\ \{}}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00573\ \textcolor{comment}{\ \ uint32\_t\ i\ =\ 0,\ N\ =\ 512;}}
+\DoxyCodeLine{00574\ \textcolor{comment}{\ \ uint64\_t\ *test\_values\ =\ NULL;}}
+\DoxyCodeLine{00575\ \textcolor{comment}{\ \ elem\_t\ new\_elem;}}
+\DoxyCodeLine{00576\ \textcolor{comment}{\ \ elasticCuckooTable\_t\ elasticCuckooHT;}}
+\DoxyCodeLine{00577\ \textcolor{comment}{\ \ cuckooTable\_t\ cuckooHT;}}
+\DoxyCodeLine{00578\ \textcolor{comment}{}}
+\DoxyCodeLine{00579\ \textcolor{comment}{\ \ if\ (elastic)\ \{}}
+\DoxyCodeLine{00580\ \textcolor{comment}{\ \ \ \ create\_elastic(d,\ size,\ \&elasticCuckooHT,\ hash\_func,\ rehash\_threshold,}}
+\DoxyCodeLine{00581\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scale,\ swaps,\ priority);}}
+\DoxyCodeLine{00582\ \textcolor{comment}{\ \ \}\ else\ \{}}
+\DoxyCodeLine{00583\ \textcolor{comment}{\ \ \ \ create(d,\ size,\ \&cuckooHT,\ hash\_func);}}
+\DoxyCodeLine{00584\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00585\ \textcolor{comment}{\ \ test\_values\ =\ (uint64\_t\ *)malloc(N\ *\ sizeof(uint64\_t));}}
+\DoxyCodeLine{00586\ \textcolor{comment}{}}
+\DoxyCodeLine{00587\ \textcolor{comment}{\ \ for\ (i\ =\ 0;\ i\ <\ N;\ i++)\ \{}}
+\DoxyCodeLine{00588\ \textcolor{comment}{\ \ \ \ test\_values[i]\ =\ 0;}}
+\DoxyCodeLine{00589\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00590\ \textcolor{comment}{}}
+\DoxyCodeLine{00591\ \textcolor{comment}{\ \ for\ (i\ =\ 0;\ i\ <\ N;\ i++)\ \{}}
+\DoxyCodeLine{00592\ \textcolor{comment}{\ \ \ \ new\_elem.valid\ =\ 1;}}
+\DoxyCodeLine{00593\ \textcolor{comment}{}}
+\DoxyCodeLine{00594\ \textcolor{comment}{\ \ \ \ if\ (elastic)\ \{}}
+\DoxyCodeLine{00595\ \textcolor{comment}{\ \ \ \ \ \ do\ \{}}
+\DoxyCodeLine{00596\ \textcolor{comment}{\ \ \ \ \ \ \ \ \_rdrand64\_step((unsigned\ long\ long\ *)\&new\_elem.value);}}
+\DoxyCodeLine{00597\ \textcolor{comment}{\ \ \ \ \ \ \}\ while\ (find\_elastic(\&new\_elem,\ \&elasticCuckooHT)\ !=\ NULL);}}
+\DoxyCodeLine{00598\ \textcolor{comment}{}}
+\DoxyCodeLine{00599\ \textcolor{comment}{\ \ \ \ \}\ else\ \{}}
+\DoxyCodeLine{00600\ \textcolor{comment}{\ \ \ \ \ \ do\ \{}}
+\DoxyCodeLine{00601\ \textcolor{comment}{\ \ \ \ \ \ \ \ \_rdrand64\_step((unsigned\ long\ long\ *)\&new\_elem.value);}}
+\DoxyCodeLine{00602\ \textcolor{comment}{\ \ \ \ \ \ \}\ while\ (find(\&new\_elem,\ \&cuckooHT)\ !=\ NULL);}}
+\DoxyCodeLine{00603\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00604\ \textcolor{comment}{}}
+\DoxyCodeLine{00605\ \textcolor{comment}{\ \ \ \ test\_values[i]\ =\ new\_elem.value;}}
+\DoxyCodeLine{00606\ \textcolor{comment}{}}
+\DoxyCodeLine{00607\ \textcolor{comment}{\ \ \ \ if\ (elastic)\ \{}}
+\DoxyCodeLine{00608\ \textcolor{comment}{\ \ \ \ \ \ insert\_elastic(\&new\_elem,\ \&elasticCuckooHT,\ 0,\ 0);}}
+\DoxyCodeLine{00609\ \textcolor{comment}{\ \ \ \ \}\ else\ \{}}
+\DoxyCodeLine{00610\ \textcolor{comment}{\ \ \ \ \ \ insert(\&new\_elem,\ \&cuckooHT);}}
+\DoxyCodeLine{00611\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00612\ \textcolor{comment}{}}
+\DoxyCodeLine{00613\ \textcolor{comment}{\ \ \ \ if\ (elastic)\ \{}}
+\DoxyCodeLine{00614\ \textcolor{comment}{\ \ \ \ \ \ evaluate\_elasticity(\&elasticCuckooHT,\ oneshot);}}
+\DoxyCodeLine{00615\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00616\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00617\ \textcolor{comment}{}}
+\DoxyCodeLine{00618\ \textcolor{comment}{\ \ if\ (elastic)\ \{}}
+\DoxyCodeLine{00619\ \textcolor{comment}{\ \ \ \ destroy\_elastic(\&elasticCuckooHT);}}
+\DoxyCodeLine{00620\ \textcolor{comment}{\ \ \}\ else\ \{}}
+\DoxyCodeLine{00621\ \textcolor{comment}{\ \ \ \ destroy(\&cuckooHT);}}
+\DoxyCodeLine{00622\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00623\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00624\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00627\ \textcolor{comment}{int\ main(int\ argc,\ char\ **argv)\ \{}}
+\DoxyCodeLine{00628\ \textcolor{comment}{\ \ uint32\_t\ d\ =\ 4,\ size\ =\ 0,\ elastic\ =\ 0,\ oneshot\ =\ 0,\ scale\ =\ 0,\ swaps\ =\ 0;}}
+\DoxyCodeLine{00629\ \textcolor{comment}{\ \ char\ hash\_func[20];}}
+\DoxyCodeLine{00630\ \textcolor{comment}{\ \ float\ threshold\ =\ 0;}}
+\DoxyCodeLine{00631\ \textcolor{comment}{\ \ uint8\_t\ priority\ =\ 0;}}
+\DoxyCodeLine{00632\ \textcolor{comment}{}}
+\DoxyCodeLine{00633\ \textcolor{comment}{\ \ assert(argc\ ==\ 10\ ||\ argc\ ==\ 5);}}
+\DoxyCodeLine{00634\ \textcolor{comment}{\ \ d\ =\ strtol(argv[1],\ NULL,\ 10);}}
+\DoxyCodeLine{00635\ \textcolor{comment}{\ \ if\ (d\ <\ 2)\ \{}}
+\DoxyCodeLine{00636\ \textcolor{comment}{\ \ \ \ printf("{}Number\ of\ ways\ required\ to\ be\ greater\ than\ 2\(\backslash\)n"{});}}
+\DoxyCodeLine{00637\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00638\ \textcolor{comment}{\ \ size\ =\ strtol(argv[2],\ NULL,\ 10);}}
+\DoxyCodeLine{00639\ \textcolor{comment}{\ \ if\ (strcmp(argv[3],\ "{}blake2"{})\ ==\ 0)\ \{}}
+\DoxyCodeLine{00640\ \textcolor{comment}{\ \ \ \ strcpy(hash\_func,\ "{}blake2"{});}}
+\DoxyCodeLine{00641\ \textcolor{comment}{\ \ \}\ else\ if\ (strcmp(argv[3],\ "{}city"{})\ ==\ 0)\ \{}}
+\DoxyCodeLine{00642\ \textcolor{comment}{\ \ \ \ strcpy(hash\_func,\ "{}city"{});}}
+\DoxyCodeLine{00643\ \textcolor{comment}{\ \ \}\ else\ \{}}
+\DoxyCodeLine{00644\ \textcolor{comment}{\ \ \ \ printf("{}Hash\ function\ not\ found\(\backslash\)n"{});}}
+\DoxyCodeLine{00645\ \textcolor{comment}{\ \ \ \ return\ 0;}}
+\DoxyCodeLine{00646\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00647\ \textcolor{comment}{}}
+\DoxyCodeLine{00648\ \textcolor{comment}{\ \ if\ (strcmp(argv[4],\ "{}elastic"{})\ ==\ 0)\ \{}}
+\DoxyCodeLine{00649\ \textcolor{comment}{\ \ \ \ elastic\ =\ 1;}}
+\DoxyCodeLine{00650\ \textcolor{comment}{\ \ \}\ else\ \{}}
+\DoxyCodeLine{00651\ \textcolor{comment}{\ \ \ \ elastic\ =\ 0;}}
+\DoxyCodeLine{00652\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00653\ \textcolor{comment}{}}
+\DoxyCodeLine{00654\ \textcolor{comment}{\ \ if\ (elastic)\ \{}}
+\DoxyCodeLine{00655\ \textcolor{comment}{\ \ \ \ if\ (strcmp(argv[5],\ "{}oneshot"{})\ ==\ 0)\ \{}}
+\DoxyCodeLine{00656\ \textcolor{comment}{\ \ \ \ \ \ oneshot\ =\ 1;}}
+\DoxyCodeLine{00657\ \textcolor{comment}{\ \ \ \ \}\ else\ \{}}
+\DoxyCodeLine{00658\ \textcolor{comment}{\ \ \ \ \ \ oneshot\ =\ 0;}}
+\DoxyCodeLine{00659\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00660\ \textcolor{comment}{\ \ \ \ threshold\ =\ strtof(argv[6],\ NULL);}}
+\DoxyCodeLine{00661\ \textcolor{comment}{\ \ \ \ scale\ =\ strtol(argv[7],\ NULL,\ 10);}}
+\DoxyCodeLine{00662\ \textcolor{comment}{\ \ \ \ swaps\ =\ strtol(argv[8],\ NULL,\ 10);}}
+\DoxyCodeLine{00663\ \textcolor{comment}{\ \ \ \ priority\ =\ strtol(argv[9],\ NULL,\ 10);}}
+\DoxyCodeLine{00664\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00665\ \textcolor{comment}{}}
+\DoxyCodeLine{00666\ \textcolor{comment}{\ \ simple\_example(d,\ size,\ hash\_func,\ elastic,\ oneshot,\ threshold,\ scale,\ swaps,}}
+\DoxyCodeLine{00667\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ priority);}}
+\DoxyCodeLine{00668\ \textcolor{comment}{}}
+\DoxyCodeLine{00669\ \textcolor{comment}{\ \ return\ 0;}}
+\DoxyCodeLine{00670\ \textcolor{comment}{\}}}
+\DoxyCodeLine{00671\ \textcolor{comment}{}}
+\DoxyCodeLine{00672\ \textcolor{comment}{*/}}
+
+\end{DoxyCode}

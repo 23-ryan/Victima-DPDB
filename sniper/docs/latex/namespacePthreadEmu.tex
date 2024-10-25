@@ -1,0 +1,746 @@
+\doxysection{Pthread\+Emu Namespace Reference}
+\label{namespacePthreadEmu}\index{PthreadEmu@{PthreadEmu}}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ pthread\+\_\+counters\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ pthread\+\_\+enum\+\_\+t} \{ \newline
+\textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+LOCK} = 0
+, \textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+TRYLOCK}
+, \textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+UNLOCK}
+, \textbf{ PTHREAD\+\_\+\+COND\+\_\+\+WAIT}
+, \newline
+\textbf{ PTHREAD\+\_\+\+COND\+\_\+\+SIGNAL}
+, \textbf{ PTHREAD\+\_\+\+COND\+\_\+\+BROADCAST}
+, \textbf{ PTHREAD\+\_\+\+BARRIER\+\_\+\+WAIT}
+, \textbf{ PTHREAD\+\_\+\+ENUM\+\_\+\+LAST}
+ \}
+\item 
+enum \textbf{ state\+\_\+t} \{ \newline
+\textbf{ STATE\+\_\+\+STOPPED}
+, \textbf{ STATE\+\_\+\+RUNNING}
+, \textbf{ STATE\+\_\+\+WAITING}
+, \textbf{ STATE\+\_\+\+INREGION}
+, \newline
+\textbf{ STATE\+\_\+\+SEPARATOR}
+, \textbf{ STATE\+\_\+\+MAX}
+, \textbf{ STATE\+\_\+\+BY\+\_\+\+RETURN}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ pthread\+Count} (\textbf{ pthread\+\_\+enum\+\_\+t} function, \textbf{ Core} $\ast$core, \textbf{ Subsecond\+Time} delay\+\_\+sync, \textbf{ Subsecond\+Time} delay\+\_\+mem)
+\item 
+\textbf{ Int\+Ptr} \textbf{ futex\+Hb\+Address} (pthread\+\_\+mutex\+\_\+t $\ast$mux)
+\item 
+void \textbf{ update\+State} (\textbf{ Core} $\ast$core, \textbf{ state\+\_\+t} state, \textbf{ Subsecond\+Time} delay)
+\item 
+void \textbf{ init} ()
+\item 
+\textbf{ Int\+Ptr} \textbf{ Mutex\+Init} (pthread\+\_\+mutex\+\_\+t $\ast$mux, pthread\+\_\+mutexattr\+\_\+t $\ast$attributes)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Mutex\+Lock} (pthread\+\_\+mutex\+\_\+t $\ast$mux)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Mutex\+Trylock} (pthread\+\_\+mutex\+\_\+t $\ast$mux)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Mutex\+Unlock} (pthread\+\_\+mutex\+\_\+t $\ast$mux)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Cond\+Init} (pthread\+\_\+cond\+\_\+t $\ast$cond, pthread\+\_\+condattr\+\_\+t $\ast$attributes)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Cond\+Wait} (pthread\+\_\+cond\+\_\+t $\ast$cond, pthread\+\_\+mutex\+\_\+t $\ast$mutex)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Cond\+Signal} (pthread\+\_\+cond\+\_\+t $\ast$cond)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Cond\+Broadcast} (pthread\+\_\+cond\+\_\+t $\ast$cond)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Barrier\+Init} (pthread\+\_\+barrier\+\_\+t $\ast$barrier, pthread\+\_\+barrierattr\+\_\+t $\ast$attributes, unsigned count)
+\item 
+\textbf{ Int\+Ptr} \textbf{ Barrier\+Wait} (pthread\+\_\+barrier\+\_\+t $\ast$barrier)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+bool \textbf{ pthread\+\_\+stats\+\_\+added} = false
+\item 
+const char $\ast$ \textbf{ pthread\+\_\+names} [$\,$]
+\item 
+struct \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t} $\ast$ \textbf{ pthread\+\_\+counters} = NULL
+\item 
+static std\+::unordered\+\_\+map$<$ pthread\+\_\+mutex\+\_\+t $\ast$, \textbf{ Int\+Ptr} $>$ \textbf{ futex\+\_\+map}
+\item 
+static \textbf{ Lock} \textbf{ futex\+\_\+map\+\_\+lock}
+\item 
+static \textbf{ Lock} \textbf{ trace\+\_\+lock}
+\item 
+static FILE $\ast$ \textbf{ trace\+\_\+fp} = NULL
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\index{PthreadEmu@{PthreadEmu}!pthread\_enum\_t@{pthread\_enum\_t}}
+\index{pthread\_enum\_t@{pthread\_enum\_t}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{pthread\_enum\_t}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+enum \textbf{ Pthread\+Emu\+::pthread\+\_\+enum\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_MUTEX\_LOCK@{PTHREAD\_MUTEX\_LOCK}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_MUTEX\_LOCK@{PTHREAD\_MUTEX\_LOCK}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+MUTEX\+\_\+\+LOCK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_MUTEX\_TRYLOCK@{PTHREAD\_MUTEX\_TRYLOCK}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_MUTEX\_TRYLOCK@{PTHREAD\_MUTEX\_TRYLOCK}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+MUTEX\+\_\+\+TRYLOCK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_MUTEX\_UNLOCK@{PTHREAD\_MUTEX\_UNLOCK}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_MUTEX\_UNLOCK@{PTHREAD\_MUTEX\_UNLOCK}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+MUTEX\+\_\+\+UNLOCK&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_COND\_WAIT@{PTHREAD\_COND\_WAIT}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_COND\_WAIT@{PTHREAD\_COND\_WAIT}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+COND\+\_\+\+WAIT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_COND\_SIGNAL@{PTHREAD\_COND\_SIGNAL}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_COND\_SIGNAL@{PTHREAD\_COND\_SIGNAL}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+COND\+\_\+\+SIGNAL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_COND\_BROADCAST@{PTHREAD\_COND\_BROADCAST}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_COND\_BROADCAST@{PTHREAD\_COND\_BROADCAST}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+COND\+\_\+\+BROADCAST&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_BARRIER\_WAIT@{PTHREAD\_BARRIER\_WAIT}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_BARRIER\_WAIT@{PTHREAD\_BARRIER\_WAIT}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+BARRIER\+\_\+\+WAIT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PTHREAD\_ENUM\_LAST@{PTHREAD\_ENUM\_LAST}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!PTHREAD\_ENUM\_LAST@{PTHREAD\_ENUM\_LAST}}}\label{namespacePthreadEmu_ac5b813d0b98d9bb7b1ebcce97f1f0673} 
+PTHREAD\+\_\+\+ENUM\+\_\+\+LAST&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 12} of file \textbf{ pthread\+\_\+emu.\+h}.
+
+\index{PthreadEmu@{PthreadEmu}!state\_t@{state\_t}}
+\index{state\_t@{state\_t}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{state\_t}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+enum \textbf{ Pthread\+Emu\+::state\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_STOPPED@{STATE\_STOPPED}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_STOPPED@{STATE\_STOPPED}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+STOPPED&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_RUNNING@{STATE\_RUNNING}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_RUNNING@{STATE\_RUNNING}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+RUNNING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_WAITING@{STATE\_WAITING}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_WAITING@{STATE\_WAITING}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+WAITING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_INREGION@{STATE\_INREGION}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_INREGION@{STATE\_INREGION}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+INREGION&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_SEPARATOR@{STATE\_SEPARATOR}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_SEPARATOR@{STATE\_SEPARATOR}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+SEPARATOR&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_MAX@{STATE\_MAX}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_MAX@{STATE\_MAX}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+MAX&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STATE\_BY\_RETURN@{STATE\_BY\_RETURN}!PthreadEmu@{PthreadEmu}}\index{PthreadEmu@{PthreadEmu}!STATE\_BY\_RETURN@{STATE\_BY\_RETURN}}}\label{namespacePthreadEmu_a78bc86ef9b3af1fdc3ca88e0eb034d2d} 
+STATE\+\_\+\+BY\+\_\+\+RETURN&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 19} of file \textbf{ pthread\+\_\+emu.\+h}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{PthreadEmu@{PthreadEmu}!BarrierInit@{BarrierInit}}
+\index{BarrierInit@{BarrierInit}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{BarrierInit()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ae6bcb115344fecb7ccd1db5b55dce25a} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Barrier\+Init (\begin{DoxyParamCaption}\item[{pthread\+\_\+barrier\+\_\+t $\ast$}]{barrier}{, }\item[{pthread\+\_\+barrierattr\+\_\+t $\ast$}]{attributes}{, }\item[{unsigned}]{count}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 259} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Barrier\+Init()}, \textbf{ Core\+::\+NONE}, \textbf{ Core\+::\+READ}, and \textbf{ Core\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ae6bcb115344fecb7ccd1db5b55dce25a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ae6bcb115344fecb7ccd1db5b55dce25a_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!BarrierWait@{BarrierWait}}
+\index{BarrierWait@{BarrierWait}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{BarrierWait()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ad602327a342271ca63a50486e8f7a392} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Barrier\+Wait (\begin{DoxyParamCaption}\item[{pthread\+\_\+barrier\+\_\+t $\ast$}]{barrier}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 282} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Barrier\+Wait()}, \textbf{ Memory\+Result\+::latency}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+NONE}, \textbf{ PTHREAD\+\_\+\+BARRIER\+\_\+\+WAIT}, \textbf{ pthread\+Count()}, \textbf{ Core\+::\+READ\+\_\+\+EX}, \textbf{ STATE\+\_\+\+RUNNING}, \textbf{ STATE\+\_\+\+WAITING}, and \textbf{ update\+State()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ad602327a342271ca63a50486e8f7a392_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ad602327a342271ca63a50486e8f7a392_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!CondBroadcast@{CondBroadcast}}
+\index{CondBroadcast@{CondBroadcast}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{CondBroadcast()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a77a9a5e3bd1681dd0dceb25f9b96a5f5} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Cond\+Broadcast (\begin{DoxyParamCaption}\item[{pthread\+\_\+cond\+\_\+t $\ast$}]{cond}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 243} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Cond\+Broadcast()}, \textbf{ Memory\+Result\+::latency}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+NONE}, \textbf{ PTHREAD\+\_\+\+COND\+\_\+\+BROADCAST}, \textbf{ pthread\+Count()}, and \textbf{ Core\+::\+READ\+\_\+\+EX}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a77a9a5e3bd1681dd0dceb25f9b96a5f5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a77a9a5e3bd1681dd0dceb25f9b96a5f5_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!CondInit@{CondInit}}
+\index{CondInit@{CondInit}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{CondInit()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a04b61d242ac2fe13156f260f6842d2e5} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Cond\+Init (\begin{DoxyParamCaption}\item[{pthread\+\_\+cond\+\_\+t $\ast$}]{cond}{, }\item[{pthread\+\_\+condattr\+\_\+t $\ast$}]{attributes}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 190} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Carbon\+Cond\+Init()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a04b61d242ac2fe13156f260f6842d2e5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a04b61d242ac2fe13156f260f6842d2e5_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!CondSignal@{CondSignal}}
+\index{CondSignal@{CondSignal}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{CondSignal()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a955002f90b9c1c9d03bff6776fa68a1f} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Cond\+Signal (\begin{DoxyParamCaption}\item[{pthread\+\_\+cond\+\_\+t $\ast$}]{cond}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 227} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Cond\+Signal()}, \textbf{ Memory\+Result\+::latency}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+NONE}, \textbf{ PTHREAD\+\_\+\+COND\+\_\+\+SIGNAL}, \textbf{ pthread\+Count()}, and \textbf{ Core\+::\+READ\+\_\+\+EX}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a955002f90b9c1c9d03bff6776fa68a1f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a955002f90b9c1c9d03bff6776fa68a1f_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!CondWait@{CondWait}}
+\index{CondWait@{CondWait}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{CondWait()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a667507421eddc65ebc981b4fb80d6226} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Cond\+Wait (\begin{DoxyParamCaption}\item[{pthread\+\_\+cond\+\_\+t $\ast$}]{cond}{, }\item[{pthread\+\_\+mutex\+\_\+t $\ast$}]{mutex}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 207} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Cond\+Wait()}, \textbf{ Memory\+Result\+::latency}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+TIME}, \textbf{ Core\+::\+NONE}, \textbf{ PTHREAD\+\_\+\+COND\+\_\+\+WAIT}, \textbf{ pthread\+Count()}, \textbf{ Core\+::\+READ\+\_\+\+EX}, \textbf{ STATE\+\_\+\+RUNNING}, \textbf{ STATE\+\_\+\+WAITING}, and \textbf{ update\+State()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a667507421eddc65ebc981b4fb80d6226_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a667507421eddc65ebc981b4fb80d6226_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!futexHbAddress@{futexHbAddress}}
+\index{futexHbAddress@{futexHbAddress}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{futexHbAddress()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a56c3c557e8534a09002ca0b107a04e68} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::futex\+Hb\+Address (\begin{DoxyParamCaption}\item[{pthread\+\_\+mutex\+\_\+t $\ast$}]{mux}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ futex\+\_\+map}, and \textbf{ futex\+\_\+map\+\_\+lock}.
+
+
+
+Referenced by \textbf{ Mutex\+Lock()}, and \textbf{ Mutex\+Unlock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a56c3c557e8534a09002ca0b107a04e68_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!init@{init}}
+\index{init@{init}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{init()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a6d9283fe91c6851304e19d0472dbfd0a} 
+void Pthread\+Emu\+::init (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ \+\_\+\+\_\+attribute\+\_\+\+\_\+()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ pthread\+\_\+counters}, \textbf{ PTHREAD\+\_\+\+ENUM\+\_\+\+LAST}, \textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+LOCK}, \textbf{ pthread\+\_\+names}, \textbf{ pthread\+\_\+stats\+\_\+added}, \textbf{ register\+Stats\+Metric()}, \textbf{ trace\+\_\+fp}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ Simulator\+::start()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=265pt]{namespacePthreadEmu_a6d9283fe91c6851304e19d0472dbfd0a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=248pt]{namespacePthreadEmu_a6d9283fe91c6851304e19d0472dbfd0a_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!MutexInit@{MutexInit}}
+\index{MutexInit@{MutexInit}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{MutexInit()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_adf3544918684da4120f68de023037213} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Mutex\+Init (\begin{DoxyParamCaption}\item[{pthread\+\_\+mutex\+\_\+t $\ast$}]{mux}{, }\item[{pthread\+\_\+mutexattr\+\_\+t $\ast$}]{attributes}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 98} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Carbon\+Mutex\+Init()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_adf3544918684da4120f68de023037213_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_adf3544918684da4120f68de023037213_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!MutexLock@{MutexLock}}
+\index{MutexLock@{MutexLock}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{MutexLock()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ab91bc87d8a104f60d1bf9bbd4587c0f9} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Mutex\+Lock (\begin{DoxyParamCaption}\item[{pthread\+\_\+mutex\+\_\+t $\ast$}]{mux}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 116} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Mutex\+Lock()}, \textbf{ futex\+Hb\+Address()}, \textbf{ Core\+::get\+Id()}, \textbf{ Memory\+Result\+::latency}, \textbf{ make\+Memory\+Result()}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+NONE}, \textbf{ pthread\+\_\+counters}, \textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+LOCK}, \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t\+::pthread\+\_\+mutex\+\_\+lock\+\_\+contended}, \textbf{ pthread\+Count()}, \textbf{ Core\+::\+READ\+\_\+\+EX}, \textbf{ STATE\+\_\+\+INREGION}, \textbf{ STATE\+\_\+\+WAITING}, \textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ update\+State()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ab91bc87d8a104f60d1bf9bbd4587c0f9_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ab91bc87d8a104f60d1bf9bbd4587c0f9_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!MutexTrylock@{MutexTrylock}}
+\index{MutexTrylock@{MutexTrylock}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{MutexTrylock()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ab0635f628cc51bc486815843181be7bd} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Mutex\+Trylock (\begin{DoxyParamCaption}\item[{pthread\+\_\+mutex\+\_\+t $\ast$}]{mux}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 143} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Mutex\+Trylock()}, \textbf{ Memory\+Result\+::latency}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+NONE}, \textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+TRYLOCK}, \textbf{ pthread\+Count()}, \textbf{ Core\+::\+READ\+\_\+\+EX}, \textbf{ STATE\+\_\+\+INREGION}, \textbf{ STATE\+\_\+\+RUNNING}, \textbf{ STATE\+\_\+\+WAITING}, \textbf{ update\+State()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ab0635f628cc51bc486815843181be7bd_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ab0635f628cc51bc486815843181be7bd_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!MutexUnlock@{MutexUnlock}}
+\index{MutexUnlock@{MutexUnlock}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{MutexUnlock()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a9377cc2569cdd6a6ab6efc4fd4238e8a} 
+\textbf{ Int\+Ptr} Pthread\+Emu\+::\+Mutex\+Unlock (\begin{DoxyParamCaption}\item[{pthread\+\_\+mutex\+\_\+t $\ast$}]{mux}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 162} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Carbon\+Mutex\+Unlock()}, \textbf{ futex\+Hb\+Address()}, \textbf{ Core\+::get\+Id()}, \textbf{ Memory\+Result\+::latency}, \textbf{ make\+Memory\+Result()}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+NONE}, \textbf{ pthread\+\_\+counters}, \textbf{ PTHREAD\+\_\+\+MUTEX\+\_\+\+UNLOCK}, \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t\+::pthread\+\_\+mutex\+\_\+unlock\+\_\+contended}, \textbf{ pthread\+Count()}, \textbf{ Core\+::\+READ\+\_\+\+EX}, \textbf{ STATE\+\_\+\+RUNNING}, \textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ update\+State()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ lite\+::routine\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a9377cc2569cdd6a6ab6efc4fd4238e8a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a9377cc2569cdd6a6ab6efc4fd4238e8a_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!pthreadCount@{pthreadCount}}
+\index{pthreadCount@{pthreadCount}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{pthreadCount()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a6946280c77a2b1ad27c6762f47820449} 
+void Pthread\+Emu\+::pthread\+Count (\begin{DoxyParamCaption}\item[{\textbf{ pthread\+\_\+enum\+\_\+t}}]{function}{, }\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Subsecond\+Time}}]{delay\+\_\+sync}{, }\item[{\textbf{ Subsecond\+Time}}]{delay\+\_\+mem}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Id()}, \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t\+::pthread\+\_\+count}, \textbf{ pthread\+\_\+counters}, \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t\+::pthread\+\_\+total\+\_\+delay\+\_\+mem}, and \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t\+::pthread\+\_\+total\+\_\+delay\+\_\+sync}.
+
+
+
+Referenced by \textbf{ Barrier\+Wait()}, \textbf{ Cond\+Broadcast()}, \textbf{ Cond\+Signal()}, \textbf{ Cond\+Wait()}, \textbf{ Mutex\+Lock()}, \textbf{ Mutex\+Trylock()}, and \textbf{ Mutex\+Unlock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=274pt]{namespacePthreadEmu_a6946280c77a2b1ad27c6762f47820449_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_a6946280c77a2b1ad27c6762f47820449_icgraph}
+\end{center}
+\end{figure}
+\index{PthreadEmu@{PthreadEmu}!updateState@{updateState}}
+\index{updateState@{updateState}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{updateState()}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ae31a6bd911c5940ba9deb232196a3c23} 
+void Pthread\+Emu\+::update\+State (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ state\+\_\+t}}]{state}{, }\item[{\textbf{ Subsecond\+Time}}]{delay}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+References \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ trace\+\_\+fp}, and \textbf{ trace\+\_\+lock}.
+
+
+
+Referenced by \textbf{ Barrier\+Wait()}, \textbf{ Cond\+Wait()}, \textbf{ Mutex\+Lock()}, \textbf{ Mutex\+Trylock()}, and \textbf{ Mutex\+Unlock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ae31a6bd911c5940ba9deb232196a3c23_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacePthreadEmu_ae31a6bd911c5940ba9deb232196a3c23_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{PthreadEmu@{PthreadEmu}!futex\_map@{futex\_map}}
+\index{futex\_map@{futex\_map}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{futex\_map}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a732b9acacdae04ac5e8f0790e7aac190} 
+std\+::unordered\+\_\+map$<$pthread\+\_\+mutex\+\_\+t$\ast$, \textbf{ Int\+Ptr}$>$ Pthread\+Emu\+::futex\+\_\+map\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+Referenced by \textbf{ futex\+Hb\+Address()}.
+
+\index{PthreadEmu@{PthreadEmu}!futex\_map\_lock@{futex\_map\_lock}}
+\index{futex\_map\_lock@{futex\_map\_lock}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{futex\_map\_lock}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_adb43d1d6860ffac867a7fda9755d59ac} 
+\textbf{ Lock} Pthread\+Emu\+::futex\+\_\+map\+\_\+lock\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+Referenced by \textbf{ futex\+Hb\+Address()}.
+
+\index{PthreadEmu@{PthreadEmu}!pthread\_counters@{pthread\_counters}}
+\index{pthread\_counters@{pthread\_counters}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{pthread\_counters}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a3d22b759d300d9d17bcc8fe45d7ce083} 
+struct \textbf{ Pthread\+Emu\+::pthread\+\_\+counters\+\_\+t} $\ast$ Pthread\+Emu\+::pthread\+\_\+counters = NULL}
+
+
+
+Referenced by \textbf{ init()}, \textbf{ Mutex\+Lock()}, \textbf{ Mutex\+Unlock()}, and \textbf{ pthread\+Count()}.
+
+\index{PthreadEmu@{PthreadEmu}!pthread\_names@{pthread\_names}}
+\index{pthread\_names@{pthread\_names}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{pthread\_names}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_a16d524e05d05673f9cd890dd9a0c120e} 
+const char$\ast$ Pthread\+Emu\+::pthread\+\_\+names[$\,$]}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}pthread\_mutex\_lock"{}},\ \textcolor{stringliteral}{"{}pthread\_mutex\_trylock"{}},\ \textcolor{stringliteral}{"{}pthread\_mutex\_unlock"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}pthread\_cond\_wait"{}},\ \textcolor{stringliteral}{"{}pthread\_cond\_signal"{}},\ \textcolor{stringliteral}{"{}pthread\_cond\_broadcast"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}pthread\_barrier\_wait"{}}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 19} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+Referenced by \textbf{ init()}.
+
+\index{PthreadEmu@{PthreadEmu}!pthread\_stats\_added@{pthread\_stats\_added}}
+\index{pthread\_stats\_added@{pthread\_stats\_added}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{pthread\_stats\_added}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ae6088e1778091f6f10725c7d0312191a} 
+bool Pthread\+Emu\+::pthread\+\_\+stats\+\_\+added = false}
+
+
+
+Definition at line \textbf{ 18} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+Referenced by \textbf{ init()}.
+
+\index{PthreadEmu@{PthreadEmu}!trace\_fp@{trace\_fp}}
+\index{trace\_fp@{trace\_fp}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{trace\_fp}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ab1195e3c8be22c1bdcda70ef324259e9} 
+FILE$\ast$ Pthread\+Emu\+::trace\+\_\+fp = NULL\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 59} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+Referenced by \textbf{ init()}, and \textbf{ update\+State()}.
+
+\index{PthreadEmu@{PthreadEmu}!trace\_lock@{trace\_lock}}
+\index{trace\_lock@{trace\_lock}!PthreadEmu@{PthreadEmu}}
+\doxysubsubsection{trace\_lock}
+{\footnotesize\ttfamily \label{namespacePthreadEmu_ad626b6768a3fd8b306bc5a682a602e18} 
+\textbf{ Lock} Pthread\+Emu\+::trace\+\_\+lock\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 58} of file \textbf{ pthread\+\_\+emu.\+cc}.
+
+
+
+Referenced by \textbf{ update\+State()}.
+

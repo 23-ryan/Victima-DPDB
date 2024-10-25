@@ -1,0 +1,81 @@
+\doxysection{shmem\+\_\+perf\+\_\+model.\+cc}
+\label{shmem__perf__model_8cc_source}\index{common/performance\_model/shmem\_perf\_model.cc@{common/performance\_model/shmem\_perf\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf\_model.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fxsupport.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ ShmemPerfModel::ShmemPerfModel():}
+\DoxyCodeLine{00009\ \ \ \ m\_enabled(false),}
+\DoxyCodeLine{00010\ \ \ \ m\_num\_memory\_accesses(0),}
+\DoxyCodeLine{00011\ \ \ \ m\_total\_memory\_access\_latency(SubsecondTime::Zero())}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ NUM\_CORE\_THREADS;\ i++)}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ m\_elapsed\_time[i]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ ShmemPerfModel::\string~ShmemPerfModel()}
+\DoxyCodeLine{00018\ \{\}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00021\ ShmemPerfModel::setElapsedTime(Thread\_t\ thread\_num,\ SubsecondTime\ time)}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}setElapsedTime:\ thread(\%u),\ time(\%s)"{}},\ thread\_num,\ itostr(time).c\_str());}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{comment}{//ScopedLock\ sl(m\_shmem\_perf\_model\_lock);}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ assert(thread\_num\ <\ NUM\_CORE\_THREADS);}
+\DoxyCodeLine{00027\ \ \ \ m\_elapsed\_time[thread\_num]\ =\ time;}
+\DoxyCodeLine{00028\ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ SubsecondTime}
+\DoxyCodeLine{00031\ ShmemPerfModel::getElapsedTime(Thread\_t\ thread\_num)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//ScopedReadLock\ sl(m\_shmem\_perf\_model\_lock);}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{return}\ m\_elapsed\_time[thread\_num];}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00039\ ShmemPerfModel::updateElapsedTime(SubsecondTime\ time,\ Thread\_t\ thread\_num)}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}updateElapsedTime:\ time(\%s)"{}},\ itostr(time).c\_str());}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{comment}{//ScopedLock\ sl(m\_shmem\_perf\_model\_lock);}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{if}\ (m\_elapsed\_time[thread\_num]\ <\ time)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ m\_elapsed\_time[thread\_num]\ =\ time;}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00049\ ShmemPerfModel::incrElapsedTime(SubsecondTime\ time,\ Thread\_t\ thread\_num)}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}incrElapsedTime:\ time(\%s)"{}},\ itostr(time).c\_str());}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{comment}{//ScopedLock\ sl(m\_shmem\_perf\_model\_lock);}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ SubsecondTime\ i\_elapsed\_time\ =\ m\_elapsed\_time[thread\_num];}
+\DoxyCodeLine{00055\ \ \ \ SubsecondTime\ t\_elapsed\_time\ =\ i\_elapsed\_time\ +\ time;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ LOG\_ASSERT\_ERROR(t\_elapsed\_time\ >=\ i\_elapsed\_time,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}t\_elapsed\_time(\%s)\ <\ i\_elapsed\_time(\%s)"{}},}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ itostr(t\_elapsed\_time).c\_str(),}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ itostr(i\_elapsed\_time).c\_str());}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ atomic\_add\_subsecondtime(m\_elapsed\_time[thread\_num],\ time);}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00066\ ShmemPerfModel::incrTotalMemoryAccessLatency(SubsecondTime\ shmem\_time)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{if}\ (m\_enabled)}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{comment}{//ScopedLock\ sl(m\_shmem\_perf\_model\_lock);}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&m\_num\_memory\_accesses,\ 1);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ atomic\_add\_subsecondtime(m\_total\_memory\_access\_latency,\ shmem\_time);}
+\DoxyCodeLine{00074\ \ \ \ \}}
+\DoxyCodeLine{00075\ \}}
+
+\end{DoxyCode}

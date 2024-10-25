@@ -1,0 +1,451 @@
+\doxysection{routine\+\_\+replace.\+cc}
+\label{routine__replace_8cc_source}\index{pin/lite/routine\_replace.cc@{pin/lite/routine\_replace.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}lite/routine\_replace.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}instruction\_modeling.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pthread\_emu.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}sync\_api.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}packet\_type.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}magic\_client.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}trace\_rtn.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}memory\_tracker.h"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cerrno>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ The\ Pintool\ can\ easily\ read\ from\ application\ memory,\ so}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ we\ dont\ need\ to\ explicitly\ initialize\ stuff\ and\ do\ a\ special\ ret}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }lite}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ std::unordered\_map<core\_id\_t,\ SubsecondTime>\ pthread\_t\_start;}
+\DoxyCodeLine{00029\ AFUNPTR\ ptr\_exit\ =\ NULL;}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{struct\ }pthread\_functions\_t\ \{}
+\DoxyCodeLine{00032\ \ \ \ String\ name;}
+\DoxyCodeLine{00033\ \ \ \ PthreadEmu::pthread\_enum\_t\ function;}
+\DoxyCodeLine{00034\ \ \ \ PthreadEmu::state\_t\ state\_after;}
+\DoxyCodeLine{00035\ \}\ pthread\_functions[]\ =\ \{}
+\DoxyCodeLine{00036\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_mutex\_lock"{}},\ \ \ \ \ \ PthreadEmu::PTHREAD\_MUTEX\_LOCK,\ \ \ \ \ PthreadEmu::STATE\_INREGION\ \},}
+\DoxyCodeLine{00037\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_mutex\_trylock"{}},\ \ \ PthreadEmu::PTHREAD\_MUTEX\_TRYLOCK,\ \ PthreadEmu::STATE\_BY\_RETURN\ \},}
+\DoxyCodeLine{00038\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_mutex\_unlock"{}},\ \ \ \ PthreadEmu::PTHREAD\_MUTEX\_UNLOCK,\ \ \ PthreadEmu::STATE\_RUNNING\ \},}
+\DoxyCodeLine{00039\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_cond\_wait"{}},\ \ \ \ \ \ \ PthreadEmu::PTHREAD\_COND\_WAIT,\ \ \ \ \ \ PthreadEmu::STATE\_RUNNING\ \},}
+\DoxyCodeLine{00040\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_cond\_signal"{}},\ \ \ \ \ PthreadEmu::PTHREAD\_COND\_SIGNAL,\ \ \ \ PthreadEmu::STATE\_RUNNING\ \},}
+\DoxyCodeLine{00041\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_cond\_broadcast"{}},\ \ PthreadEmu::PTHREAD\_COND\_BROADCAST,\ PthreadEmu::STATE\_RUNNING\ \},}
+\DoxyCodeLine{00042\ \ \ \ \{\ \textcolor{stringliteral}{"{}pthread\_barrier\_wait"{}},\ \ \ \ PthreadEmu::PTHREAD\_BARRIER\_WAIT,\ \ \ PthreadEmu::STATE\_RUNNING\ \},}
+\DoxyCodeLine{00043\ \};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}\ printStackTrace(THREADID\ threadid,\ \textcolor{keywordtype}{char}\ *\ function,\ BOOL\ enter)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ printf(\textcolor{stringliteral}{"{}[\%u]\ \%s\ \%s\(\backslash\)n"{}},\ threadid,\ function,\ enter\ ?\ \textcolor{stringliteral}{"{}Enter"{}}\ :\ \textcolor{stringliteral}{"{}Exit"{}});}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ routineStartCallback(RTN\ rtn,\ INS\ ins)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ String\ rtn\_name\ =\ RTN\_Name(rtn).c\_str();}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \textcolor{comment}{//\ Routine\ instrumentation\ functions\ which\ can\ cause\ a\ rescheduling,\ or\ a\ jump\ in\ application\ code,}}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{comment}{//\ need\ to\ be\ called\ *before*\ the\ handleBasicBlock\ for\ any\ code\ in\ the\ routine,}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{comment}{//\ else,\ we\ would\ first\ issue\ the\ basic\ block\ to\ one\ core\ and\ later\ the\ send\ the}}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{comment}{//\ dynamic\ information\ to\ another\ core,\ or\ send\ dynamic\ instructions\ for\ the\ wrong\ basic\ block.}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \textcolor{comment}{//\ icc/openmp\ compatibility}}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}\_\_kmp\_reap\_monitor"{}}\ ||\ rtn\_name\ ==\ \textcolor{stringliteral}{"{}\_\_kmp\_internal\_end\_atexit"{}})}
+\DoxyCodeLine{00061\ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ INS\_InsertCall(ins,\ IPOINT\_BEFORE,\ AFUNPTR(emuKmpReapMonitor),\ IARG\_THREAD\_ID,\ IARG\_CONTEXT,\ IARG\_END);}
+\DoxyCodeLine{00063\ \ \ \ \}}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keywordtype}{void}\ routineCallback(RTN\ rtn,\ \textcolor{keywordtype}{void}*\ v)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ String\ rtn\_name\ =\ RTN\_Name(rtn).c\_str();}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ addRtnTracer(rtn);}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{if}\ (0)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ RTN\_Open\ (rtn);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ name\ =\ (\textcolor{keyword}{new}\ String(rtn\_name))-\/>c\_str();}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ RTN\_InsertCall\ (rtn,\ IPOINT\_BEFORE,\ AFUNPTR\ (printStackTrace),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ name,\ IARG\_BOOL,\ \textcolor{keyword}{true},\ IARG\_END);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ RTN\_InsertCall\ (rtn,\ IPOINT\_AFTER,\ \ AFUNPTR\ (printStackTrace),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ name,\ IARG\_BOOL,\ \textcolor{keyword}{false},\ IARG\_END);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ RTN\_Close\ (rtn);}
+\DoxyCodeLine{00079\ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getMemoryTracker())}
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}malloc"{}}\ ||\ rtn\_name\ ==\ \textcolor{stringliteral}{"{}\_int\_malloc"{}})}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ size\_pos\ =\ 0;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}\_int\_malloc"{}})\ size\_pos\ =\ 1;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ RTN\_Open(rtn);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_BEFORE,\ AFUNPTR(mallocBefore),\ IARG\_THREAD\_ID,\ IARG\_RETURN\_IP,\ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ size\_pos,\ IARG\_END);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_AFTER,\ \ AFUNPTR(mallocAfter),\ IARG\_THREAD\_ID,\ IARG\_FUNCRET\_EXITPOINT\_VALUE,\ IARG\_END);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ RTN\_Close(rtn);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}free"{}})}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ RTN\_Open(rtn);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_BEFORE,\ AFUNPTR(freeBefore),\ IARG\_THREAD\_ID,\ IARG\_RETURN\_IP,\ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,\ IARG\_END);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ RTN\_Close(rtn);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \textcolor{comment}{//\ save\ pointers\ to\ some\ functions\ we'll\ want\ to\ call\ through\ PIN\_CallApplicationFunction}}
+\DoxyCodeLine{00102\ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}exit"{}})\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ptr\_exit\ =\ RTN\_Funptr(rtn);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00105\ \ \ \ \textcolor{comment}{//\ Above\ this\ point:\ monitor-\/only\ instrumentation\ that\ is\ safe\ to\ use\ with\ PinPlay}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>getConfig()-\/>getEnableSyscallEmulation())}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00112\ \ \ \ \textcolor{comment}{//\ Below\ this\ point:\ emulation\ code\ that\ is\ NOT\ safe\ with\ PinPlay}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \textcolor{comment}{//\ CarbonStartSim()\ and\ CarbonStopSim()}}
+\DoxyCodeLine{00116\ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonStartSim"{}})}
+\DoxyCodeLine{00117\ \ \ \ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(SInt32),}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonStartSim"{}},}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(\textcolor{keywordtype}{int}),}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(\textcolor{keywordtype}{char}**),}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::nullFunction),}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00129\ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonStopSim"{}})}
+\DoxyCodeLine{00131\ \ \ \ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonStopSim"{}},}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::nullFunction),}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00141\ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ Synchronization}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonMutexInit"{}})}
+\DoxyCodeLine{00145\ \ \ \ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonMutexInit"{}},}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_mutex\_t*),}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonMutexInit),}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00157\ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonMutexLock"{}})}
+\DoxyCodeLine{00159\ \ \ \ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonMutexLock"{}},}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_mutex\_t*),}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonMutexLock),}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00171\ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonMutexUnlock"{}})}
+\DoxyCodeLine{00173\ \ \ \ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonMutexUnlock"{}},}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_mutex\_t*),}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonMutexUnlock),}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00185\ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonCondInit"{}})}
+\DoxyCodeLine{00187\ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonCondInit"{}},}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_cond\_t*),}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonCondInit),}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00199\ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonCondWait"{}})}
+\DoxyCodeLine{00201\ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonCondWait"{}},}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_cond\_t*),}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_mutex\_t*),}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonCondWait),}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 1,}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00215\ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonCondSignal"{}})}
+\DoxyCodeLine{00217\ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonCondSignal"{}},}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_cond\_t*),}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonCondSignal),}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00229\ \ \ \ \}}
+\DoxyCodeLine{00230\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonCondBroadcast"{}})}
+\DoxyCodeLine{00231\ \ \ \ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonCondBroadcast"{}},}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_cond\_t*),}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonCondBroadcast),}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00243\ \ \ \ \}}
+\DoxyCodeLine{00244\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonBarrierInit"{}})}
+\DoxyCodeLine{00245\ \ \ \ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonBarrierInit"{}},}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_barrier\_t*),}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}),}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonBarrierInit),}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 1,}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00259\ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}CarbonBarrierWait"{}})}
+\DoxyCodeLine{00261\ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ PROTO\ proto\ =\ PROTO\_Allocate(PIN\_PARG(\textcolor{keywordtype}{void}),}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ CALLINGSTD\_DEFAULT,}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}CarbonBarrierWait"{}},}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG(carbon\_barrier\_t*),}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ PIN\_PARG\_END());}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(CarbonBarrierWait),}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_PROTOTYPE,\ proto,}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00273\ \ \ \ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \textcolor{comment}{//\ os\ emulation}}
+\DoxyCodeLine{00276\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}sched\_getcpu"{}})\ \ \ \ \ \ RTN\_ReplaceSignature(rtn,\ AFUNPTR(emuGetCPU),\ IARG\_THREAD\_ID,\ IARG\_END);}
+\DoxyCodeLine{00277\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}get\_nprocs"{}}\ \ \ \ \ \ ||\ rtn\_name\ ==\ \textcolor{stringliteral}{"{}\_\_get\_nprocs"{}})}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(emuGetNprocs));}
+\DoxyCodeLine{00279\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}get\_nprocs\_conf"{}}\ ||\ rtn\_name\ ==\ \textcolor{stringliteral}{"{}\_\_get\_nprocs\_conf"{}})}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(emuGetNprocs));}
+\DoxyCodeLine{00281\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getOSEmuClockReplace())}
+\DoxyCodeLine{00282\ \ \ \ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name\ ==\ \textcolor{stringliteral}{"{}clock\_gettime"{}})}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,\ AFUNPTR(emuClockGettime),\ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,\ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 1,\ IARG\_END);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}gettimeofday"{}})\ !=\ String::npos)}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ RTN\_ReplaceSignature(rtn,\ AFUNPTR(emuGettimeofday),\ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 0,\ IARG\_FUNCARG\_ENTRYPOINT\_VALUE,\ 1,\ IARG\_END);}
+\DoxyCodeLine{00289\ \ \ \ \}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getOSEmuPthreadReplace())\ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_mutex\_init"{}})\ !=\ String::npos)\ \ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::MutexInit));}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_mutex\_lock"{}})\ !=\ String::npos)\ \ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::MutexLock));}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_mutex\_trylock"{}})\ !=\ String::npos)\ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::MutexTrylock));}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_mutex\_unlock"{}})\ !=\ String::npos)\ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::MutexUnlock));}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_mutex\_destroy"{}})\ !=\ String::npos)\ \ \ RTN\_Replace(rtn,\ AFUNPTR(nullFunction));}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_cond\_init"{}})\ !=\ String::npos)\ \ \ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::CondInit));}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_cond\_wait"{}})\ !=\ String::npos)\ \ \ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::CondWait));}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_cond\_signal"{}})\ !=\ String::npos)\ \ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::CondSignal));}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_cond\_broadcast"{}})\ !=\ String::npos)\ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::CondBroadcast));}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_cond\_destroy"{}})\ !=\ String::npos)\ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(nullFunction));}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_barrier\_init"{}})\ !=\ String::npos)\ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::BarrierInit));}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_barrier\_wait"{}})\ !=\ String::npos)\ \ \ \ RTN\_Replace(rtn,\ AFUNPTR(PthreadEmu::BarrierWait));}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (rtn\_name.find(\textcolor{stringliteral}{"{}pthread\_barrier\_destroy"{}})\ !=\ String::npos)\ RTN\_Replace(rtn,\ AFUNPTR(nullFunction));}
+\DoxyCodeLine{00305\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \textcolor{comment}{//\ pthread\ wrappers}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \textcolor{keyword}{sizeof}(pthread\_functions)\ /\ \textcolor{keyword}{sizeof}(pthread\_functions\_t);\ ++i)\ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn\_name.find(pthread\_functions[i].name)\ !=\ String::npos)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ RTN\_Open(rtn);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_BEFORE,\ AFUNPTR(pthreadBefore),\ IARG\_THREAD\_ID,\ IARG\_END);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ RTN\_InsertCall(rtn,\ IPOINT\_AFTER,\ \ AFUNPTR(pthreadAfter),\ IARG\_THREAD\_ID,\ IARG\_ADDRINT,\ i,\ IARG\_FUNCRET\_EXITPOINT\_VALUE,\ IARG\_END);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ RTN\_Close(rtn);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \}}
+\DoxyCodeLine{00316\ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ AFUNPTR\ getFunptr(CONTEXT*\ context,\ \textcolor{keywordtype}{string}\ func\_name)}
+\DoxyCodeLine{00319\ \{}
+\DoxyCodeLine{00320\ \ \ \ IntPtr\ reg\_inst\_ptr\ =\ PIN\_GetContextReg(context,\ REG\_INST\_PTR);}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ PIN\_LockClient();}
+\DoxyCodeLine{00323\ \ \ \ IMG\ img\ =\ IMG\_FindByAddress(reg\_inst\_ptr);}
+\DoxyCodeLine{00324\ \ \ \ RTN\ rtn\ =\ RTN\_FindByName(img,\ func\_name.c\_str());}
+\DoxyCodeLine{00325\ \ \ \ PIN\_UnlockClient();}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \textcolor{keywordflow}{return}\ RTN\_Funptr(rtn);}
+\DoxyCodeLine{00328\ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ IntPtr\ nullFunction()}
+\DoxyCodeLine{00331\ \{}
+\DoxyCodeLine{00332\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}In\ nullFunction()"{}});}
+\DoxyCodeLine{00333\ \ \ \ \textcolor{keywordflow}{return}\ IntPtr(0);}
+\DoxyCodeLine{00334\ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \textcolor{keywordtype}{void}\ pthreadBefore(THREADID\ thread\_id)}
+\DoxyCodeLine{00337\ \{}
+\DoxyCodeLine{00338\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00339\ \ \ \ assert(core);}
+\DoxyCodeLine{00340\ \ \ \ pthread\_t\_start[thread\_id]\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00341\ \ \ \ updateState(core,\ PthreadEmu::STATE\_WAITING);}
+\DoxyCodeLine{00342\ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \textcolor{keywordtype}{void}\ pthreadAfter(THREADID\ thread\_id,\ ADDRINT\ type\_id,\ ADDRINT\ retval)}
+\DoxyCodeLine{00345\ \{}
+\DoxyCodeLine{00346\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00347\ \ \ \ assert(core);}
+\DoxyCodeLine{00348\ \ \ \ PthreadEmu::state\_t\ new\_state;}
+\DoxyCodeLine{00349\ \ \ \ \textcolor{keywordflow}{if}\ (pthread\_functions[type\_id].state\_after\ ==\ PthreadEmu::STATE\_BY\_RETURN)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ new\_state\ =\ retval\ ==\ EBUSY\ ?\ PthreadEmu::STATE\_RUNNING\ :\ PthreadEmu::STATE\_INREGION;}
+\DoxyCodeLine{00351\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ new\_state\ =\ pthread\_functions[type\_id].state\_after;}
+\DoxyCodeLine{00353\ \ \ \ updateState(core,\ new\_state);}
+\DoxyCodeLine{00354\ \ \ \ pthreadCount(pthread\_functions[type\_id].function,\ core,\ core-\/>getPerformanceModel()-\/>getElapsedTime()\ -\/\ pthread\_t\_start[thread\_id],\ SubsecondTime::Zero());}
+\DoxyCodeLine{00355\ \}}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \textcolor{keywordtype}{void}\ mallocBefore(THREADID\ thread\_id,\ ADDRINT\ eip,\ ADDRINT\ size)}
+\DoxyCodeLine{00358\ \{}
+\DoxyCodeLine{00359\ \ \ \ localStore[thread\_id].malloc.eip\ =\ localStore[thread\_id].lastCallSite;}
+\DoxyCodeLine{00360\ \ \ \ localStore[thread\_id].malloc.size\ =\ size;}
+\DoxyCodeLine{00361\ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{keywordtype}{void}\ mallocAfter(THREADID\ thread\_id,\ ADDRINT\ address)}
+\DoxyCodeLine{00364\ \{}
+\DoxyCodeLine{00365\ \ \ \ \textcolor{keywordflow}{if}\ (localStore[thread\_id].malloc.size)}
+\DoxyCodeLine{00366\ \ \ \ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ Sim()-\/>getMemoryTracker()-\/>logMalloc(localStore[thread\_id].thread-\/>getId(),\ localStore[thread\_id].malloc.eip,\ address,\ localStore[thread\_id].malloc.size);}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ localStore[thread\_id].malloc.size\ =\ 0;}
+\DoxyCodeLine{00369\ \ \ \ \}}
+\DoxyCodeLine{00370\ \}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{keywordtype}{void}\ freeBefore(THREADID\ thread\_id,\ ADDRINT\ eip,\ ADDRINT\ address)}
+\DoxyCodeLine{00373\ \{}
+\DoxyCodeLine{00374\ \ \ \ Sim()-\/>getMemoryTracker()-\/>logFree(localStore[thread\_id].thread-\/>getId(),\ eip,\ address);}
+\DoxyCodeLine{00375\ \}}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ IntPtr\ emuGetNprocs()}
+\DoxyCodeLine{00378\ \{}
+\DoxyCodeLine{00379\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getConfig()-\/>getOSEmuNprocs()}
+\DoxyCodeLine{00380\ \ \ \ ?\ Sim()-\/>getConfig()-\/>getOSEmuNprocs()}
+\DoxyCodeLine{00381\ \ \ \ :\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00382\ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ IntPtr\ emuGetCPU(THREADID\ thread\_id)}
+\DoxyCodeLine{00385\ \{}
+\DoxyCodeLine{00386\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00387\ \ \ \ assert(core);}
+\DoxyCodeLine{00388\ \ \ \ \textcolor{keywordflow}{return}\ core-\/>getId();}
+\DoxyCodeLine{00389\ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ IntPtr\ emuClockGettime(THREADID\ thread\_id,\ clockid\_t\ clk\_id,\ \textcolor{keyword}{struct}\ timespec\ *tp)}
+\DoxyCodeLine{00392\ \{}
+\DoxyCodeLine{00393\ \ \ \ \textcolor{keywordflow}{switch}(clk\_id)}
+\DoxyCodeLine{00394\ \ \ \ \{}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CLOCK\_REALTIME:}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CLOCK\_MONOTONIC:}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Return\ simulated\ time}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tp)}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ assert(core);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ time\ =\ Sim()-\/>getConfig()-\/>getOSEmuTimeStart()\ *\ 1000000000}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ core-\/>getPerformanceModel()-\/>getElapsedTime().getNS();}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ tp-\/>tv\_sec\ =\ time\ /\ 1000000000;}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ tp-\/>tv\_nsec\ =\ time\ \%\ 1000000000;}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unknown/non-\/emulated\ clock\ types\ (such\ as\ CLOCK\_PROCESS\_CPUTIME\_ID/CLOCK\_THREAD\_CPUTIME\_ID)}}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clock\_gettime(clk\_id,\ tp);}
+\DoxyCodeLine{00412\ \ \ \ \}}
+\DoxyCodeLine{00413\ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ IntPtr\ emuGettimeofday(THREADID\ thread\_id,\ \textcolor{keyword}{struct}\ timeval\ *tv,\ \textcolor{keyword}{struct}\ timezone\ *tz)}
+\DoxyCodeLine{00416\ \{}
+\DoxyCodeLine{00417\ \ \ \ LOG\_ASSERT\_WARNING\_ONCE(tz\ ==\ NULL,\ \textcolor{stringliteral}{"{}gettimeofday()\ with\ non-\/NULL\ timezone\ not\ supported"{}});}
+\DoxyCodeLine{00418\ \ \ \ LOG\_ASSERT\_ERROR(tv\ !=\ NULL,\ \textcolor{stringliteral}{"{}gettimeofday()\ called\ with\ NULL\ timeval\ not\ supported"{}});}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00421\ \ \ \ assert(core);}
+\DoxyCodeLine{00422\ \ \ \ UInt64\ time\ =\ Sim()-\/>getConfig()-\/>getOSEmuTimeStart()\ *\ 1000000000}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ core-\/>getPerformanceModel()-\/>getElapsedTime().getNS();}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ tv-\/>tv\_sec\ =\ time\ /\ 1000000000;}
+\DoxyCodeLine{00426\ \ \ \ tv-\/>tv\_usec\ =\ (time\ /\ 1000)\ \%\ 1000000;}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00429\ \}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \textcolor{keywordtype}{void}\ emuKmpReapMonitor(THREADID\ threadIndex,\ CONTEXT\ *ctxt)}
+\DoxyCodeLine{00432\ \{}
+\DoxyCodeLine{00433\ \ \ \ \textcolor{comment}{//\ Hack\ to\ make\ ICC's\ OpenMP\ runtime\ library\ work.}}
+\DoxyCodeLine{00434\ \ \ \ \textcolor{comment}{//\ This\ runtime\ creates\ a\ monitor\ thread\ which\ blocks\ in\ a\ condition\ variable\ with\ a\ timeout.}}
+\DoxyCodeLine{00435\ \ \ \ \textcolor{comment}{//\ On\ exit,\ thread\ 0\ executes\ \_\_kmp\_reap\_monitor()\ which\ join()s\ on\ this\ monitor\ thread.}}
+\DoxyCodeLine{00436\ \ \ \ \textcolor{comment}{//\ In\ due\ time,\ the\ timeout\ occurs\ and\ the\ monitor\ thread\ returns}}
+\DoxyCodeLine{00437\ \ \ \ \textcolor{comment}{//\ from\ pthread\_cond\_timedwait(),\ sees\ that\ it\ should\ be\ exiting,\ and\ returns.}}
+\DoxyCodeLine{00438\ \ \ \ \textcolor{comment}{//\ However,\ in\ simulation\ all\ of\ this\ happens\ post-\/ROI,\ where\ time\ is\ not\ advancing\ so\ the\ timeout\ never\ occurs.}}
+\DoxyCodeLine{00439\ \ \ \ \textcolor{comment}{//\ Having\ time\ advance\ using\ a\ one-\/IPC\ model\ during\ pre-\/\ and\ post-\/ROI\ would\ be\ nice,\ but\ for\ now,}}
+\DoxyCodeLine{00440\ \ \ \ \textcolor{comment}{//\ just\ forcefully\ terminate\ the\ application\ when\ the\ master\ thread\ reaches\ \_\_kmp\_reap\_monitor().}}
+\DoxyCodeLine{00441\ \ \ \ \textcolor{keywordtype}{void}\ *res;}
+\DoxyCodeLine{00442\ \textcolor{preprocessor}{\#if\ PIN\_REV\ >=\ 71313}}
+\DoxyCodeLine{00443\ \ \ \ PIN\_CallApplicationFunction(ctxt,\ threadIndex,\ CALLINGSTD\_DEFAULT,\ ptr\_exit,\ NULL,\ PIN\_PARG(\textcolor{keywordtype}{void}*),\ \&res,\ PIN\_PARG(\textcolor{keywordtype}{int}),\ 0,\ PIN\_PARG\_END());}
+\DoxyCodeLine{00444\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00445\ \ \ \ PIN\_CallApplicationFunction(ctxt,\ threadIndex,\ CALLINGSTD\_DEFAULT,\ ptr\_exit,\ PIN\_PARG(\textcolor{keywordtype}{void}*),\ \&res,\ PIN\_PARG(\textcolor{keywordtype}{int}),\ 0,\ PIN\_PARG\_END());}
+\DoxyCodeLine{00446\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00447\ \}}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,64 @@
+\doxysection{sampling\+\_\+manager.\+h}
+\label{sampling__manager_8h_source}\index{common/sampling/sampling\_manager.h@{common/sampling/sampling\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SAMPLING\_MANAGER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SAMPLING\_MANAGER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}sampling\_algorithm.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}inst\_mode.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <boost/tuple/tuple.hpp>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }SamplingProvider;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }SamplingManager}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_sampling\_enabled;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_uncoordinated;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_fastforward;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_warmup;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ SubsecondTime\ m\_target\_ffend;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ SamplingProvider\ *m\_sampling\_provider;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ SamplingAlgorithm\ *m\_sampling\_algorithm;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ std::vector<UInt64>\ m\_instructions;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_time\_total;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_time\_nonidle;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setInstrumentationMode(InstMode::inst\_mode\_t\ mode);}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ periodic(SubsecondTime\ time);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ instr\_count(core\_id\_t\ core\_id);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ hook\_instr\_count(SamplingManager\ *self,\ core\_id\_t\ core\_id)\ \{\ self-\/>instr\_count(core\_id);\ \}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ hook\_periodic(SamplingManager\ *self,\ subsecond\_time\_t\ time)\ \{\ self-\/>periodic(time);\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }FastforwardPerformanceModel;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ recalibrateInstructionsCallback(core\_id\_t\ core\_id);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ SamplingManager();}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \string~SamplingManager();}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{comment}{//\ To\ be\ called\ by\ SamplingAlgorithm}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enableFastForward(SubsecondTime\ until,\ \textcolor{keywordtype}{bool}\ warmup,\ \textcolor{keywordtype}{bool}\ detailed\_sync);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disableFastForward();}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ SamplingProvider*\ getSamplingProvider()\ \{\ \textcolor{keywordflow}{return}\ m\_sampling\_provider;\ \};}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ SubsecondTime\ getCoreHistoricCPI(Core\ *core,\ \textcolor{keywordtype}{bool}\ non\_idle,\ SubsecondTime\ min\_nonidle\_time)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ resetCoreHistoricCPIs();}
+\DoxyCodeLine{00056\ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ SAMPLING\_MANAGER\_H}}
+
+\end{DoxyCode}

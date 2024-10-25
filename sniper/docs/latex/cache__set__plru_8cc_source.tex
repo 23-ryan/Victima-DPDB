@@ -1,0 +1,121 @@
+\doxysection{cache\+\_\+set\+\_\+plru.\+cc}
+\label{cache__set__plru_8cc_source}\index{common/core/memory\_subsystem/cache/cache\_set\_plru.cc@{common/core/memory\_subsystem/cache/cache\_set\_plru.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_plru.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Tree\ LRU\ for\ 4\ and\ 8\ way\ caches}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ CacheSetPLRU::CacheSetPLRU(}
+\DoxyCodeLine{00007\ \ \ \ \ \ \ CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set)\ :}
+\DoxyCodeLine{00009\ \ \ \ CacheSet(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ LOG\_ASSERT\_ERROR(associativity\ ==\ 4\ ||\ associativity\ ==\ 8,}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}PLRU\ not\ implemted\ for\ associativity\ \%d\ (only\ 4,\ 8)"{}},\ associativity);}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 8;\ ++i)}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ b[i]\ =\ 0;}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ CacheSetPLRU::\string~CacheSetPLRU()}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ UInt32}
+\DoxyCodeLine{00022\ CacheSetPLRU::getReplacementIndex(CacheCntlr\ *cntlr)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{comment}{//\ Invalidations\ may\ mess\ up\ the\ LRU\ bits}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cache\_block\_info\_array[i]-\/>isValid())}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ updateReplacementIndex(i);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ i;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ UInt32\ retValue\ =\ -\/1;}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (m\_associativity\ ==\ 4)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[0]\ ==\ 0)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[1]\ ==\ 0)\ retValue\ =\ 0;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ retValue\ =\ 1;\ \ \ \textcolor{comment}{//\ b1==1}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[2]\ ==\ 0)\ retValue\ =\ 2;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ retValue\ =\ 3;\ \ \ \textcolor{comment}{//\ b2==1}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00048\ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_associativity\ ==\ 8)}
+\DoxyCodeLine{00050\ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[0]\ ==\ 0)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[1]\ ==\ 0)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[2]\ ==\ 0)\ retValue=\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ retValue=\ 1;\ \ \textcolor{comment}{//\ b2==1}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ b1==1}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[3]\ ==\ 0)\ retValue\ =\ 2;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ retValue\ =\ 3;\ \ \textcolor{comment}{//\ b3==1}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ b0==1}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[4]\ ==\ 0)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[5]\ ==\ 0)\ retValue\ =\ 4;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ retValue\ =\ 5;\ \ \textcolor{comment}{//\ b5==1}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ b4==1}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b[6]\ ==\ 0)\ retValue\ =\ 6;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ retValue\ =\ 7;\ \ \textcolor{comment}{//\ b6==1}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}PLRU\ doesn't\ support\ associativity\ \%d"{}},\ m\_associativity);}
+\DoxyCodeLine{00081\ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ LOG\_ASSERT\_ERROR(isValidReplacement(retValue),\ \textcolor{stringliteral}{"{}PLRU\ selected\ an\ invalid\ replacement\ candidate"{}}\ );}
+\DoxyCodeLine{00085\ \ \ \ updateReplacementIndex(retValue);}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{return}\ retValue;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00091\ CacheSetPLRU::updateReplacementIndex(UInt32\ accessed\_index)}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordflow}{if}\ (m\_associativity\ ==\ 4)}
+\DoxyCodeLine{00094\ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \ \ \ \ \ (accessed\_index==0)\ \{\ b[0]=1;b[1]=1;\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==1)\ \{\ b[0]=1;b[1]=0;\ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==2)\ \{\ b[0]=0;\ \ \ \ \ \ \ b[2]=1;\}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==3)\ \{\ b[0]=0;\ \ \ \ \ \ \ b[2]=0;\}}
+\DoxyCodeLine{00099\ \ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_associativity\ ==\ 8)}
+\DoxyCodeLine{00101\ \ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \ \ \ \ \ (accessed\_index==0)\ \{\ b[0]=1;b[1]=1;b[2]=1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==1)\ \{\ b[0]=1;b[1]=1;b[2]=0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==2)\ \{\ b[0]=1;b[1]=0;\ \ \ \ \ \ \ b[3]=1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==3)\ \{\ b[0]=1;b[1]=0;\ \ \ \ \ \ \ b[3]=0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==4)\ \{\ b[0]=0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b[4]=1;b[5]=1;\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==5)\ \{\ b[0]=0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b[4]=1;b[5]=0;\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==6)\ \{\ b[0]=0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b[4]=0;\ \ \ \ \ \ \ b[6]=1;\}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (accessed\_index==7)\ \{\ b[0]=0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b[4]=0;\ \ \ \ \ \ \ b[6]=0;\}}
+\DoxyCodeLine{00110\ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00112\ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}PLRU\ doesn't\ support\ associativity\ \%d"{}},\ m\_associativity);}
+\DoxyCodeLine{00114\ \ \ \ \}}
+\DoxyCodeLine{00115\ \}}
+
+\end{DoxyCode}

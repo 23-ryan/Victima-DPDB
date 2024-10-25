@@ -1,0 +1,82 @@
+\doxysection{allocator.\+h}
+\label{allocator_8h_source}\index{common/misc/allocator.h@{common/misc/allocator.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_ALLOCATOR\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_ALLOCATOR\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}FSBAllocator.hh"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <typeinfo>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <cxxabi.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Pool\ allocator}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }Allocator}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }DataElement}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ Allocator\ *allocator;}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ data[];}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~Allocator()\ \{\}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ *alloc(\textcolor{keywordtype}{size\_t}\ bytes)\ =\ 0;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \_dealloc(\textcolor{keywordtype}{void}\ *ptr)\ =\ 0;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ dealloc(\textcolor{keywordtype}{void}*\ ptr)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ DataElement\ *elem\ =\ (DataElement*)(((\textcolor{keywordtype}{char}*)ptr)\ -\/\ \textcolor{keyword}{sizeof}(DataElement));}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ elem-\/>allocator-\/>\_dealloc(elem);}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{unsigned}\ MaxItems\ =\ 0>\ \textcolor{keyword}{class\ }TypedAllocator\ :\ \textcolor{keyword}{public}\ Allocator}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ UInt64\ m\_items;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ FSBAllocator\_ElemAllocator<\textcolor{keyword}{sizeof}(DataElement)\ +\ \textcolor{keyword}{sizeof}(T),\ MaxItems,\ T>\ m\_alloc;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ ROB-\/SMT,\ DynamicMicroOps\ are\ allocated\ by\ their\ own\ thread\ but\ free'd\ in\ simulate()\ which\ can\ be\ called\ by\ anyone}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ TypedAllocator()}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ :\ m\_items(0)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~TypedAllocator()}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_items)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ status;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *nameoftype\ =\ abi::\_\_cxa\_demangle(\textcolor{keyword}{typeid}(T).name(),\ 0,\ 0,\ \&status);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[ALLOC]\ \%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ items\ of\ type\ \%s\ not\ freed\(\backslash\)n"{}},\ m\_items,\ nameoftype);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ free(nameoftype);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ alloc(\textcolor{keywordtype}{size\_t}\ bytes)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//LOG\_ASSERT\_ERROR(bytes\ ==\ sizeof(T),\ "{}"{});}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ ++m\_items;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ DataElement\ *elem\ =\ (DataElement\ *)m\_alloc.allocate();}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ elem-\/>allocator\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ elem-\/>data;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \_dealloc(\textcolor{keywordtype}{void}*\ ptr)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ -\/-\/m\_items;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ m\_alloc.deallocate((T*)ptr);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ \};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_ALLOCATOR\_H}}
+
+\end{DoxyCode}

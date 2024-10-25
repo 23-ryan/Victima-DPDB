@@ -1,0 +1,160 @@
+\doxysection{key.\+cpp}
+\label{key_8cpp_source}\index{common/config/key.cpp@{common/config/key.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}key.hpp"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <boost/version.hpp>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <boost/lexical\_cast.hpp>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string.hpp>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#if\ (BOOST\_VERSION==103500)}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/core.hpp>}}
+\DoxyCodeLine{00015\ \textcolor{keyword}{using\ namespace\ }boost::spirit;}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#\ include\ <boost/spirit/include/classic\_core.hpp>}}
+\DoxyCodeLine{00018\ \textcolor{keyword}{using\ namespace\ }boost::spirit::classic;}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{comment}{//\ Like\ int\_p,\ but\ support\ up\ to\ SInt64}}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keyword}{typedef}\ int\_parser<SInt64,\ 10,\ 1,\ -\/1>\ long\_parser\_t;}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{static}\ long\_parser\_t\ long\_p;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ V>}
+\DoxyCodeLine{00028\ \ \ \ \ Key::Key(\textcolor{keyword}{const}\ String\ \&\ parentPath\_,\ \textcolor{keyword}{const}\ String\ \&\ name\_,\ \textcolor{keyword}{const}\ V\ \&\ value\_)}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ m\_name(name\_),}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ m\_value(boost::lexical\_cast<String>(value\_)),}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ m\_parentPath(parentPath\_),}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ m\_type(DetermineType(m\_value))}
+\DoxyCodeLine{00034\ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{template}<>\ Key::Key(\textcolor{keyword}{const}\ String\ \&\ parentPath\_,\ \textcolor{keyword}{const}\ String\ \&\ name\_,\ \textcolor{keyword}{const}\ String\ \&\ value\_)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ m\_name(name\_),}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ m\_value(value\_),}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ m\_parentPath(parentPath\_),}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ m\_type(DetermineType(m\_value))}
+\DoxyCodeLine{00043\ \ \ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keyword}{template}\ Key::Key(\textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ SInt64\ \&);}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{template}\ Key::Key(\textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ String\ \&,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \&);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//Determine\ the\ type\ of\ a\ given\ key\ by\ trying\ to\ cast\ it\ to\ different\ types}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//and\ catching\ the\ error.}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{short}\ Key::DetermineType(String\ value)}
+\DoxyCodeLine{00051\ \ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//strings\ are\ always\ valid}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{short}\ valid\ =\ TYPE\_STRING\_VALID;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Try\ for\ floats}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(parse(value.c\_str(),real\_p).full)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_value\_f\ =\ boost::lexical\_cast<double>(value);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ valid\ |=\ TYPE\_FLOAT\_VALID;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{catch}(\textcolor{keyword}{const}\ boost::bad\_lexical\_cast\ \&)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ ints}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(parse(value.c\_str(),long\_p).full)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_value\_i\ =\ boost::lexical\_cast<SInt64>(value);}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ valid\ |=\ TYPE\_INT\_VALID;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{catch}(\textcolor{keyword}{const}\ boost::bad\_lexical\_cast\ \&)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ bools}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ String\ icase\_value\ =\ m\_value;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ boost::to\_lower(icase\_value);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(icase\_value\ ==\ \textcolor{stringliteral}{"{}true"{}}\ ||\ icase\_value\ ==\ \textcolor{stringliteral}{"{}yes"{}}\ ||\ icase\_value\ ==\ \textcolor{stringliteral}{"{}1"{}})}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ valid\ |=\ TYPE\_BOOL\_VALID;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ m\_value\_b\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(icase\_value\ ==\ \textcolor{stringliteral}{"{}false"{}}\ ||\ icase\_value\ ==\ \textcolor{stringliteral}{"{}no"{}}\ ||\ icase\_value\ ==\ \textcolor{stringliteral}{"{}0"{}})}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ valid\ |=\ TYPE\_BOOL\_VALID;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ m\_value\_b\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ valid;}
+\DoxyCodeLine{00095\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_attribute\_\_((noreturn))\ Key::throwInvalid(String\ type)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00098\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_value\ ==\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}[SNIPER]\ "{}}\ <<\ \textcolor{stringliteral}{"{}Required\ configuration\ value\ missing\ for\ key\ "{}}\ <<\ m\_parentPath\ <<\ \textcolor{stringliteral}{"{}/"{}}\ <<\ m\_name\ <<\ std::endl;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}[SNIPER]\ "{}}\ <<\ \textcolor{stringliteral}{"{}Invalid\ configuration\ value\ of\ type\ "{}}\ <<\ type\ <<\ \textcolor{stringliteral}{"{}\ for\ key\ "{}}\ <<\ m\_parentPath\ <<\ \textcolor{stringliteral}{"{}/"{}}\ <<\ m\_name\ <<\ \textcolor{stringliteral}{"{}:\ "{}}\ <<\ m\_value\ <<\ std::endl;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::bad\_cast();}
+\DoxyCodeLine{00104\ \ \ \ \ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{bool}\ Key::getBool()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00107\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_type\ \&\ TYPE\_BOOL\_VALID)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_value\_b;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ throwInvalid(\textcolor{stringliteral}{"{}bool"{}});}
+\DoxyCodeLine{00112\ \ \ \ \ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ SInt64\ Key::getInt()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00115\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_type\ \&\ TYPE\_INT\_VALID)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_value\_i;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ throwInvalid(\textcolor{stringliteral}{"{}int"{}});}
+\DoxyCodeLine{00120\ \ \ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{const}\ String\ Key::getString()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00123\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_value;}
+\DoxyCodeLine{00125\ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{double}\ Key::getFloat()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00128\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_type\ \&\ TYPE\_FLOAT\_VALID)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_value\_f;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ throwInvalid(\textcolor{stringliteral}{"{}float"{}});}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{void}\ Key::getValue(\textcolor{keywordtype}{bool}\ \&bool\_val)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ bool\_val\ =\ getBool();}
+\DoxyCodeLine{00138\ \ \ \ \ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{void}\ Key::getValue(SInt64\ \&int\_val)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00141\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ int\_val\ =\ getInt();}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{void}\ Key::getValue(String\ \&string\_val)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00146\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ string\_val\ =\ getString();}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordtype}{void}\ Key::getValue(\textcolor{keywordtype}{double}\ \&double\_val)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00151\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ double\_val\ =\ getFloat();}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \}\textcolor{comment}{//end\ of\ namespace\ config}}
+\DoxyCodeLine{00156\ }
+
+\end{DoxyCode}

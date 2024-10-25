@@ -1,0 +1,76 @@
+\doxysection{distribution.\+h}
+\label{distribution_8h_source}\index{common/misc/distribution.h@{common/misc/distribution.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DISTRIBUTION\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DISTRIBUTION\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <tr1/random>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }FloatDistribution}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{virtual}\ \string~FloatDistribution()\ \{\}}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{double}\ next()\ =\ 0;}
+\DoxyCodeLine{00013\ \};}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }NormalFloatDistribution\ :\ \textcolor{keyword}{public}\ FloatDistribution}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00018\ \ \ \ NormalFloatDistribution(\textcolor{keywordtype}{double}\ mean,\ \textcolor{keywordtype}{double}\ stddev,\ \textcolor{keywordtype}{unsigned}\ seed\ =\ 1000)}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ :\ generator(seed)}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ ,\ distribution(mean,\ stddev)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordtype}{double}\ next()}
+\DoxyCodeLine{00024\ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ distribution(generator);}
+\DoxyCodeLine{00026\ \ \ \ \}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{comment}{//The\ following\ code\ is\ for\ C++\ 2011\ only\ (-\/std-\/c++11).\ C++0x\ in\ GCC\ 4.4\ does\ not\ support\ this,\ but\ it\ does\ support\ the\ TR1\ implementation}}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{comment}{//std::default\_random\_engine\ generator;}}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{comment}{//std::normal\_distribution<double>\ distribution;}}
+\DoxyCodeLine{00031\ \ \ \ std::tr1::ranlux64\_base\_01\ generator;}
+\DoxyCodeLine{00032\ \ \ \ std::tr1::normal\_distribution<double>\ distribution;}
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }TimeDistribution}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keyword}{virtual}\ \string~TimeDistribution()\ \{\}}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ next()\ =\ 0;}
+\DoxyCodeLine{00040\ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }ConstantTimeDistribution\ :\ \textcolor{keyword}{public}\ TimeDistribution}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ ConstantTimeDistribution(SubsecondTime\ constant)\ :\ value(constant)\ \{\}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ SubsecondTime\ next()}
+\DoxyCodeLine{00048\ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ value;}
+\DoxyCodeLine{00050\ \ \ \ \}}
+\DoxyCodeLine{00051\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00052\ \ \ \ SubsecondTime\ value;}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{class\ }NormalTimeDistribution\ :\ \textcolor{keyword}{public}\ TimeDistribution}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ NormalTimeDistribution(SubsecondTime\ mean,\ SubsecondTime\ stddev,\ \textcolor{keywordtype}{unsigned}\ seed\ =\ 1000)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ :\ normal\_dist(mean.getFS(),\ stddev.getFS())}
+\DoxyCodeLine{00060\ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ SubsecondTime\ next()\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ normal\ =\ normal\_dist.next();}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ SubsecondTime\ value\ =\ SubsecondTime::FS(normal);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ value;}
+\DoxyCodeLine{00066\ \ \ \ \}}
+\DoxyCodeLine{00067\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00068\ \ \ \ NormalFloatDistribution\ normal\_dist;}
+\DoxyCodeLine{00069\ \};}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_DISTRIBUTION\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

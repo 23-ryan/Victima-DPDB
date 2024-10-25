@@ -1,0 +1,92 @@
+\doxysection{city.\+h}
+\label{city_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/city.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/city.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ city.h\ -\/\ cityhash-\/c}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ CityHash\ on\ C}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Copyright\ (c)\ 2011-\/2012,\ Alexander\ Nusov}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ -\/\ original\ copyright\ notice\ -\/}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2011\ Google,\ Inc.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining\ a\ copy}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ of\ this\ software\ and\ associated\ documentation\ files\ (the\ "{}Software"{}),\ to\ deal}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ in\ the\ Software\ without\ restriction,\ including\ without\ limitation\ the\ rights}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ to\ use,\ copy,\ modify,\ merge,\ publish,\ distribute,\ sublicense,\ and/or\ sell}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ copies\ of\ the\ Software,\ and\ to\ permit\ persons\ to\ whom\ the\ Software\ is}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ furnished\ to\ do\ so,\ subject\ to\ the\ following\ conditions:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ The\ above\ copyright\ notice\ and\ this\ permission\ notice\ shall\ be\ included\ in}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ all\ copies\ or\ substantial\ portions\ of\ the\ Software.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ THE\ SOFTWARE\ IS\ PROVIDED\ "{}AS\ IS"{},\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,\ EXPRESS\ OR}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF\ MERCHANTABILITY,}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ AUTHORS\ OR\ COPYRIGHT\ HOLDERS\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ LIABILITY,\ WHETHER\ IN\ AN\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ OUT\ OF\ OR\ IN\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ THE\ SOFTWARE.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CityHash,\ by\ Geoff\ Pike\ and\ Jyrki\ Alakuijala}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ This\ file\ provides\ a\ few\ functions\ for\ hashing\ strings.\ On\ x86-\/64}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ hardware\ in\ 2011,\ CityHash64()\ is\ faster\ than\ other\ high-\/quality}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ hash\ functions,\ such\ as\ Murmur.\ \ This\ is\ largely\ due\ to\ higher}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ instruction-\/level\ parallelism.\ \ CityHash64()\ and\ CityHash128()\ also\ perform}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ well\ on\ hash-\/quality\ tests.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ CityHash128()\ is\ optimized\ for\ relatively\ long\ strings\ and\ returns}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ a\ 128-\/bit\ hash.\ \ For\ strings\ more\ than\ about\ 2000\ bytes\ it\ can\ be}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ faster\ than\ CityHash64().}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Functions\ in\ the\ CityHash\ family\ are\ not\ suitable\ for\ cryptography.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ WARNING:\ This\ code\ has\ not\ been\ tested\ on\ big-\/endian\ platforms!}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ It\ is\ known\ to\ work\ well\ on\ little-\/endian\ platforms\ that\ have\ a\ small\ penalty}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ for\ unaligned\ reads,\ such\ as\ current\ Intel\ and\ AMD\ moderate-\/to-\/high-\/end\ CPUs.}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ By\ the\ way,\ for\ some\ hash\ functions,\ given\ strings\ a\ and\ b,\ the\ hash}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ of\ a+b\ is\ easily\ derived\ from\ the\ hashes\ of\ a\ and\ b.\ \ This\ property}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ doesn't\ hold\ for\ any\ hash\ functions\ in\ this\ file.}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#ifndef\ CITY\_HASH\_H\_}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ CITY\_HASH\_H\_}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{typedef}\ uint8\_t\ uint8;}
+\DoxyCodeLine{00055\ \textcolor{keyword}{typedef}\ uint32\_t\ uint32;}
+\DoxyCodeLine{00056\ \textcolor{keyword}{typedef}\ uint64\_t\ uint64;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\_uint128\ uint128;}
+\DoxyCodeLine{00059\ \textcolor{keyword}{struct\ }\_uint128\ \{}
+\DoxyCodeLine{00060\ \ \ uint64\ first;}
+\DoxyCodeLine{00061\ \ \ uint64\ second;}
+\DoxyCodeLine{00062\ \};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#define\ Uint128Low64(x)\ (x).first}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#define\ Uint128High64(x)\ (x).second}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.}}
+\DoxyCodeLine{00068\ uint64\ CityHash64(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{size\_t}\ len);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.\ \ For\ convenience,\ a\ 64-\/bit\ seed\ is\ also}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ hashed\ into\ the\ result.}}
+\DoxyCodeLine{00072\ uint64\ CityHash64WithSeed(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{size\_t}\ len,\ uint64\ seed);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.\ \ For\ convenience,\ two\ seeds\ are\ also}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ hashed\ into\ the\ result.}}
+\DoxyCodeLine{00076\ uint64\ CityHash64WithSeeds(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{size\_t}\ len,\ uint64\ seed0,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\ seed1);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.}}
+\DoxyCodeLine{00080\ uint128\ CityHash128(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *s,\ \textcolor{keywordtype}{size\_t}\ len);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Hash\ function\ for\ a\ byte\ array.\ \ For\ convenience,\ a\ 128-\/bit\ seed\ is\ also}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ hashed\ into\ the\ result.}}
+\DoxyCodeLine{00084\ uint128\ CityHash128WithSeed(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *s,\ \textcolor{keywordtype}{size\_t}\ len,\ uint128\ seed);}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ CITY\_HASH\_H\_}}
+
+\end{DoxyCode}

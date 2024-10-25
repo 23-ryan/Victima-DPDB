@@ -1,0 +1,50 @@
+\doxysection{local\+\_\+storage.\+h}
+\label{local__storage_8h_source}\index{pin/local\_storage.h@{pin/local\_storage.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_LOCAL\_STORAGE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_LOCAL\_STORAGE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ MAX\_PIN\_THREADS\ 2048}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}inst\_mode.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}spin\_loop\_detection.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }DynamicInstruction;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{struct\ }ThreadLocalStorage}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ Thread*\ thread;}
+\DoxyCodeLine{00018\ \ \ \ DynamicInstruction*\ dynins;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{comment}{//\ Arguments\ passed\ to\ pthread\_create\ and\ syscall(clone),}}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{comment}{//\ needed\ on\ return\ once\ we\ know\ the\ new\ thread's\ id}}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00023\ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ thread\_id\_t\ new\_thread\_id;}
+\DoxyCodeLine{00025\ \ \ \ \}\ clone;}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{comment}{//\ State\ used\ by\ spin\ loop\ detection}}
+\DoxyCodeLine{00027\ \ \ \ SpinLoopDetectionState\ sld;}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{comment}{//\ Malloc\ tracker}}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00030\ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ ADDRINT\ eip;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size;}
+\DoxyCodeLine{00033\ \ \ \ \}\ malloc;}
+\DoxyCodeLine{00034\ \ \ \ ADDRINT\ lastCallSite;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \textcolor{comment}{//\ Scratchpads\ for\ fault-\/injection}}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ NUM\_SCRATCHPADS\ =\ 3;}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ SCRATCHPAD\_SIZE\ =\ 1024;}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordtype}{char}*\ scratch[NUM\_SCRATCHPADS];}
+\DoxyCodeLine{00040\ \};}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ Keep\ track\ of\ THREADID\ to\ Thread*\ pointers\ (and\ some\ other\ stuff),\ way\ faster\ than\ a\ PinTLS\ lookup}}
+\DoxyCodeLine{00042\ \textcolor{keyword}{extern}\ std::vector<ThreadLocalStorage>\ localStore;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_LOCAL\_STORAGE\_H}}
+
+\end{DoxyCode}

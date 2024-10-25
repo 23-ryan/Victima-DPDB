@@ -1,0 +1,61 @@
+\doxysection{utopia\+\_\+cache\+\_\+template.\+cc}
+\label{utopia__cache__template_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/utopia\_cache\_template.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/utopia\_cache\_template.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}utopia\_cache\_template.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ }
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00014\ \ \ UtopiaCache::UtopiaCache(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ UInt32\ block\_size,\ UInt32\ size,\ UInt32\ associativity,ComponentLatency\ \_access\_latency,\ ComponentLatency\ \_miss\_latency)}
+\DoxyCodeLine{00015\ \ \ \ \ :\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00016\ \ \ \ \ ,\ access\_latency(\_access\_latency)}
+\DoxyCodeLine{00017\ \ \ \ \ ,\ miss\_latency(\_miss\_latency)}
+\DoxyCodeLine{00018\ \ \ \ \ ,\ m\_cache(name\ ,\ cfgname,\ core\_id,\ k\_KILO\ *\ size\ /\ (associativity\ *\ block\_size),\ associativity,\ block\_size,\ \textcolor{stringliteral}{"{}lru"{}},\ CacheBase::PR\_L1\_CACHE)\ \textcolor{comment}{//\ Assuming\ 8B\ granularity}}
+\DoxyCodeLine{00019\ \ }
+\DoxyCodeLine{00020\ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTOPIA]"{}}\ <<\ \textcolor{stringliteral}{"{}Instantiating\ "{}}\ <<\ name\ <<\ \textcolor{stringliteral}{"{}\ with\ sets:\ "{}}\ <<\ \ k\_KILO\ *\ size\ /\ (associativity\ *\ 8)\ <<\ std::endl;}
+\DoxyCodeLine{00022\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}access"{}},\ \&m\_access);}
+\DoxyCodeLine{00023\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}miss"{}},\ \&m\_miss);}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ UtopiaCache::where\_t\ UtopiaCache::lookup(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ allocate\_on\_miss,\ \textcolor{keywordtype}{bool}\ count)}
+\DoxyCodeLine{00028\ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hit;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ hit\ =\ m\_cache.accessSingleLine(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Accessing\ xmem\ cache:\ "{}\ <<\ (hit\ ?\ "{}HIT"{}\ :\ "{}MISS"{}\ )<<\ std::endl;}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_access++;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit)\ \textcolor{keywordflow}{return}\ UtopiaCache::where\_t::HIT;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_miss++;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocate\_on\_miss)\ allocate(address,\ now,\ \&m\_cache);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UtopiaCache::where\_t::MISS;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \textcolor{keywordtype}{void}\ UtopiaCache::allocate(IntPtr\ address,\ SubsecondTime\ now,\ Cache\ *Utopia\_cache)}
+\DoxyCodeLine{00043\ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction;}
+\DoxyCodeLine{00045\ \ \ \ \ IntPtr\ evict\_addr;}
+\DoxyCodeLine{00046\ \ \ \ \ CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00049\ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00050\ \ \ \ \ Utopia\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{auto}\ pair\ =\ std::make\_pair(Utopia\_cache-\/>getCacheSet(set\_index)-\/>getReplacementIndex(NULL),\ set\_index);}
+\DoxyCodeLine{00052\ \ \ \ \ Utopia\_cache-\/>insertSingleLine(address,\ NULL,\ \&eviction,\ \&evict\_addr,\ \&evict\_block\_info,\ NULL,\ now);}
+\DoxyCodeLine{00053\ \ \ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \}}
+
+\end{DoxyCode}

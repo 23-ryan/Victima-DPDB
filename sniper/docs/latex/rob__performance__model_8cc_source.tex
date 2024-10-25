@@ -1,0 +1,37 @@
+\doxysection{rob\+\_\+performance\+\_\+model.\+cc}
+\label{rob__performance__model_8cc_source}\index{common/performance\_model/performance\_models/rob\_performance\_model.cc@{common/performance\_model/performance\_models/rob\_performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}rob\_performance\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ RobPerformanceModel::RobPerformanceModel(Core\ *core)}
+\DoxyCodeLine{00005\ \ \ \ \ :\ MicroOpPerformanceModel(core,\ !Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/issue\_memops\_at\_issue"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00006\ \ \ \ \ ,\ rob\_timer(core,}
+\DoxyCodeLine{00007\ \ \ \ \ \ \ \ this,}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ m\_core\_model,}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/mispredict\_penalty"{}},\ core-\/>getId()),}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/dispatch\_width"{}},\ core-\/>getId()),}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/window\_size"{}},\ core-\/>getId())}
+\DoxyCodeLine{00012\ \ \ \ \ )}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ RobPerformanceModel::\string~RobPerformanceModel()}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ boost::tuple<uint64\_t,uint64\_t>\ RobPerformanceModel::simulate(\textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts)}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ uint64\_t\ ins;\ SubsecondTime\ latency;}
+\DoxyCodeLine{00023\ \ \ \ boost::tie(ins,\ latency)\ =\ rob\_timer.simulate(insts);}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<uint64\_t,uint64\_t>(ins,\ SubsecondTime::divideRounded(latency,\ m\_elapsed\_time.getPeriod()));}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keywordtype}{void}\ RobPerformanceModel::notifyElapsedTimeUpdate()}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ rob\_timer.synchronize(m\_elapsed\_time.getElapsedTime());}
+\DoxyCodeLine{00031\ \}}
+
+\end{DoxyCode}

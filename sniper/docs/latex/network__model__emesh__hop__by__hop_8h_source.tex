@@ -1,0 +1,101 @@
+\doxysection{network\+\_\+model\+\_\+emesh\+\_\+hop\+\_\+by\+\_\+hop.\+h}
+\label{network__model__emesh__hop__by__hop_8h_source}\index{common/network/network\_model\_emesh\_hop\_by\_hop.h@{common/network/network\_model\_emesh\_hop\_by\_hop.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_NETWORK\_MODEL\_EMESH\_HOP\_BY\_HOP\_GENERIC\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_NETWORK\_MODEL\_EMESH\_HOP\_BY\_HOP\_GENERIC\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}network\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}queue\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }NetworkModelEMeshHopByHop\ :\ \textcolor{keyword}{public}\ NetworkModel}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ UP\ =\ 0,}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ DOWN,}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ LEFT,}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ RIGHT,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ NUM\_OUTPUT\_DIRECTIONS,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Directions\ below\ are\ fake\ and\ do\ not\ have\ a\ corresponding\ queue}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ SELF,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ PEER,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ DESTINATION,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ MAX\_OUTPUT\_DIRECTIONS}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \}\ OutputDirection;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{comment}{//\ Fields}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ SInt32\ m\_mesh\_width;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ SInt32\ m\_mesh\_height;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ QueueModel*\ m\_queue\_models[NUM\_OUTPUT\_DIRECTIONS];}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ QueueModel*\ m\_injection\_port\_queue\_model;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ QueueModel*\ m\_ejection\_port\_queue\_model;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enabled;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{comment}{//\ Lock}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{comment}{//\ Counters}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ UInt64\ m\_total\_bytes\_sent;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ UInt64\ m\_total\_packets\_sent;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ UInt64\ m\_total\_bytes\_received;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ UInt64\ m\_total\_packets\_received;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ SubsecondTime\ m\_total\_contention\_delay;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ SubsecondTime\ m\_total\_packet\_latency;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{comment}{//\ Functions}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ computePosition(core\_id\_t\ core,\ SInt32\ \&x,\ SInt32\ \&y);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ core\_id\_t\ computeCoreId(SInt32\ x,\ SInt32\ y);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ SInt32\ computeDistance(core\_id\_t\ sender,\ core\_id\_t\ receiver);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addHop(OutputDirection\ direction,\ core\_id\_t\ final\_dest,\ core\_id\_t\ next\_dest,\ SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length,\ std::vector<Hop>\&\ nextHops,\ core\_id\_t\ requester,\ subsecond\_time\_t\ *queue\_delay\_stats\ =\ NULL);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ SubsecondTime\ computeLatency(OutputDirection\ direction,\ SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length,\ core\_id\_t\ requester,\ subsecond\_time\_t\ *queue\_delay\_stats);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ SubsecondTime\ computeProcessingTime(UInt32\ pkt\_length);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ core\_id\_t\ getNextDest(core\_id\_t\ final\_dest,\ OutputDirection\&\ direction);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{comment}{//\ Injection\ \&\ Ejection\ Port\ Queue\ Models}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ SubsecondTime\ computeInjectionPortQueueDelay(core\_id\_t\ pkt\_receiver,\ SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length);}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ SubsecondTime\ computeEjectionPortQueueDelay(SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_fake\_node;\ \textcolor{comment}{//<\ True\ for\ nodes\ that\ are\ not\ the\ master\ of\ their\ concentrated\ node,\ these\ do\ not\ count\ in\ the\ topology}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ SInt32\ m\_concentration;\ \textcolor{comment}{//<\ Number\ of\ cores\ per\ network\ node}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ SInt32\ m\_dimensions;\ \textcolor{comment}{//\ 1\ for\ line/ring,\ 2\ for\ mesh/torus}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_wrap\_around;\ \textcolor{comment}{//\ false\ for\ line/mesh,\ true\ for\ ring/torus}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ ComponentBandwidthPerCycle\ m\_link\_bandwidth;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ ComponentLatency\ m\_hop\_latency;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_broadcast\_tree\_enabled;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_queue\_model\_enabled;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ String\ m\_queue\_model\_type;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createQueueModels(String\ name);}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ NetworkModelEMeshHopByHop(Network*\ net,\ EStaticNetwork\ net\_type);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \string~NetworkModelEMeshHopByHop();}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ routePacket(\textcolor{keyword}{const}\ NetPacket\ \&pkt,\ std::vector<Hop>\ \&nextHops);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processReceivedPacket(NetPacket\ \&pkt);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ computeMeshDimensions(SInt32\ \&mesh\_width,\ SInt32\ \&mesh\_height);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keyword}{static}\ std::pair<bool,std::vector<core\_id\_t>\ >\ computeMemoryControllerPositions(SInt32\ num\_memory\_controllers,\ SInt32\ core\_count);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keyword}{static}\ std::pair<bool,SInt32>\ computeCoreCountConstraints(SInt32\ core\_count);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enable();}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disable();}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isEnabled();}
+\DoxyCodeLine{00093\ \};}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_NETWORK\_MODEL\_EMESH\_HOP\_BY\_HOP\_GENERIC\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

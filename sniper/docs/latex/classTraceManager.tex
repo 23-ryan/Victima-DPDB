@@ -1,0 +1,868 @@
+\doxysection{Trace\+Manager Class Reference}
+\label{classTraceManager}\index{TraceManager@{TraceManager}}
+
+
+{\ttfamily \#include $<$trace\+\_\+manager.\+h$>$}
+
+
+
+Collaboration diagram for Trace\+Manager\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classTraceManager__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ app\+\_\+info\+\_\+t}
+\item 
+class \textbf{ Monitor}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Trace\+Manager} ()
+\item 
+\textbf{ $\sim$\+Trace\+Manager} ()
+\item 
+void \textbf{ init} ()
+\item 
+void \textbf{ start} ()
+\item 
+void \textbf{ stop} ()
+\item 
+void \textbf{ mark\+\_\+done} ()
+\item 
+void \textbf{ wait} ()
+\item 
+void \textbf{ run} ()
+\item 
+void \textbf{ cleanup} ()
+\item 
+void \textbf{ setup\+Trace\+Files} (int index)
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ create\+Thread} (\textbf{ app\+\_\+id\+\_\+t} app\+\_\+id, \textbf{ Subsecond\+Time} time, \textbf{ thread\+\_\+id\+\_\+t} creator\+\_\+thread\+\_\+id)
+\item 
+\textbf{ app\+\_\+id\+\_\+t} \textbf{ create\+Application} (\textbf{ Subsecond\+Time} time, \textbf{ thread\+\_\+id\+\_\+t} creator\+\_\+thread\+\_\+id)
+\item 
+void \textbf{ signal\+Started} ()
+\item 
+void \textbf{ signal\+Done} (\textbf{ Trace\+Thread} $\ast$thread, \textbf{ Subsecond\+Time} time, bool aborted)
+\item 
+void \textbf{ end\+Application} (\textbf{ Trace\+Thread} $\ast$thread, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ access\+Memory} (int core\+\_\+id, \textbf{ Core\+::lock\+\_\+signal\+\_\+t} lock\+\_\+signal, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} d\+\_\+addr, char $\ast$data\+\_\+buffer, \textbf{ UInt32} data\+\_\+size)
+\item 
+\textbf{ UInt64} \textbf{ get\+Progress\+Expect} ()
+\item 
+\textbf{ UInt64} \textbf{ get\+Progress\+Value} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+String \textbf{ get\+Fifo\+Name} (\textbf{ app\+\_\+id\+\_\+t} app\+\_\+id, \textbf{ UInt64} thread\+\_\+num, bool response, bool \textbf{ create})
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ new\+Thread} (\textbf{ app\+\_\+id\+\_\+t} app\+\_\+id, bool first, bool init\+\_\+fifo, bool spawn, \textbf{ Subsecond\+Time} time, \textbf{ thread\+\_\+id\+\_\+t} creator\+\_\+thread\+\_\+id)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Monitor} $\ast$ \textbf{ m\+\_\+monitor}
+\item 
+std\+::vector$<$ \textbf{ Trace\+Thread} $\ast$ $>$ \textbf{ m\+\_\+threads}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+threads\+\_\+started}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+threads\+\_\+running}
+\item 
+\textbf{ Semaphore} \textbf{ m\+\_\+done}
+\item 
+const bool \textbf{ m\+\_\+stop\+\_\+with\+\_\+first\+\_\+app}
+\item 
+const bool \textbf{ m\+\_\+app\+\_\+restart}
+\item 
+const bool \textbf{ m\+\_\+emulate\+\_\+syscalls}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+apps}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+apps\+\_\+nonfinish}
+\item 
+std\+::vector$<$ \textbf{ app\+\_\+info\+\_\+t} $>$ \textbf{ m\+\_\+app\+\_\+info}
+\item 
+std\+::vector$<$ String $>$ \textbf{ m\+\_\+tracefiles}
+\item 
+std\+::vector$<$ String $>$ \textbf{ m\+\_\+responsefiles}
+\item 
+String \textbf{ m\+\_\+trace\+\_\+prefix}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+lock}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Monitor}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 13} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{TraceManager@{TraceManager}!TraceManager@{TraceManager}}
+\index{TraceManager@{TraceManager}!TraceManager@{TraceManager}}
+\doxysubsubsection{TraceManager()}
+{\footnotesize\ttfamily \label{classTraceManager_aa9b1244d2588d9fd3de2157a47979bf5} 
+Trace\+Manager\+::\+Trace\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 14} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ setup\+Trace\+Files()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_aa9b1244d2588d9fd3de2157a47979bf5_cgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!````~TraceManager@{$\sim$TraceManager}}
+\index{````~TraceManager@{$\sim$TraceManager}!TraceManager@{TraceManager}}
+\doxysubsubsection{$\sim$TraceManager()}
+{\footnotesize\ttfamily \label{classTraceManager_a0f0988540948118357e571343d8fc48f} 
+Trace\+Manager\+::$\sim$\+Trace\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 236} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ cleanup()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=347pt]{classTraceManager_a0f0988540948118357e571343d8fc48f_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Function Documentation}
+\index{TraceManager@{TraceManager}!accessMemory@{accessMemory}}
+\index{accessMemory@{accessMemory}!TraceManager@{TraceManager}}
+\doxysubsubsection{accessMemory()}
+{\footnotesize\ttfamily \label{classTraceManager_a64afa2a65b3f86accebf08b4dec5da95} 
+void Trace\+Manager\+::access\+Memory (\begin{DoxyParamCaption}\item[{int}]{core\+\_\+id}{, }\item[{\textbf{ Core\+::lock\+\_\+signal\+\_\+t}}]{lock\+\_\+signal}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{d\+\_\+addr}{, }\item[{char $\ast$}]{data\+\_\+buffer}{, }\item[{\textbf{ UInt32}}]{data\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 312} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Thread\+::get\+Core()}, \textbf{ Core\+::get\+Id()}, \textbf{ Trace\+Thread\+::get\+Thread()}, \textbf{ Trace\+Thread\+::handle\+Access\+Memory()}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING\+\_\+\+ONCE}, \textbf{ Trace\+Thread\+::m\+\_\+stopped}, and \textbf{ m\+\_\+threads}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a64afa2a65b3f86accebf08b4dec5da95_cgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!cleanup@{cleanup}}
+\index{cleanup@{cleanup}!TraceManager@{TraceManager}}
+\doxysubsubsection{cleanup()}
+{\footnotesize\ttfamily \label{classTraceManager_a82b2f65a10cbae39b1b16b1df582be95} 
+void Trace\+Manager\+::cleanup (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 224} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+app\+\_\+info}, \textbf{ m\+\_\+num\+\_\+apps}, \textbf{ m\+\_\+num\+\_\+apps\+\_\+nonfinish}, \textbf{ m\+\_\+num\+\_\+threads\+\_\+running}, and \textbf{ m\+\_\+threads}.
+
+
+
+Referenced by \textbf{ $\sim$\+Trace\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=347pt]{classTraceManager_a82b2f65a10cbae39b1b16b1df582be95_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!createApplication@{createApplication}}
+\index{createApplication@{createApplication}!TraceManager@{TraceManager}}
+\doxysubsubsection{createApplication()}
+{\footnotesize\ttfamily \label{classTraceManager_a431432e3dc90968f27d40e7aa16959a7} 
+\textbf{ app\+\_\+id\+\_\+t} Trace\+Manager\+::create\+Application (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{creator\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 137} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+app\+\_\+info}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+num\+\_\+apps}, \textbf{ m\+\_\+num\+\_\+apps\+\_\+nonfinish}, and \textbf{ new\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a431432e3dc90968f27d40e7aa16959a7_cgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!createThread@{createThread}}
+\index{createThread@{createThread}!TraceManager@{TraceManager}}
+\doxysubsubsection{createThread()}
+{\footnotesize\ttfamily \label{classTraceManager_acba3eee11a8eb4cbf0c660d68ef18ce8} 
+\textbf{ thread\+\_\+id\+\_\+t} Trace\+Manager\+::create\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{creator\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 78} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+lock}, and \textbf{ new\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_acba3eee11a8eb4cbf0c660d68ef18ce8_cgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!endApplication@{endApplication}}
+\index{endApplication@{endApplication}!TraceManager@{TraceManager}}
+\doxysubsubsection{endApplication()}
+{\footnotesize\ttfamily \label{classTraceManager_aa72df3d7ff4e7e192131aceeb0107f82} 
+void Trace\+Manager\+::end\+Application (\begin{DoxyParamCaption}\item[{\textbf{ Trace\+Thread} $\ast$}]{thread}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 209} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Thread\+::get\+App\+Id()}, \textbf{ Trace\+Thread\+::get\+Thread()}, \textbf{ m\+\_\+threads}, and \textbf{ signal\+Done()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_aa72df3d7ff4e7e192131aceeb0107f82_cgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!getFifoName@{getFifoName}}
+\index{getFifoName@{getFifoName}!TraceManager@{TraceManager}}
+\doxysubsubsection{getFifoName()}
+{\footnotesize\ttfamily \label{classTraceManager_ac8a1817aff953673191a60ebc8da8aa9} 
+String Trace\+Manager\+::get\+Fifo\+Name (\begin{DoxyParamCaption}\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{, }\item[{\textbf{ UInt64}}]{thread\+\_\+num}{, }\item[{bool}]{response}{, }\item[{bool}]{create}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ create()}, \textbf{ itostr()}, and \textbf{ m\+\_\+trace\+\_\+prefix}.
+
+
+
+Referenced by \textbf{ new\+Thread()}, and \textbf{ setup\+Trace\+Files()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_ac8a1817aff953673191a60ebc8da8aa9_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_ac8a1817aff953673191a60ebc8da8aa9_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!getProgressExpect@{getProgressExpect}}
+\index{getProgressExpect@{getProgressExpect}!TraceManager@{TraceManager}}
+\doxysubsubsection{getProgressExpect()}
+{\footnotesize\ttfamily \label{classTraceManager_ad612eb215567070971fce2c60663edd6} 
+\textbf{ UInt64} Trace\+Manager\+::get\+Progress\+Expect (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 285} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+\index{TraceManager@{TraceManager}!getProgressValue@{getProgressValue}}
+\index{getProgressValue@{getProgressValue}!TraceManager@{TraceManager}}
+\doxysubsubsection{getProgressValue()}
+{\footnotesize\ttfamily \label{classTraceManager_a5195e2fb788ea4f8cebf5c2c1dc2e253} 
+\textbf{ UInt64} Trace\+Manager\+::get\+Progress\+Value (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 290} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+stop\+\_\+with\+\_\+first\+\_\+app}, \textbf{ m\+\_\+threads}, and \textbf{ uint64\+\_\+t}.
+
+\index{TraceManager@{TraceManager}!init@{init}}
+\index{init@{init}!TraceManager@{TraceManager}}
+\doxysubsubsection{init()}
+{\footnotesize\ttfamily \label{classTraceManager_a93f835d9bd908142f5e7ba62a96d6112} 
+void Trace\+Manager\+::init (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+num\+\_\+apps}, \textbf{ new\+Thread()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Simulator\+::start()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a93f835d9bd908142f5e7ba62a96d6112_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=257pt]{classTraceManager_a93f835d9bd908142f5e7ba62a96d6112_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!mark\_done@{mark\_done}}
+\index{mark\_done@{mark\_done}!TraceManager@{TraceManager}}
+\doxysubsubsection{mark\_done()}
+{\footnotesize\ttfamily \label{classTraceManager_a5d9cefc5224497c809da54e03b0e7c0a} 
+void Trace\+Manager\+::mark\+\_\+done (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 268} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+trace\+\_\+prefix}.
+
+
+
+Referenced by \textbf{ stop()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a5d9cefc5224497c809da54e03b0e7c0a_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!newThread@{newThread}}
+\index{newThread@{newThread}!TraceManager@{TraceManager}}
+\doxysubsubsection{newThread()}
+{\footnotesize\ttfamily \label{classTraceManager_a4924ac040b118e0647bae199a89106e4} 
+\textbf{ thread\+\_\+id\+\_\+t} Trace\+Manager\+::new\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{, }\item[{bool}]{first}{, }\item[{bool}]{init\+\_\+fifo}{, }\item[{bool}]{spawn}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{creator\+\_\+thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 86} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Stats\+Manager\+::\+EVENT\+\_\+\+APP\+\_\+\+START}, \textbf{ get\+Fifo\+Name()}, \textbf{ Thread\+::get\+Id()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+APPLICATION\+\_\+\+START}, \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+app\+\_\+info}, \textbf{ m\+\_\+num\+\_\+apps}, \textbf{ m\+\_\+num\+\_\+threads\+\_\+running}, \textbf{ m\+\_\+responsefiles}, \textbf{ m\+\_\+threads}, \textbf{ m\+\_\+tracefiles}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, and \textbf{ Trace\+Thread\+::spawn()}.
+
+
+
+Referenced by \textbf{ create\+Application()}, \textbf{ create\+Thread()}, \textbf{ init()}, and \textbf{ signal\+Done()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a4924ac040b118e0647bae199a89106e4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a4924ac040b118e0647bae199a89106e4_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!run@{run}}
+\index{run@{run}!TraceManager@{TraceManager}}
+\doxysubsubsection{run()}
+{\footnotesize\ttfamily \label{classTraceManager_a1f973f678fd39c9aabdac63cd4e5df1f} 
+void Trace\+Manager\+::run (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 279} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ start()}, and \textbf{ wait()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a1f973f678fd39c9aabdac63cd4e5df1f_cgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!setupTraceFiles@{setupTraceFiles}}
+\index{setupTraceFiles@{setupTraceFiles}!TraceManager@{TraceManager}}
+\doxysubsubsection{setupTraceFiles()}
+{\footnotesize\ttfamily \label{classTraceManager_a23137ac966129464d74b652db1ab4a1a} 
+void Trace\+Manager\+::setup\+Trace\+Files (\begin{DoxyParamCaption}\item[{int}]{index}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ get\+Fifo\+Name()}, \textbf{ itostr()}, \textbf{ m\+\_\+emulate\+\_\+syscalls}, \textbf{ m\+\_\+num\+\_\+apps}, \textbf{ m\+\_\+responsefiles}, \textbf{ m\+\_\+trace\+\_\+prefix}, and \textbf{ m\+\_\+tracefiles}.
+
+
+
+Referenced by \textbf{ Trace\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a23137ac966129464d74b652db1ab4a1a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a23137ac966129464d74b652db1ab4a1a_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!signalDone@{signalDone}}
+\index{signalDone@{signalDone}!TraceManager@{TraceManager}}
+\doxysubsubsection{signalDone()}
+{\footnotesize\ttfamily \label{classTraceManager_a549fadbff016ae292cc7eb23e7a1b386} 
+void Trace\+Manager\+::signal\+Done (\begin{DoxyParamCaption}\item[{\textbf{ Trace\+Thread} $\ast$}]{thread}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{bool}]{aborted}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 159} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Stats\+Manager\+::\+EVENT\+\_\+\+APP\+\_\+\+EXIT}, \textbf{ Thread\+::get\+App\+Id()}, \textbf{ Trace\+Thread\+::get\+Thread()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+APPLICATION\+\_\+\+EXIT}, \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+app\+\_\+info}, \textbf{ m\+\_\+app\+\_\+restart}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+num\+\_\+apps\+\_\+nonfinish}, \textbf{ m\+\_\+num\+\_\+threads\+\_\+running}, \textbf{ m\+\_\+stop\+\_\+with\+\_\+first\+\_\+app}, \textbf{ Trace\+Thread\+::m\+\_\+stopped}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ new\+Thread()}, and \textbf{ stop()}.
+
+
+
+Referenced by \textbf{ end\+Application()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a549fadbff016ae292cc7eb23e7a1b386_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_a549fadbff016ae292cc7eb23e7a1b386_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!signalStarted@{signalStarted}}
+\index{signalStarted@{signalStarted}!TraceManager@{TraceManager}}
+\doxysubsubsection{signalStarted()}
+{\footnotesize\ttfamily \label{classTraceManager_a13fe3e88ecefcb2b36dc7d9c50558d58} 
+void Trace\+Manager\+::signal\+Started (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 154} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+num\+\_\+threads\+\_\+started}.
+
+\index{TraceManager@{TraceManager}!start@{start}}
+\index{start@{start}!TraceManager@{TraceManager}}
+\doxysubsubsection{start()}
+{\footnotesize\ttfamily \label{classTraceManager_ae442dcda60691b3352e93fdfe9db0ade} 
+void Trace\+Manager\+::start (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 241} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+monitor}, \textbf{ m\+\_\+threads}, and \textbf{ Trace\+Manager\+::\+Monitor\+::spawn()}.
+
+
+
+Referenced by \textbf{ run()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_ae442dcda60691b3352e93fdfe9db0ade_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{classTraceManager_ae442dcda60691b3352e93fdfe9db0ade_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!stop@{stop}}
+\index{stop@{stop}!TraceManager@{TraceManager}}
+\doxysubsubsection{stop()}
+{\footnotesize\ttfamily \label{classTraceManager_ab63ad68bfb45a2d4c9ad633fee886016} 
+void Trace\+Manager\+::stop (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 251} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+done}, \textbf{ m\+\_\+threads}, \textbf{ mark\+\_\+done()}, and \textbf{ Semaphore\+::signal()}.
+
+
+
+Referenced by \textbf{ signal\+Done()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_ab63ad68bfb45a2d4c9ad633fee886016_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_ab63ad68bfb45a2d4c9ad633fee886016_icgraph}
+\end{center}
+\end{figure}
+\index{TraceManager@{TraceManager}!wait@{wait}}
+\index{wait@{wait}!TraceManager@{TraceManager}}
+\doxysubsubsection{wait()}
+{\footnotesize\ttfamily \label{classTraceManager_ab4cd88c8def5880619535f8edb55eeaf} 
+void Trace\+Manager\+::wait (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 274} of file \textbf{ trace\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+done}, and \textbf{ Semaphore\+::wait()}.
+
+
+
+Referenced by \textbf{ run()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classTraceManager_ab4cd88c8def5880619535f8edb55eeaf_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=277pt]{classTraceManager_ab4cd88c8def5880619535f8edb55eeaf_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Friends And Related Symbol Documentation}
+\index{TraceManager@{TraceManager}!Monitor@{Monitor}}
+\index{Monitor@{Monitor}!TraceManager@{TraceManager}}
+\doxysubsubsection{Monitor}
+{\footnotesize\ttfamily \label{classTraceManager_a1aceee49824f6ba6ea0d4b26a8ebe1d4} 
+friend class Monitor\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 59} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{TraceManager@{TraceManager}!m\_app\_info@{m\_app\_info}}
+\index{m\_app\_info@{m\_app\_info}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_app\_info}
+{\footnotesize\ttfamily \label{classTraceManager_a4b533202fecac58ed6294ad573876602} 
+std\+::vector$<$\textbf{ app\+\_\+info\+\_\+t}$>$ Trace\+Manager\+::m\+\_\+app\+\_\+info\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ cleanup()}, \textbf{ create\+Application()}, \textbf{ new\+Thread()}, and \textbf{ signal\+Done()}.
+
+\index{TraceManager@{TraceManager}!m\_app\_restart@{m\_app\_restart}}
+\index{m\_app\_restart@{m\_app\_restart}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_app\_restart}
+{\footnotesize\ttfamily \label{classTraceManager_a76ca1a90a41a9413e271ed4d4f1ff521} 
+const bool Trace\+Manager\+::m\+\_\+app\+\_\+restart\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 46} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ signal\+Done()}.
+
+\index{TraceManager@{TraceManager}!m\_done@{m\_done}}
+\index{m\_done@{m\_done}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_done}
+{\footnotesize\ttfamily \label{classTraceManager_a00ded38d1796c548de4dc4eeb8e08505} 
+\textbf{ Semaphore} Trace\+Manager\+::m\+\_\+done\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 44} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ stop()}, and \textbf{ wait()}.
+
+\index{TraceManager@{TraceManager}!m\_emulate\_syscalls@{m\_emulate\_syscalls}}
+\index{m\_emulate\_syscalls@{m\_emulate\_syscalls}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_emulate\_syscalls}
+{\footnotesize\ttfamily \label{classTraceManager_aa887a424fd5996c6f957c8ff4b0ce45c} 
+const bool Trace\+Manager\+::m\+\_\+emulate\+\_\+syscalls\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ setup\+Trace\+Files()}.
+
+\index{TraceManager@{TraceManager}!m\_lock@{m\_lock}}
+\index{m\_lock@{m\_lock}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_lock}
+{\footnotesize\ttfamily \label{classTraceManager_ac54986f511913cac8c56c905fe087878} 
+\textbf{ Lock} Trace\+Manager\+::m\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 54} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ create\+Application()}, \textbf{ create\+Thread()}, and \textbf{ signal\+Done()}.
+
+\index{TraceManager@{TraceManager}!m\_monitor@{m\_monitor}}
+\index{m\_monitor@{m\_monitor}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_monitor}
+{\footnotesize\ttfamily \label{classTraceManager_a04171b06a4bb9474dad42fcc83cd69b3} 
+\textbf{ Monitor}$\ast$ Trace\+Manager\+::m\+\_\+monitor\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ start()}.
+
+\index{TraceManager@{TraceManager}!m\_num\_apps@{m\_num\_apps}}
+\index{m\_num\_apps@{m\_num\_apps}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_num\_apps}
+{\footnotesize\ttfamily \label{classTraceManager_ac9f40b4be8bbf96497f6b5c307c41988} 
+\textbf{ UInt32} Trace\+Manager\+::m\+\_\+num\+\_\+apps\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ cleanup()}, \textbf{ create\+Application()}, \textbf{ init()}, \textbf{ new\+Thread()}, and \textbf{ setup\+Trace\+Files()}.
+
+\index{TraceManager@{TraceManager}!m\_num\_apps\_nonfinish@{m\_num\_apps\_nonfinish}}
+\index{m\_num\_apps\_nonfinish@{m\_num\_apps\_nonfinish}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_num\_apps\_nonfinish}
+{\footnotesize\ttfamily \label{classTraceManager_a47f7b4b5829b0be561f378b66c38f35a} 
+\textbf{ UInt32} Trace\+Manager\+::m\+\_\+num\+\_\+apps\+\_\+nonfinish\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ cleanup()}, \textbf{ create\+Application()}, and \textbf{ signal\+Done()}.
+
+\index{TraceManager@{TraceManager}!m\_num\_threads\_running@{m\_num\_threads\_running}}
+\index{m\_num\_threads\_running@{m\_num\_threads\_running}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_num\_threads\_running}
+{\footnotesize\ttfamily \label{classTraceManager_a1cb9f96ddc2b959519ce81b1dae6cda3} 
+\textbf{ UInt32} Trace\+Manager\+::m\+\_\+num\+\_\+threads\+\_\+running\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 43} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ cleanup()}, \textbf{ new\+Thread()}, and \textbf{ signal\+Done()}.
+
+\index{TraceManager@{TraceManager}!m\_num\_threads\_started@{m\_num\_threads\_started}}
+\index{m\_num\_threads\_started@{m\_num\_threads\_started}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_num\_threads\_started}
+{\footnotesize\ttfamily \label{classTraceManager_a89b6d345af62670e99accc359a89a96d} 
+\textbf{ UInt32} Trace\+Manager\+::m\+\_\+num\+\_\+threads\+\_\+started\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ signal\+Started()}.
+
+\index{TraceManager@{TraceManager}!m\_responsefiles@{m\_responsefiles}}
+\index{m\_responsefiles@{m\_responsefiles}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_responsefiles}
+{\footnotesize\ttfamily \label{classTraceManager_ab450d25568ff793b429fa0c65e95e4f2} 
+std\+::vector$<$String$>$ Trace\+Manager\+::m\+\_\+responsefiles\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ new\+Thread()}, and \textbf{ setup\+Trace\+Files()}.
+
+\index{TraceManager@{TraceManager}!m\_stop\_with\_first\_app@{m\_stop\_with\_first\_app}}
+\index{m\_stop\_with\_first\_app@{m\_stop\_with\_first\_app}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_stop\_with\_first\_app}
+{\footnotesize\ttfamily \label{classTraceManager_a05bc3138d655d76d328c54050c8a9d31} 
+const bool Trace\+Manager\+::m\+\_\+stop\+\_\+with\+\_\+first\+\_\+app\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Progress\+Value()}, and \textbf{ signal\+Done()}.
+
+\index{TraceManager@{TraceManager}!m\_threads@{m\_threads}}
+\index{m\_threads@{m\_threads}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_threads}
+{\footnotesize\ttfamily \label{classTraceManager_a98dbfc3de6af3f8bc962e0e8e79edc8b} 
+std\+::vector$<$\textbf{ Trace\+Thread} $\ast$$>$ Trace\+Manager\+::m\+\_\+threads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ access\+Memory()}, \textbf{ cleanup()}, \textbf{ end\+Application()}, \textbf{ get\+Progress\+Value()}, \textbf{ new\+Thread()}, \textbf{ start()}, and \textbf{ stop()}.
+
+\index{TraceManager@{TraceManager}!m\_trace\_prefix@{m\_trace\_prefix}}
+\index{m\_trace\_prefix@{m\_trace\_prefix}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_trace\_prefix}
+{\footnotesize\ttfamily \label{classTraceManager_a5aa684050e9c82db4f6a6255b46ca62b} 
+String Trace\+Manager\+::m\+\_\+trace\+\_\+prefix\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Fifo\+Name()}, \textbf{ mark\+\_\+done()}, and \textbf{ setup\+Trace\+Files()}.
+
+\index{TraceManager@{TraceManager}!m\_tracefiles@{m\_tracefiles}}
+\index{m\_tracefiles@{m\_tracefiles}!TraceManager@{TraceManager}}
+\doxysubsubsection{m\_tracefiles}
+{\footnotesize\ttfamily \label{classTraceManager_a0224b28309968671505e03357bb98279} 
+std\+::vector$<$String$>$ Trace\+Manager\+::m\+\_\+tracefiles\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ trace\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ new\+Thread()}, and \textbf{ setup\+Trace\+Files()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/trace\+\_\+frontend/\textbf{ trace\+\_\+manager.\+h}\item 
+common/trace\+\_\+frontend/\textbf{ trace\+\_\+manager.\+cc}\end{DoxyCompactItemize}

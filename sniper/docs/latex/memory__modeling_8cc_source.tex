@@ -1,0 +1,415 @@
+\doxysection{memory\+\_\+modeling.\+cc}
+\label{memory__modeling_8cc_source}\index{pin/lite/memory\_modeling.cc@{pin/lite/memory\_modeling.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}lite/memory\_modeling.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}inst\_mode.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}instruction\_modeling.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}dynamic\_instruction.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}fault\_injection.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}inst\_mode\_macros.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}toolreg.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }lite}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ Lock\ g\_atomic\_lock;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keywordtype}{void}\ addMemoryModeling(TRACE\ trace,\ INS\ ins,\ InstMode::inst\_mode\_t\ inst\_mode)}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsMemoryRead\ (ins)\ ||\ INS\_IsMemoryWrite\ (ins))}
+\DoxyCodeLine{00023\ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ INS\_MemoryOperandCount(ins);\ i++)}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_MemoryOperandIsRead(ins,\ i))}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getFaultinjectionManager())}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(i\ <\ TOOLREG\_NUM\_MEM,\ \textcolor{stringliteral}{"{}Insufficient\ number\ of\ TOOLREG\_MEMx\ available"{}});}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(i\ <\ ThreadLocalStorage::NUM\_SCRATCHPADS,\ \textcolor{stringliteral}{"{}Insufficient\ number\ of\ ThreadLocalStorage::NUM\_SCRATCHPADS\ available"{}});}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_FASTFORWARD(inst\_mode),}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryReadFaultinjectionNondetailed),}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_MemoryOperandIsWritten(ins,\ i)\ ?\ INS\_IsAtomicUpdate(ins)\ :\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_REFERENCE,\ g\_toolregs[TOOLREG\_EA0\ +\ i],}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_RETURN\_REGS,\ g\_toolregs[TOOLREG\_MEM0\ +\ i],}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryReadFaultinjection),}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ ADDRINT(0),}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_MemoryOperandIsWritten(ins,\ i)\ ?\ INS\_IsAtomicUpdate(ins)\ :\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ i,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_REFERENCE,\ g\_toolregs[TOOLREG\_EA0\ +\ i],}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_RETURN\_REGS,\ g\_toolregs[TOOLREG\_MEM0\ +\ i],}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryReadFaultinjection),}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_MemoryOperandIsWritten(ins,\ i)\ ?\ INS\_IsAtomicUpdate(ins)\ :\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ i,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_REFERENCE,\ g\_toolregs[TOOLREG\_EA0\ +\ i],}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_RETURN\_REGS,\ g\_toolregs[TOOLREG\_MEM0\ +\ i],}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INS\_RewriteMemoryOperand(ins,\ i,\ g\_toolregs[TOOLREG\_MEM0\ +\ i]);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_MemoryOperandIsWritten(ins,\ i))}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_AFTER,\ AFUNPTR(lite::completeMemoryWrite),}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_IsAtomicUpdate(ins),}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ g\_toolregs[TOOLREG\_EA0\ +\ i],}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ g\_toolregs[TOOLREG\_MEM0\ +\ i],}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryRead),}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_MemoryOperandIsWritten(ins,\ i)\ ?\ INS\_IsAtomicUpdate(ins)\ :\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ i,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getConfig()-\/>getIssueMemopsAtFunctional()\ ?\ AFUNPTR(lite::handleMemoryReadDetailedIssue)\ :\ AFUNPTR(lite::handleMemoryReadDetailed),}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_MemoryOperandIsWritten(ins,\ i)\ ?\ INS\_IsAtomicUpdate(ins)\ :\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ i,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ INS\_MemoryOperandCount(ins);\ i++)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_MemoryOperandIsWritten(ins,\ i))}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getFaultinjectionManager())}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryWriteFaultinjection),}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ ADDRINT(0),}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_IsAtomicUpdate(ins),}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryWriteFaultinjection),}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_IsAtomicUpdate(ins),}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleMemoryWrite),}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_IsAtomicUpdate(ins),}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ i,}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT(}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getConfig()-\/>getIssueMemopsAtFunctional()\ ?\ AFUNPTR(lite::handleMemoryWriteDetailedIssue)\ :\ AFUNPTR(lite::handleMemoryWriteDetailed),}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_EXECUTING,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ INS\_IsAtomicUpdate(ins),}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYOP\_EA,\ i,}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ INS\_MemoryOperandSize(ins,\ i),}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ i,}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \ \}}
+\DoxyCodeLine{00177\ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{keywordtype}{void}\ handleMemoryRead(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ read\_address,\ UInt32\ read\_data\_size)}
+\DoxyCodeLine{00180\ \{}
+\DoxyCodeLine{00181\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00182\ \ \ \ assert(core);}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordflow}{if}\ (executing)}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ core-\/>accessMemoryFast(\textcolor{keyword}{false},\ Core::READ,\ read\_address);}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keywordtype}{void}\ handleMemoryReadDetailed(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ read\_address,\ UInt32\ read\_data\_size)}
+\DoxyCodeLine{00188\ \{}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{comment}{//\ Detailed\ mode:\ core\ model\ will\ do\ its\ own\ access,\ just\ log\ the\ address}}
+\DoxyCodeLine{00190\ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00191\ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ SubsecondTime::Zero(),\ read\_address,\ read\_data\_size,\ Operand::READ,\ 0,\ HitWhere::UNKNOWN);}
+\DoxyCodeLine{00192\ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{keywordtype}{void}\ handleMemoryReadDetailedIssue(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ read\_address,\ UInt32\ read\_data\_size)}
+\DoxyCodeLine{00195\ \{}
+\DoxyCodeLine{00196\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00197\ \ \ \ assert(core);}
+\DoxyCodeLine{00198\ \ \ \ MemoryResult\ res;}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{if}\ (executing)}
+\DoxyCodeLine{00201\ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ res\ =\ core-\/>accessMemory(}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ (is\_atomic\_update)\ ?\ Core::LOCK\ :\ Core::NONE,}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ (is\_atomic\_update)\ ?\ Core::READ\_EX\ :\ Core::READ,}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ read\_address,}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ read\_data\_size,}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ eip\ ?\ Core::MEM\_MODELED\_RETURN\ :\ Core::MEM\_MODELED\_COUNT,}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ eip);}
+\DoxyCodeLine{00210\ \ \ \ \}}
+\DoxyCodeLine{00211\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00212\ \ \ \ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ res\ =\ makeMemoryResult(HitWhere::PREDICATE\_FALSE,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00214\ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00217\ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ res.latency,\ read\_address,\ read\_data\_size,\ Operand::READ,\ 0,\ res.hit\_where);}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ ADDRINT\ handleMemoryReadFaultinjectionNondetailed(\textcolor{keywordtype}{bool}\ is\_atomic\_update,\ ADDRINT\ read\_address,\ ADDRINT\ *save\_ea)}
+\DoxyCodeLine{00224\ \{}
+\DoxyCodeLine{00225\ \ \ \ *save\_ea\ =\ read\_address;}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic\_update)}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ g\_atomic\_lock.acquire();}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \textcolor{keywordflow}{return}\ read\_address;}
+\DoxyCodeLine{00231\ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ ADDRINT\ handleMemoryReadFaultinjection(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ ADDRINT\ read\_address,\ UInt32\ read\_data\_size,\ UInt32\ op\_num,\ ADDRINT\ *save\_ea)}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \ \ \ *save\_ea\ =\ read\_address;}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic\_update)}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ g\_atomic\_lock.acquire();}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ Core*\ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \textcolor{keywordflow}{if}\ (executing)}
+\DoxyCodeLine{00243\ \ \ \ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ buf\_fault[1024];}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *buf\_data\ =\ localStore[thread\_id].scratch[op\_num];}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \textcolor{comment}{//\ Load\ fault\ mask\ from\ simulated\ memory}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ MemoryResult\ memres\ =\ core-\/>accessMemory(}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*(is\_atomic\_update)\ ?\ Core::LOCK\ :*/}\ Core::NONE,}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ (is\_atomic\_update)\ ?\ Core::READ\_EX\ :\ Core::READ,}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ read\_address,}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ buf\_fault,}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ read\_data\_size,}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ eip\ ?\ Core::MEM\_MODELED\_RETURN\ :\ Core::MEM\_MODELED\_COUNT,}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime::MaxTime(),}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true});}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ memres.latency,\ read\_address,\ read\_data\_size,\ Operand::READ,\ 0,\ memres.hit\_where);}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \textcolor{comment}{//\ Load\ correct\ data\ from\ real\ memory}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ PIN\_SafeCopy(buf\_data,\ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*)read\_address,\ read\_data\_size);}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ the\ fault\ mask\ to\ the\ data}}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ Sim()-\/>getFaultinjectionManager()-\/>applyFault(core,\ read\_address,\ read\_data\_size,\ memres,\ (Byte*)buf\_data,\ (\textcolor{keyword}{const}\ Byte*)buf\_fault);}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \textcolor{comment}{//\ Address\ to\ do\ the\ actual\ read\ from:\ read\ from\ our\ data\ buffer}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (ADDRINT)buf\_data;}
+\DoxyCodeLine{00273\ \ \ \ \}}
+\DoxyCodeLine{00274\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00275\ \ \ \ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \textcolor{comment}{//\ CMOV\ with\ false\ predicate,\ no\ actual\ write,\ but\ performance\ model\ expects\ a\ MemoryInfo}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(\textcolor{keyword}{false},\ SubsecondTime::Zero(),\ read\_address,\ read\_data\_size,\ Operand::READ,\ 0,\ HitWhere::PREDICATE\_FALSE);}
+\DoxyCodeLine{00279\ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \textcolor{keywordflow}{return}\ read\_address;}
+\DoxyCodeLine{00282\ \}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{keywordtype}{void}\ completeMemoryWrite(\textcolor{keywordtype}{bool}\ is\_atomic\_update,\ ADDRINT\ write\_address,\ ADDRINT\ scratch,\ UINT32\ write\_size)}
+\DoxyCodeLine{00285\ \{}
+\DoxyCodeLine{00286\ \ \ \ PIN\_SafeCopy((\textcolor{keywordtype}{void}*)write\_address,\ (\textcolor{keywordtype}{void}*)scratch,\ write\_size);}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic\_update)}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ g\_atomic\_lock.release();}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{keywordtype}{void}\ handleMemoryWrite(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ write\_address,\ UInt32\ write\_data\_size)}
+\DoxyCodeLine{00293\ \{}
+\DoxyCodeLine{00294\ \ \ \ \textcolor{comment}{/*\ Optimization\ for\ atomic\ instructions:\ we\ know\ the\ second\ (write)\ access\ will\ be\ a\ hit.\ Also,\ since\ this\ is\ Lite\ mode,}}
+\DoxyCodeLine{00295\ \textcolor{comment}{\ \ \ \ \ \ we\ don't\ need\ to\ write\ back\ the\ data.\ Therefore,\ only\ tell\ the\ cache\ to\ add\ a\ hit\ to\ its\ counters\ and\ push\ the}}
+\DoxyCodeLine{00296\ \textcolor{comment}{\ \ \ \ \ \ appropriate\ DynamicInstructionInfo,\ but\ don't\ keep\ the\ cache\ hierarchy\ locked\ for\ potentially\ a\ very\ long\ time.\ */}}
+\DoxyCodeLine{00297\ \ \ \ Core*\ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00298\ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic\_update\ \&\&\ executing)}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ core-\/>logMemoryHit(\textcolor{keyword}{false},\ Core::WRITE,\ write\_address,\ Core::MEM\_MODELED\_COUNT,\ eip);}
+\DoxyCodeLine{00300\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (executing)}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ core-\/>accessMemoryFast(\textcolor{keyword}{false},\ Core::WRITE,\ write\_address);}
+\DoxyCodeLine{00302\ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \textcolor{keywordtype}{void}\ handleMemoryWriteDetailed(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ write\_address,\ UInt32\ write\_data\_size)}
+\DoxyCodeLine{00305\ \{}
+\DoxyCodeLine{00306\ \ \ \ \textcolor{comment}{/*\ Optimization\ for\ atomic\ instructions:\ we\ know\ the\ second\ (write)\ access\ will\ be\ a\ hit.\ Also,\ since\ this\ is\ Lite\ mode,}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ \ \ \ \ we\ don't\ need\ to\ write\ back\ the\ data.\ Therefore,\ only\ tell\ the\ cache\ to\ add\ a\ hit\ to\ its\ counters\ and\ push\ the}}
+\DoxyCodeLine{00308\ \textcolor{comment}{\ \ \ \ \ \ appropriate\ DynamicInstructionInfo,\ but\ don't\ keep\ the\ cache\ hierarchy\ locked\ for\ potentially\ a\ very\ long\ time.\ */}}
+\DoxyCodeLine{00309\ \ \ \ Core*\ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00310\ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic\_update\ \&\&\ executing)}
+\DoxyCodeLine{00311\ \ \ \ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ core-\/>logMemoryHit(\textcolor{keyword}{false},\ Core::WRITE,\ write\_address,\ Core::MEM\_MODELED\_RETURN,\ eip);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ SubsecondTime::Zero(),\ write\_address,\ write\_data\_size,\ Operand::WRITE,\ 0,\ HitWhere::L1\_OWN);}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \ \ \ \}}
+\DoxyCodeLine{00319\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00320\ \ \ \ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{comment}{//\ Detailed\ mode:\ core\ model\ will\ do\ its\ own\ access,\ just\ log\ the\ address}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ SubsecondTime::Zero(),\ write\_address,\ write\_data\_size,\ Operand::WRITE,\ 0,\ HitWhere::UNKNOWN);}
+\DoxyCodeLine{00324\ \ \ \ \}}
+\DoxyCodeLine{00325\ \}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{keywordtype}{void}\ handleMemoryWriteDetailedIssue(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ write\_address,\ UInt32\ write\_data\_size)}
+\DoxyCodeLine{00328\ \{}
+\DoxyCodeLine{00329\ \ \ \ Core*\ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00330\ \ \ \ MemoryResult\ res;}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \textcolor{keywordflow}{if}\ (executing)}
+\DoxyCodeLine{00333\ \ \ \ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ res\ =\ core-\/>accessMemory(}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ (is\_atomic\_update)\ ?\ Core::UNLOCK\ :\ Core::NONE,}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ Core::WRITE,}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ write\_address,}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ write\_data\_size,}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ eip\ ?\ Core::MEM\_MODELED\_RETURN\ :\ Core::MEM\_MODELED\_COUNT,}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ eip);}
+\DoxyCodeLine{00342\ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00344\ \ \ \ \{}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ res\ =\ makeMemoryResult(HitWhere::PREDICATE\_FALSE,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00346\ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00349\ \ \ \ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ res.latency,\ write\_address,\ write\_data\_size,\ Operand::WRITE,\ 0,\ res.hit\_where);}
+\DoxyCodeLine{00352\ \ \ \ \}}
+\DoxyCodeLine{00353\ \}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{keywordtype}{char}\ g\_zeros[1024]\ =\ \{\ 0\ \};}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \textcolor{keywordtype}{void}\ handleMemoryWriteFaultinjection(THREADID\ thread\_id,\ BOOL\ executing,\ ADDRINT\ eip,\ \textcolor{keywordtype}{bool}\ is\_atomic\_update,\ IntPtr\ write\_address,\ UInt32\ write\_data\_size)}
+\DoxyCodeLine{00358\ \{}
+\DoxyCodeLine{00359\ \ \ \ \textcolor{comment}{/*\ Optimization\ for\ atomic\ instructions:\ we\ know\ the\ second\ (write)\ access\ will\ be\ a\ hit.\ Also,\ since\ this\ is\ Lite\ mode,}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ \ \ \ \ we\ don't\ need\ to\ write\ back\ the\ data.\ Therefore,\ only\ tell\ the\ cache\ to\ add\ a\ hit\ to\ its\ counters\ and\ push\ the}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ \ \ \ \ appropriate\ DynamicInstructionInfo,\ but\ don't\ keep\ the\ cache\ hierarchy\ locked\ for\ potentially\ a\ very\ long\ time.\ */}}
+\DoxyCodeLine{00362\ \ \ \ Core*\ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00363\ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic\_update\ \&\&\ executing)}
+\DoxyCodeLine{00364\ \ \ \ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ core-\/>accessMemory(}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*(is\_atomic\_update)\ ?\ Core::UNLOCK\ :*/}\ Core::NONE,}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ Core::WRITE,}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ write\_address,}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ g\_zeros,}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ write\_data\_size,}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ Core::MEM\_MODELED\_NONE,}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime::MaxTime(),}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false});}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \ \ \ \ \ \ core-\/>logMemoryHit(\textcolor{keyword}{false},\ Core::WRITE,\ write\_address,\ eip\ ?\ Core::MEM\_MODELED\_RETURN\ :\ Core::MEM\_MODELED\_COUNT,\ eip);}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ SubsecondTime::Zero(),\ write\_address,\ write\_data\_size,\ Operand::WRITE,\ 0,\ HitWhere::L1\_OWN);}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00382\ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (executing)}
+\DoxyCodeLine{00384\ \ \ \ \{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ MemoryResult\ res\ =\ core-\/>accessMemory(}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*(is\_atomic\_update)\ ?\ Core::UNLOCK\ :*/}\ Core::NONE,}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ Core::WRITE,}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ write\_address,}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ g\_zeros,}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ write\_data\_size,}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ eip\ ?\ Core::MEM\_MODELED\_RETURN\ :\ Core::MEM\_MODELED\_COUNT,}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime::MaxTime(),}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false});}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(executing,\ res.latency,\ write\_address,\ write\_data\_size,\ Operand::WRITE,\ 0,\ res.hit\_where);}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00400\ \ \ \ \}}
+\DoxyCodeLine{00401\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (eip)}
+\DoxyCodeLine{00402\ \ \ \ \{}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \textcolor{comment}{//\ CMOV\ with\ false\ predicate,\ no\ actual\ write,\ but\ performance\ model\ expects\ a\ MemoryInfo}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ localStore[thread\_id].dynins-\/>addMemory(\textcolor{keyword}{false},\ SubsecondTime::Zero(),\ write\_address,\ write\_data\_size,\ Operand::WRITE,\ 0,\ HitWhere::PREDICATE\_FALSE);}
+\DoxyCodeLine{00406\ \ \ \ \}}
+\DoxyCodeLine{00407\ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \}}
+
+\end{DoxyCode}

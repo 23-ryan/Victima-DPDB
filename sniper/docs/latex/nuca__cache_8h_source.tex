@@ -1,0 +1,55 @@
+\doxysection{nuca\+\_\+cache.\+h}
+\label{nuca__cache_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/nuca\_cache.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/nuca\_cache.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_NUCA\_CACHE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_NUCA\_CACHE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}hit\_where.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}boost/tuple/tuple.hpp"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }MemoryManagerBase;}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }ShmemPerfModel;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }AddressHomeLookup;}
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }QueueModel;}
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }ShmemPerf;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }NucaCache}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ MemoryManagerBase\ *m\_memory\_manager;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ ShmemPerfModel\ *m\_shmem\_perf\_model;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ AddressHomeLookup\ *m\_home\_lookup;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ ComponentLatency\ m\_data\_access\_time;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ ComponentLatency\ m\_tags\_access\_time;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ ComponentBandwidth\ m\_data\_array\_bandwidth;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ Cache*\ m\_cache;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ QueueModel\ *m\_queue\_model;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ UInt64\ m\_reads,\ m\_writes,\ m\_read\_misses,\ m\_write\_misses;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ UInt64\ m\_metadata\_reads,\ m\_metadata\_writes,\ m\_metadata\_read\_misses,\ m\_metadata\_write\_misses;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ ShmemPerf\ m\_dummy\_shmem\_perf;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ SubsecondTime\ accessDataArray(Cache::access\_t\ access,\ SubsecondTime\ t\_start,\ ShmemPerf\ *perf);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ NucaCache(MemoryManagerBase*\ memory\_manager,\ ShmemPerfModel*\ shmem\_perf\_model,\ AddressHomeLookup*\ home\_lookup,\ UInt32\ cache\_block\_size,\ ParametricDramDirectoryMSI::CacheParameters\&\ parameters);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \string~NucaCache();}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ read(IntPtr\ address,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf,\ \textcolor{keywordtype}{bool}\ count,\textcolor{keywordtype}{bool}\ is\_metadata);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ boost::tuple<SubsecondTime,\ HitWhere::where\_t>\ write(IntPtr\ address,\ Byte*\ data\_buf,\ \textcolor{keywordtype}{bool}\&\ eviction,\ IntPtr\&\ evict\_address,\ Byte*\ evict\_buf,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ count,\textcolor{keywordtype}{bool}\ is\_metadata);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ markTranslationMetadata(IntPtr\ address,\ CacheBlockInfo::block\_type\_t\ blocktype);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ Cache*\ getCache()\{\textcolor{keywordflow}{return}\ m\_cache;\}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ measureStats();}
+\DoxyCodeLine{00047\ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_NUCA\_CACHE\_H}}
+
+\end{DoxyCode}

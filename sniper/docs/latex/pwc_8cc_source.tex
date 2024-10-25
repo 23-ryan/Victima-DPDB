@@ -1,0 +1,110 @@
+\doxysection{pwc.\+cc}
+\label{pwc_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pwc.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pwc.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ }
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ UInt32\ PWC::SIM\_PAGE\_SHIFT;}
+\DoxyCodeLine{00015\ \ \ IntPtr\ PWC::SIM\_PAGE\_SIZE;}
+\DoxyCodeLine{00016\ \ \ IntPtr\ PWC::SIM\_PAGE\_MASK;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00019\ \ \ PWC::PWC(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ UInt32\ L4\_associativity,\ UInt32\ L4\_num\_entries,\ UInt32\ L3\_associativity,\ UInt32\ L3\_num\_entries,\ UInt32\ L2\_associativity,\ UInt32\ L2\_num\_entries,\ ComponentLatency\ \_access\_latency,\ ComponentLatency\ \_miss\_latency,\ \textcolor{keywordtype}{bool}\ \_perfect)}
+\DoxyCodeLine{00020\ \ \ \ \ :\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00021\ \ \ \ \ ,\ access\_latency(\_access\_latency)}
+\DoxyCodeLine{00022\ \ \ \ \ ,\ miss\_latency(\_miss\_latency)}
+\DoxyCodeLine{00023\ \ \ \ \ ,\ m\_L4\_cache(name\ +\ \textcolor{stringliteral}{"{}\_L4"{}},\ cfgname,\ core\_id,\ L4\_num\_entries\ /\ L4\_associativity,\ L4\_associativity,\ 8,\ \textcolor{stringliteral}{"{}lru"{}},\ CacheBase::PR\_L1\_CACHE)\ \textcolor{comment}{//\ Assuming\ 8B\ granularity}}
+\DoxyCodeLine{00024\ \ \ \ \ ,\ m\_L3\_cache(name\ +\ \textcolor{stringliteral}{"{}\_L3"{}},\ cfgname,\ core\_id,\ L3\_num\_entries\ /\ L3\_associativity,\ L3\_associativity,\ 8,\ \textcolor{stringliteral}{"{}lru"{}},\ CacheBase::PR\_L1\_CACHE)}
+\DoxyCodeLine{00025\ \ \ \ \ ,\ m\_L2\_cache(name\ +\ \textcolor{stringliteral}{"{}\_L2"{}},\ cfgname,\ core\_id,\ L2\_num\_entries\ /\ L2\_associativity,\ L2\_associativity,\ 8,\ \textcolor{stringliteral}{"{}lru"{}},\ CacheBase::PR\_L1\_CACHE)\ \ }
+\DoxyCodeLine{00026\ \ \ \ \ ,\ perfect(\_perfect)}
+\DoxyCodeLine{00027\ \ \ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ registerStatsMetric(name+\textcolor{stringliteral}{"{}\_L4"{}},\ core\_id,\ \textcolor{stringliteral}{"{}access"{}},\ \&m\_l4\_access);}
+\DoxyCodeLine{00030\ \ \ \ \ registerStatsMetric(name+\textcolor{stringliteral}{"{}\_L4"{}},\ core\_id,\ \textcolor{stringliteral}{"{}miss"{}},\ \&m\_l4\_miss);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ registerStatsMetric(name+\textcolor{stringliteral}{"{}\_L3"{}},\ core\_id,\ \textcolor{stringliteral}{"{}access"{}},\ \&m\_l3\_access);}
+\DoxyCodeLine{00033\ \ \ \ \ registerStatsMetric(name+\textcolor{stringliteral}{"{}\_L3"{}},\ core\_id,\ \textcolor{stringliteral}{"{}miss"{}},\ \&m\_l3\_miss);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ registerStatsMetric(name+\textcolor{stringliteral}{"{}\_L2"{}},\ core\_id,\ \textcolor{stringliteral}{"{}access"{}},\ \&m\_l2\_access);}
+\DoxyCodeLine{00036\ \ \ \ \ registerStatsMetric(name+\textcolor{stringliteral}{"{}\_L2"{}},\ core\_id,\ \textcolor{stringliteral}{"{}miss"{}},\ \&m\_l2\_miss);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ PWC::where\_t\ PWC::lookup(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ allocate\_on\_miss,\ \textcolor{keywordtype}{int}\ level,\ \textcolor{keywordtype}{bool}\ count)}
+\DoxyCodeLine{00041\ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{bool}\ hit;}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordflow}{if}(perfect)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PWC::HIT;}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//TODO\ model\ bitmap\ cache\ access\ here}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordflow}{switch}(level)\{}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 1:\{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ hit\ =\ m\_L4\_cache.accessSingleLine(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_l4\_access++;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit)\ \textcolor{keywordflow}{return}\ PWC::HIT;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_l4\_miss++;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocate\_on\_miss)\ allocate(address,\ now,\ \&m\_L4\_cache);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PWC::MISS;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 2:\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ hit\ =\ m\_L3\_cache.accessSingleLine(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_l3\_access++;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit)\ \textcolor{keywordflow}{return}\ PWC::HIT;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_l3\_miss++;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocate\_on\_miss)\ allocate(address,\ now,\&\ m\_L3\_cache);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PWC::MISS;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 3:\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ hit\ =\ m\_L2\_cache.accessSingleLine(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_l2\_access++;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit)\ \textcolor{keywordflow}{return}\ PWC::HIT;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_l2\_miss++;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocate\_on\_miss)\ allocate(address,\ now,\ \&m\_L2\_cache);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PWC::MISS;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordtype}{void}\ PWC::allocate(IntPtr\ address,\ SubsecondTime\ now,\ Cache\ *pwc\_cache)}
+\DoxyCodeLine{00093\ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction;}
+\DoxyCodeLine{00095\ \ \ \ \ IntPtr\ evict\_addr;}
+\DoxyCodeLine{00096\ \ \ \ \ CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00099\ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00100\ \ \ \ \ pwc\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00101\ \ \ \ \ pwc\_cache-\/>insertSingleLine(address,\ NULL,\ \&eviction,\ \&evict\_addr,\ \&evict\_block\_info,\ NULL,\ now);}
+\DoxyCodeLine{00102\ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \}}
+
+\end{DoxyCode}

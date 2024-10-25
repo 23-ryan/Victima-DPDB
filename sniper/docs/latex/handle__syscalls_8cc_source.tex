@@ -1,0 +1,151 @@
+\doxysection{handle\+\_\+syscalls.\+cc}
+\label{handle__syscalls_8cc_source}\index{pin/lite/handle\_syscalls.cc@{pin/lite/handle\_syscalls.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}lite/handle\_syscalls.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}syscall\_strings.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <syscall.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }lite}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{void}\ handleSyscall(THREADID\ threadIndex,\ CONTEXT*\ ctx)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ We\ shouldn't\ block\ on\ actual\ SYS\_futex\ calls\ while\ inside\ the\ SyscallEntry\ function}}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{comment}{//\ Therefore,\ do\ all\ the\ work\ here,\ which\ is\ at\ INS\_InsertCall(syscall,\ IPOINT\_BEFORE)}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ IntPtr\ syscall\_number\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GAX);}
+\DoxyCodeLine{00023\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Syscall\ Number(\%d)"{}},\ syscall\_number);}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{comment}{//printf("{}Entering\ syscall\ \%s(\%ld)\(\backslash\)n"{},\ syscall\_string(syscall\_number),\ syscall\_number);}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ SyscallMdl::syscall\_args\_t\ args;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#ifdef\ TARGET\_IA32}}
+\DoxyCodeLine{00030\ \ \ \ args.arg0\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GBX);}
+\DoxyCodeLine{00031\ \ \ \ args.arg1\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GCX);}
+\DoxyCodeLine{00032\ \ \ \ args.arg2\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GDX);}
+\DoxyCodeLine{00033\ \ \ \ args.arg3\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GSI);}
+\DoxyCodeLine{00034\ \ \ \ args.arg4\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GDI);}
+\DoxyCodeLine{00035\ \ \ \ args.arg5\ =\ PIN\_GetContextReg\ (ctx,\ REG\_GBP);}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#ifdef\ TARGET\_INTEL64}}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{comment}{//\ FIXME:\ The\ LEVEL\_BASE::\ ugliness\ is\ required\ by\ the\ fact\ that\ REG\_R8\ etc}}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{comment}{//\ are\ also\ defined\ in\ /usr/include/sys/ucontext.h}}
+\DoxyCodeLine{00041\ \ \ \ args.arg0\ =\ PIN\_GetContextReg\ (ctx,\ LEVEL\_BASE::REG\_GDI);}
+\DoxyCodeLine{00042\ \ \ \ args.arg1\ =\ PIN\_GetContextReg\ (ctx,\ LEVEL\_BASE::REG\_GSI);}
+\DoxyCodeLine{00043\ \ \ \ args.arg2\ =\ PIN\_GetContextReg\ (ctx,\ LEVEL\_BASE::REG\_GDX);}
+\DoxyCodeLine{00044\ \ \ \ args.arg3\ =\ PIN\_GetContextReg\ (ctx,\ LEVEL\_BASE::REG\_R10);}
+\DoxyCodeLine{00045\ \ \ \ args.arg4\ =\ PIN\_GetContextReg\ (ctx,\ LEVEL\_BASE::REG\_R8);}
+\DoxyCodeLine{00046\ \ \ \ args.arg5\ =\ PIN\_GetContextReg\ (ctx,\ LEVEL\_BASE::REG\_R9);}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{if}\ (syscall\_number\ ==\ SYS\_clone)}
+\DoxyCodeLine{00050\ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ thread\_id\_t\ new\_thread\_id\ =\ Sim()-\/>getThreadManager()-\/>spawnThread(localStore[threadIndex].thread-\/>getId(),\ 0);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ Thread\ *new\_thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(new\_thread\_id);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ localStore[threadIndex].clone.new\_thread\_id\ =\ new\_thread\_id;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \ \ \ \#if\ defined(TARGET\_IA32)}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ new\_thread-\/>m\_os\_info.tid\_ptr\ =\ args.arg2;}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ \ \ \ \#elif\ defined(TARGET\_INTEL64)}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ new\_thread-\/>m\_os\_info.tid\_ptr\ =\ args.arg3;}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ new\_thread-\/>m\_os\_info.clear\_tid\ =\ args.arg0\ \&\ CLONE\_CHILD\_CLEARTID\ ?\ true\ :\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (syscall\_number\ ==\ SYS\_execve)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}execv\ system\ call\ not\ supported\ in\ Pin\ mode,\ use\ SIFT\ mode\ instead\ (-\/-\/sift)"{}});}
+\DoxyCodeLine{00065\ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ Thread*\ thread\ =\ localStore[threadIndex].thread;}
+\DoxyCodeLine{00068\ \ \ \ LOG\_ASSERT\_ERROR(thread\ !=\ NULL,\ \textcolor{stringliteral}{"{}Thread(NULL)"{}});}
+\DoxyCodeLine{00069\ \ \ \ thread-\/>getSyscallMdl()-\/>runEnter(syscall\_number,\ args);}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keywordtype}{void}\ syscallEnterRunModel(THREADID\ threadIndex,\ CONTEXT*\ ctx,\ SYSCALL\_STANDARD\ syscall\_standard,\ \textcolor{keywordtype}{void}*\ v)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \ Thread*\ thread\ =\ localStore[threadIndex].thread;}
+\DoxyCodeLine{00075\ \ \ \ LOG\_ASSERT\_ERROR(thread\ !=\ NULL,\ \textcolor{stringliteral}{"{}Thread(NULL)"{}});}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>getSyscallMdl()-\/>isEmulated())}
+\DoxyCodeLine{00077\ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ PIN\_SetSyscallNumber(ctx,\ syscall\_standard,\ SYS\_getpid);}
+\DoxyCodeLine{00079\ \ \ \ \}}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keywordtype}{void}\ syscallExitRunModel(THREADID\ threadIndex,\ CONTEXT*\ ctx,\ SYSCALL\_STANDARD\ syscall\_standard,\ \textcolor{keywordtype}{void}*\ v)}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ Thread*\ thread\ =\ localStore[threadIndex].thread;}
+\DoxyCodeLine{00085\ \ \ \ LOG\_ASSERT\_ERROR(thread\ !=\ NULL,\ \textcolor{stringliteral}{"{}Thread(NULL)"{}});}
+\DoxyCodeLine{00086\ \ \ \ IntPtr\ old\_return\_val\ =\ PIN\_GetSyscallReturn(ctx,\ syscall\_standard);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>getSyscallMdl()-\/>getCurrentSyscallNumber()\ ==\ SYS\_clone)}
+\DoxyCodeLine{00089\ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ Thread\ *new\_thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(localStore[threadIndex].clone.new\_thread\_id);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ new\_thread-\/>m\_os\_info.tid\ =\ old\_return\_val;}
+\DoxyCodeLine{00092\ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>getSyscallMdl()-\/>isEmulated())}
+\DoxyCodeLine{00095\ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ IntPtr\ syscall\_return\ =\ thread-\/>getSyscallMdl()-\/>runExit(old\_return\_val);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ PIN\_SetContextReg(ctx,\ REG\_GAX,\ syscall\_return);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Syscall\ returned\ (\%p)"{}},\ syscall\_return);}
+\DoxyCodeLine{00100\ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00102\ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ thread-\/>getSyscallMdl()-\/>runExit(old\_return\_val);}
+\DoxyCodeLine{00104\ \ \ \ \}}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keywordtype}{bool}\ interceptSignal(THREADID\ threadIndex,\ INT32\ signal,\ CONTEXT\ *ctx,\ BOOL\ hasHandler,\ \textcolor{keyword}{const}\ EXCEPTION\_INFO\ *pExceptInfo,\ \textcolor{keywordtype}{void}*\ v)}
+\DoxyCodeLine{00108\ \{}
+\DoxyCodeLine{00109\ \ \ \ ADDRINT\ eip\ =\ PIN\_GetContextReg(ctx,\ REG\_INST\_PTR);}
+\DoxyCodeLine{00110\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Application\ received\ fatal\ signal\ \%u\ at\ eip\ \%p\(\backslash\)n"{}},\ signal,\ (\textcolor{keywordtype}{void}*)eip);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ INT32\ column,\ line;}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keywordtype}{string}\ fileName;}
+\DoxyCodeLine{00114\ \ \ \ PIN\_GetSourceLocation(eip,\ \&column,\ \&line,\ \&fileName);}
+\DoxyCodeLine{00115\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}in\ \%s:\%u\(\backslash\)n"{}},\ fileName.c\_str(),\ line);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordflow}{switch}(PIN\_GetDebugStatus())}
+\DoxyCodeLine{00118\ \ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DEBUG\_STATUS\_CONNECTED:}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ debugger\ is\ already\ connected,\ it\ should\ just\ break}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ This\ is\ supposed\ to\ work\ in\ a\ future\ Pin\ version.\ Right\ now,\ a\ fatal\ signal\ will\ kill\ Pin\ \&\ the\ application}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DEBUG\_STATUS\_UNCONNECTED:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ -\/appdebug\_enable\ switch\ was\ used,\ but\ no\ debugger\ is\ currently\ connected}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Instruct\ the\ user\ to\ do\ this\ now}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ DEBUG\_CONNECTION\_INFO\ info;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!PIN\_GetDebugConnectionInfo(\&info)\ ||\ info.\_type\ !=\ DEBUG\_CONNECTION\_TYPE\_TCP\_SERVER)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)nStart\ GDB\ and\ enter\ this\ command:\(\backslash\)n\ \ target\ remote\ :\%d\(\backslash\)n\(\backslash\)n"{}},\ info.\_tcpServer.\_tcpPort);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ PIN\_WaitForDebuggerToConnect(0);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DEBUG\_STATUS\_UNCONNECTABLE:}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Application\ debugging\ is\ enabled,\ but\ it\ is\ too\ early\ to\ allow\ a\ debugger\ to\ connect}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)nApplication\ debugging\ is\ enabled,\ but\ it\ is\ too\ early\ to\ allow\ a\ debugger\ to\ connect.\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ exit(0);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DEBUG\_STATUS\_DISABLED:}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ -\/appdebug*\ switch\ given\ to\ Pin,\ nothing\ we\ can\ do}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)nApplication\ debugging\ is\ currently\ disabled.\(\backslash\)nTo\ enable\ it,\ start\ Sniper\ with\ the\ -\/-\/appdebug\ or\ -\/-\/appdebug-\/wait\ command\ line\ switch.\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ exit(0);}
+\DoxyCodeLine{00140\ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \}}
+
+\end{DoxyCode}

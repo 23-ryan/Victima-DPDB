@@ -1,0 +1,136 @@
+\doxysection{network\+\_\+model\+\_\+bus.\+cc}
+\label{network__model__bus_8cc_source}\index{common/network/network\_model\_bus.cc@{common/network/network\_model\_bus.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}network\_model\_bus.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ NetworkModelBusGlobal*\ NetworkModelBus::\_bus\_global[NUM\_STATIC\_NETWORKS]\ =\ \{\ NULL\ \};}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ NetworkModelBusGlobal::NetworkModelBusGlobal(String\ name)}
+\DoxyCodeLine{00014\ \ \ \ :\ \_bandwidth(8\ *\ Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}network/bus/bandwidth"{}}))\ \textcolor{comment}{/*\ =\ 8\ *\ GB/s\ /\ Gcycles/s\ =\ bits\ /\ cycle,\ round\ down\ (implicit:\ float\ to\ int\ conversion)\ */}}
+\DoxyCodeLine{00015\ \ \ \ ,\ \_num\_packets(0)}
+\DoxyCodeLine{00016\ \ \ \ ,\ \_num\_packets\_delayed(0)}
+\DoxyCodeLine{00017\ \ \ \ ,\ \_num\_bytes(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ \_time\_used(SubsecondTime::Zero())}
+\DoxyCodeLine{00019\ \ \ \ ,\ \_total\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ String\ model\_type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}network/bus/queue\_model/type"{}});}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{comment}{//\ Emulate\ the\ original\ code,\ with\ 10\ cycles\ of\ latency\ for\ the\ history\_list,\ and\ 0\ outstanding\ transactions\ for\ the\ contention\ model}}
+\DoxyCodeLine{00023\ \ \ \ SubsecondTime\ proc\_period\ =\ ComponentPeriod::fromFreqHz(Sim()-\/>getCfg()-\/>getFloatArray(\textcolor{stringliteral}{"{}perf\_model/core/frequency"{}},\ 0)*1000000000);}
+\DoxyCodeLine{00024\ \ \ \ \_queue\_model\ =\ QueueModel::create(\textcolor{stringliteral}{"{}bus-\/queue"{}},\ 0,\ model\_type,\ 10\ *\ proc\_period);}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{comment}{/*\ 8\ *\ GB/s\ /\ Gcycles/s\ =\ bits\ /\ cycle,\ round\ down\ (implicit:\ float\ to\ int\ conversion)\ */}}
+\DoxyCodeLine{00026\ \ \ \ registerStatsMetric(name,\ 0,\ \textcolor{stringliteral}{"{}num-\/packets"{}},\ \&\_num\_packets);}
+\DoxyCodeLine{00027\ \ \ \ registerStatsMetric(name,\ 0,\ \textcolor{stringliteral}{"{}num-\/packets-\/delayed"{}},\ \&\_num\_packets\_delayed);}
+\DoxyCodeLine{00028\ \ \ \ registerStatsMetric(name,\ 0,\ \textcolor{stringliteral}{"{}num-\/bytes"{}},\ \&\_num\_bytes);}
+\DoxyCodeLine{00029\ \ \ \ registerStatsMetric(name,\ 0,\ \textcolor{stringliteral}{"{}time-\/used"{}},\ \&\_time\_used);}
+\DoxyCodeLine{00030\ \ \ \ registerStatsMetric(name,\ 0,\ \textcolor{stringliteral}{"{}total-\/delay"{}},\ \&\_total\_delay);}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ NetworkModelBusGlobal::\string~NetworkModelBusGlobal()}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keyword}{delete}\ \_queue\_model;}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{/*\ Model\ bus\ utilization.\ In:\ packet\ start\ time\ and\ size.\ Out:\ packet\ out\ time\ */}}
+\DoxyCodeLine{00039\ SubsecondTime}
+\DoxyCodeLine{00040\ NetworkModelBusGlobal::useBus(SubsecondTime\ t\_start,\ UInt32\ length,\ subsecond\_time\_t\ *queue\_delay\_stats)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ SubsecondTime\ t\_delay\ =\ \_bandwidth.getLatency(length\ *\ 8);}
+\DoxyCodeLine{00043\ \ \ \ SubsecondTime\ t\_queue\ =\ \_queue\_model-\/>computeQueueDelay(t\_start,\ t\_delay);}
+\DoxyCodeLine{00044\ \ \ \ \_time\_used\ +=\ t\_delay;}
+\DoxyCodeLine{00045\ \ \ \ \_total\_delay\ +=\ t\_queue;}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordflow}{if}\ (queue\_delay\_stats)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ *queue\_delay\_stats\ +=\ t\_queue;}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{if}\ (t\_queue\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \_num\_packets\_delayed\ ++;}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{return}\ t\_start\ +\ t\_queue\ +\ t\_delay;}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ NetworkModelBus::NetworkModelBus(Network\ *net,\ EStaticNetwork\ net\_type)}
+\DoxyCodeLine{00054\ \ \ \ :\ NetworkModel(net,\ net\_type)}
+\DoxyCodeLine{00055\ \ \ \ ,\ \_enabled(false)}
+\DoxyCodeLine{00056\ \ \ \ ,\ \_ignore\_local(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}network/bus/ignore\_local\_traffic"{}}))}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordflow}{if}\ (!\_bus\_global[net\_type])\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ String\ name\ =\ String(\textcolor{stringliteral}{"{}network."{}})+EStaticNetworkStrings[net\_type]+\textcolor{stringliteral}{"{}.bus"{}};}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \_bus\_global[net\_type]\ =\ \textcolor{keyword}{new}\ NetworkModelBusGlobal(name);}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \_bus\ =\ \_bus\_global[net\_type];}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00066\ NetworkModelBus::routePacket(\textcolor{keyword}{const}\ NetPacket\ \&pkt,\ std::vector<Hop>\ \&nextHops)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ SubsecondTime\ t\_recv;}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{if}\ (accountPacket(pkt))\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ ScopedLock\ sl(\_bus-\/>\_lock);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \_bus-\/>\_num\_packets\ ++;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \_bus-\/>\_num\_bytes\ +=\ getNetwork()-\/>getModeledLength(pkt);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ t\_recv\ =\ \_bus-\/>useBus(pkt.time,\ pkt.length,\ (subsecond\_time\_t*)\&pkt.queue\_delay);}
+\DoxyCodeLine{00074\ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ t\_recv\ =\ pkt.time;}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.receiver\ ==\ NetPacket::BROADCAST)}
+\DoxyCodeLine{00078\ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ UInt32\ total\_cores\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ (SInt32)\ total\_cores;\ i++)}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ Hop\ h;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ h.final\_dest\ =\ i;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ h.next\_dest\ =\ i;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ h.time\ =\ t\_recv;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00092\ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ Hop\ h;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ h.final\_dest\ =\ pkt.receiver;}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ h.next\_dest\ =\ pkt.receiver;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ h.time\ =\ t\_recv;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00099\ \ \ \ \}}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00103\ NetworkModelBus::processReceivedPacket(NetPacket\ \&pkt)}
+\DoxyCodeLine{00104\ \{}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00108\ NetworkModelBus::accountPacket(\textcolor{keyword}{const}\ NetPacket\ \&pkt)}
+\DoxyCodeLine{00109\ \{}
+\DoxyCodeLine{00110\ \ \ \ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.type\ ==\ SHARED\_MEM\_1)}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ requester\ =\ getNetwork()-\/>getCore()-\/>getMemoryManager()-\/>getShmemRequester(pkt.data);}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ Other\ Packet\ types}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ requester\ =\ pkt.sender;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ LOG\_ASSERT\_ERROR((requester\ >=\ 0)\ \&\&\ (requester\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores()),}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}requester(\%i)"{}},\ requester);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{if}\ (\ \ !\_enabled}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ ||\ (\_ignore\_local\ \&\&\ pkt.sender\ ==\ pkt.receiver)}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Data\ to/from\ MCP:\ admin\ traffic,\ don't\ account}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ ||\ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ ||\ (pkt.sender\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ ||\ (pkt.receiver\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ )}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00128\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00130\ \}}
+
+\end{DoxyCode}

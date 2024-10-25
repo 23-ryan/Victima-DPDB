@@ -1,0 +1,108 @@
+\doxysection{rob\+\_\+contention\+\_\+nehalem.\+cc}
+\label{rob__contention__nehalem_8cc_source}\index{common/performance\_model/performance\_models/rob\_performance\_model/rob\_contention\_nehalem.cc@{common/performance\_model/performance\_models/rob\_performance\_model/rob\_contention\_nehalem.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}rob\_contention\_nehalem.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ RobContentionNehalem::RobContentionNehalem(\textcolor{keyword}{const}\ Core\ *core,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model)}
+\DoxyCodeLine{00014\ \ \ \ :\ m\_core\_model(core\_model)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_cache\_block\_mask(\string~(core-\/>getMemoryManager()-\/>getCacheBlockSize()\ -\/\ 1))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_now(core-\/>getDvfsDomain())}
+\DoxyCodeLine{00017\ \ \ \ ,\ alu\_used\_until(DynamicMicroOpNehalem::UOP\_ALU\_SIZE,\ SubsecondTime::Zero())}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keywordtype}{void}\ RobContentionNehalem::initCycle(SubsecondTime\ now)}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \ m\_now.setElapsedTime(now);}
+\DoxyCodeLine{00024\ \ \ \ memset(ports,\ 0,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{bool})\ *\ DynamicMicroOpNehalem::UOP\_PORT\_SIZE);}
+\DoxyCodeLine{00025\ \ \ \ ports\_generic\ =\ 0;}
+\DoxyCodeLine{00026\ \ \ \ ports\_generic05\ =\ 0;}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keywordtype}{bool}\ RobContentionNehalem::tryIssue(\textcolor{keyword}{const}\ DynamicMicroOp\ \&uop)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{comment}{//\ Port\ contention}}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{comment}{//\ TODO:\ Maybe\ the\ scheduler\ is\ more\ intelligent\ and\ doesn't\ just\ assing\ the\ first\ uop\ in\ the\ ROB}}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ that\ fits\ a\ particular\ free\ port.\ We\ could\ give\ precedence\ to\ uops\ that\ have\ dependants,\ etc.}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{comment}{//\ NOTE:\ mixes\ canIssue\ and\ doIssue,\ in\ the\ sense\ that\ ports*\ are\ incremented\ immediately.}}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ This\ works\ as\ long\ as,\ if\ we\ return\ true,\ this\ microop\ is\ indeed\ issued}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keyword}{const}\ DynamicMicroOpNehalem\ *core\_uop\_info\ =\ uop.getCoreSpecificInfo<DynamicMicroOpNehalem>();}
+\DoxyCodeLine{00038\ \ \ \ DynamicMicroOpNehalem::uop\_port\_t\ uop\_port\ =\ core\_uop\_info-\/>getPort();}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{if}\ (uop\_port\ ==\ DynamicMicroOpNehalem::UOP\_PORT015)}
+\DoxyCodeLine{00040\ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ports\_generic\ >=\ 3)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ ports\_generic++;}
+\DoxyCodeLine{00045\ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop\_port\ ==\ DynamicMicroOpNehalem::UOP\_PORT05)}
+\DoxyCodeLine{00047\ \ \ \ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ports\_generic05\ >=\ 2)}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ ports\_generic05++;}
+\DoxyCodeLine{00052\ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop\_port\ ==\ DynamicMicroOpNehalem::UOP\_PORT2\ ||\ uop\_port\ ==\ DynamicMicroOpNehalem::UOP\_PORT34)}
+\DoxyCodeLine{00054\ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ports[uop\_port])}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ ports[uop\_port]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00059\ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00061\ \ \ \ \{\ \textcolor{comment}{//\ PORT0,\ PORT1\ or\ PORT5}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ports[uop\_port])}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (ports\_generic\ >=\ 3)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop\_port\ !=\ DynamicMicroOpNehalem::UOP\_PORT1\ \&\&\ ports\_generic05\ >=\ 2)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ ports[uop\_port]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ ports\_generic++;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop\_port\ !=\ DynamicMicroOpNehalem::UOP\_PORT1)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ ports\_generic05++;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00075\ \ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{comment}{//\ ALU\ contention}}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{if}\ (DynamicMicroOpNehalem::uop\_alu\_t\ alu\ =\ core\_uop\_info-\/>getAlu())}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (alu\_used\_until[alu]\ >\ m\_now)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00082\ \ \ \ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keywordtype}{void}\ RobContentionNehalem::doIssue(DynamicMicroOp\ \&uop)}
+\DoxyCodeLine{00088\ \{}
+\DoxyCodeLine{00089\ \ \ \ \textcolor{keyword}{const}\ DynamicMicroOpNehalem\ *core\_uop\_info\ =\ uop.getCoreSpecificInfo<DynamicMicroOpNehalem>();}
+\DoxyCodeLine{00090\ \ \ \ DynamicMicroOpNehalem::uop\_alu\_t\ alu\ =\ core\_uop\_info-\/>getAlu();}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{if}\ (alu)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ alu\_used\_until[alu]\ =\ m\_now\ +\ m\_core\_model-\/>getAluLatency(uop.getMicroOp());}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keywordtype}{bool}\ RobContentionNehalem::noMore()}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \ \textcolor{comment}{//\ When\ we\ issued\ something\ to\ all\ ports\ in\ this\ cycle,\ stop\ walking\ the\ rest\ of\ the\ ROB}}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{if}\ (ports[DynamicMicroOpNehalem::UOP\_PORT2]\ \&\&\ ports[DynamicMicroOpNehalem::UOP\_PORT34]\ \&\&\ ports\_generic\ >=\ 3)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00102\ \}}
+
+\end{DoxyCode}

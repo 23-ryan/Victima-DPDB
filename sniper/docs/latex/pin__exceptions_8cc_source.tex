@@ -1,0 +1,49 @@
+\doxysection{pin\+\_\+exceptions.\+cc}
+\label{pin__exceptions_8cc_source}\index{pin/pin\_exceptions.cc@{pin/pin\_exceptions.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pin\_exceptions.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}callstack.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ EXCEPT\_HANDLING\_RESULT\ exceptionHandler(THREADID\ tid,\ EXCEPTION\_INFO\ *pExceptInfo,\ PHYSICAL\_CONTEXT\ *pPhysCtxt,\ VOID\ *v)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ in\_handler\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}[SNIPER]\ Internal\ exception:\ \%s\(\backslash\)n"{}},\ PIN\_ExceptionToString(pExceptInfo).c\_str());}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{if}\ (in\_handler)}
+\DoxyCodeLine{00014\ \ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{comment}{//\ Avoid\ recursion\ when\ the\ code\ below\ generates\ a\ new\ exception}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EHR\_UNHANDLED;}
+\DoxyCodeLine{00017\ \ \ \ \}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ in\_handler\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BACKTRACE\_SIZE\ =\ 16;}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordtype}{void}\ *\ backtrace\_buffer[BACKTRACE\_SIZE];}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ backtrace\_n\ =\ get\_call\_stack\_from(backtrace\_buffer,\ BACKTRACE\_SIZE,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{void}*)PIN\_GetPhysicalContextReg(pPhysCtxt,\ LEVEL\_BASE::REG\_STACK\_PTR),}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{void}*)PIN\_GetPhysicalContextReg(pPhysCtxt,\ LEVEL\_BASE::REG\_GBP)}
+\DoxyCodeLine{00026\ \ \ \ );}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ FILE*\ fp\ =\ fopen(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}debug\_backtrace.out"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{comment}{//\ so\ addr2line\ can\ calculate\ the\ offset\ where\ we're\ really\ mapped}}
+\DoxyCodeLine{00030\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}pin\_sim.so\(\backslash\)n"{}});}
+\DoxyCodeLine{00031\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIdPTR\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}},\ (intptr\_t)rdtsc);}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{comment}{//\ actual\ function\ function\ where\ the\ exception\ occured\ (won't\ be\ in\ the\ backtrace)}}
+\DoxyCodeLine{00033\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIdPTR\ \textcolor{stringliteral}{"{}"{}},\ (intptr\_t)PIN\_GetPhysicalContextReg(pPhysCtxt,\ LEVEL\_BASE::REG\_INST\_PTR));}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ backtrace\_n;\ ++i)}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRIdPTR\ \textcolor{stringliteral}{"{}"{}},\ (intptr\_t)backtrace\_buffer[i]);}
+\DoxyCodeLine{00037\ \ \ \ \}}
+\DoxyCodeLine{00038\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00039\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%s\(\backslash\)n"{}},\ PIN\_ExceptionToString(pExceptInfo).c\_str());}
+\DoxyCodeLine{00040\ \ \ \ fclose(fp);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{return}\ EHR\_CONTINUE\_SEARCH;}
+\DoxyCodeLine{00043\ \}}
+
+\end{DoxyCode}

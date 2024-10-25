@@ -1,0 +1,153 @@
+\doxysection{network\+\_\+model\+\_\+emesh\+\_\+hop\+\_\+counter.\+cc}
+\label{network__model__emesh__hop__counter_8cc_source}\index{common/network/network\_model\_emesh\_hop\_counter.cc@{common/network/network\_model\_emesh\_hop\_counter.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}network\_model\_emesh\_hop\_counter.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ NetworkModelEMeshHopCounter::NetworkModelEMeshHopCounter(Network\ *net,\ EStaticNetwork\ net\_type)}
+\DoxyCodeLine{00014\ \ \ \ :\ NetworkModel(net,\ net\_type)}
+\DoxyCodeLine{00015\ \ \ \ ,\ \_hopLatency(NULL,0)}
+\DoxyCodeLine{00016\ \ \ \ ,\ \_enabled(false)}
+\DoxyCodeLine{00017\ \ \ \ ,\ \_num\_packets(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ \_num\_bytes(0)}
+\DoxyCodeLine{00019\ \ \ \ ,\ \_total\_latency(SubsecondTime::Zero())}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ SInt32\ total\_cores\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \_meshWidth\ =\ (SInt32)\ floor\ (sqrt(total\_cores));}
+\DoxyCodeLine{00024\ \ \ \ \_meshHeight\ =\ (SInt32)\ ceil\ (1.0\ *\ total\_cores\ /\ \_meshWidth);}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \_linkBandwidth\ =\ ComponentBandwidthPerCycle(Sim()-\/>getDvfsManager()-\/>getCoreDomain(net-\/>getCore()-\/>getId()),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_counter/link\_bandwidth"{}}));}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \_hopLatency\ =\ ComponentLatency(Sim()-\/>getDvfsManager()-\/>getCoreDomain(net-\/>getCore()-\/>getId()),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_counter/hop\_latency"{}}));}
+\DoxyCodeLine{00030\ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Could\ not\ read\ emesh\_hop\_counter\ paramters\ from\ the\ cfg\ file"{}});}
+\DoxyCodeLine{00034\ \ \ \ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ assert(total\_cores\ <=\ \_meshWidth\ *\ \_meshHeight);}
+\DoxyCodeLine{00037\ \ \ \ assert(total\_cores\ >\ (\_meshWidth\ -\/\ 1)\ *\ \_meshHeight);}
+\DoxyCodeLine{00038\ \ \ \ assert(total\_cores\ >\ \_meshWidth\ *\ (\_meshHeight\ -\/\ 1));}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ NetworkModelEMeshHopCounter::\string~NetworkModelEMeshHopCounter()}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}\ NetworkModelEMeshHopCounter::computePosition(core\_id\_t\ core,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SInt32\ \&x,\ SInt32\ \&y)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ x\ =\ core\ \%\ \_meshWidth;}
+\DoxyCodeLine{00049\ \ \ \ y\ =\ core\ /\ \_meshWidth;}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ SInt32\ NetworkModelEMeshHopCounter::computeDistance(SInt32\ x1,\ SInt32\ y1,\ SInt32\ x2,\ SInt32\ y2)}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{return}\ abs(x1\ -\/\ x2)\ +\ abs(y1\ -\/\ y2);}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keywordtype}{void}\ NetworkModelEMeshHopCounter::routePacket(\textcolor{keyword}{const}\ NetPacket\ \&pkt,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<Hop>\ \&nextHops)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ UInt32\ pkt\_length\ =\ getNetwork()-\/>getModeledLength(pkt);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ SubsecondTime\ serialization\_latency\ =\ computeSerializationLatency(pkt\_length);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ SInt32\ sx,\ sy,\ dx,\ dy;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ computePosition(pkt.sender,\ sx,\ sy);}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.receiver\ ==\ NetPacket::BROADCAST)}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ UInt32\ total\_cores\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ SubsecondTime\ curr\_time\ =\ pkt.time;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{comment}{//\ There's\ no\ broadcast\ tree\ here,\ but\ I\ guess\ that\ won't\ be\ a}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{comment}{//\ bottleneck\ at\ all\ since\ there's\ no\ contention}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ (SInt32)\ total\_cores;\ i++)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ computePosition(i,\ dx,\ dy);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency\ =\ computeDistance(sx,\ sy,\ dx,\ dy)\ *\ \_hopLatency.getLatency();}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ pkt.sender)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ latency\ +=\ serialization\_latency;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ Hop\ h;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ h.final\_dest\ =\ i;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ h.next\_dest\ =\ i;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ h.time\ =\ curr\_time\ +\ latency;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ curr\_time}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ curr\_time\ +=\ serialization\_latency;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00095\ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ computePosition(pkt.receiver,\ dx,\ dy);}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ SubsecondTime\ latency\ =\ computeDistance(sx,\ sy,\ dx,\ dy)\ *\ \_hopLatency.getLatency();}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pkt.receiver\ !=\ pkt.sender)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ latency\ +=\ serialization\_latency;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ Hop\ h;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ h.final\_dest\ =\ pkt.receiver;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ h.next\_dest\ =\ pkt.receiver;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ h.time\ =\ pkt.time\ +\ latency;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00108\ \ \ \ \}}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00112\ NetworkModelEMeshHopCounter::processReceivedPacket(NetPacket\ \&pkt)}
+\DoxyCodeLine{00113\ \{}
+\DoxyCodeLine{00114\ \ \ \ ScopedLock\ sl(\_lock);}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ UInt32\ pkt\_length\ =\ getNetwork()-\/>getModeledLength(pkt);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.type\ ==\ SHARED\_MEM\_1)}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ requester\ =\ getNetwork()-\/>getCore()-\/>getMemoryManager()-\/>getShmemRequester(pkt.data);}
+\DoxyCodeLine{00122\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ Other\ Packet\ types}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ requester\ =\ pkt.sender;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ LOG\_ASSERT\_ERROR((requester\ >=\ 0)\ \&\&\ (requester\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores()),}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}requester(\%i)"{}},\ requester);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \textcolor{keywordflow}{if}\ (\ (!\_enabled)\ ||\ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())\ )}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \textcolor{comment}{//\ LOG\_ASSERT\_ERROR(pkt.start\_time\ >\ 0,\ "{}start\_time(\%llu)"{},\ pkt.start\_time);}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ SubsecondTime\ latency\ =\ pkt.time\ -\/\ pkt.start\_time;}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \_num\_packets\ ++;}
+\DoxyCodeLine{00136\ \ \ \ \_num\_bytes\ +=\ pkt\_length;}
+\DoxyCodeLine{00137\ \ \ \ \_total\_latency\ +=\ latency;}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ SubsecondTime}
+\DoxyCodeLine{00141\ NetworkModelEMeshHopCounter::computeSerializationLatency(UInt32\ pkt\_length)}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ Send:\ (pkt\_length\ *\ 8)\ bits}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{comment}{//\ Bandwidth:\ (m\_link\_bandwidth)\ bits/cycle}}
+\DoxyCodeLine{00145\ \ \ \ UInt32\ num\_bits\ =\ pkt\_length\ *\ 8;}
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keywordflow}{return}\ \_linkBandwidth.getRoundedLatency(num\_bits);}
+\DoxyCodeLine{00147\ \}}
+
+\end{DoxyCode}

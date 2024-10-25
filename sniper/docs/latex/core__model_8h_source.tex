@@ -1,0 +1,64 @@
+\doxysection{core\+\_\+model.\+h}
+\label{core__model_8h_source}\index{common/performance\_model/performance\_models/core\_model/core\_model.h@{common/performance\_model/performance\_models/core\_model/core\_model.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_CORE\_MODEL}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_CORE\_MODEL}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}allocator.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }IntervalContention;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }RobContention;}
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }MicroOp;}
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }DynamicMicroOp;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }CoreModel}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{static}\ std::map<String,\ const\ CoreModel*>\ s\_core\_models;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CoreModel*\ getCoreModel(String\ type);}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ IntervalContention*\ createIntervalContentionModel(\textcolor{keyword}{const}\ Core\ *core)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ getLongLatencyCutoff()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{comment}{//\ Build\ a\ RobContention\ model\ for\ this\ core\ type}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ RobContention*\ createRobContentionModel(\textcolor{keyword}{const}\ Core\ *core)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{comment}{//\ Return\ an\ Allocator\ for\ my\ type\ of\ DynamicMicroOp}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ Allocator*\ createDMOAllocator()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{comment}{//\ Populate\ a\ MicroOp's\ core-\/specific\ information\ object}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ DynamicMicroOp*\ createDynamicMicroOp(Allocator\ *alloc,\ \textcolor{keyword}{const}\ MicroOp\ *uop,\ ComponentPeriod\ period)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ getInstructionLatency(\textcolor{keyword}{const}\ MicroOp\ *uop)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ getAluLatency(\textcolor{keyword}{const}\ MicroOp\ *uop)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ getBypassLatency(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ getLongestLatency()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00040\ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }BaseCoreModel\ :\ \textcolor{keyword}{public}\ CoreModel}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ Allocator*\ createDMOAllocator()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ need\ to\ be\ able\ to\ hold\ one\ (Pin)\ trace\ worth\ of\ MicroOps,\ as\ we\ can\ only\ stop\ functional\ simulation\ at\ the\ skew\ barrier}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ TypedAllocator<T,\ 8192>();}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ DynamicMicroOp*\ createDynamicMicroOp(Allocator\ *alloc,\ \textcolor{keyword}{const}\ MicroOp\ *uop,\ ComponentPeriod\ period)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ T\ *info\ =\ DynamicMicroOp::alloc<T>(alloc,\ uop,\ \textcolor{keyword}{this},\ period);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ info;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_CORE\_MODEL}}
+
+\end{DoxyCode}

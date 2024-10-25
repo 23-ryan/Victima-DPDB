@@ -1,0 +1,546 @@
+\doxysection{Parametric\+Dram\+Directory\+MSI\+::Cache\+Master\+Cntlr Class Reference}
+\label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr}\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+
+
+{\ttfamily \#include $<$cache\+\_\+cntlr.\+h$>$}
+
+
+
+Collaboration diagram for Parametric\+Dram\+Directory\+MSI\+::Cache\+Master\+Cntlr\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classParametricDramDirectoryMSI_1_1CacheMasterCntlr__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ create\+Set\+Locks} (\textbf{ UInt32} cache\+\_\+block\+\_\+size, \textbf{ UInt32} num\+\_\+sets, \textbf{ UInt32} core\+\_\+offset, \textbf{ UInt32} num\+\_\+cores)
+\item 
+\textbf{ Set\+Lock} $\ast$ \textbf{ get\+Set\+Lock} (\textbf{ Int\+Ptr} addr)
+\item 
+void \textbf{ create\+ATDs} (String name, String config\+Name, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ UInt32} shared\+\_\+cores, \textbf{ UInt32} size, \textbf{ UInt32} associativity, \textbf{ UInt32} block\+\_\+size, String replacement\+\_\+policy, \textbf{ Cache\+Base\+::hash\+\_\+t} hash\+\_\+function)
+\item 
+void \textbf{ access\+ATDs} (\textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, bool hit, \textbf{ Int\+Ptr} address, \textbf{ UInt32} core\+\_\+num)
+\item 
+\textbf{ Cache\+Master\+Cntlr} (String name, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ UInt32} outstanding\+\_\+misses)
+\item 
+\textbf{ $\sim$\+Cache\+Master\+Cntlr} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Cache} $\ast$ \textbf{ m\+\_\+cache}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+cache\+\_\+lock}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+smt\+\_\+lock}
+\item 
+\textbf{ Cache\+Cntlr\+List} \textbf{ m\+\_\+prev\+\_\+cache\+\_\+cntlrs}
+\item 
+\textbf{ Prefetcher} $\ast$ \textbf{ m\+\_\+prefetcher}
+\item 
+\textbf{ Dram\+Cntlr\+Interface} $\ast$ \textbf{ m\+\_\+dram\+\_\+cntlr}
+\item 
+\textbf{ Contention\+Model} $\ast$ \textbf{ m\+\_\+dram\+\_\+outstanding\+\_\+writebacks}
+\item 
+\textbf{ Mshr} \textbf{ mshr}
+\item 
+\textbf{ Mshr} \textbf{ metadata\+\_\+mshr}
+\item 
+\textbf{ Contention\+Model} \textbf{ m\+\_\+l1\+\_\+mshr}
+\item 
+\textbf{ Contention\+Model} \textbf{ m\+\_\+l1\+\_\+metadata\+\_\+mshr}
+\item 
+\textbf{ Contention\+Model} \textbf{ m\+\_\+next\+\_\+level\+\_\+read\+\_\+bandwidth}
+\item 
+\textbf{ Cache\+Directory\+Waiter\+Map} \textbf{ m\+\_\+directory\+\_\+waiters}
+\item 
+\textbf{ Int\+Ptr} \textbf{ m\+\_\+evicting\+\_\+address}
+\item 
+\textbf{ Byte} $\ast$ \textbf{ m\+\_\+evicting\+\_\+buf}
+\item 
+std\+::vector$<$ \textbf{ ATD} $\ast$ $>$ \textbf{ m\+\_\+atds}
+\item 
+std\+::vector$<$ \textbf{ Set\+Lock} $>$ \textbf{ m\+\_\+setlocks}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+log\+\_\+blocksize}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+sets}
+\item 
+std\+::deque$<$ \textbf{ Int\+Ptr} $>$ \textbf{ m\+\_\+prefetch\+\_\+list}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+prefetch\+\_\+next}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Cache\+Cntlr}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 149} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!CacheMasterCntlr@{CacheMasterCntlr}}
+\index{CacheMasterCntlr@{CacheMasterCntlr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{CacheMasterCntlr()}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a525f47582576e600503c2fe2dd113820} 
+Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::\+Cache\+Master\+Cntlr (\begin{DoxyParamCaption}\item[{String}]{name}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ UInt32}}]{outstanding\+\_\+misses}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 186} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!````~CacheMasterCntlr@{$\sim$CacheMasterCntlr}}
+\index{````~CacheMasterCntlr@{$\sim$CacheMasterCntlr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{$\sim$CacheMasterCntlr()}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_aeb9b671a77c761bb209493314c7d5f3a} 
+Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::$\sim$\+Cache\+Master\+Cntlr (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ cache\+\_\+cntlr.\+cc}.
+
+
+
+References \textbf{ m\+\_\+atds}, and \textbf{ m\+\_\+cache}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!accessATDs@{accessATDs}}
+\index{accessATDs@{accessATDs}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{accessATDs()}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_af6a25907bd3af375b87e7719b68f1d61} 
+void Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::access\+ATDs (\begin{DoxyParamCaption}\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{bool}]{hit}{, }\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ UInt32}}]{core\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 125} of file \textbf{ cache\+\_\+cntlr.\+cc}.
+
+
+
+References \textbf{ m\+\_\+atds}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::update\+Counters()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_af6a25907bd3af375b87e7719b68f1d61_icgraph}
+\end{center}
+\end{figure}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!createATDs@{createATDs}}
+\index{createATDs@{createATDs}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{createATDs()}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a85edeaca3993310eb008e7be4854e273} 
+void Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::create\+ATDs (\begin{DoxyParamCaption}\item[{String}]{name}{, }\item[{String}]{config\+Name}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ UInt32}}]{shared\+\_\+cores}{, }\item[{\textbf{ UInt32}}]{size}{, }\item[{\textbf{ UInt32}}]{associativity}{, }\item[{\textbf{ UInt32}}]{block\+\_\+size}{, }\item[{String}]{replacement\+\_\+policy}{, }\item[{\textbf{ Cache\+Base\+::hash\+\_\+t}}]{hash\+\_\+function}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 114} of file \textbf{ cache\+\_\+cntlr.\+cc}.
+
+
+
+References \textbf{ m\+\_\+atds}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::\+Cache\+Cntlr()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a85edeaca3993310eb008e7be4854e273_icgraph}
+\end{center}
+\end{figure}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!createSetLocks@{createSetLocks}}
+\index{createSetLocks@{createSetLocks}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{createSetLocks()}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_abd42f421ee2b6b653ec54109da08ae4e} 
+void Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::create\+Set\+Locks (\begin{DoxyParamCaption}\item[{\textbf{ UInt32}}]{cache\+\_\+block\+\_\+size}{, }\item[{\textbf{ UInt32}}]{num\+\_\+sets}{, }\item[{\textbf{ UInt32}}]{core\+\_\+offset}{, }\item[{\textbf{ UInt32}}]{num\+\_\+cores}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ cache\+\_\+cntlr.\+cc}.
+
+
+
+References \textbf{ floor\+Log2()}, \textbf{ m\+\_\+log\+\_\+blocksize}, \textbf{ m\+\_\+num\+\_\+sets}, and \textbf{ m\+\_\+setlocks}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::create\+Set\+Locks()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=308pt]{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_abd42f421ee2b6b653ec54109da08ae4e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_abd42f421ee2b6b653ec54109da08ae4e_icgraph}
+\end{center}
+\end{figure}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!getSetLock@{getSetLock}}
+\index{getSetLock@{getSetLock}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{getSetLock()}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a47062b3d8450cfd946b9819030d7381b} 
+\textbf{ Set\+Lock} $\ast$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::get\+Set\+Lock (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{addr}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 108} of file \textbf{ cache\+\_\+cntlr.\+cc}.
+
+
+
+References \textbf{ m\+\_\+log\+\_\+blocksize}, \textbf{ m\+\_\+num\+\_\+sets}, and \textbf{ m\+\_\+setlocks}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::acquire\+Lock()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::acquire\+Stack\+Lock()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::release\+Lock()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::release\+Stack\+Lock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a47062b3d8450cfd946b9819030d7381b_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Friends And Related Symbol Documentation}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!CacheCntlr@{CacheCntlr}}
+\index{CacheCntlr@{CacheCntlr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{CacheCntlr}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_abb8cd39e9bd527907bd55c9e713e81fe} 
+friend class \textbf{ Cache\+Cntlr}\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 201} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_atds@{m\_atds}}
+\index{m\_atds@{m\_atds}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_atds}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a383e887414e8fa8129a5cd230cdbaad0} 
+std\+::vector$<$\textbf{ ATD}$\ast$$>$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+atds\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 170} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ access\+ATDs()}, \textbf{ create\+ATDs()}, and \textbf{ $\sim$\+Cache\+Master\+Cntlr()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_cache@{m\_cache}}
+\index{m\_cache@{m\_cache}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_cache}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_ae09a54b524b589b0f034fe3ab8e197e2} 
+\textbf{ Cache}$\ast$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+cache\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 152} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::access\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::\+Cache\+Cntlr()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::disable()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::enable()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::get\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::get\+Cache\+Block\+Info()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::invalidate\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::is\+In\+Lower\+Level\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::retrieve\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::walk\+Usage\+Bits()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::write\+Cache\+Block()}, and \textbf{ $\sim$\+Cache\+Master\+Cntlr()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_cache\_lock@{m\_cache\_lock}}
+\index{m\_cache\_lock@{m\_cache\_lock}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_cache\_lock}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a3f9f5daa2cb7e2bb23b2ff71e2b0a698} 
+\textbf{ Lock} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+cache\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 154} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::get\+Lock()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_directory\_waiters@{m\_directory\_waiters}}
+\index{m\_directory\_waiters@{m\_directory\_waiters}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_directory\_waiters}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_adff90bffd54080c082b533b483bf59f2} 
+\textbf{ Cache\+Directory\+Waiter\+Map} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+directory\+\_\+waiters\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 166} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::handle\+Msg\+From\+Dram\+Directory()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::initiate\+Directory\+Access()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_dram\_cntlr@{m\_dram\_cntlr}}
+\index{m\_dram\_cntlr@{m\_dram\_cntlr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_dram\_cntlr}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_aa58ea0a9b6dcfe76e63fe125762b5a2a} 
+\textbf{ Dram\+Cntlr\+Interface}$\ast$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+dram\+\_\+cntlr\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 158} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::access\+DRAM()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Shmem\+Req\+From\+Prev\+Cache()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::set\+DRAMDirect\+Access()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_dram\_outstanding\_writebacks@{m\_dram\_outstanding\_writebacks}}
+\index{m\_dram\_outstanding\_writebacks@{m\_dram\_outstanding\_writebacks}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_dram\_outstanding\_writebacks}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a4abfc3bae05fd1f6967fff5db26adcba} 
+\textbf{ Contention\+Model}$\ast$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+dram\+\_\+outstanding\+\_\+writebacks\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 159} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::set\+DRAMDirect\+Access()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_evicting\_address@{m\_evicting\_address}}
+\index{m\_evicting\_address@{m\_evicting\_address}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_evicting\_address}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a1b5bb29f021b0900af12c1ee1314c7dd} 
+\textbf{ Int\+Ptr} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+evicting\+\_\+address\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 167} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::notify\+Prev\+Level\+Evict()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::write\+Cache\+Block()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_evicting\_buf@{m\_evicting\_buf}}
+\index{m\_evicting\_buf@{m\_evicting\_buf}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_evicting\_buf}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a17d086bc7382e076d885ca10a9d208fb} 
+\textbf{ Byte}$\ast$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+evicting\+\_\+buf\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 168} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::notify\+Prev\+Level\+Evict()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::write\+Cache\+Block()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_l1\_metadata\_mshr@{m\_l1\_metadata\_mshr}}
+\index{m\_l1\_metadata\_mshr@{m\_l1\_metadata\_mshr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_l1\_metadata\_mshr}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a563db8f9d81bca72c77221e99fdb2365} 
+\textbf{ Contention\+Model} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+l1\+\_\+metadata\+\_\+mshr\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 164} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_l1\_mshr@{m\_l1\_mshr}}
+\index{m\_l1\_mshr@{m\_l1\_mshr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_l1\_mshr}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_abdb6050fa0c3de84ac9322ee503ac050} 
+\textbf{ Contention\+Model} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+l1\+\_\+mshr\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 163} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_log\_blocksize@{m\_log\_blocksize}}
+\index{m\_log\_blocksize@{m\_log\_blocksize}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_log\_blocksize}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_ac432d82b535fee31128e88ecabe25ee7} 
+\textbf{ UInt32} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+log\+\_\+blocksize\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 173} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ create\+Set\+Locks()}, and \textbf{ get\+Set\+Lock()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_next\_level\_read\_bandwidth@{m\_next\_level\_read\_bandwidth}}
+\index{m\_next\_level\_read\_bandwidth@{m\_next\_level\_read\_bandwidth}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_next\_level\_read\_bandwidth}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a9a2b8d0941aecdcf7ce39744a9546f22} 
+\textbf{ Contention\+Model} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+next\+\_\+level\+\_\+read\+\_\+bandwidth\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 165} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::copy\+Data\+From\+Next\+Level()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_num\_sets@{m\_num\_sets}}
+\index{m\_num\_sets@{m\_num\_sets}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_num\_sets}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a6b73dea0d2d8e899fbfa2d28c05f4e72} 
+\textbf{ UInt32} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+num\+\_\+sets\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 174} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ create\+Set\+Locks()}, and \textbf{ get\+Set\+Lock()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_prefetch\_list@{m\_prefetch\_list}}
+\index{m\_prefetch\_list@{m\_prefetch\_list}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_prefetch\_list}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a8af43ffb37003ebf9ee529408fd8648a} 
+std\+::deque$<$\textbf{ Int\+Ptr}$>$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+prefetch\+\_\+list\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 176} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::\+Prefetch()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::train\+Prefetcher()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_prefetch\_next@{m\_prefetch\_next}}
+\index{m\_prefetch\_next@{m\_prefetch\_next}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_prefetch\_next}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_ae1beb10599177d7dbdf6effe45a0323e} 
+\textbf{ Subsecond\+Time} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+prefetch\+\_\+next\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 177} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::\+Prefetch()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::train\+Prefetcher()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_prefetcher@{m\_prefetcher}}
+\index{m\_prefetcher@{m\_prefetcher}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_prefetcher}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_aec32cc3d058d922b4b4a43f503770b4b} 
+\textbf{ Prefetcher}$\ast$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+prefetcher\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 157} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::\+Cache\+Cntlr()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Shmem\+Req\+From\+Prev\+Cache()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::train\+Prefetcher()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_prev\_cache\_cntlrs@{m\_prev\_cache\_cntlrs}}
+\index{m\_prev\_cache\_cntlrs@{m\_prev\_cache\_cntlrs}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_prev\_cache\_cntlrs}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a80f64ebbad6281b0b46ab4fd399ffee5} 
+\textbf{ Cache\+Cntlr\+List} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+prev\+\_\+cache\+\_\+cntlrs\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 156} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::is\+First\+Level()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::is\+In\+Lower\+Level\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::notify\+Prev\+Level\+Evict()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::notify\+Prev\+Level\+Insert()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Shmem\+Req\+From\+Prev\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::set\+Prev\+Cache\+Cntlrs()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::update\+Cache\+Block()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_setlocks@{m\_setlocks}}
+\index{m\_setlocks@{m\_setlocks}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_setlocks}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_ad66a30e1d33a42588fc601b92a9071eb} 
+std\+::vector$<$\textbf{ Set\+Lock}$>$ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+setlocks\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 172} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ create\+Set\+Locks()}, and \textbf{ get\+Set\+Lock()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!m\_smt\_lock@{m\_smt\_lock}}
+\index{m\_smt\_lock@{m\_smt\_lock}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{m\_smt\_lock}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_af98a8b4259af8489258348dc63f58802} 
+\textbf{ Lock} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::m\+\_\+smt\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 155} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!metadata\_mshr@{metadata\_mshr}}
+\index{metadata\_mshr@{metadata\_mshr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{metadata\_mshr}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_ac8c683bea8e2fca213c2bb74955ef68a} 
+\textbf{ Mshr} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::metadata\+\_\+mshr\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 162} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::cleanup\+Metadata\+Mshr()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::handle\+Msg\+From\+Dram\+Directory()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Shmem\+Req\+From\+Prev\+Cache()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::update\+Counters()}.
+
+\index{ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}!mshr@{mshr}}
+\index{mshr@{mshr}!ParametricDramDirectoryMSI::CacheMasterCntlr@{ParametricDramDirectoryMSI::CacheMasterCntlr}}
+\doxysubsubsection{mshr}
+{\footnotesize\ttfamily \label{classParametricDramDirectoryMSI_1_1CacheMasterCntlr_a7367c63faa2f5d8754a0017846186a98} 
+\textbf{ Mshr} Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Master\+Cntlr\+::mshr\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 161} of file \textbf{ cache\+\_\+cntlr.\+h}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::cleanup\+Mshr()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::handle\+Msg\+From\+Dram\+Directory()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Shmem\+Req\+From\+Prev\+Cache()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::update\+Counters()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ cache\+\_\+cntlr.\+h}\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ cache\+\_\+cntlr.\+cc}\end{DoxyCompactItemize}

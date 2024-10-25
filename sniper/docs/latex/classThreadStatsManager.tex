@@ -1,0 +1,839 @@
+\doxysection{Thread\+Stats\+Manager Class Reference}
+\label{classThreadStatsManager}\index{ThreadStatsManager@{ThreadStatsManager}}
+
+
+{\ttfamily \#include $<$thread\+\_\+stats\+\_\+manager.\+h$>$}
+
+
+
+Collaboration diagram for Thread\+Stats\+Manager\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=286pt]{classThreadStatsManager__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ Stat\+Callback}
+\item 
+class \textbf{ Thread\+Stats}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ Thread\+Stat\+Type\+Enum} \{ \newline
+\textbf{ INSTRUCTIONS}
+, \textbf{ ELAPSED\+\_\+\+NONIDLE\+\_\+\+TIME}
+, \textbf{ WAITING\+\_\+\+COST}
+, \textbf{ NUM\+\_\+\+THREAD\+\_\+\+STAT\+\_\+\+FIXED\+\_\+\+TYPES}
+, \newline
+\textbf{ DYNAMIC}
+, \textbf{ INVALID}
+ \}
+\item 
+typedef \textbf{ UInt32} \textbf{ Thread\+Stat\+Type}
+\item 
+typedef std\+::vector$<$ \textbf{ Thread\+Stat\+Type} $>$ \textbf{ Thread\+Stat\+Type\+List}
+\item 
+typedef \textbf{ UInt64}($\ast$) \textbf{ Thread\+Stat\+Callback}(\textbf{ Thread\+Stat\+Type} type, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Core} $\ast$core, \textbf{ UInt64} user)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Thread\+Stats\+Manager} ()
+\item 
+\textbf{ $\sim$\+Thread\+Stats\+Manager} ()
+\item 
+void \textbf{ update} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id=\textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ Subsecond\+Time} time=\textbf{ Subsecond\+Time\+::\+Max\+Time}())
+\item 
+void \textbf{ calculate\+Waiting\+Costs} (\textbf{ Subsecond\+Time} time)
+\item 
+const \textbf{ Thread\+Stat\+Type\+List} \& \textbf{ get\+Thread\+Stat\+Types} ()
+\item 
+const char $\ast$ \textbf{ get\+Thread\+Stat\+Name} (\textbf{ Thread\+Stat\+Type} type)
+\item 
+\textbf{ UInt64} \textbf{ get\+Thread\+Statistic} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Thread\+Stat\+Type} type)
+\item 
+\textbf{ Thread\+Stat\+Type} \textbf{ register\+Thread\+Stat\+Metric} (\textbf{ Thread\+Stat\+Type} type, const char $\ast$name, \textbf{ Thread\+Stat\+Callback} func, \textbf{ UInt64} user)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt64} \textbf{ call\+Thread\+Stat\+Callback} (\textbf{ Thread\+Stat\+Type} type, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Core} $\ast$core)
+\item 
+void \textbf{ pre\+\_\+stat\+\_\+write} ()
+\item 
+void \textbf{ thread\+Create} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+void \textbf{ thread\+Start} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ thread\+Stall} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Thread\+Manager\+::stall\+\_\+type\+\_\+t} reason, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ thread\+Resume} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+by, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ thread\+Exit} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ UInt64} \textbf{ metric\+Callback} (\textbf{ Thread\+Stat\+Type} type, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Core} $\ast$core, \textbf{ UInt64} user)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+pre\+\_\+stat\+\_\+write} (\textbf{ UInt64} ptr, \textbf{ UInt64})
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+thread\+\_\+create} (\textbf{ UInt64} ptr, \textbf{ UInt64} \+\_\+args)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+thread\+\_\+start} (\textbf{ UInt64} ptr, \textbf{ UInt64} \+\_\+args)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+thread\+\_\+stall} (\textbf{ UInt64} ptr, \textbf{ UInt64} \+\_\+args)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+thread\+\_\+resume} (\textbf{ UInt64} ptr, \textbf{ UInt64} \+\_\+args)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+thread\+\_\+exit} (\textbf{ UInt64} ptr, \textbf{ UInt64} \+\_\+args)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::vector$<$ \textbf{ Thread\+Stats} $\ast$ $>$ \textbf{ m\+\_\+threads\+\_\+stats}
+\item 
+\textbf{ Thread\+Stat\+Type\+List} \textbf{ m\+\_\+thread\+\_\+stat\+\_\+types}
+\item 
+std\+::unordered\+\_\+map$<$ \textbf{ Thread\+Stat\+Type}, \textbf{ Stat\+Callback} $>$ \textbf{ m\+\_\+thread\+\_\+stat\+\_\+callbacks}
+\item 
+\textbf{ Thread\+Stat\+Type} \textbf{ m\+\_\+next\+\_\+dynamic\+\_\+type}
+\item 
+\textbf{ Bottle\+Graph\+Manager} \textbf{ m\+\_\+bottlegraphs}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+waiting\+\_\+time\+\_\+last}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const int \textbf{ MAX\+\_\+\+THREADS} = 4096
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 11} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{ThreadStatsManager@{ThreadStatsManager}!ThreadStatCallback@{ThreadStatCallback}}
+\index{ThreadStatCallback@{ThreadStatCallback}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{ThreadStatCallback}
+{\footnotesize\ttfamily \label{classThreadStatsManager_abc7d8272223e9e3207dd5fbadf169496} 
+\textbf{ UInt64}($\ast$) Thread\+Stats\+Manager\+::\+Thread\+Stat\+Callback(\textbf{ Thread\+Stat\+Type} type, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Core} $\ast$core, \textbf{ UInt64} user)}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!ThreadStatType@{ThreadStatType}}
+\index{ThreadStatType@{ThreadStatType}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{ThreadStatType}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a26a6c7b4b9ce369f5b9479961b0a3001} 
+\textbf{ UInt32} \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stat\+Type}}
+
+
+
+Definition at line \textbf{ 14} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!ThreadStatTypeList@{ThreadStatTypeList}}
+\index{ThreadStatTypeList@{ThreadStatTypeList}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{ThreadStatTypeList}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a28a548dcc473ceb0e6598615474df393} 
+std\+::vector$<$\textbf{ Thread\+Stat\+Type}$>$ \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stat\+Type\+List}}
+
+
+
+Definition at line \textbf{ 15} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{ThreadStatsManager@{ThreadStatsManager}!ThreadStatTypeEnum@{ThreadStatTypeEnum}}
+\index{ThreadStatTypeEnum@{ThreadStatTypeEnum}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{ThreadStatTypeEnum}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+enum \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stat\+Type\+Enum}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INSTRUCTIONS@{INSTRUCTIONS}!ThreadStatsManager@{ThreadStatsManager}}\index{ThreadStatsManager@{ThreadStatsManager}!INSTRUCTIONS@{INSTRUCTIONS}}}\label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+INSTRUCTIONS&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{ELAPSED\_NONIDLE\_TIME@{ELAPSED\_NONIDLE\_TIME}!ThreadStatsManager@{ThreadStatsManager}}\index{ThreadStatsManager@{ThreadStatsManager}!ELAPSED\_NONIDLE\_TIME@{ELAPSED\_NONIDLE\_TIME}}}\label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+ELAPSED\+\_\+\+NONIDLE\+\_\+\+TIME&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{WAITING\_COST@{WAITING\_COST}!ThreadStatsManager@{ThreadStatsManager}}\index{ThreadStatsManager@{ThreadStatsManager}!WAITING\_COST@{WAITING\_COST}}}\label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+WAITING\+\_\+\+COST&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_THREAD\_STAT\_FIXED\_TYPES@{NUM\_THREAD\_STAT\_FIXED\_TYPES}!ThreadStatsManager@{ThreadStatsManager}}\index{ThreadStatsManager@{ThreadStatsManager}!NUM\_THREAD\_STAT\_FIXED\_TYPES@{NUM\_THREAD\_STAT\_FIXED\_TYPES}}}\label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+NUM\+\_\+\+THREAD\+\_\+\+STAT\+\_\+\+FIXED\+\_\+\+TYPES&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DYNAMIC@{DYNAMIC}!ThreadStatsManager@{ThreadStatsManager}}\index{ThreadStatsManager@{ThreadStatsManager}!DYNAMIC@{DYNAMIC}}}\label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+DYNAMIC&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID@{INVALID}!ThreadStatsManager@{ThreadStatsManager}}\index{ThreadStatsManager@{ThreadStatsManager}!INVALID@{INVALID}}}\label{classThreadStatsManager_a96986a4b1d11cfed172f1ae5e53b2ebd} 
+INVALID&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 16} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{ThreadStatsManager@{ThreadStatsManager}!ThreadStatsManager@{ThreadStatsManager}}
+\index{ThreadStatsManager@{ThreadStatsManager}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{ThreadStatsManager()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a420abcdca61ac2921b56f78f93dc9991} 
+Thread\+Stats\+Manager\+::\+Thread\+Stats\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 10} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ ELAPSED\+\_\+\+NONIDLE\+\_\+\+TIME}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+PRE\+\_\+\+STAT\+\_\+\+WRITE}, \textbf{ hook\+\_\+pre\+\_\+stat\+\_\+write()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+CREATE}, \textbf{ hook\+\_\+thread\+\_\+create()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+EXIT}, \textbf{ hook\+\_\+thread\+\_\+exit()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+RESUME}, \textbf{ hook\+\_\+thread\+\_\+resume()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+STALL}, \textbf{ hook\+\_\+thread\+\_\+stall()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+START}, \textbf{ hook\+\_\+thread\+\_\+start()}, \textbf{ INSTRUCTIONS}, \textbf{ metric\+Callback()}, \textbf{ Hooks\+Manager\+::\+ORDER\+\_\+\+NOTIFY\+\_\+\+PRE}, \textbf{ register\+Thread\+Stat\+Metric()}, and \textbf{ WAITING\+\_\+\+COST}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a420abcdca61ac2921b56f78f93dc9991_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!````~ThreadStatsManager@{$\sim$ThreadStatsManager}}
+\index{````~ThreadStatsManager@{$\sim$ThreadStatsManager}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{$\sim$ThreadStatsManager()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a073947c9d295f6d70e6b6360407826ad} 
+Thread\+Stats\+Manager\+::$\sim$\+Thread\+Stats\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 31} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+threads\+\_\+stats}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{ThreadStatsManager@{ThreadStatsManager}!calculateWaitingCosts@{calculateWaitingCosts}}
+\index{calculateWaitingCosts@{calculateWaitingCosts}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{calculateWaitingCosts()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a575c057255dcb7a465c5c1053229b866} 
+void Thread\+Stats\+Manager\+::calculate\+Waiting\+Costs (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 74} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Subsecond\+Time\+::get\+FS()}, \textbf{ m\+\_\+threads\+\_\+stats}, \textbf{ m\+\_\+waiting\+\_\+time\+\_\+last}, \textbf{ Thread\+Manager\+::\+STALL\+\_\+\+UNSCHEDULED}, and \textbf{ WAITING\+\_\+\+COST}.
+
+
+
+Referenced by \textbf{ pre\+\_\+stat\+\_\+write()}, \textbf{ thread\+Exit()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, and \textbf{ update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=315pt]{classThreadStatsManager_a575c057255dcb7a465c5c1053229b866_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a575c057255dcb7a465c5c1053229b866_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!callThreadStatCallback@{callThreadStatCallback}}
+\index{callThreadStatCallback@{callThreadStatCallback}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{callThreadStatCallback()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a5b3375ba2931b78dc3b0ad62653057f9} 
+\textbf{ UInt64} Thread\+Stats\+Manager\+::call\+Thread\+Stat\+Callback (\begin{DoxyParamCaption}\item[{\textbf{ Thread\+Stat\+Type}}]{type}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Core} $\ast$}]{core}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+stat\+\_\+callbacks}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!getThreadStatistic@{getThreadStatistic}}
+\index{getThreadStatistic@{getThreadStatistic}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{getThreadStatistic()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_aeb488de303973f8f095031ee2fb7e9b0} 
+\textbf{ UInt64} Thread\+Stats\+Manager\+::get\+Thread\+Statistic (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Thread\+Stat\+Type}}]{type}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 57} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+threads\+\_\+stats}.
+
+
+
+Referenced by \textbf{ Scheduler\+Sequential\+::results\+\_\+on\+\_\+file()}, and \textbf{ Scheduler\+Sequential\+::results\+\_\+on\+\_\+screen()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_aeb488de303973f8f095031ee2fb7e9b0_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!getThreadStatName@{getThreadStatName}}
+\index{getThreadStatName@{getThreadStatName}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{getThreadStatName()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_aafe24f4247271af4f27af5e94a1c341d} 
+const char $\ast$ Thread\+Stats\+Manager\+::get\+Thread\+Stat\+Name (\begin{DoxyParamCaption}\item[{\textbf{ Thread\+Stat\+Type}}]{type}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 56} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+stat\+\_\+callbacks}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stats\+::\+Thread\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=320pt]{classThreadStatsManager_aafe24f4247271af4f27af5e94a1c341d_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!getThreadStatTypes@{getThreadStatTypes}}
+\index{getThreadStatTypes@{getThreadStatTypes}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{getThreadStatTypes()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a958acff6406d028c5e2161a3af0c3c31} 
+const \textbf{ Thread\+Stat\+Type\+List} \& Thread\+Stats\+Manager\+::get\+Thread\+Stat\+Types (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+stat\+\_\+types}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stats\+::\+Thread\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=320pt]{classThreadStatsManager_a958acff6406d028c5e2161a3af0c3c31_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!hook\_pre\_stat\_write@{hook\_pre\_stat\_write}}
+\index{hook\_pre\_stat\_write@{hook\_pre\_stat\_write}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{hook\_pre\_stat\_write()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_af7107ad6801edb431eca69106e1c35ba} 
+static \textbf{ SInt64} Thread\+Stats\+Manager\+::hook\+\_\+pre\+\_\+stat\+\_\+write (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 92} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{classThreadStatsManager_af7107ad6801edb431eca69106e1c35ba_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!hook\_thread\_create@{hook\_thread\_create}}
+\index{hook\_thread\_create@{hook\_thread\_create}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{hook\_thread\_create()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a827f74b7051afe4c08d9be434e1358f4} 
+static \textbf{ SInt64} Thread\+Stats\+Manager\+::hook\+\_\+thread\+\_\+create (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{\+\_\+args}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 94} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ Hooks\+Manager\+::\+Thread\+Create\+::thread\+\_\+id}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{classThreadStatsManager_a827f74b7051afe4c08d9be434e1358f4_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!hook\_thread\_exit@{hook\_thread\_exit}}
+\index{hook\_thread\_exit@{hook\_thread\_exit}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{hook\_thread\_exit()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a448d898948ab9ecda0ce36200a98d08c} 
+static \textbf{ SInt64} Thread\+Stats\+Manager\+::hook\+\_\+thread\+\_\+exit (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{\+\_\+args}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 118} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ Hooks\+Manager\+::\+Thread\+Time\+::thread\+\_\+id}, and \textbf{ Hooks\+Manager\+::\+Thread\+Time\+::time}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{classThreadStatsManager_a448d898948ab9ecda0ce36200a98d08c_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!hook\_thread\_resume@{hook\_thread\_resume}}
+\index{hook\_thread\_resume@{hook\_thread\_resume}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{hook\_thread\_resume()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a806b8bcd35f77a9a544fd405bb703b01} 
+static \textbf{ SInt64} Thread\+Stats\+Manager\+::hook\+\_\+thread\+\_\+resume (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{\+\_\+args}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ Hooks\+Manager\+::\+Thread\+Resume\+::thread\+\_\+by}, \textbf{ Hooks\+Manager\+::\+Thread\+Resume\+::thread\+\_\+id}, and \textbf{ Hooks\+Manager\+::\+Thread\+Resume\+::time}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{classThreadStatsManager_a806b8bcd35f77a9a544fd405bb703b01_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!hook\_thread\_stall@{hook\_thread\_stall}}
+\index{hook\_thread\_stall@{hook\_thread\_stall}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{hook\_thread\_stall()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a8e804044d7069ba6fb52beca895cdc92} 
+static \textbf{ SInt64} Thread\+Stats\+Manager\+::hook\+\_\+thread\+\_\+stall (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{\+\_\+args}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 106} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ Hooks\+Manager\+::\+Thread\+Stall\+::reason}, \textbf{ Hooks\+Manager\+::\+Thread\+Stall\+::thread\+\_\+id}, and \textbf{ Hooks\+Manager\+::\+Thread\+Stall\+::time}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{classThreadStatsManager_a8e804044d7069ba6fb52beca895cdc92_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!hook\_thread\_start@{hook\_thread\_start}}
+\index{hook\_thread\_start@{hook\_thread\_start}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{hook\_thread\_start()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_afa5f0ed7c1c9bc70849fddeb40df06a3} 
+static \textbf{ SInt64} Thread\+Stats\+Manager\+::hook\+\_\+thread\+\_\+start (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{ptr}{, }\item[{\textbf{ UInt64}}]{\+\_\+args}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+References \textbf{ Hooks\+Manager\+::\+Thread\+Time\+::thread\+\_\+id}, and \textbf{ Hooks\+Manager\+::\+Thread\+Time\+::time}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{classThreadStatsManager_afa5f0ed7c1c9bc70849fddeb40df06a3_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!metricCallback@{metricCallback}}
+\index{metricCallback@{metricCallback}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{metricCallback()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a3a50f57b6976bb08548c7e2233e8af4a} 
+\textbf{ UInt64} Thread\+Stats\+Manager\+::metric\+Callback (\begin{DoxyParamCaption}\item[{\textbf{ Thread\+Stat\+Type}}]{type}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ UInt64}}]{user}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ ELAPSED\+\_\+\+NONIDLE\+\_\+\+TIME}, \textbf{ Subsecond\+Time\+::get\+FS()}, \textbf{ Performance\+Model\+::get\+Instruction\+Count()}, \textbf{ Performance\+Model\+::get\+Non\+Idle\+Elapsed\+Time()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ INSTRUCTIONS}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, and \textbf{ WAITING\+\_\+\+COST}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a3a50f57b6976bb08548c7e2233e8af4a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=298pt]{classThreadStatsManager_a3a50f57b6976bb08548c7e2233e8af4a_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!pre\_stat\_write@{pre\_stat\_write}}
+\index{pre\_stat\_write@{pre\_stat\_write}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{pre\_stat\_write()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a00466c620bba430d2927c3eb6adddd61} 
+void Thread\+Stats\+Manager\+::pre\+\_\+stat\+\_\+write (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ calculate\+Waiting\+Costs()}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+bottlegraphs}, \textbf{ Bottle\+Graph\+Manager\+::update()}, and \textbf{ update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a00466c620bba430d2927c3eb6adddd61_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!registerThreadStatMetric@{registerThreadStatMetric}}
+\index{registerThreadStatMetric@{registerThreadStatMetric}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{registerThreadStatMetric()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a11bcde5806bc967f942fbb2252285de7} 
+\textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stat\+Type} Thread\+Stats\+Manager\+::register\+Thread\+Stat\+Metric (\begin{DoxyParamCaption}\item[{\textbf{ Thread\+Stat\+Type}}]{type}{, }\item[{const char $\ast$}]{name}{, }\item[{\textbf{ Thread\+Stat\+Callback}}]{func}{, }\item[{\textbf{ UInt64}}]{user}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ DYNAMIC}, \textbf{ m\+\_\+next\+\_\+dynamic\+\_\+type}, \textbf{ m\+\_\+thread\+\_\+stat\+\_\+callbacks}, and \textbf{ m\+\_\+thread\+\_\+stat\+\_\+types}.
+
+
+
+Referenced by \textbf{ Thread\+Stats\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{classThreadStatsManager_a11bcde5806bc967f942fbb2252285de7_icgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!threadCreate@{threadCreate}}
+\index{threadCreate@{threadCreate}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{threadCreate()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a78b1269f6aa1e63802a6165a8e0a039b} 
+void Thread\+Stats\+Manager\+::thread\+Create (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 135} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+threads\+\_\+stats}, and \textbf{ MAX\+\_\+\+THREADS}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!threadExit@{threadExit}}
+\index{threadExit@{threadExit}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{threadExit()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a445e9369df13919561614b708fad77b8} 
+void Thread\+Stats\+Manager\+::thread\+Exit (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 163} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ calculate\+Waiting\+Costs()}, \textbf{ m\+\_\+bottlegraphs}, \textbf{ m\+\_\+threads\+\_\+stats}, and \textbf{ Bottle\+Graph\+Manager\+::update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a445e9369df13919561614b708fad77b8_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!threadResume@{threadResume}}
+\index{threadResume@{threadResume}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{threadResume()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_aa2f3153e254ef564537078e18455c58b} 
+void Thread\+Stats\+Manager\+::thread\+Resume (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+by}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 156} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ calculate\+Waiting\+Costs()}, \textbf{ m\+\_\+bottlegraphs}, \textbf{ m\+\_\+threads\+\_\+stats}, and \textbf{ Bottle\+Graph\+Manager\+::update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_aa2f3153e254ef564537078e18455c58b_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!threadStall@{threadStall}}
+\index{threadStall@{threadStall}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{threadStall()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a32e66a231f401fa5b168bd5d4c08a52c} 
+void Thread\+Stats\+Manager\+::thread\+Stall (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Thread\+Manager\+::stall\+\_\+type\+\_\+t}}]{reason}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 148} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ calculate\+Waiting\+Costs()}, \textbf{ m\+\_\+bottlegraphs}, \textbf{ m\+\_\+threads\+\_\+stats}, \textbf{ Thread\+Manager\+::\+STALL\+\_\+\+UNSCHEDULED}, and \textbf{ Bottle\+Graph\+Manager\+::update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a32e66a231f401fa5b168bd5d4c08a52c_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!threadStart@{threadStart}}
+\index{threadStart@{threadStart}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{threadStart()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a443bb9acd95714b44c56e557dd4d98f9} 
+void Thread\+Stats\+Manager\+::thread\+Start (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 141} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+bottlegraphs}, \textbf{ m\+\_\+threads\+\_\+stats}, \textbf{ Bottle\+Graph\+Manager\+::thread\+Start()}, and \textbf{ Bottle\+Graph\+Manager\+::update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a443bb9acd95714b44c56e557dd4d98f9_cgraph}
+\end{center}
+\end{figure}
+\index{ThreadStatsManager@{ThreadStatsManager}!update@{update}}
+\index{update@{update}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{update()}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a36e6c76dca86c99bc7bf4498da4497d0} 
+void Thread\+Stats\+Manager\+::update (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{ = {\ttfamily \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}}, }\item[{\textbf{ Subsecond\+Time}}]{time}{ = {\ttfamily \textbf{ Subsecond\+Time\+::\+Max\+Time}()}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ calculate\+Waiting\+Costs()}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+threads\+\_\+stats}, and \textbf{ Subsecond\+Time\+::\+Max\+Time()}.
+
+
+
+Referenced by \textbf{ pre\+\_\+stat\+\_\+write()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThreadStatsManager_a36e6c76dca86c99bc7bf4498da4497d0_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=294pt]{classThreadStatsManager_a36e6c76dca86c99bc7bf4498da4497d0_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{ThreadStatsManager@{ThreadStatsManager}!m\_bottlegraphs@{m\_bottlegraphs}}
+\index{m\_bottlegraphs@{m\_bottlegraphs}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{m\_bottlegraphs}
+{\footnotesize\ttfamily \label{classThreadStatsManager_ab09e490d8e6ad84b4e7638c44dc4d19c} 
+\textbf{ Bottle\+Graph\+Manager} Thread\+Stats\+Manager\+::m\+\_\+bottlegraphs\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 78} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ pre\+\_\+stat\+\_\+write()}, \textbf{ thread\+Exit()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, and \textbf{ thread\+Start()}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!m\_next\_dynamic\_type@{m\_next\_dynamic\_type}}
+\index{m\_next\_dynamic\_type@{m\_next\_dynamic\_type}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{m\_next\_dynamic\_type}
+{\footnotesize\ttfamily \label{classThreadStatsManager_ad527924ef3dcac58b2de8583d6078e64} 
+\textbf{ Thread\+Stat\+Type} Thread\+Stats\+Manager\+::m\+\_\+next\+\_\+dynamic\+\_\+type\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 77} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ register\+Thread\+Stat\+Metric()}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!m\_thread\_stat\_callbacks@{m\_thread\_stat\_callbacks}}
+\index{m\_thread\_stat\_callbacks@{m\_thread\_stat\_callbacks}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{m\_thread\_stat\_callbacks}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a36136bb623630a5cd4d3e76e32ba47d0} 
+std\+::unordered\+\_\+map$<$\textbf{ Thread\+Stat\+Type}, \textbf{ Stat\+Callback}$>$ Thread\+Stats\+Manager\+::m\+\_\+thread\+\_\+stat\+\_\+callbacks\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ call\+Thread\+Stat\+Callback()}, \textbf{ get\+Thread\+Stat\+Name()}, and \textbf{ register\+Thread\+Stat\+Metric()}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!m\_thread\_stat\_types@{m\_thread\_stat\_types}}
+\index{m\_thread\_stat\_types@{m\_thread\_stat\_types}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{m\_thread\_stat\_types}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a160759cb6c28be7fb1257f1068e7982d} 
+\textbf{ Thread\+Stat\+Type\+List} Thread\+Stats\+Manager\+::m\+\_\+thread\+\_\+stat\+\_\+types\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Thread\+Stat\+Types()}, and \textbf{ register\+Thread\+Stat\+Metric()}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!m\_threads\_stats@{m\_threads\_stats}}
+\index{m\_threads\_stats@{m\_threads\_stats}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{m\_threads\_stats}
+{\footnotesize\ttfamily \label{classThreadStatsManager_ab4180b9b1880c0413d25db84769e8563} 
+std\+::vector$<$\textbf{ Thread\+Stats}$\ast$$>$ Thread\+Stats\+Manager\+::m\+\_\+threads\+\_\+stats\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 74} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ calculate\+Waiting\+Costs()}, \textbf{ get\+Thread\+Statistic()}, \textbf{ thread\+Create()}, \textbf{ thread\+Exit()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, \textbf{ thread\+Start()}, \textbf{ update()}, and \textbf{ $\sim$\+Thread\+Stats\+Manager()}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!m\_waiting\_time\_last@{m\_waiting\_time\_last}}
+\index{m\_waiting\_time\_last@{m\_waiting\_time\_last}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{m\_waiting\_time\_last}
+{\footnotesize\ttfamily \label{classThreadStatsManager_ab1ae5d4424202d5c6db2489bab3ebf68} 
+\textbf{ Subsecond\+Time} Thread\+Stats\+Manager\+::m\+\_\+waiting\+\_\+time\+\_\+last\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 79} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ calculate\+Waiting\+Costs()}.
+
+\index{ThreadStatsManager@{ThreadStatsManager}!MAX\_THREADS@{MAX\_THREADS}}
+\index{MAX\_THREADS@{MAX\_THREADS}!ThreadStatsManager@{ThreadStatsManager}}
+\doxysubsubsection{MAX\_THREADS}
+{\footnotesize\ttfamily \label{classThreadStatsManager_a47f32c48528ce0be7832551245bb7e11} 
+const int Thread\+Stats\+Manager\+::\+MAX\+\_\+\+THREADS = 4096\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 73} of file \textbf{ thread\+\_\+stats\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ thread\+Create()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ thread\+\_\+stats\+\_\+manager.\+h}\item 
+common/system/\textbf{ thread\+\_\+stats\+\_\+manager.\+cc}\end{DoxyCompactItemize}

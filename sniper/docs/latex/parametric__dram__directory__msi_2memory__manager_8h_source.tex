@@ -1,0 +1,347 @@
+\doxysection{memory\+\_\+manager.\+h}
+\label{parametric__dram__directory__msi_2memory__manager_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/memory\_manager.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/memory\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache\_base.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}../pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cntlr.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}../pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_cntlr.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}../pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_msg.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}semaphore.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf\_model.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}shared\_cache\_block\_info.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker\_radix.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}tlb.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}rangelb.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}ulb.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}utopia\_cache\_template.h"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}modrian\_memory.h"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker\_xmem.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}contention\_model.h"{}}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}va\_area\_reader.h"{}}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{class\ }DramCache;}
+\DoxyCodeLine{00032\ \textcolor{keyword}{class\ }ShmemPerf;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keyword}{class\ }TLB;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keyword}{typedef}\ std::pair<core\_id\_t,\ MemComponent::component\_t>\ CoreComponentType;}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{typedef}\ std::map<CoreComponentType,\ CacheCntlr*>\ CacheCntlrMap;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keyword}{enum}\ TranslationHitWhere\{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ UTR\_HIT\ =\ 0,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ UTR\_MISS,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ ULB\_HIT,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_HIT\_L1,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_HIT\_L2,}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_POTM\_HIT,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_HIT\_CACHE\_L1,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_HIT\_CACHE\_L2,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_HIT\_CACHE\_NUCA,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\_MISS}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keyword}{struct\ }TranslationResultStruct\{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ TranslationHitWhere\ hitwhere;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \};\ }
+\DoxyCodeLine{00058\ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }TranslationResultStruct\ TranslationResult;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keyword}{class\ }MemoryManager\ :\ \textcolor{keyword}{public}\ MemoryManagerBase}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ CacheCntlr*\ m\_cache\_cntlrs[MemComponent::LAST\_LEVEL\_CACHE\ +\ 1];}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ NucaCache*\ m\_nuca\_cache;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ DramCache*\ m\_dram\_cache;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ PrL1PrL2DramDirectoryMSI::DramDirectoryCntlr*\ m\_dram\_directory\_cntlr;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ PrL1PrL2DramDirectoryMSI::DramCntlr*\ m\_dram\_cntlr;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ m\_tag\_directory\_home\_lookup;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ m\_dram\_controller\_home\_lookup;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ TLB\ *m\_itlb,\ *m\_dtlb,\ *m\_stlb,\ *m\_potm\_tlb;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ RLB\ *m\_rlb;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ m\_system\_page\_size;}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ PageTableWalker\ *ptw;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ ModrianMemoryManager\ *\ mmm;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ XMemManager\ *\ xmem\_manager;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_miss\_penalty;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_tlb\_miss\_parallel;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l1\_access\_penalty;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l2\_access\_penalty;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l1\_miss\_penalty;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l2\_miss\_penalty;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ ComponentLatency\ potm\_latency;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ ComponentLatency\ migration\_latency;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_utopia\_enabled;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_ulb\_enabled;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_utopia\_permission\_enabled;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_utopia\_tag\_enabled;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_potm\_enabled;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_virtualized;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_parallel\_walk;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ UtopiaCache\ *utopia\_perm\_cache;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ UtopiaCache\ *utopia\_tag\_cache;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ ULB*\ ulb;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ std::unordered\_map<IntPtr,\ SubsecondTime>\ migration\_map;\ \textcolor{comment}{//\ Track\ migrated\ pages}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ UtopiaCache*\ shadow\_cache;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ shadow\_cache\_enabled;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ UInt32\ shadow\_cache\_size;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ UInt32\ shadow\_cache\_associativity;}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ ComponentLatency\ shadow\_cache\_hit\_latency;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ ComponentLatency\ shadow\_cache\_miss\_latency;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ current\_nuca\_stamp;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ tlb\_hit;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ utr\_hit;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ tlb\_hit\_l1;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ tlb\_hit\_l2;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ tlb\_and\_utr\_miss;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ tlb\_hit\_latency;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ tlb\_hit\_l1\_latency;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ tlb\_hit\_l2\_latency;}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ utr\_hit\_latency;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ tlb\_and\_utr\_miss\_latency;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ total\_latency;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ llc\_miss\_l1tlb\_hit;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ llc\_miss\_l2tlb\_hit;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ llc\_miss\_l2tlb\_miss;}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ llc\_hit\_l1tlb\_hit;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ llc\_hit\_l2tlb\_hit;}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ llc\_hit\_l2tlb\_miss;}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ victima\_latency;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ l1c\_hit\_tlb\_latency;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ l2c\_hit\_tlb\_latency;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ nucac\_hit\_tlb\_latency;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ l1c\_hit\_tlb;}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ l2c\_hit\_tlb;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ nucac\_hit\_tlb;}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ ptw\_contention;}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ migrations\_affected\_latency;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ migrations\_affected\_request;}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \}\ translation\_stats;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ metadata\_hit[HitWhere::NUM\_HITWHERES];}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \}\ metadata\_stats;}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ PWC\ *pwc;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_pwc\_enabled;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ UInt32\ pwc\_L4\_assoc,pwc\_L4\_size;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ UInt32\ pwc\_L3\_assoc,pwc\_L3\_size;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ UInt32\ pwc\_L2\_assoc,pwc\_L2\_size;}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ tlb\_caching;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ ComponentLatency\ pwc\_access\_latency;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ ComponentLatency\ pwc\_miss\_latency;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ parallel\_ptw;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ ContentionModel\ *ptw\_srs;\ \textcolor{comment}{//\ Enabling\ parallel\ PTWs}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ core\_id\_t\ m\_core\_id\_master;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_tag\_directory\_present;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_dram\_cntlr\_present;}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hash\_dont\_cache\_enabled;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hash\_baseline\_enabled;}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ radix\_enabled;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ xmem\_enabled;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modrian\_memory\_enabled;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ ptw\_cuckoo\_enabled;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ oracle\_translation\_enabled;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ oracle\_protection\_enabled;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ oracle\_expressive\_enabled;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_rlb\_enabled;}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Address\ scaling\ }}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scaling\_factor;}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l1\_cache\_access;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_l2\_cache\_access;\ }
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_tlb\_nuca\_cache\_access;}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ UInt64\ nuca\_time\_series;\ }
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Semaphore*\ m\_user\_thread\_sem;}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ Semaphore*\ m\_network\_thread\_sem;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ m\_last\_level\_cache;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enabled;}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ ShmemPerf\ m\_dummy\_shmem\_perf;}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Performance\ Models}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ CachePerfModel*\ m\_cache\_perf\_models[MemComponent::LAST\_LEVEL\_CACHE\ +\ 1];}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Global\ map\ of\ all\ caches\ on\ all\ cores\ (within\ this\ process!)}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ CacheCntlrMap\ m\_all\_cache\_cntlrs;}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ MemoryManager(Core*\ core,\ Network*\ network,\ ShmemPerfModel*\ shmem\_perf\_model);}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \string~MemoryManager();}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ UInt64\ getCacheBlockSize()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cache\_block\_size;\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ Cache*\ getCache(MemComponent::component\_t\ mem\_component)\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_cache\_cntlrs[mem\_component\ ==\ MemComponent::LAST\_LEVEL\_CACHE\ ?\ MemComponent::component\_t(m\_last\_level\_cache)\ :\ mem\_component]-\/>getCache();}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ Cache*\ getL1ICache()\ \{\ \textcolor{keywordflow}{return}\ getCache(MemComponent::L1\_ICACHE);\ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ Cache*\ getL1DCache()\ \{\ \textcolor{keywordflow}{return}\ getCache(MemComponent::L1\_DCACHE);\ \}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ PageTableWalker*\ getPTW()\{\textcolor{keywordflow}{return}\ ptw;\}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ Cache*\ getLastLevelCache()\ \{\ \textcolor{keywordflow}{return}\ getCache(MemComponent::LAST\_LEVEL\_CACHE);\ \}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ TLB*\ getTLB()\ \{\textcolor{keywordflow}{return}\ m\_dtlb;\}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ TLB*\ getPOTM()\ \{\textcolor{keywordflow}{return}\ m\_potm\_tlb;\}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ PrL1PrL2DramDirectoryMSI::DramDirectoryCache*\ getDramDirectoryCache()\ \{\ \textcolor{keywordflow}{return}\ m\_dram\_directory\_cntlr-\/>getDramDirectoryCache();\ \}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ PrL1PrL2DramDirectoryMSI::DramCntlr*\ getDramCntlr()\ \{\ \textcolor{keywordflow}{return}\ m\_dram\_cntlr;\ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ getTagDirectoryHomeLookup()\ \{\ \textcolor{keywordflow}{return}\ m\_tag\_directory\_home\_lookup;\ \}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ getDramControllerHomeLookup()\ \{\ \textcolor{keywordflow}{return}\ m\_dram\_controller\_home\_lookup;\ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateTranslationCounters(TranslationResult\ trResult,\ HitWhere::where\_t\ dataResult);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ CacheCntlr*\ getCacheCntlrAt(core\_id\_t\ core\_id,\ MemComponent::component\_t\ mem\_component)\ \{\ \textcolor{keywordflow}{return}\ m\_all\_cache\_cntlrs[CoreComponentType(core\_id,\ mem\_component)];\ \}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setCacheCntlrAt(core\_id\_t\ core\_id,\ MemComponent::component\_t\ mem\_component,\ CacheCntlr*\ cache\_cntlr)\ \{\ m\_all\_cache\_cntlrs[CoreComponentType(core\_id,\ mem\_component)]\ =\ cache\_cntlr;\ \}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ NucaCache*\ getNucaCache()\{\ \textcolor{keywordflow}{return}\ m\_nuca\_cache;\ \}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ measureNucaStats();}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ HitWhere::where\_t\ coreInitiateMemoryAccess(}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,\ UInt32\ offset,}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::MemModeled\ modeled);}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ TranslationResult\ performAddressTranslation(}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ Byte\ *data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ count);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ TranslationResult\ accessUtopiaSubsystem(}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ Byte\ *data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\ }
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ count);}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ TranslationResult\ accessTLBSubsystem(}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ TLB\ *\ tlb,\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,\ }
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isIfetch,\ }
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ count,\ }
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ }
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ data\_length);}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMsgFromNetwork(NetPacket\&\ packet);}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ msg\_type,\ MemComponent::component\_t\ sender\_mem\_component,\ MemComponent::component\_t\ receiver\_mem\_component,\ core\_id\_t\ requester,\ core\_id\_t\ receiver,\ IntPtr\ address,\ Byte*\ data\_buf\ =\ NULL,\ UInt32\ data\_length\ =\ 0,\ HitWhere::where\_t\ where\ =\ HitWhere::UNKNOWN,\ ShmemPerf\ *perf\ =\ NULL,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS,\ CacheBlockInfo::block\_type\_t\ block\_type=CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ broadcastMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ msg\_type,\ MemComponent::component\_t\ sender\_mem\_component,\ MemComponent::component\_t\ receiver\_mem\_component,\ core\_id\_t\ requester,\ IntPtr\ address,\ Byte*\ data\_buf\ =\ NULL,\ UInt32\ data\_length\ =\ 0,\ ShmemPerf\ *perf\ =\ NULL,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS);}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ SubsecondTime\ getL1HitLatency(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ m\_cache\_perf\_models[MemComponent::L1\_ICACHE]-\/>getLatency(CachePerfModel::ACCESS\_CACHE\_DATA\_AND\_TAGS);\ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addL1Hits(\textcolor{keywordtype}{bool}\ icache,\ Core::mem\_op\_t\ mem\_op\_type,\ UInt64\ hits)\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ (icache\ ?\ m\_cache\_cntlrs[MemComponent::L1\_ICACHE]\ :\ m\_cache\_cntlrs[MemComponent::L1\_DCACHE])-\/>updateHits(mem\_op\_type,\ hits);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enableModels();}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disableModels();}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ bitmap;}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ core\_id\_t\ getShmemRequester(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ pkt\_data)}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((PrL1PrL2DramDirectoryMSI::ShmemMsg*)\ pkt\_data)-\/>getRequester();\ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ UInt32\ getModeledLength(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ pkt\_data)}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((PrL1PrL2DramDirectoryMSI::ShmemMsg*)\ pkt\_data)-\/>getModeledLength();\ \}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ tagCachesBlockType(IntPtr\ address,\ CacheBlockInfo::block\_type\_t\ btype)\{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_nuca\_cache)\ m\_nuca\_cache-\/>markTranslationMetadata(address,btype);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>markMetadata(address,btype);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>markMetadata(address,btype);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ SubsecondTime\ getCost(MemComponent::component\_t\ mem\_component,\ CachePerfModel::CacheAccess\_t\ access\_type);}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ incrElapsedTime(SubsecondTime\ latency,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS);}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ incrElapsedTime(MemComponent::component\_t\ mem\_component,\ CachePerfModel::CacheAccess\_t\ access\_type,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS);}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }features\{}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ page\_size;}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ dram\_accesses;}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_table\_walks;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ll\_pwc\_hit;}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ l2\_tlb\_hit;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ l2\_tlb\_miss;}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accesses;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ l1\_tlb\_hit;}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ ptw\_latency;}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,struct\ features>\ tlb\_features;}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ tlb\_features\ m\_page\_features;}
+\DoxyCodeLine{00340\ \ \ \ \};}
+\DoxyCodeLine{00341\ \}}
+
+\end{DoxyCode}

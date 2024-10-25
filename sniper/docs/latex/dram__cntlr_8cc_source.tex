@@ -1,0 +1,146 @@
+\doxysection{dram\+\_\+cntlr.\+cc}
+\label{dram__cntlr_8cc_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_cntlr.cc@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_cntlr.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dram\_cntlr.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}fault\_injection.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{extern}\ Lock\ iolock;}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#\ \ include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#\ \ include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#\ \ define\ MYLOG(...)\ \{\ ScopedLock\ l(iolock);\ fflush(stdout);\ printf("{}[\%s]\ \%d\%cdr\ \%-\/25s@\%3u:\ "{},\ itostr(getShmemPerfModel()-\/>getElapsedTime()).c\_str(),\ getMemoryManager()-\/>getCore()-\/>getId(),\ Sim()-\/>getCoreManager()-\/>amiUserThread()\ ?\ '\string^'\ :\ '\_',\ \_\_FUNCTION\_\_,\ \_\_LINE\_\_);\ printf(\_\_VA\_ARGS\_\_);\ printf("{}\(\backslash\)n"{});\ fflush(stdout);\ \}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#\ \ define\ MYLOG(...)\ \{\}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{class\ }TimeDistribution;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{namespace\ }PrL1PrL2DramDirectoryMSI}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ DramCntlr::DramCntlr(MemoryManagerBase*\ memory\_manager,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model,}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ UInt32\ cache\_block\_size,AddressHomeLookup*\ \_address\_home\_lookup)}
+\DoxyCodeLine{00027\ \ \ \ :\ DramCntlrInterface(memory\_manager,\ shmem\_perf\_model,\ cache\_block\_size)}
+\DoxyCodeLine{00028\ \ \ \ ,\ m\_reads(0)}
+\DoxyCodeLine{00029\ \ \ \ ,\ m\_writes(0)}
+\DoxyCodeLine{00030\ \ \ \ ,\ address\_home\_lookup(\_address\_home\_lookup)}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ m\_dram\_perf\_model\ =\ DramPerfModel::createDramPerfModel(}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ memory\_manager-\/>getCore()-\/>getId(),}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ cache\_block\_size,\ address\_home\_lookup);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ m\_fault\_injector\ =\ Sim()-\/>getFaultinjectionManager()}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ ?\ Sim()-\/>getFaultinjectionManager()-\/>getFaultInjector(memory\_manager-\/>getCore()-\/>getId(),\ MemComponent::DRAM)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ :\ NULL;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ m\_dram\_access\_count\ =\ \textcolor{keyword}{new}\ AccessCountMap[DramCntlrInterface::NUM\_ACCESS\_TYPES];}
+\DoxyCodeLine{00042\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ memory\_manager-\/>getCore()-\/>getId(),\ \textcolor{stringliteral}{"{}reads"{}},\ \&m\_reads);}
+\DoxyCodeLine{00043\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ memory\_manager-\/>getCore()-\/>getId(),\ \textcolor{stringliteral}{"{}writes"{}},\ \&m\_writes);}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ DramCntlr::\string~DramCntlr()}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ printDramAccessCount();}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_dram\_access\_count;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keyword}{delete}\ m\_dram\_perf\_model;}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>}
+\DoxyCodeLine{00055\ DramCntlr::getDataFromDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getFaultinjectionManager())}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_data\_map.count(address)\ ==\ 0)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ m\_data\_map[address]\ =\ \textcolor{keyword}{new}\ Byte[getCacheBlockSize()];}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ memset((\textcolor{keywordtype}{void}*)\ m\_data\_map[address],\ 0x00,\ getCacheBlockSize());}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ assumes\ error\ occurs\ in\ memory.\ If\ we\ want\ to\ model\ bus\ errors,\ insert\ the\ error\ into\ data\_buf\ instead}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ m\_fault\_injector-\/>preRead(address,\ address,\ getCacheBlockSize(),\ (Byte*)m\_data\_map[address],\ now);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ memcpy((\textcolor{keywordtype}{void}*)\ data\_buf,\ (\textcolor{keywordtype}{void}*)\ m\_data\_map[address],\ getCacheBlockSize());}
+\DoxyCodeLine{00070\ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ SubsecondTime\ dram\_access\_latency\ =\ runDramPerfModel(requester,\ now,\ address,\ READ,\ perf,is\_metadata);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ ++m\_reads;}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_DRAM\_ACCESS\_COUNT}}
+\DoxyCodeLine{00075\ \ \ \ addToDramAccessCount(address,\ READ);}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00077\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}R\ @\ \%08lx\ latency\ \%s"{}},\ address,\ itostr(dram\_access\_latency).c\_str());}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>(dram\_access\_latency,\ HitWhere::DRAM);}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>}
+\DoxyCodeLine{00083\ DramCntlr::putDataToDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getFaultinjectionManager())}
+\DoxyCodeLine{00086\ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_data\_map[address]\ ==\ NULL)}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Data\ Buffer\ does\ not\ exist"{}});}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ memcpy((\textcolor{keywordtype}{void}*)\ m\_data\_map[address],\ (\textcolor{keywordtype}{void}*)\ data\_buf,\ getCacheBlockSize());}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ assumes\ error\ occurs\ in\ memory.\ If\ we\ want\ to\ model\ bus\ errors,\ insert\ the\ error\ into\ data\_buf\ instead}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ m\_fault\_injector-\/>postWrite(address,\ address,\ getCacheBlockSize(),\ (Byte*)m\_data\_map[address],\ now);}
+\DoxyCodeLine{00096\ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ SubsecondTime\ dram\_access\_latency\ =\ runDramPerfModel(requester,\ now,\ address,\ WRITE,\ \&m\_dummy\_shmem\_perf,is\_metadata);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ ++m\_writes;}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_DRAM\_ACCESS\_COUNT}}
+\DoxyCodeLine{00101\ \ \ \ addToDramAccessCount(address,\ WRITE);}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00103\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}W\ @\ \%08lx"{}},\ address);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>(dram\_access\_latency,\ HitWhere::DRAM);}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ SubsecondTime}
+\DoxyCodeLine{00109\ DramCntlr::runDramPerfModel(core\_id\_t\ requester,\ SubsecondTime\ time,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\ \textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ UInt64\ pkt\_size\ =\ getCacheBlockSize();}
+\DoxyCodeLine{00112\ \ \ \ }
+\DoxyCodeLine{00113\ \ \ \ SubsecondTime\ dram\_access\_latency\ =\ m\_dram\_perf\_model-\/>getAccessLatency(time,\ pkt\_size,\ requester,\ address,\ access\_type,\ perf,is\_metadata);}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{keywordflow}{return}\ dram\_access\_latency;}
+\DoxyCodeLine{00115\ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00118\ DramCntlr::addToDramAccessCount(IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type)}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \ \ \ m\_dram\_access\_count[access\_type][address]\ =\ m\_dram\_access\_count[access\_type][address]\ +\ 1;}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00124\ DramCntlr::printDramAccessCount()}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ k\ =\ 0;\ k\ <\ DramCntlrInterface::NUM\_ACCESS\_TYPES;\ k++)}
+\DoxyCodeLine{00127\ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (AccessCountMap::iterator\ i\ =\ m\_dram\_access\_count[k].begin();\ i\ !=\ m\_dram\_access\_count[k].end();\ i++)}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*i).second\ >\ 100)}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Dram\ Cntlr(\%i),\ Address(0x\%x),\ Access\ Count(\%llu),\ Access\ Type(\%s)"{}},}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_memory\_manager-\/>getCore()-\/>getId(),\ (*i).first,\ (*i).second,}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (k\ ==\ READ)?\ \textcolor{stringliteral}{"{}READ"{}}\ :\ \textcolor{stringliteral}{"{}WRITE"{}});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \ \ \ \}}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \}}
+
+\end{DoxyCode}

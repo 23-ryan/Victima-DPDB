@@ -1,0 +1,357 @@
+\doxysection{performance\+\_\+model.\+cc}
+\label{performance__model_8cc_source}\index{common/performance\_model/performance\_model.cc@{common/performance\_model/performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}fastforward\_performance\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}oneipc\_performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}interval\_performance\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}rob\_performance\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}rob\_smt\_performance\_model.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}dynamic\_instruction.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ PerformanceModel*\ PerformanceModel::create(Core*\ core)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ String\ type;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ type\ =\ Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}perf\_model/core/type"{}},\ core-\/>getId());}
+\DoxyCodeLine{00023\ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (...)\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}No\ perf\ model\ type\ provided."{}});}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}oneipc"{}})}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ OneIPCPerformanceModel(core);}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}interval"{}})}
+\DoxyCodeLine{00030\ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{comment}{//\ The\ interval\ model\ needs\ the\ branch\ misprediction\ penalty}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ mispredict\_penalty\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/branch\_predictor/mispredict\_penalty"{}},\ core-\/>getId());}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ IntervalPerformanceModel(core,\ mispredict\_penalty);}
+\DoxyCodeLine{00034\ \ \ \ \}}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}rob"{}})}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ uint32\_t\ smt\_threads\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/logical\_cpus"{}},\ core-\/>getId());}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (smt\_threads\ ==\ 1)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ RobPerformanceModel(core);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ RobSmtPerformanceModel(core);}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00044\ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ perf\ model\ type:\ \%s"{}},\ type.c\_str());}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00047\ \ \ \ \}}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ Public\ Interface}}
+\DoxyCodeLine{00051\ PerformanceModel::PerformanceModel(Core\ *core)}
+\DoxyCodeLine{00052\ \ \ \ :\ m\_core(core)}
+\DoxyCodeLine{00053\ \ \ \ ,\ m\_dynins\_alloc(DynamicInstruction::createAllocator())}
+\DoxyCodeLine{00054\ \ \ \ ,\ m\_enabled(false)}
+\DoxyCodeLine{00055\ \ \ \ ,\ m\_fastforward(false)}
+\DoxyCodeLine{00056\ \ \ \ ,\ m\_fastforward\_model(new\ FastforwardPerformanceModel(core,\ this))}
+\DoxyCodeLine{00057\ \ \ \ ,\ m\_detailed\_sync(true)}
+\DoxyCodeLine{00058\ \ \ \ ,\ m\_hold(false)}
+\DoxyCodeLine{00059\ \ \ \ ,\ m\_instruction\_count(0)}
+\DoxyCodeLine{00060\ \ \ \ ,\ m\_elapsed\_time(Sim()-\/>getDvfsManager()-\/>getCoreDomain(core-\/>getId()))}
+\DoxyCodeLine{00061\ \ \ \ ,\ m\_idle\_elapsed\_time(Sim()-\/>getDvfsManager()-\/>getCoreDomain(core-\/>getId()))}
+\DoxyCodeLine{00062\ \ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}
+\DoxyCodeLine{00063\ \ \ \ ,\ m\_instruction\_queue(256)\ \textcolor{comment}{//\ Reduce\ from\ default\ size\ to\ keep\ memory\ issue\ time\ more\ or\ less\ synchronized}}
+\DoxyCodeLine{00064\ \ \ \ \#else}
+\DoxyCodeLine{00065\ \ \ \ ,\ m\_instruction\_queue(1024)\ \textcolor{comment}{//\ Need\ a\ bit\ more\ space\ for\ when\ the\ dyninsninfo\ items\ aren't\ coming\ in\ yet,\ or\ for\ a\ boatload\ of\ TLBMissInstructions}}
+\DoxyCodeLine{00066\ \ \ \ \#endif}
+\DoxyCodeLine{00067\ \ \ \ ,\ m\_current\_ins\_index(0)}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ \ m\_bp\ =\ BranchPredictor::create(core-\/>getId());}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ m\_instruction\_tracer\ =\ InstructionTracer::create(core);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}instruction\_count"{}},\ \&m\_instruction\_count);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}elapsed\_time"{}},\ \&m\_elapsed\_time);}
+\DoxyCodeLine{00076\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}idle\_elapsed\_time"{}},\ \&m\_idle\_elapsed\_time);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiStartTime"{}},\ \&m\_cpiStartTime);}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncFutex"{}},\ \&m\_cpiSyncFutex);}
+\DoxyCodeLine{00081\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncPthreadMutex"{}},\ \&m\_cpiSyncPthreadMutex);}
+\DoxyCodeLine{00082\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncPthreadCond"{}},\ \&m\_cpiSyncPthreadCond);}
+\DoxyCodeLine{00083\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncPthreadBarrier"{}},\ \&m\_cpiSyncPthreadBarrier);}
+\DoxyCodeLine{00084\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncJoin"{}},\ \&m\_cpiSyncJoin);}
+\DoxyCodeLine{00085\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncPause"{}},\ \&m\_cpiSyncPause);}
+\DoxyCodeLine{00086\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncSleep"{}},\ \&m\_cpiSyncSleep);}
+\DoxyCodeLine{00087\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncSyscall"{}},\ \&m\_cpiSyncSyscall);}
+\DoxyCodeLine{00088\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncUnscheduled"{}},\ \&m\_cpiSyncUnscheduled);}
+\DoxyCodeLine{00089\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSyncDvfsTransition"{}},\ \&m\_cpiSyncDvfsTransition);}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}performance\_model"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiRecv"{}},\ \&m\_cpiRecv);}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ PerformanceModel::\string~PerformanceModel()}
+\DoxyCodeLine{00095\ \{}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keyword}{delete}\ m\_bp;}
+\DoxyCodeLine{00097\ \ \ \ \textcolor{keyword}{delete}\ m\_fastforward\_model;}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{if}\ (m\_instruction\_tracer)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_instruction\_tracer;}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keywordtype}{void}\ PerformanceModel::enable()}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_enabled)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ enableDetailedModel();}
+\DoxyCodeLine{00106\ \ \ \ m\_enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00107\ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{keywordtype}{void}\ PerformanceModel::disable()}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{if}\ (m\_enabled)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ disableDetailedModel();}
+\DoxyCodeLine{00113\ \ \ \ m\_enabled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{void}\ PerformanceModel::countInstructions(IntPtr\ address,\ UInt32\ count)}
+\DoxyCodeLine{00117\ \{}
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00119\ \ \ \ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ m\_fastforward\_model-\/>countInstructions(address,\ count);}
+\DoxyCodeLine{00121\ \ \ \ \}}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keywordtype}{void}\ PerformanceModel::handleMemoryLatency(SubsecondTime\ latency,\ HitWhere::where\_t\ hit\_where)}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00127\ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ m\_fastforward\_model-\/>handleMemoryLatency(latency,\ hit\_where);}
+\DoxyCodeLine{00129\ \ \ \ \}}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{void}\ PerformanceModel::handleBranchMispredict()}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00135\ \ \ \ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ m\_fastforward\_model-\/>handleBranchMispredict();}
+\DoxyCodeLine{00137\ \ \ \ \}}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ DynamicInstruction*\ PerformanceModel::createDynamicInstruction(Instruction\ *ins,\ IntPtr\ eip)}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keywordflow}{return}\ DynamicInstruction::alloc(m\_dynins\_alloc,\ ins,\ eip);}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{keywordtype}{void}\ PerformanceModel::queuePseudoInstruction(PseudoInstruction\ *i)}
+\DoxyCodeLine{00146\ \{}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keywordflow}{if}\ (i-\/>getType()\ ==\ INST\_SPAWN)}
+\DoxyCodeLine{00148\ \ \ \ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ SpawnInstruction\ \textcolor{keyword}{const}*\ spawn\_insn\ =\ \textcolor{keyword}{dynamic\_cast<}SpawnInstruction\ const*\textcolor{keyword}{>}(i);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(spawn\_insn\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ a\ SpawnInstruction,\ but\ did\ not\ get\ one."{}});}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ setElapsedTime(spawn\_insn-\/>getTime());}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ i;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00154\ \ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_enabled)}
+\DoxyCodeLine{00157\ \ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{comment}{//\ queueInstruction\ and\ pushDynamicInstructionInfo\ are\ not\ being\ called\ in\ fast-\/forward\ by\ using\ instrumentation\ modes}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{comment}{//\ For\ queueDynamicInstruction,\ which\ are\ used\ all\ over\ the\ place,\ ignore\ them\ manually}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ i;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00162\ \ \ \ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \textcolor{keywordflow}{if}\ (i-\/>isIdle())}
+\DoxyCodeLine{00165\ \ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ handleIdleInstruction(i);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ i;}
+\DoxyCodeLine{00168\ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00170\ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ m\_fastforward\_model-\/>queuePseudoInstruction(i);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ m\_instruction\_queue.push\_wait(createDynamicInstruction(i,\ 0));}
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ m\_instruction\_queue.push(createDynamicInstruction(i,\ 0));}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \ \}}
+\DoxyCodeLine{00184\ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{keywordtype}{void}\ PerformanceModel::queueInstruction(DynamicInstruction\ *ins)}
+\DoxyCodeLine{00187\ \{}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\ ||\ !m\_enabled)}
+\DoxyCodeLine{00189\ \ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \textcolor{comment}{//\ Some\ threads\ may\ not\ have\ switched\ instrumentation\ mode\ yet\ even\ though\ we\ have\ left\ ROI}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{comment}{//\ Ignore\ the\ instructions\ they\ send\ to\ avoid\ overflowing\ buffers}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ ins;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00194\ \ \ \ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ m\_instruction\_queue.push\_wait(ins);}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ m\_instruction\_queue.push(ins);}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keywordtype}{void}\ PerformanceModel::handleIdleInstruction(PseudoInstruction\ *instruction)}
+\DoxyCodeLine{00204\ \{}
+\DoxyCodeLine{00205\ \ \ \ \textcolor{comment}{//\ If\ fast-\/forwarding\ without\ detailed\ synchronization,\ our\ fast-\/forwarding\ IPC}}
+\DoxyCodeLine{00206\ \ \ \ \textcolor{comment}{//\ already\ contains\ idle\ periods\ so\ we\ can\ ignore\ these\ now}}
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\ \&\&\ !m\_detailed\_sync)}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{if}\ (instruction-\/>getType()\ ==\ INST\_SYNC)}
+\DoxyCodeLine{00211\ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ track\ of\ the\ type\ of\ Sync\ instruction\ and\ it's\ latency\ to\ calculate\ CPI\ numbers}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ SyncInstruction\ \textcolor{keyword}{const}*\ sync\_insn\ =\ \textcolor{keyword}{dynamic\_cast<}SyncInstruction\ const*\textcolor{keyword}{>}(instruction);}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(sync\_insn\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ a\ SyncInstruction,\ but\ did\ not\ get\ one."{}});}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \textcolor{comment}{//\ Thread\ may\ wake\ up\ on\ a\ different\ core\ than\ where\ it\ went\ to\ sleep,\ and/or\ a\ different\ thread}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \textcolor{comment}{//\ may\ have\ run\ on\ this\ core\ while\ the\ thread\ was\ asleep}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \textcolor{comment}{//\ So,\ compute\ actual\ delay\ between\ our\ last\ local\ time\ and\ the\ time\ we're\ supposed\ to\ wake\ up}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ SubsecondTime\ time\_begin\ =\ getElapsedTime();}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ SubsecondTime\ time\_end\ =\ sync\_insn-\/>getTime();}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ SubsecondTime\ insn\_cost;}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (time\_end\ >\ time\_begin)}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ insn\_cost\ =\ time\_end\ -\/\ time\_begin;}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Core\ may\ have\ executed\ other\ instructions\ already}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ insn\_cost\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(sync\_insn-\/>getSyncType())\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::FUTEX):}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ m\_cpiSyncFutex\ +=\ insn\_cost;}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::PTHREAD\_MUTEX):}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ m\_cpiSyncPthreadMutex\ +=\ insn\_cost;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::PTHREAD\_COND):}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ m\_cpiSyncPthreadCond\ +=\ insn\_cost;}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::PTHREAD\_BARRIER):}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ m\_cpiSyncPthreadBarrier\ +=\ insn\_cost;}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::JOIN):}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ m\_cpiSyncJoin\ +=\ insn\_cost;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::PAUSE):}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ m\_cpiSyncPause\ +=\ insn\_cost;}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::SLEEP):}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ m\_cpiSyncSleep\ +=\ insn\_cost;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::SYSCALL):}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ m\_cpiSyncSyscall\ +=\ insn\_cost;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(SyncInstruction::UNSCHEDULED):}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ m\_cpiSyncUnscheduled\ +=\ insn\_cost;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Unexpected\ SyncInstruction::type\_t\ enum\ type.\ (\%d)"{}},\ sync\_insn-\/>getSyncType());}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ incrementIdleElapsedTime(insn\_cost);}
+\DoxyCodeLine{00261\ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (instruction-\/>getType()\ ==\ INST\_DELAY)}
+\DoxyCodeLine{00263\ \ \ \ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ SubsecondTime\ insn\_cost\ =\ instruction-\/>getCost(getCore());}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ DelayInstruction\ \textcolor{keyword}{const}*\ delay\_insn\ =\ \textcolor{keyword}{dynamic\_cast<}DelayInstruction\ const*\textcolor{keyword}{>}(instruction);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(delay\_insn\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ a\ DelayInstruction,\ but\ did\ not\ get\ one."{}});}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(delay\_insn-\/>getDelayType())\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \textcolor{keywordflow}{case}(DelayInstruction::DVFS\_TRANSITION):}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ m\_cpiSyncDvfsTransition\ +=\ insn\_cost;}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Unexpected\ DelayInstruction::type\_t\ enum\ type.\ (\%d)"{}},\ delay\_insn-\/>getDelayType());}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ incrementIdleElapsedTime(insn\_cost);}
+\DoxyCodeLine{00275\ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (instruction-\/>getType()\ ==\ INST\_RECV)}
+\DoxyCodeLine{00277\ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ SubsecondTime\ insn\_cost\ =\ instruction-\/>getCost(getCore());}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \_\_attribute\_\_((unused))\ RecvInstruction\ \textcolor{keyword}{const}*\ recv\_insn\ =\ \textcolor{keyword}{dynamic\_cast<}RecvInstruction\ const*\textcolor{keyword}{>}(instruction);}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(recv\_insn\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ a\ RecvInstruction,\ but\ did\ not\ get\ one."{}});}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ m\_cpiRecv\ +=\ insn\_cost;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ incrementIdleElapsedTime(insn\_cost);}
+\DoxyCodeLine{00283\ \ \ \ \}}
+\DoxyCodeLine{00284\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00285\ \ \ \ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unexpectedly\ received\ something\ other\ than\ a\ Sync\ or\ Recv\ Instruction"{}});}
+\DoxyCodeLine{00287\ \ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \textcolor{comment}{//\ Notify\ the\ fast-\/forward\ performance\ model}}
+\DoxyCodeLine{00290\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ m\_fastforward\_model-\/>notifyElapsedTimeUpdate();}
+\DoxyCodeLine{00292\ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{keywordtype}{void}\ PerformanceModel::iterate()}
+\DoxyCodeLine{00295\ \{}
+\DoxyCodeLine{00296\ \ \ \ \textcolor{keywordflow}{while}\ (m\_instruction\_queue.size()\ >\ 0)}
+\DoxyCodeLine{00297\ \ \ \ \{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \textcolor{comment}{//\ While\ the\ functional\ thread\ is\ waiting\ because\ of\ clock\ skew\ minimization,\ wait\ here\ as\ well}}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(m\_hold)}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ sched\_yield();}
+\DoxyCodeLine{00302\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ DynamicInstruction\ *ins\ =\ m\_instruction\_queue.front();}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(!ins-\/>instruction-\/>isIdle(),\ \textcolor{stringliteral}{"{}Idle\ instructions\ should\ not\ make\ it\ here!"{}});}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_fastforward\ \&\&\ m\_enabled)}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ handleInstruction(ins);}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ ins;}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \ \ m\_instruction\_queue.pop();}
+\DoxyCodeLine{00314\ \ \ \ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ synchronize();}
+\DoxyCodeLine{00317\ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{keywordtype}{void}\ PerformanceModel::synchronize()}
+\DoxyCodeLine{00320\ \{}
+\DoxyCodeLine{00321\ \ \ \ ClockSkewMinimizationClient\ *client\ =\ m\_core-\/>getClockSkewMinimizationClient();}
+\DoxyCodeLine{00322\ \ \ \ \textcolor{keywordflow}{if}\ (client)}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ client-\/>synchronize(SubsecondTime::Zero(),\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00324\ \}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \textcolor{keywordtype}{void}\ PerformanceModel::incrementIdleElapsedTime(SubsecondTime\ time)}
+\DoxyCodeLine{00327\ \{}
+\DoxyCodeLine{00328\ \ \ \ \textcolor{comment}{//\ Advance\ the\ idle\ time}}
+\DoxyCodeLine{00329\ \ \ \ m\_idle\_elapsed\_time.addLatency(time);}
+\DoxyCodeLine{00330\ \ \ \ \textcolor{comment}{//\ Advance\ the\ total\ (non-\/idle\ +\ idle)\ time}}
+\DoxyCodeLine{00331\ \ \ \ incrementElapsedTime(time);}
+\DoxyCodeLine{00332\ \ \ \ \textcolor{comment}{//\ Let\ the\ performance\ model\ know\ time\ has\ jumped}}
+\DoxyCodeLine{00333\ \ \ \ notifyElapsedTimeUpdate();}
+\DoxyCodeLine{00334\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ m\_fastforward\_model-\/>notifyElapsedTimeUpdate();}
+\DoxyCodeLine{00336\ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \textcolor{comment}{//\ Only\ called\ at\ the\ start\ of\ a\ new\ thread\ (SPAWN\_INST)}}
+\DoxyCodeLine{00339\ \textcolor{keywordtype}{void}\ PerformanceModel::setElapsedTime(SubsecondTime\ time)}
+\DoxyCodeLine{00340\ \{}
+\DoxyCodeLine{00341\ \ \ \ LOG\_ASSERT\_ERROR(time\ >=\ getElapsedTime(),\ \textcolor{stringliteral}{"{}setElapsedTime()\ cannot\ go\ backwards\ in\ time"{}});}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ SubsecondTime\ insn\_cost\ =\ time\ -\/\ getElapsedTime();}
+\DoxyCodeLine{00344\ \ \ \ \textcolor{keywordflow}{if}\ (getElapsedTime()\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \textcolor{comment}{//\ Core\ has\ run\ something\ before,\ account\ as\ unscheduled\ time}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ m\_cpiSyncUnscheduled\ +=\ insn\_cost;}
+\DoxyCodeLine{00347\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{comment}{//\ First\ thread\ to\ run\ on\ this\ core}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ m\_cpiStartTime\ +=\ insn\_cost;}
+\DoxyCodeLine{00350\ \ \ \ incrementIdleElapsedTime(insn\_cost);}
+\DoxyCodeLine{00351\ \}}
+
+\end{DoxyCode}

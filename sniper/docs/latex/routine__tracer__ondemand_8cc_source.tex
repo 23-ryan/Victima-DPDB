@@ -1,0 +1,76 @@
+\doxysection{routine\+\_\+tracer\+\_\+ondemand.\+cc}
+\label{routine__tracer__ondemand_8cc_source}\index{common/system/routine\_tracer\_ondemand.cc@{common/system/routine\_tracer\_ondemand.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer\_ondemand.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <signal.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keywordtype}{void}\ RoutineTracerOndemand::RtnThread::printStack()}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ Core::State\ state\ =\ Sim()-\/>getThreadManager()-\/>getThreadState(m\_thread-\/>getId());}
+\DoxyCodeLine{00013\ \ \ \ printf(\textcolor{stringliteral}{"{}Thread\ \%d\ (app\ \%d):\ \%s"{}},\ m\_thread-\/>getId(),\ m\_thread-\/>getAppId(),\ Core::CoreStateString(state));}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread-\/>getCore())}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ on\ core\ \%d"{}},\ m\_thread-\/>getCore()-\/>getId());}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (state\ ==\ Core::STALLED)}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ for\ \%s"{}},\ ThreadManager::stall\_type\_names[Sim()-\/>getThreadManager()-\/>getThreadStallReason(m\_thread-\/>getId())]);}
+\DoxyCodeLine{00018\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread-\/>getSyscallMdl()-\/>inSyscall())}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)tSyscall:\ \%s\(\backslash\)n"{}},\ m\_thread-\/>getSyscallMdl()-\/>formatSyscall().c\_str());}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{for}(std::deque<IntPtr>::reverse\_iterator\ it\ =\ m\_stack.rbegin();\ it\ !=\ m\_stack.rend();\ ++it)}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)t(\%12"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{})\ \%s\(\backslash\)n"{}},\ *it,\ m\_master-\/>getRoutine(*it)\ ?\ m\_master-\/>getRoutine(*it)-\/>m\_name\ :\ \textcolor{stringliteral}{"{}(unknown)"{}});}
+\DoxyCodeLine{00024\ \ \ \ \}}
+\DoxyCodeLine{00025\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ RoutineTracerOndemand::RtnMaster::RtnMaster()}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_SIGUSR1,\ signalHandler,\ 0);}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ SInt64\ RoutineTracerOndemand::RtnMaster::signalHandler(UInt64,\ UInt64)}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ RoutineTracerThread\ *tracer\ =\ thread-\/>getRoutineTracer();}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ RoutineTracerOndemand::RtnThread\ *ondemand\_tracer\ =\ \textcolor{keyword}{dynamic\_cast<}RoutineTracerOndemand::RtnThread*\textcolor{keyword}{>}(tracer);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(ondemand\_tracer,\ \textcolor{stringliteral}{"{}Expected\ a\ routine\ tracer\ of\ type\ RoutineTracerOndemand::RtnThread"{}});}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ ondemand\_tracer-\/>printStack();}
+\DoxyCodeLine{00045\ \ \ \ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ RoutineTracerOndemand::RtnMaster::addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{if}\ (m\_routines.count(eip)\ ==\ 0)}
+\DoxyCodeLine{00055\ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ m\_routines[eip]\ =\ \textcolor{keyword}{new}\ RoutineTracer::Routine(eip,\ name,\ imgname,\ offset,\ column,\ line,\ filename);}
+\DoxyCodeLine{00057\ \ \ \ \}}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keywordtype}{bool}\ RoutineTracerOndemand::RtnMaster::hasRoutine(IntPtr\ eip)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{return}\ m\_routines.count(eip)\ >\ 0;}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ RoutineTracer::Routine*\ RoutineTracerOndemand::RtnMaster::getRoutine(IntPtr\ eip)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{return}\ m\_routines[eip];}
+\DoxyCodeLine{00070\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,113 @@
+\doxysection{hooks\+\_\+manager.\+h}
+\label{hooks__manager_8h_source}\index{common/system/hooks\_manager.h@{common/system/hooks\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_HOOKS\_MANAGER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_HOOKS\_MANAGER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }HookType}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{enum}\ hook\_type\_t\ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{comment}{//\ Hook\ name\ \ \ \ \ \ \ \ \ \ \ \ \ \ Parameter\ (cast\ from\ UInt64)\ \ \ \ \ \ \ \ \ Description}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ HOOK\_PERIODIC,\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SubsecondTime\ current\_time\ \ \ \ \ \ \ \ Barrier\ was\ reached}}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ HOOK\_PERIODIC\_INS,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ UInt64\ icount\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Instruction-\/based\ periodic\ callback}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ HOOK\_SIM\_START,\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Simulation\ start}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ HOOK\_SIM\_END,\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Simulation\ end}}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ HOOK\_ROI\_BEGIN,\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ROI\ begin}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ HOOK\_ROI\_END,\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ROI\ end}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ HOOK\_CPUFREQ\_CHANGE,\ \ \ \ \ \ \textcolor{comment}{//\ UInt64\ coreid\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CPU\ frequency\ was\ changed}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ HOOK\_MAGIC\_MARKER,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ MagicServer::MagicMarkerType\ *\ \ \ \ Magic\ marker\ (SimMarker)\ in\ application}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ HOOK\_MAGIC\_USER,\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MagicServer::MagicMarkerType\ *\ \ \ \ Magic\ user\ function\ (SimUser)\ in\ application}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ HOOK\_INSTR\_COUNT,\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ UInt64\ coreid\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core\ has\ executed\ a\ preset\ number\ of\ instructions}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ HOOK\_THREAD\_CREATE,\ \ \ \ \ \ \ \textcolor{comment}{//\ HooksManager::ThreadCreate\ \ \ \ \ \ \ \ Thread\ creation}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ HOOK\_THREAD\_START,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ HooksManager::ThreadTime\ \ \ \ \ \ \ \ \ \ Thread\ start}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ HOOK\_THREAD\_EXIT,\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ HooksManager::ThreadTime\ \ \ \ \ \ \ \ \ \ Thread\ end}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ HOOK\_THREAD\_STALL,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ HooksManager::ThreadStall\ \ \ \ \ \ \ \ \ Thread\ has\ entered\ stalled\ state}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ HOOK\_THREAD\_RESUME,\ \ \ \ \ \ \ \textcolor{comment}{//\ HooksManager::ThreadResume\ \ \ \ \ \ \ \ Thread\ has\ entered\ running\ state}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ HOOK\_THREAD\_MIGRATE,\ \ \ \ \ \ \textcolor{comment}{//\ HooksManager::ThreadMigrate\ \ \ \ \ \ \ Thread\ was\ moved\ to\ a\ different\ core}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ HOOK\_INSTRUMENT\_MODE,\ \ \ \ \ \textcolor{comment}{//\ UInt64\ Instrument\ Mode\ \ \ \ \ \ \ \ \ \ \ \ Simulation\ mode\ change\ (ex.\ detailed,\ ffwd)}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ HOOK\_PRE\_STAT\_WRITE,\ \ \ \ \ \ \textcolor{comment}{//\ const\ char\ *\ prefix\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Before\ statistics\ are\ written\ (update\ generated\ stats\ now!)}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ HOOK\_SYSCALL\_ENTER,\ \ \ \ \ \ \ \textcolor{comment}{//\ SyscallMdl::HookSyscallEnter\ \ \ \ \ \ Thread\ enters\ a\ system\ call}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ HOOK\_SYSCALL\_EXIT,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ SyscallMdl::HookSyscallExit\ \ \ \ \ \ \ Thread\ exist\ from\ system\ call}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ HOOK\_APPLICATION\_START,\ \ \ \textcolor{comment}{//\ app\_id\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Application\ (re)start}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ HOOK\_APPLICATION\_EXIT,\ \ \ \ \textcolor{comment}{//\ app\_id\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Application\ exit}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ HOOK\_APPLICATION\_ROI\_BEGIN,\ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ROI\ begin,\ always\ triggers}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ HOOK\_APPLICATION\_ROI\_END,\ \ \ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ROI\ end,\ always\ triggers}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ HOOK\_SIGUSR1,\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ none\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Sniper\ process\ received\ SIGUSR1}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ HOOK\_TYPES\_MAX}
+\DoxyCodeLine{00042\ \ \ \ \};}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ hook\_type\_names[];}
+\DoxyCodeLine{00044\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }std}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keyword}{template}\ <>\ \textcolor{keyword}{struct\ }hash<HookType::hook\_type\_t>\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ operator()(\textcolor{keyword}{const}\ HookType::hook\_type\_t\ \&\ type)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//return\ std::hash<int>(type);}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})type;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \};}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{class\ }HooksManager}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keyword}{enum}\ HookCallbackOrder\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ ORDER\_NOTIFY\_PRE,\ \ \ \ \ \ \ \textcolor{comment}{//\ For\ callbacks\ that\ want\ to\ inspect\ state\ before\ any\ actions}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ ORDER\_ACTION,\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ callbacks\ that\ want\ to\ change\ simulator\ state\ based\ on\ the\ event}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ ORDER\_NOTIFY\_POST,\ \ \ \ \ \ \textcolor{comment}{//\ For\ callbacks\ that\ want\ to\ inspect\ state\ after\ any\ actions}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ NUM\_HOOK\_ORDER,}
+\DoxyCodeLine{00064\ \ \ \ \};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keyword}{typedef}\ SInt64\ (*HookCallbackFunc)(UInt64,\ UInt64);}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keyword}{struct\ }HookCallback\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ HookCallbackFunc\ func;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ UInt64\ arg;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ HookCallbackOrder\ order;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ HookCallback(HookCallbackFunc\ \_func,\ UInt64\ \_arg,\ HookCallbackOrder\ \_order)\ :\ func(\_func),\ arg(\_arg),\ order(\_order)\ \{\}}
+\DoxyCodeLine{00072\ \ \ \ \};}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ thread\_id\_t\ thread\_id;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ thread\_id\_t\ creator\_thread\_id;}
+\DoxyCodeLine{00076\ \ \ \ \}\ ThreadCreate;}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ thread\_id\_t\ thread\_id;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ subsecond\_time\_t\ time;}
+\DoxyCodeLine{00080\ \ \ \ \}\ ThreadTime;}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ thread\_id\_t\ thread\_id;\ \ \textcolor{comment}{//\ Thread\ stalling}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ ThreadManager::stall\_type\_t\ reason;\ \textcolor{comment}{//\ Reason\ for\ thread\ stall}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ subsecond\_time\_t\ time;\ \ \textcolor{comment}{//\ Time\ at\ which\ the\ stall\ occurs\ (if\ known,\ else\ SubsecondTime::MaxTime())}}
+\DoxyCodeLine{00085\ \ \ \ \}\ ThreadStall;}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ thread\_id\_t\ thread\_id;\ \ \textcolor{comment}{//\ Thread\ being\ woken\ up}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ thread\_id\_t\ thread\_by;\ \ \textcolor{comment}{//\ Thread\ triggering\ the\ wakeup}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ subsecond\_time\_t\ time;\ \ \textcolor{comment}{//\ Time\ at\ which\ the\ wakeup\ occurs\ (if\ known,\ else\ SubsecondTime::MaxTime())}}
+\DoxyCodeLine{00090\ \ \ \ \}\ ThreadResume;}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ thread\_id\_t\ thread\_id;\ \ \textcolor{comment}{//\ Thread\ being\ migrated}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ core\_id\_t\ core\_id;\ \ \ \ \ \ \textcolor{comment}{//\ Core\ the\ thread\ is\ now\ running\ (or\ INVALID\_CORE\_ID\ ==\ -\/1\ for\ unscheduled)}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ subsecond\_time\_t\ time;\ \ \textcolor{comment}{//\ Current\ time}}
+\DoxyCodeLine{00095\ \ \ \ \}\ ThreadMigrate;}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ HooksManager();}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordtype}{void}\ init();}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordtype}{void}\ fini();}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordtype}{void}\ registerHook(HookType::hook\_type\_t\ type,\ HookCallbackFunc\ func,\ UInt64\ argument,\ HookCallbackOrder\ order\ =\ ORDER\_NOTIFY\_PRE);}
+\DoxyCodeLine{00101\ \ \ \ SInt64\ callHooks(HookType::hook\_type\_t\ type,\ UInt64\ argument,\ \textcolor{keywordtype}{bool}\ expect\_return\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00104\ \ \ \ std::unordered\_map<HookType::hook\_type\_t,\ std::vector<HookCallback>\ >\ m\_registry;}
+\DoxyCodeLine{00105\ \};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_HOOKS\_MANAGER\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

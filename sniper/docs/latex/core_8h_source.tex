@@ -1,0 +1,209 @@
+\doxysection{core.\+h}
+\label{core_8h_source}\index{common/core/core.h@{common/core/core.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CORE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CORE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ some\ forward\ declarations\ for\ cross\ includes}}
+\DoxyCodeLine{00005\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }Network;}
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }MemoryManagerBase;}
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }MemoryManagerFast;}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }PerformanceModel;}
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }ClockSkewMinimizationClient;}
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }ShmemPerfModel;}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }TopologyInfo;}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }CheetahManager;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}packet\_type.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}bbv\_count.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}cpuid.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}hit\_where.h"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{struct\ }MemoryResult\ \{}
+\DoxyCodeLine{00026\ \ \ \ HitWhere::where\_t\ hit\_where;}
+\DoxyCodeLine{00027\ \ \ \ subsecond\_time\_t\ latency;}
+\DoxyCodeLine{00028\ \};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ MemoryResult\ makeMemoryResult(HitWhere::where\_t\ \_hit\_where,\ SubsecondTime\ \_latency);}
+\DoxyCodeLine{00031\ \textcolor{keywordtype}{void}\ applicationMemCopy(\textcolor{keywordtype}{void}\ *dest,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src,\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }Core}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ State}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ RUNNING\ =\ 0,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ INITIALIZING,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ STALLED,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ SLEEPING,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ WAKING\_UP,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ IDLE,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ BROKEN,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ NUM\_STATES}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ lock\_signal\_t}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ INVALID\_LOCK\_SIGNAL\ =\ 0,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ MIN\_LOCK\_SIGNAL,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ NONE\ =\ MIN\_LOCK\_SIGNAL,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ LOCK,}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ UNLOCK,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ MAX\_LOCK\_SIGNAL\ =\ UNLOCK,}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ NUM\_LOCK\_SIGNAL\_TYPES\ =\ MAX\_LOCK\_SIGNAL\ -\/\ MIN\_LOCK\_SIGNAL\ +\ 1}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ mem\_op\_t}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ INVALID\_MEM\_OP\ =\ 0,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ MIN\_MEM\_OP,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ READ\ =\ MIN\_MEM\_OP,}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ READ\_EX,}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ WRITE,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ MAX\_MEM\_OP\ =\ WRITE,}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ NUM\_MEM\_OP\_TYPES\ =\ MAX\_MEM\_OP\ -\/\ MIN\_MEM\_OP\ +\ 1}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ mem\_origin\_t}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ PAGE\_TABLE\_WALK\ =\ 0,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ NORMAL,}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ NUM\_MEM\_ORIGINS}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{comment}{/*\ To\ what\ extend\ to\ make\ a\ memory\ access\ visible\ to\ the\ simulated\ instruction\ */}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ MemModeled}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ MEM\_MODELED\_NONE,\ \ \ \ \ \ \textcolor{comment}{/*\ Not\ at\ all\ (pure\ backdoor\ access)\ */}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ MEM\_MODELED\_COUNT,\ \ \ \ \ \textcolor{comment}{/*\ Count\ in\ \#accesses/\#misses\ */}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ MEM\_MODELED\_COUNT\_TLBTIME,\ \textcolor{comment}{/*\ Count\ in\ \#accesses/\#misses,\ queue\ TLBMissInstruction\ on\ TLB\ miss\ */}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ MEM\_MODELED\_TIME,\ \ \ \ \ \ \textcolor{comment}{/*\ Count\ +\ account\ for\ access\ latency\ (using\ MemAccessInstruction)\ */}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ MEM\_MODELED\_FENCED,\ \ \ \ \textcolor{comment}{/*\ Count\ +\ account\ for\ access\ latency\ as\ memory\ fence\ (using\ MemAccessInstruction)\ */}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ MEM\_MODELED\_RETURN,\ \ \ \ \textcolor{comment}{/*\ Count\ +\ time\ +\ return\ data\ to\ construct\ DynamicInstruction\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ CoreStateString(State\ state);}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ Core(SInt32\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \string~Core();}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{comment}{//\ Query\ and\ update\ branch\ predictor,\ return\ true\ on\ mispredict}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ accessBranchPredictor(IntPtr\ eip,\ \textcolor{keywordtype}{bool}\ taken,\ IntPtr\ target);}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ MemoryResult\ readInstructionMemory(IntPtr\ address,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ instruction\_size);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ MemoryResult\ accessMemory(lock\_signal\_t\ lock\_signal,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size,\ MemModeled\ modeled\ =\ MEM\_MODELED\_NONE,\ IntPtr\ eip\ =\ 0,\ SubsecondTime\ now\ =\ SubsecondTime::MaxTime(),\ \textcolor{keywordtype}{bool}\ is\_fault\_mask\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ MemoryResult\ nativeMemOp(lock\_signal\_t\ lock\_signal,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ accessMemoryFast(\textcolor{keywordtype}{bool}\ icache,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ address);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ logMemoryHit(\textcolor{keywordtype}{bool}\ icache,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ MemModeled\ modeled\ =\ MEM\_MODELED\_NONE,\ IntPtr\ eip\ =\ 0);}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ countInstructions(IntPtr\ address,\ UInt32\ count);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ emulateCpuid(UInt32\ eax,\ UInt32\ ecx,\ cpuid\_result\_t\ \&res)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{comment}{//\ network\ accessor\ since\ network\ is\ private}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ getId()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_core\_id;\ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ Thread\ *getThread()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thread;\ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setThread(Thread\ *thread)\ \{\ m\_thread\ =\ thread;\ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ Network\ *getNetwork()\ \{\ \textcolor{keywordflow}{return}\ m\_network;\ \}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ PerformanceModel\ *getPerformanceModel()\ \{\ \textcolor{keywordflow}{return}\ m\_performance\_model;\ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ ClockSkewMinimizationClient*\ getClockSkewMinimizationClient()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_clock\_skew\_minimization\_client;\ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ MemoryManagerBase\ *getMemoryManager()\ \{\ \textcolor{keywordflow}{return}\ m\_memory\_manager;\ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MemoryManagerBase\ *getMemoryManager()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_memory\_manager;\ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod*\ getDvfsDomain()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_dvfs\_domain;\ \}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ TopologyInfo*\ getTopologyInfo()\ \{\ \textcolor{keywordflow}{return}\ m\_topology\_info;\ \}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{keyword}{const}\ TopologyInfo*\ getTopologyInfo()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_topology\_info;\ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keyword}{const}\ CheetahManager*\ getCheetahManager()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cheetah\_manager;\ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ State\ getState()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_core\_state;\ \}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setState(State\ core\_state)\ \{\ m\_core\_state\ =\ core\_state;\ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ UInt64\ getInstructionCount()\ \{\ \textcolor{keywordflow}{return}\ m\_instructions;\ \}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ BbvCount\ *getBbvCount()\ \{\ \textcolor{keywordflow}{return}\ \&m\_bbv;\ \}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ UInt64\ getInstructionsCallback()\ \{\ \textcolor{keywordflow}{return}\ m\_instructions\_callback;\ \}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isEnabledInstructionsCallback()\ \{\ \textcolor{keywordflow}{return}\ m\_instructions\_callback\ !=\ UINT64\_MAX;\ \}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setInstructionsCallback(UInt64\ instructions)\ \{\ m\_instructions\_callback\ =\ m\_instructions\ +\ instructions;\ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disableInstructionsCallback()\ \{\ m\_instructions\_callback\ =\ UINT64\_MAX;\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enablePerformanceModels();}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disablePerformanceModels();}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{comment}{//\ @RBERA:\ for\ measuring\ contribution\ of\ page-\/walk\ entries\ in\ cache}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ measureCacheStats();}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{comment}{//Utr}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ UInt64\ *getUtrBitmap();}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateSpinCount(UInt64\ instructions,\ SubsecondTime\ elapsed\_time)}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ m\_spin\_loops++;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ m\_spin\_instructions\ +=\ instructions;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ m\_spin\_elapsed\_time\ +=\ elapsed\_time;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod*\ m\_dvfs\_domain;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ MemoryManagerBase\ *m\_memory\_manager;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ Thread\ *m\_thread;}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ Network\ *m\_network;}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ PerformanceModel\ *m\_performance\_model;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ ClockSkewMinimizationClient\ *m\_clock\_skew\_minimization\_client;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ Lock\ m\_mem\_lock;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ BbvCount\ m\_bbv;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ TopologyInfo\ *m\_topology\_info;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ CheetahManager\ *m\_cheetah\_manager;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ UInt64\ *utr\_bitmap;}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ State\ m\_core\_state;}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keyword}{static}\ Lock\ m\_global\_core\_lock;}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ MemoryResult\ initiateMemoryAccess(}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_size,}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ MemModeled\ modeled,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ now);}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ hookPeriodicInsCheck();}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ hookPeriodicInsCall();}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ IntPtr\ m\_icache\_last\_block;}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ UInt64\ m\_spin\_loops;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ UInt64\ m\_spin\_instructions;}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ SubsecondTime\ m\_spin\_elapsed\_time;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \textcolor{comment}{//\ Optimized\ version\ of\ countInstruction\ has\ direct\ access\ to\ m\_instructions\ and\ m\_instructions\_callback}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }InstructionModeling;}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ contrast\ to\ core-\/>m\_performance\_model-\/>m\_instructions,\ this\ one\ always\ increments,}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{comment}{//\ also\ when\ performance\ modeling\ is\ disabled\ or\ when\ instrumenation\ mode\ is\ CACHE\_ONLY\ or\ FAST\_FORWARD}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ UInt64\ m\_instructions;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ UInt64\ m\_instructions\_callback;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \textcolor{comment}{//\ HOOK\_PERIODIC\_INS\ implementation}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ UInt64\ m\_instructions\_hpi\_callback;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ UInt64\ m\_instructions\_hpi\_last;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ g\_instructions\_hpi\_global;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ g\_instructions\_hpi\_global\_callback;}
+\DoxyCodeLine{00201\ \};}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

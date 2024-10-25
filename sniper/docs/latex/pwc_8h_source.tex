@@ -1,0 +1,60 @@
+\doxysection{pwc.\+h}
+\label{pwc_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pwc.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pwc.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PWC\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PWC\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <util.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \textcolor{keyword}{class\ }PWC}
+\DoxyCodeLine{00014\ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{keyword}{static}\ \ UInt32\ SIM\_PAGE\_SHIFT;\ \textcolor{comment}{//\ 4KB}}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keyword}{static}\ \ IntPtr\ SIM\_PAGE\_SIZE;}
+\DoxyCodeLine{00018\ \ \ \ \ \textcolor{keyword}{static}\ \ IntPtr\ SIM\_PAGE\_MASK;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ Cache\ m\_L4\_cache;\ \textcolor{comment}{//\ @kanellok\ Cache\ PMLE4}}
+\DoxyCodeLine{00021\ \ \ \ \ Cache\ m\_L3\_cache;\ \textcolor{comment}{//\ Cache\ PDPT}}
+\DoxyCodeLine{00022\ \ \ \ \ Cache\ m\_L2\_cache;\ \textcolor{comment}{//\ Cache\ PD}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ UInt64\ m\_l4\_access,\ m\_l4\_miss;}
+\DoxyCodeLine{00025\ \ \ \ \ UInt64\ m\_l3\_access,\ m\_l3\_miss;}
+\DoxyCodeLine{00026\ \ \ \ \ UInt64\ m\_l2\_access,\ m\_l2\_miss;}
+\DoxyCodeLine{00027\ \ \ \ \ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{bool}\ perfect;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{enum}\ where\_t}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ HIT\ =\ 0,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ MISS}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ ComponentLatency\ access\_latency;}
+\DoxyCodeLine{00044\ \ \ \ \ ComponentLatency\ miss\_latency;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ PWC(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ UInt32\ L1\_num\_entries,\ UInt32\ L1\_associativity,\ UInt32\ L2\_num\_entries,\ UInt32\ L2\_associativity,\ UInt32\ L3\_num\_entries,\ UInt32\ L3\_associativity,\ ComponentLatency\ access\_latency,\ ComponentLatency\ miss\_latency,\ \textcolor{keywordtype}{bool}\ perfect);}
+\DoxyCodeLine{00047\ \ \ \ \ PWC::where\_t\ lookup(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ allocate\_on\_miss\ ,\ \textcolor{keywordtype}{int}\ level\ ,\ \textcolor{keywordtype}{bool}\ count);}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordtype}{void}\ allocate(IntPtr\ address,\ SubsecondTime\ now,\ Cache\ *pwc\_cache);}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ HASH\_PRIME\ =\ 124183;}
+\DoxyCodeLine{00050\ \ }
+\DoxyCodeLine{00051\ \ \ \};}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ TLB\_H}}
+
+\end{DoxyCode}

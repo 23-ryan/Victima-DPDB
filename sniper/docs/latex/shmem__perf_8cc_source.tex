@@ -1,0 +1,102 @@
+\doxysection{shmem\+\_\+perf.\+cc}
+\label{shmem__perf_8cc_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_perf.cc@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_perf.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ shmem\_reason\_names[]\ =\ \{}
+\DoxyCodeLine{00006\ \ \ \ \textcolor{stringliteral}{"{}noc-\/base"{}},}
+\DoxyCodeLine{00007\ \ \ \ \textcolor{stringliteral}{"{}noc-\/queue"{}},}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{stringliteral}{"{}td-\/access"{}},}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{stringliteral}{"{}inv-\/imbalance"{}},}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{stringliteral}{"{}remote-\/cache-\/inv"{}},}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{stringliteral}{"{}remote-\/cache-\/fwd"{}},}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{stringliteral}{"{}remote-\/cache-\/wb"{}},}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{stringliteral}{"{}pending-\/hit"{}},}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{stringliteral}{"{}nuca-\/tags"{}},}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{stringliteral}{"{}nuca-\/bus"{}},}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{stringliteral}{"{}nuca-\/queue"{}},}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{stringliteral}{"{}nuca-\/data"{}},}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{stringliteral}{"{}dram-\/cache"{}},}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{stringliteral}{"{}dram-\/cache-\/tags"{}},}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{stringliteral}{"{}dram-\/cache-\/queue"{}},}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{stringliteral}{"{}dram-\/cache-\/bus"{}},}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{stringliteral}{"{}dram-\/cache-\/data"{}},}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{stringliteral}{"{}dram"{}},}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{stringliteral}{"{}dram-\/queue"{}},}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{stringliteral}{"{}dram-\/bus"{}},}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{stringliteral}{"{}dram-\/device"{}},}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{stringliteral}{"{}dram-\/cntrl"{}},}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{stringliteral}{"{}dram-\/refresh"{}},}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{stringliteral}{"{}dram-\/bank-\/pending"{}},}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{stringliteral}{"{}dram-\/bank-\/conflict"{}},}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{stringliteral}{"{}unknown"{}},}
+\DoxyCodeLine{00032\ \};}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{static\_assert}(ShmemPerf::NUM\_SHMEM\_TIMES\ ==\ \textcolor{keyword}{sizeof}(shmem\_reason\_names)\ /\ \textcolor{keyword}{sizeof}(shmem\_reason\_names[0]),}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ enough\ values\ in\ shmem\_reason\_names"{}});}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ ShmemReasonString(ShmemPerf::shmem\_times\_type\_t\ reason)}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \ LOG\_ASSERT\_ERROR(reason\ <\ ShmemPerf::NUM\_SHMEM\_TIMES,\ \textcolor{stringliteral}{"{}Invalid\ ShmemPerf\ reason\ \%d"{}},\ reason);}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{return}\ shmem\_reason\_names[reason];}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ ShmemPerf::ShmemPerf()}
+\DoxyCodeLine{00045\ \ \ \ :\ m\_core\_id(INVALID\_CORE\_ID)}
+\DoxyCodeLine{00046\ \ \ \ ,\ m\_time\_begin(SubsecondTime::Zero())}
+\DoxyCodeLine{00047\ \ \ \ ,\ m\_time\_last(SubsecondTime::Zero())}
+\DoxyCodeLine{00048\ \ \ \ ,\ m\_times(NUM\_SHMEM\_TIMES)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{void}\ ShmemPerf::disable()}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{comment}{//\ Make\ sure\ no-\/one\ increments\ any\ of\ our\ counters\ anymore}}
+\DoxyCodeLine{00055\ \ \ \ m\_time\_last\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{void}\ ShmemPerf::reset(SubsecondTime\ time,\ core\_id\_t\ core\_id)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ m\_core\_id\ =\ core\_id;}
+\DoxyCodeLine{00061\ \ \ \ m\_time\_begin\ =\ time;}
+\DoxyCodeLine{00062\ \ \ \ m\_time\_last\ =\ time;}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ ShmemPerf::NUM\_SHMEM\_TIMES;\ ++i)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ m\_times[i]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keywordtype}{void}\ ShmemPerf::updateTime(SubsecondTime\ time,\ shmem\_times\_type\_t\ reason)}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ \ LOG\_ASSERT\_ERROR(reason\ <\ NUM\_SHMEM\_TIMES,\ \textcolor{stringliteral}{"{}Invalid\ ShmemPerf\ reason\ \%d"{}},\ reason);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \textcolor{comment}{//\ Ignore\ duplicate\ paths\ or\ updates\ using\ stale\ pointers}}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ m\_time\_last)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ m\_times[reason]\ +=\ time\ -\/\ m\_time\_last;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ m\_time\_last\ =\ time;}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{void}\ ShmemPerf::updatePacket(NetPacket\&\ packet)}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{if}\ (packet.time\ >\ m\_time\_last)}
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ m\_times[NOC\_QUEUE]\ +=\ packet.queue\_delay;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ m\_time\_last\ +=\ packet.queue\_delay;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ updateTime(packet.time,\ NOC\_BASE);}
+\DoxyCodeLine{00086\ \ \ \ \}}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keywordtype}{void}\ ShmemPerf::add(ShmemPerf\ *perf)}
+\DoxyCodeLine{00090\ \{}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ ShmemPerf::NUM\_SHMEM\_TIMES;\ ++i)}
+\DoxyCodeLine{00092\ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ ShmemPerf::shmem\_times\_type\_t\ reason\ =\ ShmemPerf::shmem\_times\_type\_t(i);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ m\_times[reason]\ +=\ perf-\/>getComponent(reason);}
+\DoxyCodeLine{00095\ \ \ \ \}}
+\DoxyCodeLine{00096\ \}}
+
+\end{DoxyCode}

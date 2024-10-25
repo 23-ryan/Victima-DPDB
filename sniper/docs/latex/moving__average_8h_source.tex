@@ -1,0 +1,199 @@
+\doxysection{moving\+\_\+average.\+h}
+\label{moving__average_8h_source}\index{common/misc/moving\_average.h@{common/misc/moving\_average.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_MOVING\_AVERAGE\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_MOVING\_AVERAGE\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}modulo\_num.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }MovingAverage}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ AvgType\_t}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ ARITHMETIC\_MEAN\ =\ 0,}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ GEOMETRIC\_MEAN,}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ MEDIAN,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ NUM\_AVG\_TYPES}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ MovingAverage(UInt32\ max\_window\_size);}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~MovingAverage();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{static}\ AvgType\_t\ parseAvgType(String\ avg\_type)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (avg\_type\ ==\ \textcolor{stringliteral}{"{}arithmetic\_mean"{}})}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ARITHMETIC\_MEAN;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (avg\_type\ ==\ \textcolor{stringliteral}{"{}geometric\_mean"{}})}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ GEOMETRIC\_MEAN;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (avg\_type\ ==\ \textcolor{stringliteral}{"{}median"{}})}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MEDIAN;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Average\ Type:\ \%s"{}},\ avg\_type.c\_str());}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (AvgType\_t)\ -\/1;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{static}\ MovingAverage<T>*\ createAvgType(AvgType\_t\ avg\_type,\ UInt32\ max\_window\_size);}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ update(T\ next\_num)\ =\ 0;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ T\ compute()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ T\ compute(T\ next\_num)\ \{\ update(next\_num);\ \textcolor{keywordflow}{return}\ compute();\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ std::vector<T>\ m\_num\_list;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ UInt32\ m\_max\_window\_size;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ ModuloNum\ m\_curr\_window\_front;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ ModuloNum\ m\_curr\_window\_back;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addToWindow(T\ next\_num);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ printElements()}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Elements:\ "{}});}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ ModuloNum\ curr\_num(m\_curr\_window\_front);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ ;\ curr\_num\ !=\ m\_curr\_window\_back;\ curr\_num\ =\ curr\_num+1)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%f\ "{}},\ (\textcolor{keywordtype}{float})\ m\_num\_list[curr\_num.getValue()]);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00066\ MovingAverage<T>::MovingAverage(UInt32\ max\_window\_size)}
+\DoxyCodeLine{00067\ \ \ \ :\ m\_max\_window\_size(max\_window\_size)}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ \ m\_num\_list.resize(m\_max\_window\_size\ +\ 1);}
+\DoxyCodeLine{00070\ \ \ \ m\_curr\_window\_front\ =\ ModuloNum(m\_max\_window\_size\ +\ 1);}
+\DoxyCodeLine{00071\ \ \ \ m\_curr\_window\_back\ =\ ModuloNum(m\_max\_window\_size\ +\ 1);}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00075\ MovingAverage<T>::\string~MovingAverage()}
+\DoxyCodeLine{00076\ \{\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{void}\ MovingAverage<T>::addToWindow(T\ next\_num)}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \ \ \ m\_num\_list[m\_curr\_window\_back.getValue()]\ =\ next\_num;}
+\DoxyCodeLine{00082\ \ \ \ m\_curr\_window\_back\ =\ m\_curr\_window\_back\ +\ 1;}
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{if}\ (m\_curr\_window\_back\ ==\ m\_curr\_window\_front)}
+\DoxyCodeLine{00084\ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ m\_curr\_window\_front\ =\ m\_curr\_window\_front\ +\ 1;}
+\DoxyCodeLine{00086\ \ \ \ \}}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00090\ \textcolor{keyword}{class\ }MovingArithmeticMean\ :\ \textcolor{keyword}{public}\ MovingAverage<T>}
+\DoxyCodeLine{00091\ \{}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ T\ sum;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ MovingArithmeticMean(UInt32\ max\_window\_size):}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ MovingAverage<T>(max\_window\_size),}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ sum(SubsecondTime::Zero())}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \{\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ update(T\ next\_num)}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ UInt32\ curr\_window\_size\ =\ (this-\/>m\_curr\_window\_back\ -\/\ this-\/>m\_curr\_window\_front).getValue();}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (curr\_window\_size\ ==\ this-\/>m\_max\_window\_size)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ curr\_window\_size\ -\/-\/;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ sum\ -\/=\ this-\/>m\_num\_list[this-\/>m\_curr\_window\_front.getValue()];}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ sum\ +=\ next\_num;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ curr\_window\_size\ ++;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ this-\/>addToWindow(next\_num);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ T\ compute()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00116\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ UInt32\ curr\_window\_size\ =\ (this-\/>m\_curr\_window\_back\ -\/\ this-\/>m\_curr\_window\_front).getValue();\ \textcolor{comment}{//\ recompute}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sum\ /\ curr\_window\_size;}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00123\ \textcolor{keyword}{class\ }MovingGeometricMean\ :\ \textcolor{keyword}{public}\ MovingAverage<T>}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ MovingGeometricMean(UInt32\ max\_window\_size):}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ MovingAverage<T>(max\_window\_size)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \{\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ update(T\ next\_num)}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ this-\/>addToWindow(next\_num);}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \ \ T\ compute()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ UInt32\ curr\_window\_size\ =\ (this-\/>m\_curr\_window\_back\ -\/\ this-\/>m\_curr\_window\_front).getValue();}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ T\ geometric\_mean\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ geometric\_mean.setInternalDataForced(1);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ ModuloNum\ curr\_num(this-\/>m\_curr\_window\_front);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ ;\ curr\_num\ !=\ this-\/>m\_curr\_window\_back;\ curr\_num\ =\ curr\_num+1)}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ geometric\_mean\ *=\ this-\/>m\_num\_list[curr\_num.getValue()];}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//FIXME\ Use\ of\ internal\ data}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ SubsecondTime\ ret;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ ret.setInternalDataForced(pow((\textcolor{keywordtype}{double})\ geometric\_mean.getInternalDataForced(),\ (\textcolor{keywordtype}{double})\ 1.0/curr\_window\_size));}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \};}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00153\ \textcolor{keyword}{class\ }MovingMedian\ :\ \textcolor{keyword}{public}\ MovingAverage<T>}
+\DoxyCodeLine{00154\ \{}
+\DoxyCodeLine{00155\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ MovingMedian(UInt32\ max\_window\_size):}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ MovingAverage<T>(max\_window\_size)}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \{\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ update(T\ next\_num)}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ this-\/>addToWindow(next\_num);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ T\ compute()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00166\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ UInt32\ curr\_window\_size\ =\ (this-\/>m\_curr\_window\_back\ -\/\ this-\/>m\_curr\_window\_front).getValue();}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ UInt32\ median\_index\ =\ (this-\/>m\_curr\_window\_front\ +\ (curr\_window\_size\ /\ 2)).getValue();}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ this-\/>m\_num\_list[median\_index];}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00171\ \};}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00174\ MovingAverage<T>*\ MovingAverage<T>::createAvgType(AvgType\_t\ avg\_type,\ UInt32\ max\_window\_size)}
+\DoxyCodeLine{00175\ \{}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keywordflow}{switch}(avg\_type)}
+\DoxyCodeLine{00177\ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ARITHMETIC\_MEAN:}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ MovingArithmeticMean<T>(max\_window\_size);}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ GEOMETRIC\_MEAN:}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ MovingGeometricMean<T>(max\_window\_size);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEDIAN:}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ MovingMedian<T>(max\_window\_size);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Average\ Type:\ \%u"{}},\ (UInt32)\ avg\_type);}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00190\ \ \ \ \}}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_MOVING\_AVERAGE\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

@@ -1,0 +1,135 @@
+\doxysection{routine\+\_\+tracer\+\_\+funcstats.\+h}
+\label{routine__tracer__funcstats_8h_source}\index{common/system/routine\_tracer\_funcstats.h@{common/system/routine\_tracer\_funcstats.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_ROUTINE\_TRACER\_FUNCSTATS\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_ROUTINE\_TRACER\_FUNCSTATS\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}thread\_stats\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache\_efficiency\_tracker.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }StatsMetricBase;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }RoutineTracerFunctionStats}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<ThreadStatsManager::ThreadStatType,\ UInt64>\ RtnValues;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{class\ }Routine\ :\ \textcolor{keyword}{public}\ RoutineTracer::Routine}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_provisional;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ m\_calls;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ RtnValues\ m\_values;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ m\_bits\_used,\ m\_bits\_total;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ Routine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ :\ RoutineTracer::Routine(eip,\ name,\ imgname,\ offset,\ column,\ line,\ filename)}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_provisional(false),\ m\_calls(0),\ m\_values(),\ m\_bits\_used(0),\ m\_bits\_total(0)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isProvisional()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_provisional;\ \}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setProvisional(\textcolor{keywordtype}{bool}\ provisional)\ \{\ m\_provisional\ =\ provisional;\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ superclass\ data\ is\ copied,\ but\ clear\ the\ statistics.}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ Routine(\textcolor{keyword}{const}\ Routine\ \&r)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ :\ RoutineTracer::Routine(r)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_calls(0),\ m\_values(),\ m\_bits\_used(0),\ m\_bits\_total(0)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{class\ }RtnThread;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keyword}{class\ }RtnMaster\ :\ \textcolor{keyword}{public}\ RoutineTracer}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::vector<ThreadStatsManager::ThreadStatType>\ m\_threadstats;}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<thread\_id\_t,\ RtnThread*>\ m\_threads;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ RtnMaster();}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~RtnMaster();}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ RoutineTracerThread*\ getThreadHandler(Thread\ *thread);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ hasRoutine(IntPtr\ eip);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateRoutine(IntPtr\ eip,\ UInt64\ calls,\ RtnValues\ values);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateRoutineFull(\textcolor{keyword}{const}\ CallStack\&\ stack,\ UInt64\ calls,\ RtnValues\ values);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateRoutineFull(RoutineTracerFunctionStats::Routine*\ rtn,\ UInt64\ calls,\ RtnValues\ values);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ RoutineTracerFunctionStats::Routine*\ getRoutineFullPtr(\textcolor{keyword}{const}\ CallStack\&\ stack);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flat-\/profile\ per-\/thread\ statistics\ (excludes\ statistics\ from\ child\ calls).}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,\ RoutineTracerFunctionStats::Routine*>\ RoutineMap;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ RoutineMap\ m\_routines;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Call-\/stack-\/based\ statistics\ (includes\ statistics\ from\ child\ calls).}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<CallStack,\ RoutineTracerFunctionStats::Routine*>\ RoutineMapFull;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ RoutineMapFull\ m\_callstack\_routines;}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ ce\_get\_owner(core\_id\_t\ core\_id,\ UInt64\ address);}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ ce\_notify\_evict(\textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total);}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ \_\_ce\_get\_owner(UInt64\ user,\ core\_id\_t\ core\_id,\ UInt64\ address)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((RtnMaster*)user)-\/>ce\_get\_owner(core\_id,\ address);\ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_ce\_notify\_evict(UInt64\ user,\ \textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total)}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ ((RtnMaster*)user)-\/>ce\_notify\_evict(on\_roi\_end,\ owner,\ evictor,\ bits\_used,\ bits\_total);\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ writeResults(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ writeResultsFull(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keyword}{class\ }RtnThread\ :\ \textcolor{keyword}{public}\ RoutineTracerThread}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ RtnThread(RtnMaster\ *master,\ Thread\ *thread);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ getCurrentRoutineId();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ RtnMaster\ *m\_master;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ m\_current\_eip;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ RtnValues\ m\_values\_start;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<CallStack,\ RtnValues>\ m\_values\_start\_full;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ functionBegin(IntPtr\ eip);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ functionEnd(IntPtr\ eip,\ \textcolor{keywordtype}{bool}\ is\_function\_start);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ functionBeginHelper(IntPtr\ eip,\ RtnValues\&);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ functionEndHelper(IntPtr\ eip,\ UInt64\ count);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ functionEndFullHelper(\textcolor{keyword}{const}\ CallStack\ \&stack,\ UInt64\ count);}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ getThreadStat(ThreadStatsManager::ThreadStatType\ type);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionEnter(IntPtr\ eip,\ IntPtr\ callEip);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionExit(IntPtr\ eip);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionChildEnter(IntPtr\ eip,\ IntPtr\ eip\_child);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ functionChildExit(IntPtr\ eip,\ IntPtr\ eip\_child);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keyword}{class\ }ThreadStatAggregates}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ registerStats();}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ StatType\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GLOBAL\_INSTRUCTIONS,}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GLOBAL\_NONIDLE\_ELAPSED\_TIME,}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ callback(ThreadStatsManager::ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keyword}{class\ }ThreadStatCpiMem}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ ThreadStatsManager::ThreadStatType\ registerStat();}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<std::vector<StatsMetricBase*>\ >\ m\_stats;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ ThreadStatCpiMem();}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ callback(ThreadStatsManager::ThreadStatType\ type,\ thread\_id\_t\ thread\_id,\ Core\ *core,\ UInt64\ user);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00127\ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_ROUTINE\_TRACER\_FUNCSTATS\_H}}
+
+\end{DoxyCode}

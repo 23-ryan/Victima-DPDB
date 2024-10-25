@@ -1,0 +1,122 @@
+\doxysection{queue\+\_\+model\+\_\+windowed\+\_\+mg1.\+cc}
+\label{queue__model__windowed__mg1_8cc_source}\index{common/performance\_model/queue\_model\_windowed\_mg1.cc@{common/performance\_model/queue\_model\_windowed\_mg1.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_windowed\_mg1.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ QueueModelWindowedMG1::QueueModelWindowedMG1(String\ name,\ UInt32\ \textcolor{keywordtype}{id})}
+\DoxyCodeLine{00008\ \ \ \ :\ m\_window\_size(SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}queue\_model/windowed\_mg1/window\_size"{}})))}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_total\_requests(0)}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_total\_utilized\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_total\_queue\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_num\_arrivals(0)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_service\_time\_sum(0)}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_service\_time\_sum2(0)}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}num-\/requests"{}},\ \&m\_total\_requests);}
+\DoxyCodeLine{00017\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}total-\/time-\/used"{}},\ \&m\_total\_utilized\_time);}
+\DoxyCodeLine{00018\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}total-\/queue-\/delay"{}},\ \&m\_total\_queue\_delay);}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ QueueModelWindowedMG1::\string~QueueModelWindowedMG1()}
+\DoxyCodeLine{00022\ \{\}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ SubsecondTime}
+\DoxyCodeLine{00025\ QueueModelWindowedMG1::computeQueueDelay(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time,\ core\_id\_t\ requester)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ SubsecondTime\ t\_queue\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{comment}{//\ Advance\ the\ window\ based\ on\ the\ global\ (barrier)\ time,\ as\ this\ guarantees\ the\ earliest\ time\ any\ thread\ may\ be\ at.}}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{comment}{//\ Use\ a\ backup\ value\ of\ 10\ window\ sizes\ before\ the\ current\ request\ to\ avoid\ excessive\ memory\ usage\ in\ case\ something\ fishy\ is\ going\ on.}}
+\DoxyCodeLine{00031\ \ \ \ removeItems(std::max(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime()\ -\/\ m\_window\_size,\ pkt\_time\ -\/\ 10*m\_window\_size));}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_arrivals\ >\ 1)}
+\DoxyCodeLine{00034\ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ utilization\ =\ (double)m\_service\_time\_sum\ /\ m\_window\_size.getPS();}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ arrival\_rate\ =\ (double)m\_num\_arrivals\ /\ m\_window\_size.getPS();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ service\_time\_Es2\ =\ m\_service\_time\_sum2\ /\ m\_num\_arrivals;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ requesters\ do\ not\ throttle\ based\ on\ returned\ latency,\ it's\ their\ problem,\ not\ ours}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (utilization\ >\ .99)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ utilization\ =\ .99;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ t\_queue\ =\ SubsecondTime::PS(arrival\_rate\ *\ service\_time\_Es2\ /\ (2\ *\ (1.\ -\/\ utilization)));}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{comment}{//\ Our\ memory\ is\ limited\ in\ time\ to\ m\_window\_size.\ It\ would\ be\ strange\ to\ return\ more\ latency\ than\ that.}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_queue\ >\ m\_window\_size)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ t\_queue\ =\ m\_window\_size;}
+\DoxyCodeLine{00049\ \ \ \ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ addItem(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ m\_total\_requests++;}
+\DoxyCodeLine{00054\ \ \ \ m\_total\_utilized\_time\ +=\ processing\_time;}
+\DoxyCodeLine{00055\ \ \ \ m\_total\_queue\_delay\ +=\ t\_queue;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{return}\ t\_queue;}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ SubsecondTime}
+\DoxyCodeLine{00061\ QueueModelWindowedMG1::computeQueueDelayNoEffect(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time,\ core\_id\_t\ requester)}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ \ \ \ SubsecondTime\ t\_queue\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \textcolor{comment}{//\ Advance\ the\ window\ based\ on\ the\ global\ (barrier)\ time,\ as\ this\ guarantees\ the\ earliest\ time\ any\ thread\ may\ be\ at.}}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{comment}{//\ Use\ a\ backup\ value\ of\ 10\ window\ sizes\ before\ the\ current\ request\ to\ avoid\ excessive\ memory\ usage\ in\ case\ something\ fishy\ is\ going\ on.}}
+\DoxyCodeLine{00067\ \ \ \ removeItems(std::max(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime()\ -\/\ m\_window\_size,\ pkt\_time\ -\/\ 10*m\_window\_size));}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_arrivals\ >\ 1)}
+\DoxyCodeLine{00070\ \ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ utilization\ =\ (double)m\_service\_time\_sum\ /\ m\_window\_size.getPS();}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ arrival\_rate\ =\ (double)m\_num\_arrivals\ /\ m\_window\_size.getPS();}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ service\_time\_Es2\ =\ m\_service\_time\_sum2\ /\ m\_num\_arrivals;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ requesters\ do\ not\ throttle\ based\ on\ returned\ latency,\ it's\ their\ problem,\ not\ ours}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (utilization\ >\ .99)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ utilization\ =\ .99;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ t\_queue\ =\ SubsecondTime::PS(arrival\_rate\ *\ service\_time\_Es2\ /\ (2\ *\ (1.\ -\/\ utilization)));}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{comment}{//\ Our\ memory\ is\ limited\ in\ time\ to\ m\_window\_size.\ It\ would\ be\ strange\ to\ return\ more\ latency\ than\ that.}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_queue\ >\ m\_window\_size)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ t\_queue\ =\ m\_window\_size;}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ addItem(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ m\_total\_requests++;}
+\DoxyCodeLine{00090\ \ \ \ m\_total\_utilized\_time\ +=\ processing\_time;}
+\DoxyCodeLine{00091\ \ \ \ m\_total\_queue\_delay\ +=\ t\_queue;}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordflow}{return}\ t\_queue;}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00097\ QueueModelWindowedMG1::addItem(SubsecondTime\ pkt\_time,\ SubsecondTime\ service\_time)}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ m\_window.insert(std::pair<SubsecondTime,\ SubsecondTime>(pkt\_time,\ service\_time));}
+\DoxyCodeLine{00100\ \ \ \ m\_num\_arrivals\ ++;}
+\DoxyCodeLine{00101\ \ \ \ m\_service\_time\_sum\ +=\ service\_time.getPS();}
+\DoxyCodeLine{00102\ \ \ \ m\_service\_time\_sum2\ +=\ service\_time.getPS()\ *\ service\_time.getPS();}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00106\ QueueModelWindowedMG1::removeItems(SubsecondTime\ earliest\_time)}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keywordflow}{while}(!m\_window.empty()\ \&\&\ m\_window.begin()-\/>first\ <\ earliest\_time)}
+\DoxyCodeLine{00109\ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ std::multimap<SubsecondTime,\ SubsecondTime>::iterator\ entry\ =\ m\_window.begin();}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ m\_num\_arrivals\ -\/-\/;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ m\_service\_time\_sum\ -\/=\ entry-\/>second.getPS();}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ m\_service\_time\_sum2\ -\/=\ entry-\/>second.getPS()\ *\ entry-\/>second.getPS();}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ m\_window.erase(entry);}
+\DoxyCodeLine{00115\ \ \ \ \}}
+\DoxyCodeLine{00116\ \}}
+
+\end{DoxyCode}

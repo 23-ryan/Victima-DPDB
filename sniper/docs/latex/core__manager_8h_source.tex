@@ -1,0 +1,72 @@
+\doxysection{core\+\_\+manager.\+h}
+\label{core__manager_8h_source}\index{common/system/core\_manager.h@{common/system/core\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CORE\_MANAGER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CORE\_MANAGER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}tls.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }CoreManager}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ CoreManager();}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \string~CoreManager();}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ ThreadType\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ INVALID,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ APP\_THREAD,\ \ \ \textcolor{comment}{//\ Application\ (Pin)\ thread}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ CORE\_THREAD,\ \ \textcolor{comment}{//\ Core\ (Performance\ model)\ thread}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ SIM\_THREAD\ \ \ \ \textcolor{comment}{//\ Simulator\ (Network\ model)\ thread}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ initializeCommId(SInt32\ comm\_id);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ initializeThread(core\_id\_t\ core\_id);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ terminateThread();}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ core\_id\_t\ registerSimThread(ThreadType\ type);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ core\_id\_t\ getCurrentCoreID(\textcolor{keywordtype}{int}\ threadIndex\ =\ -\/1)\ \textcolor{comment}{//\ id\ of\ currently\ active\ core\ (or\ INVALID\_CORE\_ID)}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ getCurrentCore(threadIndex);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!core)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core-\/>getId();}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ Core\ *getCurrentCore(\textcolor{keywordtype}{int}\ threadIndex\ =\ -\/1)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_core\_tls-\/>getPtr<Core>(threadIndex);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ Core\ *getCoreFromID(core\_id\_t\ core\_id);}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ amiUserThread();}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ amiCoreThread();}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ amiSimThread();}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ UInt32\ *tid\_map;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ TLS\ *m\_core\_tls;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ TLS\ *m\_thread\_type\_tls;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ UInt32\ m\_num\_registered\_sim\_threads;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ UInt32\ m\_num\_registered\_core\_threads;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ Lock\ m\_num\_registered\_threads\_lock;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ std::vector<Core*>\ m\_cores;}
+\DoxyCodeLine{00064\ \};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

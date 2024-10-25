@@ -1,0 +1,91 @@
+\doxysection{memory\+\_\+dependencies.\+cc}
+\label{memory__dependencies_8cc_source}\index{common/performance\_model/performance\_models/micro\_op/memory\_dependencies.cc@{common/performance\_model/performance\_models/micro\_op/memory\_dependencies.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}memory\_dependencies.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ MemoryDependencies::MemoryDependencies()}
+\DoxyCodeLine{00004\ \ \ \ :\ producers(1024)\ \textcolor{comment}{//\ Maximum\ size\ should\ be\ one\ ROB\ worth\ of\ instructions}}
+\DoxyCodeLine{00005\ \{}
+\DoxyCodeLine{00006\ \ \ \ clear();}
+\DoxyCodeLine{00007\ \}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ MemoryDependencies::\string~MemoryDependencies()}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keywordtype}{void}\ MemoryDependencies::setDependencies(DynamicMicroOp\ \&microOp,\ uint64\_t\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{comment}{//\ Remove\ all\ entries\ that\ are\ now\ below\ lowestValidSequenceNumber}}
+\DoxyCodeLine{00016\ \ \ \ clean(lowestValidSequenceNumber);}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{if}\ (microOp.getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ uint64\_t\ physicalAddress\ =\ microOp.getLoadAccess().phys;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ uint64\_t\ producerSequenceNumber\ =\ find(physicalAddress);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (producerSequenceNumber\ !=\ INVALID\_SEQNR)\ \textcolor{comment}{/*\ producer\ found\ */}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ microOp.addDependency(producerSequenceNumber);}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((membar\ !=\ INVALID\_SEQNR)\ \&\&\ (membar\ >\ lowestValidSequenceNumber))}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ microOp.addDependency(membar);}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (microOp.getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00033\ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ uint64\_t\ physicalAddress\ =\ microOp.getStoreAccess().phys;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ add(microOp.getSequenceNumber(),\ physicalAddress);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{comment}{//\ Stores\ are\ also\ dependent\ on\ membars}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((membar\ !=\ INVALID\_SEQNR)\ \&\&\ (membar\ >\ lowestValidSequenceNumber))}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ microOp.addDependency(membar);}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (microOp.getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{comment}{//\ And\ membars\ are\ dependent\ on\ previous\ membars}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((membar\ !=\ INVALID\_SEQNR)\ \&\&\ (membar\ >\ lowestValidSequenceNumber))}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ microOp.addDependency(membar);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{comment}{//\ Actual\ MFENCE\ instruction}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{comment}{//\ All\ new\ instructions\ will\ have\ higher\ sequence\ numbers}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{comment}{//\ Therefore,\ this\ will\ remain\ sorted}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ membar\ =\ microOp.getSequenceNumber();}
+\DoxyCodeLine{00056\ \ \ \ \}}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keywordtype}{void}\ MemoryDependencies::add(uint64\_t\ sequenceNumber,\ uint64\_t\ address)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ Producer\ producer\ =\ \{sequenceNumber,\ address\};}
+\DoxyCodeLine{00062\ \ \ \ producers.push(producer);}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ uint64\_t\ MemoryDependencies::find(uint64\_t\ address)}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{comment}{//\ There\ may\ be\ multiple\ entries\ with\ the\ same\ address,\ we\ want\ the\ latest\ one\ so\ traverse\ list\ in\ reverse\ order}}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ producers.size()\ -\/\ 1;\ i\ >=\ 0;\ -\/-\/i)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (producers.at(i).address\ ==\ address)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ producers.at(i).seqnr;}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_SEQNR;}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{void}\ MemoryDependencies::clean(uint64\_t\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00075\ \{}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{while}(!producers.empty()\ \&\&\ producers.front().seqnr\ <\ lowestValidSequenceNumber)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ producers.pop();}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{void}\ MemoryDependencies::clear()}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{while}(!producers.empty())}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ producers.pop();}
+\DoxyCodeLine{00084\ \ \ \ membar\ =\ INVALID\_SEQNR;}
+\DoxyCodeLine{00085\ \}}
+
+\end{DoxyCode}

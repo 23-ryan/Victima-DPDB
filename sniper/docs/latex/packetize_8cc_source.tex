@@ -1,0 +1,110 @@
+\doxysection{packetize.\+cc}
+\label{packetize_8cc_source}\index{common/misc/packetize.cc@{common/misc/packetize.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}packetize.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ UnstructuredBuffer::UnstructuredBuffer()}
+\DoxyCodeLine{00004\ \{}
+\DoxyCodeLine{00005\ \}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ UnstructuredBuffer::getBuffer()}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keywordflow}{return}\ m\_chars.data();}
+\DoxyCodeLine{00010\ \}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keywordtype}{void}\ UnstructuredBuffer::clear()}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ m\_chars.erase();}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{int}\ UnstructuredBuffer::size()}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{return}\ m\_chars.size();}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ put\ buffer}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ UnstructuredBuffer\&\ UnstructuredBuffer::operator<<(std::pair<const\ void*,\ int>\ buffer)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buff\ =\ buffer.first;}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordtype}{int}\ size\ =\ buffer.second;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ assert(size\ >=\ 0);}
+\DoxyCodeLine{00030\ \ \ \ put<UInt8>((UInt8*)\ buff,\ size);}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ get\ buffer}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ UnstructuredBuffer\&\ UnstructuredBuffer::operator>>(std::pair<void*,\ int>\ buffer)}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buff\ =\ buffer.first;}
+\DoxyCodeLine{00039\ \ \ \ \_\_attribute\_\_((unused))\ \textcolor{keywordtype}{int}\ size\ =\ buffer.second;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ assert(size\ >=\ 0);}
+\DoxyCodeLine{00042\ \ \ \ \_\_attribute\_\_((unused))\ \textcolor{keywordtype}{bool}\ res\ =\ get<UInt8>((UInt8*)\ buff,\ size);}
+\DoxyCodeLine{00043\ \ \ \ assert(res\ ==\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#ifdef\ DEBUG\_UNSTRUCTURED\_BUFFER}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{int}\ main(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}*\ argv[])}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ UnstructuredBuffer\ buff;}
+\DoxyCodeLine{00052\ \ \ \ UInt32\ data1\ =\ 1;}
+\DoxyCodeLine{00053\ \ \ \ UInt8\ data2\ =\ \textcolor{charliteral}{'a'};}
+\DoxyCodeLine{00054\ \ \ \ UInt32\ data3\ =\ 3;}
+\DoxyCodeLine{00055\ \ \ \ buff\ <<\ data1\ <<\ data2\ <<\ data3;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ UInt32\ data1prime;}
+\DoxyCodeLine{00058\ \ \ \ UInt8\ data2prime;}
+\DoxyCodeLine{00059\ \ \ \ UInt32\ data3prime;}
+\DoxyCodeLine{00060\ \ \ \ buff\ >>\ data1prime\ >>\ data2prime\ >>\ data3prime;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ cout\ <<\ data1prime\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ data2prime\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ data3prime\ <<\ endl;}
+\DoxyCodeLine{00063\ \ \ \ assert(data1\ ==\ data1prime);}
+\DoxyCodeLine{00064\ \ \ \ assert(data2\ ==\ data2prime);}
+\DoxyCodeLine{00065\ \ \ \ assert(data3\ ==\ data3prime);}
+\DoxyCodeLine{00066\ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}success:\ test\ 1"{}}\ <<\ endl;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordtype}{char}\ data4[]\ =\ \textcolor{stringliteral}{"{}hello\ world"{}};}
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordtype}{char}\ data4prime[]\ =\ \textcolor{stringliteral}{"{}aaaaaaaaaaaa"{}};}
+\DoxyCodeLine{00070\ \ \ \ buff\ <<\ make\_pair(data4,\ 12);}
+\DoxyCodeLine{00071\ \ \ \ buff\ >>\ make\_pair(data4prime,\ 12);}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ cout\ <<\ data4prime\ <<\ endl;}
+\DoxyCodeLine{00075\ \ \ \ assert(strcmp(data4prime,\ data4)\ ==\ 0);}
+\DoxyCodeLine{00076\ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}success:\ test\ 2"{}}\ <<\ endl;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordtype}{int}\ data5\ =\ 42;}
+\DoxyCodeLine{00079\ \ \ \ buff\ <<\ data5;}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordtype}{int}\ data5prime\ =\ -\/1;}
+\DoxyCodeLine{00081\ \ \ \ buff\ >>\ data5prime;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ cout\ <<\ data5prime\ <<\ endl;}
+\DoxyCodeLine{00084\ \ \ \ assert(data5\ ==\ data5prime);}
+\DoxyCodeLine{00085\ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}success:\ test\ 3"{}}\ <<\ endl;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ UInt64\ data6\ =\ 40;}
+\DoxyCodeLine{00088\ \ \ \ UInt64\ data7\ =\ 41;}
+\DoxyCodeLine{00089\ \ \ \ buff\ <<\ data6\ <<\ data7;}
+\DoxyCodeLine{00090\ \ \ \ UInt64\ data6prime\ =\ 0;}
+\DoxyCodeLine{00091\ \ \ \ UInt64\ data7prime\ =\ 0;}
+\DoxyCodeLine{00092\ \ \ \ buff\ >>\ data6prime\ >>\ data7prime;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ cout\ <<\ data6prime\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ data7prime\ <<\ endl;}
+\DoxyCodeLine{00095\ \ \ \ assert(data6\ ==\ data6prime);}
+\DoxyCodeLine{00096\ \ \ \ assert(data7\ ==\ data7prime);}
+\DoxyCodeLine{00097\ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}success:\ test\ 4"{}}\ <<\ endl;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}All\ tests\ passed"{}}\ <<\ endl;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

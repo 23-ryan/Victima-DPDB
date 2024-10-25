@@ -1,0 +1,77 @@
+\doxysection{operand.\+h}
+\label{operand_8h_source}\index{common/performance\_model/operand.h@{common/performance\_model/operand.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ OPERAND\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ OPERAND\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }Operand}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keyword}{enum}\ Type}
+\DoxyCodeLine{00014\ \ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ REG,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ MEMORY,}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ IMMEDIATE}
+\DoxyCodeLine{00018\ \ \ \ \};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{enum}\ Direction}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ READ,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ WRITE}
+\DoxyCodeLine{00024\ \ \ \ \};}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{typedef}\ UInt64\ Value;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ Operand(\textcolor{keyword}{const}\ Operand\ \&src)}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ :\ m\_type(src.m\_type),\ m\_value(src.m\_value),\ m\_direction(src.m\_direction),\ m\_value\_name(src.m\_value\_name),\ m\_mem\_operand(src.m\_mem\_operand)\ \{\}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ Operand(Type\ type,\ Value\ value\ =\ 0,\ Direction\ direction\ =\ READ,\ \textcolor{keyword}{const}\ String\&\ value\_name\ =\ String(),\ \textcolor{keywordtype}{bool}\ mem\_operand\ =\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ :\ m\_type(type),\ m\_value(value),\ m\_direction(direction),\ m\_value\_name(value\_name),\ m\_mem\_operand(mem\_operand)\ \{\}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ String\ toString\ (\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00035\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ std::ostringstream\ o;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}Operand:\ "{}};}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_type\ ==\ REG)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}REG"{}};}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_type\ ==\ MEMORY)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}MEMORY"{}};}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_type\ ==\ IMMEDIATE)}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}IMMEDIATE"{}};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_direction\ ==\ READ)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}READ"{}};}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_direction\ ==\ WRITE)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}WRITE"{}};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ o\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_type\ ==\ REG)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ o\ <<\ m\_value\_name\ <<\ \textcolor{stringliteral}{"{}[Operand:"{}}\ <<\ m\_mem\_operand\ <<\ \textcolor{stringliteral}{"{}]\ ("{}}\ <<\ m\_value\ <<\ \textcolor{stringliteral}{"{})"{}};}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ o\ <<\ m\_value;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(o.str().c\_str());}
+\DoxyCodeLine{00060\ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ Type\ m\_type;}
+\DoxyCodeLine{00063\ \ \ \ Value\ m\_value;}
+\DoxyCodeLine{00064\ \ \ \ Direction\ m\_direction;}
+\DoxyCodeLine{00065\ \ \ \ String\ m\_value\_name;\ \textcolor{comment}{//\ for\ m\_type\ ==\ REG}}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordtype}{bool}\ m\_mem\_operand;\ \textcolor{comment}{//\ for\ m\_type\ ==\ REG}}
+\DoxyCodeLine{00067\ \};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{typedef}\ std::vector<Operand>\ OperandList;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ OPERAND\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

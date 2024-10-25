@@ -1,0 +1,527 @@
+\doxysection{pin/codecache\+\_\+trace.cc File Reference}
+\label{codecache__trace_8cc}\index{pin/codecache\_trace.cc@{pin/codecache\_trace.cc}}
+{\ttfamily \#include "{}fixed\+\_\+types.\+h"{}}\newline
+{\ttfamily \#include "{}codecache\+\_\+trace.\+h"{}}\newline
+{\ttfamily \#include "{}timer.\+h"{}}\newline
+{\ttfamily \#include "{}hooks\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}subsecond\+\_\+time.\+h"{}}\newline
+{\ttfamily \#include "{}simulator.\+h"{}}\newline
+{\ttfamily \#include "{}pin.\+H"{}}\newline
+{\ttfamily \#include $<$inttypes.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+Include dependency graph for codecache\+\_\+trace.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ \+\_\+\+\_\+\+STDC\+\_\+\+FORMAT\+\_\+\+MACROS}
+\item 
+\#define \textbf{ atomic\+\_\+inc\+\_\+int64}(a)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+VOID \textbf{ cache\+Init} ()
+\item 
+VOID \textbf{ new\+Cache\+Block} (USIZE new\+\_\+block\+\_\+size)
+\item 
+VOID \textbf{ full\+Cache} (USIZE trace\+\_\+size, USIZE stub\+\_\+size)
+\item 
+VOID \textbf{ cache\+Flushed} ()
+\item 
+VOID \textbf{ code\+Cache\+Entered} (ADDRINT cache\+\_\+pc)
+\item 
+VOID \textbf{ code\+Cache\+Exited} (ADDRINT cache\+\_\+pc)
+\item 
+VOID \textbf{ trace\+Linked} (ADDRINT branch\+\_\+pc, ADDRINT target\+\_\+pc)
+\item 
+VOID \textbf{ trace\+Unlinked} (ADDRINT branch\+\_\+pc, ADDRINT stub\+\_\+pc)
+\item 
+VOID \textbf{ trace\+Invalidated} (ADDRINT orig\+\_\+pc, ADDRINT cache\+\_\+pc, BOOL success)
+\item 
+VOID \textbf{ trace\+Inserted} (TRACE trace, VOID $\ast$v)
+\item 
+void \textbf{ print\+Code\+Cache\+Trace} (const \textbf{ Subsecond\+Time} \&time)
+\item 
+void \textbf{ print\+Code\+Cache\+Stats} (const \textbf{ Subsecond\+Time} \&time)
+\item 
+void \textbf{ code\+Cache\+Periodic\+Callback} (void $\ast$self, \textbf{ subsecond\+\_\+time\+\_\+t} \+\_\+time)
+\item 
+void \textbf{ init\+Code\+Cache\+Tracing} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ cc\+\_\+counters} [8]
+\item 
+static FILE $\ast$ \textbf{ cctrace}
+\item 
+static FILE $\ast$ \textbf{ ccstats}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ next\+\_\+callback}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!\_\_STDC\_FORMAT\_MACROS@{\_\_STDC\_FORMAT\_MACROS}}
+\index{\_\_STDC\_FORMAT\_MACROS@{\_\_STDC\_FORMAT\_MACROS}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{\_\_STDC\_FORMAT\_MACROS}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_aacbb9e1f38be71e22df1584a37c56693} 
+\#define \+\_\+\+\_\+\+STDC\+\_\+\+FORMAT\+\_\+\+MACROS}
+
+
+
+Definition at line \textbf{ 10} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+\index{codecache\_trace.cc@{codecache\_trace.cc}!atomic\_inc\_int64@{atomic\_inc\_int64}}
+\index{atomic\_inc\_int64@{atomic\_inc\_int64}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{atomic\_inc\_int64}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_af4a07d26599dfb37a2b631b4beb46923} 
+\#define atomic\+\_\+inc\+\_\+int64(\begin{DoxyParamCaption}\item[{}]{a}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\_\_sync\_fetch\_and\_add(\&(a),\ 1)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 20} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+Referenced by \textbf{ cache\+Flushed()}, \textbf{ code\+Cache\+Entered()}, \textbf{ full\+Cache()}, \textbf{ new\+Cache\+Block()}, \textbf{ trace\+Inserted()}, \textbf{ trace\+Invalidated()}, \textbf{ trace\+Linked()}, and \textbf{ trace\+Unlinked()}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!cacheFlushed@{cacheFlushed}}
+\index{cacheFlushed@{cacheFlushed}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{cacheFlushed()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a6da008971ad75780d85a94b56d28bfcb} 
+VOID cache\+Flushed (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 36} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=341pt]{codecache__trace_8cc_a6da008971ad75780d85a94b56d28bfcb_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!cacheInit@{cacheInit}}
+\index{cacheInit@{cacheInit}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{cacheInit()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_ab52fc88b78b9afbfdf59bbd88c946557} 
+VOID cache\+Init (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+\index{codecache\_trace.cc@{codecache\_trace.cc}!codeCacheEntered@{codeCacheEntered}}
+\index{codeCacheEntered@{codeCacheEntered}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{codeCacheEntered()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_acad98d1e8863c179d49ddbfeabffbe39} 
+VOID code\+Cache\+Entered (\begin{DoxyParamCaption}\item[{ADDRINT}]{cache\+\_\+pc}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_acad98d1e8863c179d49ddbfeabffbe39_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!codeCacheExited@{codeCacheExited}}
+\index{codeCacheExited@{codeCacheExited}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{codeCacheExited()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_aacad6272a2b74144f3b0b6704d11476d} 
+VOID code\+Cache\+Exited (\begin{DoxyParamCaption}\item[{ADDRINT}]{cache\+\_\+pc}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 46} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+\index{codecache\_trace.cc@{codecache\_trace.cc}!codeCachePeriodicCallback@{codeCachePeriodicCallback}}
+\index{codeCachePeriodicCallback@{codeCachePeriodicCallback}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{codeCachePeriodicCallback()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a431d6132ce3df6b4f9076e4808c9a2c4} 
+void code\+Cache\+Periodic\+Callback (\begin{DoxyParamCaption}\item[{void $\ast$}]{self}{, }\item[{\textbf{ subsecond\+\_\+time\+\_\+t}}]{\+\_\+time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 95} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ next\+\_\+callback}, \textbf{ Subsecond\+Time\+::\+NS()}, \textbf{ print\+Code\+Cache\+Stats()}, and \textbf{ print\+Code\+Cache\+Trace()}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_a431d6132ce3df6b4f9076e4808c9a2c4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_a431d6132ce3df6b4f9076e4808c9a2c4_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!fullCache@{fullCache}}
+\index{fullCache@{fullCache}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{fullCache()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_af8fbe78022a146bc47151b77d1ef9dd6} 
+VOID full\+Cache (\begin{DoxyParamCaption}\item[{USIZE}]{trace\+\_\+size}{, }\item[{USIZE}]{stub\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 31} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=321pt]{codecache__trace_8cc_af8fbe78022a146bc47151b77d1ef9dd6_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!initCodeCacheTracing@{initCodeCacheTracing}}
+\index{initCodeCacheTracing@{initCodeCacheTracing}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{initCodeCacheTracing()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a0b35c1f4df105a54eb3f567f8d616728} 
+void init\+Code\+Cache\+Tracing (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 107} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ cache\+Flushed()}, \textbf{ ccstats}, \textbf{ cctrace}, \textbf{ code\+Cache\+Entered()}, \textbf{ code\+Cache\+Periodic\+Callback()}, \textbf{ full\+Cache()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+PERIODIC}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ new\+Cache\+Block()}, \textbf{ next\+\_\+callback}, \textbf{ trace\+Inserted()}, \textbf{ trace\+Invalidated()}, \textbf{ trace\+Linked()}, \textbf{ trace\+Unlinked()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ main()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_a0b35c1f4df105a54eb3f567f8d616728_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=228pt]{codecache__trace_8cc_a0b35c1f4df105a54eb3f567f8d616728_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!newCacheBlock@{newCacheBlock}}
+\index{newCacheBlock@{newCacheBlock}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{newCacheBlock()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a9e9bdff81b79af6df8a1749f67a46b20} 
+VOID new\+Cache\+Block (\begin{DoxyParamCaption}\item[{USIZE}]{new\+\_\+block\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_a9e9bdff81b79af6df8a1749f67a46b20_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!printCodeCacheStats@{printCodeCacheStats}}
+\index{printCodeCacheStats@{printCodeCacheStats}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{printCodeCacheStats()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a667556a8d3f91a963c4be0f3f719a277} 
+void print\+Code\+Cache\+Stats (\begin{DoxyParamCaption}\item[{const \textbf{ Subsecond\+Time} \&}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 80} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ ccstats}, and \textbf{ Subsecond\+Time\+::get\+NS()}.
+
+
+
+Referenced by \textbf{ code\+Cache\+Periodic\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=307pt]{codecache__trace_8cc_a667556a8d3f91a963c4be0f3f719a277_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_a667556a8d3f91a963c4be0f3f719a277_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!printCodeCacheTrace@{printCodeCacheTrace}}
+\index{printCodeCacheTrace@{printCodeCacheTrace}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{printCodeCacheTrace()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_ab82f1ca432e7b3c2a34c8a54436a33c8} 
+void print\+Code\+Cache\+Trace (\begin{DoxyParamCaption}\item[{const \textbf{ Subsecond\+Time} \&}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ cc\+\_\+counters}, \textbf{ cctrace}, \textbf{ Subsecond\+Time\+::get\+NS()}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ code\+Cache\+Periodic\+Callback()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{codecache__trace_8cc_ab82f1ca432e7b3c2a34c8a54436a33c8_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{codecache__trace_8cc_ab82f1ca432e7b3c2a34c8a54436a33c8_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!traceInserted@{traceInserted}}
+\index{traceInserted@{traceInserted}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{traceInserted()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a3ed3deb27800f0d51a14d040faffded1} 
+VOID trace\+Inserted (\begin{DoxyParamCaption}\item[{TRACE}]{trace}{, }\item[{VOID $\ast$}]{v}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=337pt]{codecache__trace_8cc_a3ed3deb27800f0d51a14d040faffded1_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!traceInvalidated@{traceInvalidated}}
+\index{traceInvalidated@{traceInvalidated}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{traceInvalidated()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a25c886113518cc94a97591bdc4581b49} 
+VOID trace\+Invalidated (\begin{DoxyParamCaption}\item[{ADDRINT}]{orig\+\_\+pc}{, }\item[{ADDRINT}]{cache\+\_\+pc}{, }\item[{BOOL}]{success}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=349pt]{codecache__trace_8cc_a25c886113518cc94a97591bdc4581b49_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!traceLinked@{traceLinked}}
+\index{traceLinked@{traceLinked}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{traceLinked()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_af3017569e400b9c5c6a5b80606af570b} 
+VOID trace\+Linked (\begin{DoxyParamCaption}\item[{ADDRINT}]{branch\+\_\+pc}{, }\item[{ADDRINT}]{target\+\_\+pc}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=331pt]{codecache__trace_8cc_af3017569e400b9c5c6a5b80606af570b_icgraph}
+\end{center}
+\end{figure}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!traceUnlinked@{traceUnlinked}}
+\index{traceUnlinked@{traceUnlinked}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{traceUnlinked()}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_aecdd71f42e49128000fa50fc4e07530b} 
+VOID trace\+Unlinked (\begin{DoxyParamCaption}\item[{ADDRINT}]{branch\+\_\+pc}{, }\item[{ADDRINT}]{stub\+\_\+pc}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+References \textbf{ atomic\+\_\+inc\+\_\+int64}, and \textbf{ cc\+\_\+counters}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{codecache__trace_8cc_aecdd71f42e49128000fa50fc4e07530b_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{codecache\_trace.cc@{codecache\_trace.cc}!cc\_counters@{cc\_counters}}
+\index{cc\_counters@{cc\_counters}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{cc\_counters}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a5411544ed1a56ab5ca60e4039588bab8} 
+\textbf{ uint64\+\_\+t} cc\+\_\+counters[8]}
+
+
+
+Definition at line \textbf{ 15} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+Referenced by \textbf{ cache\+Flushed()}, \textbf{ code\+Cache\+Entered()}, \textbf{ full\+Cache()}, \textbf{ new\+Cache\+Block()}, \textbf{ print\+Code\+Cache\+Trace()}, \textbf{ trace\+Inserted()}, \textbf{ trace\+Invalidated()}, \textbf{ trace\+Linked()}, and \textbf{ trace\+Unlinked()}.
+
+\index{codecache\_trace.cc@{codecache\_trace.cc}!ccstats@{ccstats}}
+\index{ccstats@{ccstats}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{ccstats}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_ad427a7a7dd19d08e3c2aee8e6c777869} 
+FILE$\ast$ ccstats\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 17} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}, and \textbf{ print\+Code\+Cache\+Stats()}.
+
+\index{codecache\_trace.cc@{codecache\_trace.cc}!cctrace@{cctrace}}
+\index{cctrace@{cctrace}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{cctrace}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_abf55ce53c40ad11fb0662e9c45e00e22} 
+FILE$\ast$ cctrace\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 16} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+Referenced by \textbf{ init\+Code\+Cache\+Tracing()}, and \textbf{ print\+Code\+Cache\+Trace()}.
+
+\index{codecache\_trace.cc@{codecache\_trace.cc}!next\_callback@{next\_callback}}
+\index{next\_callback@{next\_callback}!codecache\_trace.cc@{codecache\_trace.cc}}
+\doxysubsubsection{next\_callback}
+{\footnotesize\ttfamily \label{codecache__trace_8cc_a81aae0a2a5e107216b825d6b0b642e2b} 
+\textbf{ Subsecond\+Time} next\+\_\+callback}
+
+
+
+Definition at line \textbf{ 18} of file \textbf{ codecache\+\_\+trace.\+cc}.
+
+
+
+Referenced by \textbf{ code\+Cache\+Periodic\+Callback()}, and \textbf{ init\+Code\+Cache\+Tracing()}.
+

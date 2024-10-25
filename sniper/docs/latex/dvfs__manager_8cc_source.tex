@@ -1,0 +1,104 @@
+\doxysection{dvfs\+\_\+manager.\+cc}
+\label{dvfs__manager_8cc_source}\index{common/system/dvfs\_manager.cc@{common/system/dvfs\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ DvfsManager::DvfsManager()}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ m\_num\_app\_cores\ =\ Config::getSingleton()-\/>getApplicationCores();}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ m\_cores\_per\_socket\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}dvfs/simple/cores\_per\_socket"{}});}
+\DoxyCodeLine{00018\ \ \ \ m\_transition\_latency\ =\ SubsecondTime::NS()\ *\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}dvfs/transition\_latency"{}});}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{stringliteral}{"{}simple"{}}\ ==\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}dvfs/type"{}}),\ \textcolor{stringliteral}{"{}Currently,\ only\ this\ simple\ dvfs\ scheme\ is\ defined"{}});}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \textcolor{comment}{//\ Initial\ configuration\ provides\ for\ socket-\/wide\ frequency\ control,\ with\ [dvfs/simple/cores\_per\_socket]\ cores\ per\ socket}}
+\DoxyCodeLine{00023\ \ \ \ m\_num\_proc\_domains\ =\ m\_num\_app\_cores\ /\ m\_cores\_per\_socket;}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_app\_cores\ \%\ m\_cores\_per\_socket\ !=\ 0)}
+\DoxyCodeLine{00025\ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{comment}{//\ Round\ up\ if\ necessary}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ m\_num\_proc\_domains++;}
+\DoxyCodeLine{00028\ \ \ \ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordtype}{float}\ core\_frequency\ =\ Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/core/frequency"{}});}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{comment}{//\ Create\ a\ domain,\ converting\ from\ GHz\ frequencies\ specified\ in\ the\ configuration\ to\ Hz}}
+\DoxyCodeLine{00032\ \ \ \ ComponentPeriod\ core\_period\ =\ ComponentPeriod::fromFreqHz(core\_frequency*1000000000);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{comment}{//\ Allocate\ m\_num\_proc\_domains\ clock\ domains,\ each\ with\ core\_period\ as\ the\ initial\ frequency/period}}
+\DoxyCodeLine{00035\ \ \ \ app\_proc\_domains.resize(m\_num\_proc\_domains,\ core\_period);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{comment}{//\ Allow\ per-\/core\ initial\ frequency\ overrides}}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_num\_app\_cores;\ ++i)}
+\DoxyCodeLine{00039\ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ \_core\_frequency\ =\ Sim()-\/>getCfg()-\/>getFloatArray(\textcolor{stringliteral}{"{}perf\_model/core/frequency"{}},\ i);}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_core\_frequency\ !=\ core\_frequency)\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ app\_proc\_domains[getCoreDomainId(i)]\ =\ ComponentPeriod::fromFreqHz(\_core\_frequency*1000000000);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Core\ \%d\ at\ \%.2f\ GHz\ (global\ clock\ \%.2f\ GHz)\(\backslash\)n"{}},\ i,\ \_core\_frequency,\ core\_frequency);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//\ Allocate\ global\ domains\ for\ all\ other\ non-\/application\ processors}}
+\DoxyCodeLine{00048\ \ \ \ global\_domains.resize(DOMAIN\_GLOBAL\_MAX,\ core\_period);}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ UInt32\ DvfsManager::getCoreDomainId(UInt32\ core\_id)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ LOG\_ASSERT\_ERROR(core\_id\ <\ m\_num\_app\_cores,\ \textcolor{stringliteral}{"{}Core\ domain\ ids\ are\ only\ supported\ for\ application\ process\ domains"{}});}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{return}\ core\_id\ /\ m\_cores\_per\_socket;}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ core\_id,\ 0-\/indexed}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{const}\ ComponentPeriod*\ DvfsManager::getCoreDomain(UInt32\ core\_id)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ <\ m\_num\_app\_cores)}
+\DoxyCodeLine{00062\ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&app\_proc\_domains[getCoreDomainId(core\_id)];}
+\DoxyCodeLine{00064\ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00066\ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ currently\ only\ support\ a\ single\ non-\/app\ domain}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&global\_domains[DOMAIN\_GLOBAL\_DEFAULT];}
+\DoxyCodeLine{00069\ \ \ \ \}}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{const}\ ComponentPeriod*\ DvfsManager::getGlobalDomain(DvfsGlobalDomain\ domain\_id)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \ LOG\_ASSERT\_ERROR(UInt32(domain\_id)\ <\ global\_domains.size(),}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Global\ domain\ \%d\ requested,\ only\ \%d\ exist"{}},\ domain\_id,\ global\_domains.size());}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{return}\ \&global\_domains[domain\_id];}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{void}\ DvfsManager::setCoreDomain(UInt32\ core\_id,\ ComponentPeriod\ new\_freq)}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ <\ m\_num\_app\_cores)}
+\DoxyCodeLine{00083\ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (new\_freq.getPeriod()\ !=\ app\_proc\_domains[getCoreDomainId(core\_id)].getPeriod())}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ queue\ a\ fake\ instruction\ that\ will\ account\ for\ the\ transition\ latency\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ PseudoInstruction\ *i\ =\ \textcolor{keyword}{new}\ DelayInstruction(m\_transition\_latency,\ DelayInstruction::DVFS\_TRANSITION);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getPerformanceModel()-\/>queuePseudoInstruction(i);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ app\_proc\_domains[getCoreDomainId(core\_id)]\ =\ new\_freq;}
+\DoxyCodeLine{00092\ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00094\ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ currently\ only\ support\ a\ single\ non-\/app\ domain}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Cannot\ change\ non-\/core\ frequency"{}});}
+\DoxyCodeLine{00097\ \ \ \ \}}
+\DoxyCodeLine{00098\ \}}
+
+\end{DoxyCode}

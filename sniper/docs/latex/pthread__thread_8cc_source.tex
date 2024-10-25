@@ -1,0 +1,43 @@
+\doxysection{pthread\+\_\+thread.\+cc}
+\label{pthread__thread_8cc_source}\index{common/misc/pthread\_thread.cc@{common/misc/pthread\_thread.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pthread\_thread.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ PthreadThread::PthreadThread(ThreadFunc\ func,\ \textcolor{keywordtype}{void}\ *arg)}
+\DoxyCodeLine{00005\ \ \ \ :\ m\_data(func,\ arg)}
+\DoxyCodeLine{00006\ \{}
+\DoxyCodeLine{00007\ \}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ PthreadThread::\string~PthreadThread()}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{comment}{//\ LOG\_PRINT("{}Joining\ on\ thread:\ \%d"{},\ m\_thread);}}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{comment}{//\ pthread\_join(m\_thread,\ NULL);}}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{comment}{//\ LOG\_PRINT("{}Joined."{});}}
+\DoxyCodeLine{00014\ \}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keywordtype}{void}\ *PthreadThread::spawnedThreadFunc(\textcolor{keywordtype}{void}\ *vp)}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ FuncData\ *fd\ =\ (FuncData*)\ vp;}
+\DoxyCodeLine{00019\ \ \ \ fd-\/>func(fd-\/>arg);}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keywordtype}{void}\ PthreadThread::run()}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Creating\ thread\ at\ func:\ \%p,\ arg:\ \%p"{}},\ m\_data.func,\ m\_data.arg);}
+\DoxyCodeLine{00026\ \ \ \ pthread\_attr\_t\ attr;}
+\DoxyCodeLine{00027\ \ \ \ pthread\_attr\_init(\&attr);}
+\DoxyCodeLine{00028\ \ \ \ pthread\_attr\_setdetachstate(\&attr,\ PTHREAD\_CREATE\_JOINABLE);}
+\DoxyCodeLine{00029\ \ \ \ pthread\_create(\&m\_thread,\ \&attr,\ spawnedThreadFunc,\ \&m\_data);}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ Check\ if\ pin\_thread.cc\ is\ included\ in\ the\ build\ and\ has}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Thread::Create\ defined.\ If\ so,\ PthreadThread\ is\ not\ used.}}
+\DoxyCodeLine{00034\ \_\_attribute\_\_((weak))\ \_Thread*\ \_Thread::create(ThreadFunc\ func,\ \textcolor{keywordtype}{void}\ *param)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ PthreadThread(func,\ param);}
+\DoxyCodeLine{00037\ \}}
+
+\end{DoxyCode}

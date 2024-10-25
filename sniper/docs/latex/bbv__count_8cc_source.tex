@@ -1,0 +1,110 @@
+\doxysection{bbv\+\_\+count.\+cc}
+\label{bbv__count_8cc_source}\index{common/core/bbv\_count.cc@{common/core/bbv\_count.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}bbv\_count.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}rng.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ BbvCount::BbvCount(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00008\ \ \ \ :\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_instrs\_abs(0)}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_bbv\_counts\_abs(NUM\_BBV,\ 0)}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_instrs\_reset(0)}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_bbv\_reset(NUM\_BBV,\ 0)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_bbv\_previous(NUM\_BBV,\ 0)}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{comment}{//\ Define\ N\ to\ skip\ X\ samples\ with\ X\ uniformely\ distributed\ between\ 0..2*N,\ so\ on\ average\ 1/N\ samples}}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_sample\_period(2\ *\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}bbv/sampling"{}}))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_sample\_seed(rng\_seed(m\_sample\_period))}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ sampleReset();}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_BBV;\ ++i)}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}core"{}},\ core\_id,\ \textcolor{stringliteral}{"{}bbv-\/"{}}+itostr(i),\ \&m\_bbv\_counts\_abs[i]);}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ BbvCount::\string~BbvCount()}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00026\ \ \ \ printf(\textcolor{stringliteral}{"{}BBV:\ "{}});}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_BBV;\ ++i)}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%ld"{}},\ m\_bbv\_counts[i]);}
+\DoxyCodeLine{00029\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00034\ BbvCount::sampleReset()}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (m\_sample\_period)\ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ m\_sample\ =\ rng\_next(m\_sample\_seed)\ \%\ m\_sample\_period;}
+\DoxyCodeLine{00038\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ m\_sample\ =\ 0;}
+\DoxyCodeLine{00040\ \ \ \ \}}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00044\ BbvCount::sample()}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordflow}{return}\ m\_sample-\/-\/\ ==\ 0;}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00050\ BbvCount::count(UInt64\ address,\ UInt64\ count)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ sampleReset();}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ m\_instrs\_abs\ +=\ count;}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \textcolor{comment}{//\ Perform\ random\ projection\ of\ basic-\/block\ vectors\ onto\ NUM\_BBV\ dimensions}}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{comment}{//\ As\ there\ are\ too\ many\ BBVs,\ we\ cannot\ store\ the\ projection\ matrix,\ rather,}}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{comment}{//\ we\ re-\/generate\ it\ on\ request\ using\ an\ RNG\ seeded\ with\ the\ BBV\ address.}}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{comment}{//\ Since\ this\ is\ a\ hot\ loop\ in\ FAST\_FORWARD\ mode,\ use\ an\ inlined\ RNG}}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{comment}{//\ and\ four\ parallel\ code\ paths\ to\ exploit\ as\ much\ ILP\ as\ possible.}}
+\DoxyCodeLine{00061\ \ \ \ UInt64\ s0\ =\ rng\_seed(address),\ s1\ =\ rng\_seed(address\ +\ 1),\ s2\ =\ rng\_seed(address\ +\ 2),\ s3\ =\ rng\_seed(address\ +\ 3);}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_BBV;\ i\ +=\ 4)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ UInt64\ weight\ =\ rng\_next(s0);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ m\_bbv\_counts\_abs[i]\ +=\ (weight\ \&\ 0xffff)\ *\ count;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ weight\ =\ rng\_next(s1);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ m\_bbv\_counts\_abs[i+1]\ +=\ (weight\ \&\ 0xffff)\ *\ count;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ weight\ =\ rng\_next(s2);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ m\_bbv\_counts\_abs[i+2]\ +=\ (weight\ \&\ 0xffff)\ *\ count;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ weight\ =\ rng\_next(s3);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ m\_bbv\_counts\_abs[i+3]\ +=\ (weight\ \&\ 0xffff)\ *\ count;}
+\DoxyCodeLine{00072\ \ \ \ \}}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00076\ BbvCount::reset(\textcolor{keywordtype}{bool}\ save)}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_BBV;\ ++i)}
+\DoxyCodeLine{00079\ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (save)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ UInt64\ icount\ =\ getInstructionCount();}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ m\_bbv\_previous[i]\ =\ getDimension(i)\ /\ (icount\ ?\ icount\ :\ 1);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ m\_bbv\_reset[i]\ =\ m\_bbv\_counts\_abs[i];}
+\DoxyCodeLine{00086\ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ m\_instrs\_reset\ =\ m\_instrs\_abs;}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ UInt64}
+\DoxyCodeLine{00091\ BbvCount::getDiff()}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \ UInt64\ diff\ =\ 0;}
+\DoxyCodeLine{00094\ \ \ \ UInt64\ icount\ =\ getInstructionCount();}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_BBV;\ ++i)}
+\DoxyCodeLine{00097\ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ SInt64\ bbv\_count\ =\ getDimension(i)\ /\ (icount\ ?\ icount\ :\ 1);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ diff\ +=\ abs(bbv\_count\ -\/\ \textcolor{keyword}{static\_cast<}SInt64\textcolor{keyword}{>}(m\_bbv\_previous[i]));}
+\DoxyCodeLine{00100\ \ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \textcolor{comment}{//\ Normalize\ by\ the\ number\ of\ BBVs\ to\ keep\ the\ results\ consistent\ as\ the\ count\ changes}}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{keywordflow}{return}\ diff\ /\ NUM\_BBV;}
+\DoxyCodeLine{00104\ \}}
+
+\end{DoxyCode}

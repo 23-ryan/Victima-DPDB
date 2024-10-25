@@ -1,0 +1,81 @@
+\doxysection{dram\+\_\+perf\+\_\+model\+\_\+constant.\+cc}
+\label{dram__perf__model__constant_8cc_source}\index{common/performance\_model/dram\_perf\_model\_constant.cc@{common/performance\_model/dram\_perf\_model\_constant.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_constant.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ DramPerfModelConstant::DramPerfModelConstant(core\_id\_t\ core\_id,}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ UInt32\ cache\_block\_size):}
+\DoxyCodeLine{00010\ \ \ \ DramPerfModel(core\_id,\ cache\_block\_size),}
+\DoxyCodeLine{00011\ \ \ \ m\_queue\_model(NULL),}
+\DoxyCodeLine{00012\ \ \ \ m\_dram\_bandwidth(8\ *\ Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/per\_controller\_bandwidth"{}})),\ \textcolor{comment}{//\ Convert\ bytes\ to\ bits}}
+\DoxyCodeLine{00013\ \ \ \ m\_total\_queueing\_delay(SubsecondTime::Zero()),}
+\DoxyCodeLine{00014\ \ \ \ m\_total\_access\_latency(SubsecondTime::Zero())}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ m\_dram\_access\_cost\ =\ SubsecondTime::FS()\ *\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(TimeConverter<float>::NStoFS(Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/latency"{}})));\ \textcolor{comment}{//\ Operate\ in\ fs\ for\ higher\ precision\ before\ converting\ to\ uint64\_t/SubsecondTime}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/enabled"{}}))}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ m\_queue\_model\ =\ QueueModel::create(\textcolor{stringliteral}{"{}dram-\/queue"{}},\ core\_id,\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/type"{}}),}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_dram\_bandwidth.getRoundedLatency(8\ *\ cache\_block\_size));\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00022\ \ \ \ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}total-\/access-\/latency"{}},\ \&m\_total\_access\_latency);}
+\DoxyCodeLine{00025\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}total-\/queueing-\/delay"{}},\ \&m\_total\_queueing\_delay);}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ DramPerfModelConstant::\string~DramPerfModelConstant()}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model)}
+\DoxyCodeLine{00031\ \ \ \ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_queue\_model;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ m\_queue\_model\ =\ NULL;}
+\DoxyCodeLine{00034\ \ \ \ \}}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ SubsecondTime}
+\DoxyCodeLine{00038\ DramPerfModelConstant::getAccessLatency(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{comment}{//\ pkt\_size\ is\ in\ 'Bytes'}}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{comment}{//\ m\_dram\_bandwidth\ is\ in\ 'Bits\ per\ clock\ cycle'}}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ ((!m\_enabled)\ ||}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores()))}
+\DoxyCodeLine{00044\ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ SubsecondTime\ processing\_time\ =\ m\_dram\_bandwidth.getRoundedLatency(8\ *\ pkt\_size);\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \textcolor{comment}{//\ Compute\ Queue\ Delay}}
+\DoxyCodeLine{00051\ \ \ \ SubsecondTime\ queue\_delay;}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model)}
+\DoxyCodeLine{00053\ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ queue\_delay\ =\ m\_queue\_model-\/>computeQueueDelay(pkt\_time,\ processing\_time,\ requester);}
+\DoxyCodeLine{00055\ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00057\ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00059\ \ \ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ SubsecondTime\ access\_latency\ =\ queue\_delay\ +\ processing\_time\ +\ m\_dram\_access\_cost;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ perf-\/>updateTime(pkt\_time);}
+\DoxyCodeLine{00065\ \ \ \ perf-\/>updateTime(pkt\_time\ +\ queue\_delay,\ ShmemPerf::DRAM\_QUEUE);}
+\DoxyCodeLine{00066\ \ \ \ perf-\/>updateTime(pkt\_time\ +\ queue\_delay\ +\ processing\_time,\ ShmemPerf::DRAM\_BUS);}
+\DoxyCodeLine{00067\ \ \ \ perf-\/>updateTime(pkt\_time\ +\ queue\_delay\ +\ processing\_time\ +\ m\_dram\_access\_cost,\ ShmemPerf::DRAM\_DEVICE);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{comment}{//\ Update\ Memory\ Counters}}
+\DoxyCodeLine{00070\ \ \ \ m\_num\_accesses\ ++;}
+\DoxyCodeLine{00071\ \ \ \ m\_total\_access\_latency\ +=\ access\_latency;}
+\DoxyCodeLine{00072\ \ \ \ m\_total\_queueing\_delay\ +=\ queue\_delay;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{return}\ access\_latency;}
+\DoxyCodeLine{00075\ \}}
+
+\end{DoxyCode}

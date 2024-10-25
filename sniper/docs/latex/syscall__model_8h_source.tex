@@ -1,0 +1,87 @@
+\doxysection{syscall\+\_\+model.\+h}
+\label{syscall__model_8h_source}\index{common/core/syscall\_model.h@{common/core/syscall\_model.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SYSCALL\_MODEL\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SYSCALL\_MODEL\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }Thread;}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }SyscallMdl}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }syscall\_args\_t}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ IntPtr\ arg0;}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ IntPtr\ arg1;}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ IntPtr\ arg2;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ IntPtr\ arg3;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ IntPtr\ arg4;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ IntPtr\ arg5;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }HookSyscallEnter}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ thread\_id;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ core\_id\_t\ core\_id;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ SubsecondTime\ time;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ IntPtr\ syscall\_number;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ syscall\_args\_t\ args;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }HookSyscallExit}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ thread\_id;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ core\_id\_t\ core\_id;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ SubsecondTime\ time;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ IntPtr\ ret\_val;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ emulated;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ SyscallMdl(Thread\ *thread);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \string~SyscallMdl();}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ runEnter(IntPtr\ syscall\_number,\ syscall\_args\_t\ \&args);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ IntPtr\ runExit(IntPtr\ old\_return);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isEmulated()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_emulated;\ \}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inSyscall()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_in\_syscall;\ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ IntPtr\ getCurrentSyscallNumber()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_syscall\_number;\ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keyword}{const}\ syscall\_args\_t\ getCurrentSyscallArguments()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_syscall\_args;\ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ String\ formatSyscall()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *futex\_names[];}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }futex\_counters\_t}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ uint64\_t\ count[16];}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ SubsecondTime\ delay[16];}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}\ *futex\_counters;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ Thread\ *m\_thread;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ IntPtr\ m\_syscall\_number;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_emulated;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_stalled;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ IntPtr\ m\_ret\_val;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_in\_syscall;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ syscall\_args\_t\ m\_syscall\_args;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ UInt64\ m\_stdout\_bytes;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ UInt64\ m\_stderr\_bytes;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ IntPtr\ handleFutexCall(syscall\_args\_t\ \&args);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{comment}{//\ Helper\ functions}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ futexCount(uint32\_t\ function,\ SubsecondTime\ delay);}
+\DoxyCodeLine{00079\ \};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

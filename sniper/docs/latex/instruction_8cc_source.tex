@@ -1,0 +1,120 @@
+\doxysection{instruction.\+cc}
+\label{instruction_8cc_source}\index{common/performance\_model/instruction.cc@{common/performance\_model/instruction.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Instruction}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ Instruction::StaticInstructionCosts\ Instruction::m\_instruction\_costs;}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ Instruction::Instruction(InstructionType\ type,\ OperandList\ \&operands)}
+\DoxyCodeLine{00014\ \ \ \ :\ m\_type(type)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_uops(NULL)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_addr(0)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_operands(operands)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ Instruction::Instruction(InstructionType\ type)}
+\DoxyCodeLine{00022\ \ \ \ :\ m\_type(type)}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_uops(NULL)}
+\DoxyCodeLine{00024\ \ \ \ ,\ m\_addr(0)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ InstructionType\ Instruction::getType()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00029\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_type;}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ String\ Instruction::getTypeName()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00034\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00035\ \ \ \ LOG\_ASSERT\_ERROR(m\_type\ <\ MAX\_INSTRUCTION\_COUNT,\ \textcolor{stringliteral}{"{}Unknown\ instruction\ type:\ \%d"{}},\ m\_type);}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{return}\ String(\ INSTRUCTION\_NAMES[\ getType()\ ]\ );}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ An\ instruction\ cost\ is\ the\ number\ of\ cycles\ it\ takes\ to\ execute\ the\ instruction,\ times\ the}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ period\ of\ the\ processor\ that\ we\ are\ currently\ running\ on}}
+\DoxyCodeLine{00041\ SubsecondTime\ Instruction::getCost(Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00042\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00043\ \ \ \ LOG\_ASSERT\_ERROR(m\_type\ <\ MAX\_INSTRUCTION\_COUNT,\ \textcolor{stringliteral}{"{}Unknown\ instruction\ type:\ \%d"{}},\ m\_type);}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *period\ =\ core-\/>getDvfsDomain();}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*period)\ *\ Instruction::m\_instruction\_costs[m\_type];}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keywordtype}{void}\ Instruction::initializeStaticInstructionModel()}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ m\_instruction\_costs.resize(MAX\_INSTRUCTION\_COUNT);}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_INSTRUCTION\_COUNT;\ i++)}
+\DoxyCodeLine{00052\ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ key\_name\ [1024];}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ snprintf(key\_name,\ 1024,\ \textcolor{stringliteral}{"{}perf\_model/core/static\_instruction\_costs/\%s"{}},\ INSTRUCTION\_NAMES[i]);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ UInt32\ instruction\_cost\ =\ Sim()-\/>getCfg()-\/>getInt(key\_name);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ m\_instruction\_costs[i]\ =\ instruction\_cost;}
+\DoxyCodeLine{00057\ \ \ \ \}}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ PseudoInstruction}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ PseudoInstruction::PseudoInstruction(SubsecondTime\ cost,\ InstructionType\ type)}
+\DoxyCodeLine{00063\ \ \ \ :\ Instruction(type)}
+\DoxyCodeLine{00064\ \ \ \ ,\ m\_cost(cost)}
+\DoxyCodeLine{00065\ \{}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ PseudoInstruction::\string~PseudoInstruction()}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ SubsecondTime\ PseudoInstruction::getCost(Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00073\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{return}\ m\_cost;}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ SyncInstruction}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ SyncInstruction::SyncInstruction(SubsecondTime\ time,\ sync\_type\_t\ sync\_type)}
+\DoxyCodeLine{00080\ \ \ \ :\ PseudoInstruction(SubsecondTime::Zero(),\ INST\_SYNC)}
+\DoxyCodeLine{00081\ \ \ \ ,\ m\_time(time)}
+\DoxyCodeLine{00082\ \ \ \ ,\ m\_sync\_type(sync\_type)}
+\DoxyCodeLine{00083\ \{\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ SubsecondTime\ SyncInstruction::getCost(Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00086\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00087\ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}SyncInstruction::getCost()\ called,\ this\ instruction\ should\ not\ have\ made\ it\ into\ handleInstruction"{}});}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{comment}{//\ SpawnInstruction}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ SpawnInstruction::SpawnInstruction(SubsecondTime\ time)}
+\DoxyCodeLine{00095\ \ \ \ :\ PseudoInstruction(SubsecondTime::Zero(),\ INST\_SPAWN)}
+\DoxyCodeLine{00096\ \ \ \ ,\ m\_time(time)}
+\DoxyCodeLine{00097\ \{\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ SubsecondTime\ SpawnInstruction::getCost(Core\ *core)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00100\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00101\ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}SpawnInstruction::getCost()\ called,\ this\ instruction\ should\ not\ have\ made\ it\ into\ handleInstruction"{}});}
+\DoxyCodeLine{00102\ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ SubsecondTime\ SpawnInstruction::getTime()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00106\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{keywordflow}{return}\ m\_time;}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ BranchInstruction}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ BranchInstruction::BranchInstruction(OperandList\ \&l)}
+\DoxyCodeLine{00113\ \ \ \ :\ Instruction(INST\_BRANCH,\ l)}
+\DoxyCodeLine{00114\ \{\ \}}
+
+\end{DoxyCode}

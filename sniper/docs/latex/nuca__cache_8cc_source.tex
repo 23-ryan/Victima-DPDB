@@ -1,0 +1,227 @@
+\doxysection{nuca\+\_\+cache.\+cc}
+\label{nuca__cache_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/nuca\_cache.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/nuca\_cache.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}nuca\_cache.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pr\_l1\_cache\_block\_info.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}queue\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ NucaCache::NucaCache(MemoryManagerBase*\ memory\_manager,\ ShmemPerfModel*\ shmem\_perf\_model,\ AddressHomeLookup*\ home\_lookup,\ UInt32\ cache\_block\_size,\ ParametricDramDirectoryMSI::CacheParameters\&\ parameters)}
+\DoxyCodeLine{00010\ \ \ \ :\ m\_core\_id(memory\_manager-\/>getCore()-\/>getId())}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_memory\_manager(memory\_manager)}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_shmem\_perf\_model(shmem\_perf\_model)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_home\_lookup(home\_lookup)}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_cache\_block\_size(cache\_block\_size)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_data\_access\_time(parameters.data\_access\_time)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_tags\_access\_time(parameters.tags\_access\_time)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_data\_array\_bandwidth(8\ *\ Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/nuca/bandwidth"{}}))}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_queue\_model(NULL)}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_reads(0)}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_writes(0)}
+\DoxyCodeLine{00021\ \ \ \ ,\ m\_read\_misses(0)}
+\DoxyCodeLine{00022\ \ \ \ ,\ m\_write\_misses(0)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ m\_cache\ =\ \textcolor{keyword}{new}\ Cache(\textcolor{stringliteral}{"{}nuca-\/cache"{}},}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}perf\_model/nuca/cache"{}},}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ m\_core\_id,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ parameters.num\_sets,}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ parameters.associativity,}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ m\_cache\_block\_size,}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ parameters.replacement\_policy,}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ CacheBase::PR\_L1\_CACHE,}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ CacheBase::parseAddressHash(parameters.hash\_function),}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ NULL,\ \textcolor{comment}{/*\ FaultinjectionManager\ */}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ home\_lookup}
+\DoxyCodeLine{00035\ \ \ \ );}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/nuca/queue\_model/enabled"{}}))}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ String\ queue\_model\_type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/nuca/queue\_model/type"{}});}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_queue\_model\ =\ QueueModel::create(\textcolor{stringliteral}{"{}nuca-\/cache-\/queue"{}},\ m\_core\_id,\ queue\_model\_type,\ m\_data\_array\_bandwidth.getRoundedLatency(8\ *\ m\_cache\_block\_size));\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}reads"{}},\ \&m\_reads);}
+\DoxyCodeLine{00044\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}writes"{}},\ \&m\_writes);}
+\DoxyCodeLine{00045\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}read-\/misses"{}},\ \&m\_read\_misses);}
+\DoxyCodeLine{00046\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}write-\/misses"{}},\ \&m\_write\_misses);}
+\DoxyCodeLine{00047\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}reads-\/metadata"{}},\ \&m\_metadata\_reads);}
+\DoxyCodeLine{00048\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}writes-\/metadata"{}},\ \&m\_metadata\_writes);}
+\DoxyCodeLine{00049\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}read-\/misses-\/metadata"{}},\ \&m\_metadata\_read\_misses);}
+\DoxyCodeLine{00050\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}nuca-\/cache"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}write-\/misses-\/metadata"{}},\ \&m\_metadata\_write\_misses);}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ NucaCache::\string~NucaCache()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keyword}{delete}\ m\_cache;}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_queue\_model;}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>}
+\DoxyCodeLine{00061\ NucaCache::read(IntPtr\ address,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ ShmemPerf\ *perf,\ \textcolor{keywordtype}{bool}\ count,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{comment}{//std::cout<<"{}Nuca\ Read:"{}<<is\_metadata<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00064\ \ \ \ HitWhere::where\_t\ hit\_where\ =\ HitWhere::MISS;}
+\DoxyCodeLine{00065\ \ \ \ perf-\/>updateTime(now);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ PrL1CacheBlockInfo*\ block\_info\ =\ (PrL1CacheBlockInfo*)m\_cache-\/>peekSingleLine(address);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ SubsecondTime\ latency\ =\ m\_tags\_access\_time.getLatency();}
+\DoxyCodeLine{00070\ \ \ \ perf-\/>updateTime(now\ +\ latency,\ ShmemPerf::NUCA\_TAGS);}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ }
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ (block\_info)}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ m\_cache-\/>accessSingleLine(address,\ Cache::LOAD,\ data\_buf,\ m\_cache\_block\_size,\ now\ +\ latency,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ latency\ +=\ accessDataArray(Cache::LOAD,\ now\ +\ latency,\ perf);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ hit\_where\ =\ HitWhere::NUCA\_CACHE;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{comment}{//nuca\_stats.metadata\_load\_hits[type]++;}}
+\DoxyCodeLine{00080\ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (count)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(is\_metadata)\{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_metadata\_read\_misses;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_read\_misses;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{comment}{//nuca\_stats.metadata\_load\_misses[type]++;}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \textcolor{keywordflow}{if}\ (count)\{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(is\_metadata)\{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ ++m\_metadata\_reads;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ ++m\_reads;\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ }
+\DoxyCodeLine{00105\ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>(latency,\ hit\_where);}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>}
+\DoxyCodeLine{00111\ NucaCache::write(IntPtr\ address,\ Byte*\ data\_buf,\ \textcolor{keywordtype}{bool}\&\ eviction,\ IntPtr\&\ evict\_address,\ Byte*\ evict\_buf,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ count,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00112\ \{}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{comment}{//std::cout<<"{}Nuca\ Write:"{}<<is\_metadata<<"{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00114\ \ \ \ HitWhere::where\_t\ hit\_where\ =\ HitWhere::MISS;}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ PrL1CacheBlockInfo*\ block\_info\ =\ (PrL1CacheBlockInfo*)m\_cache-\/>peekSingleLine(address);}
+\DoxyCodeLine{00117\ \ \ \ SubsecondTime\ latency\ =\ m\_tags\_access\_time.getLatency();}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keywordflow}{if}\ (block\_info)}
+\DoxyCodeLine{00120\ \ \ \ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ block\_info-\/>setCState(CacheState::MODIFIED);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ m\_cache-\/>accessSingleLine(address,\ Cache::STORE,\ data\_buf,\ m\_cache\_block\_size,\ now\ +\ latency,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ block\_info-\/>increaseReuse();}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ latency\ +=\ accessDataArray(Cache::STORE,\ now\ +\ latency,\ \&m\_dummy\_shmem\_perf);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ hit\_where\ =\ HitWhere::NUCA\_CACHE;}
+\DoxyCodeLine{00126\ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00128\ \ \ \ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ PrL1CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ m\_cache-\/>insertSingleLine(address,\ data\_buf,}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \&eviction,\ \&evict\_address,\ \&evict\_block\_info,\ evict\_buf,}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ now\ +\ latency);}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eviction)}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (evict\_block\_info.getCState()\ !=\ CacheState::MODIFIED)}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unless\ data\ is\ dirty,\ don't\ have\ caller\ write\ it\ back}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ eviction\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (count)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(is\_metadata)\{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_metadata\_write\_misses;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_write\_misses;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keywordflow}{if}\ (count)\{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(is\_metadata)\{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ ++m\_metadata\_writes;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ }
+\DoxyCodeLine{00159\ \ \ \ \ \ \ ++m\_writes;\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ }
+\DoxyCodeLine{00164\ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<SubsecondTime,\ HitWhere::where\_t>(latency,\ hit\_where);}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ SubsecondTime}
+\DoxyCodeLine{00170\ NucaCache::accessDataArray(Cache::access\_t\ access,\ SubsecondTime\ t\_start,\ ShmemPerf\ *perf)}
+\DoxyCodeLine{00171\ \{}
+\DoxyCodeLine{00172\ \ \ \ perf-\/>updateTime(t\_start);}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \textcolor{comment}{//\ Compute\ Queue\ Delay}}
+\DoxyCodeLine{00175\ \ \ \ SubsecondTime\ queue\_delay;}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model)}
+\DoxyCodeLine{00177\ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ SubsecondTime\ processing\_time\ =\ m\_data\_array\_bandwidth.getRoundedLatency(8\ *\ m\_cache\_block\_size);\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ queue\_delay\ =\ processing\_time\ +\ m\_queue\_model-\/>computeQueueDelay(t\_start,\ processing\_time,\ m\_core\_id);}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ perf-\/>updateTime(t\_start\ +\ processing\_time,\ ShmemPerf::NUCA\_BUS);}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ perf-\/>updateTime(t\_start\ +\ queue\_delay,\ ShmemPerf::NUCA\_QUEUE);}
+\DoxyCodeLine{00184\ \ \ \ \}}
+\DoxyCodeLine{00185\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00186\ \ \ \ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00188\ \ \ \ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ perf-\/>updateTime(t\_start\ +\ queue\_delay\ +\ m\_data\_access\_time.getLatency(),\ ShmemPerf::NUCA\_DATA);}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \textcolor{keywordflow}{return}\ queue\_delay\ +\ m\_data\_access\_time.getLatency();}
+\DoxyCodeLine{00193\ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \textcolor{keywordtype}{void}\ NucaCache::markTranslationMetadata(IntPtr\ address,\ CacheBlockInfo::block\_type\_t\ blocktype)\{}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ }
+\DoxyCodeLine{00198\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00199\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ m\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ m\_cache-\/>getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ ==\ tag)\{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ m\_cache-\/>peekBlock(set\_index,i)-\/>setBlockType(blocktype);}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00211\ \ \ \ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00218\ NucaCache::measureStats()}
+\DoxyCodeLine{00219\ \{}
+\DoxyCodeLine{00220\ \ \ \ m\_cache-\/>measureStats();}
+\DoxyCodeLine{00221\ \}}
+
+\end{DoxyCode}

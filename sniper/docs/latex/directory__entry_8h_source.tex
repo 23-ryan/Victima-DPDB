@@ -1,0 +1,122 @@
+\doxysection{directory\+\_\+entry.\+h}
+\label{directory__entry_8h_source}\index{common/core/memory\_subsystem/directory\_schemes/directory\_entry.h@{common/core/memory\_subsystem/directory\_schemes/directory\_entry.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DIRECTORY\_ENTRY\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DIRECTORY\_ENTRY\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}directory\_block\_info.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <bitset>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{long}\ Size>}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }DirectorySharersBitset\ :\ \textcolor{keyword}{public}\ std::bitset<Size>}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ DirectorySharersBitset(UInt32\ max\_num\_sharers)\ :\ std::bitset<Size>()}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \{\ assert(max\_num\_sharers\ <=\ Size);\ \}}
+\DoxyCodeLine{00018\ \};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }DirectorySharersVector\ :\ \textcolor{keyword}{public}\ std::vector<bool>}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ DirectorySharersVector(UInt32\ max\_num\_sharers)\ :\ std::vector<bool>(max\_num\_sharers,\ false)\ \{\}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ UInt32\ count(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ UInt32\ num\_sharers\ =\ 0;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ j\ =\ 0;\ j\ <\ this-\/>size();\ ++j)\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*\textcolor{keyword}{this})[j])\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_sharers\ ++;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ num\_sharers;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00034\ \};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }DirectoryEntry}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ IntPtr\ m\_address;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ DirectoryBlockInfo\ m\_directory\_block\_info;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ core\_id\_t\ m\_owner\_id;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ core\_id\_t\ m\_forwarder\_id;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ DirectoryEntry()}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ :\ m\_address(INVALID\_ADDRESS)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ ,\ m\_directory\_block\_info()}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ ,\ m\_owner\_id(INVALID\_CORE\_ID)}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~DirectoryEntry()}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ DirectoryBlockInfo*\ getDirectoryBlockInfo()\ \{\ \textcolor{keywordflow}{return}\ \&m\_directory\_block\_info;\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ hasSharer(core\_id\_t\ sharer\_id)\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ addSharer(core\_id\_t\ sharer\_id,\ UInt32\ max\_hw\_sharers)\ =\ 0;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ removeSharer(core\_id\_t\ sharer\_id,\ \textcolor{keywordtype}{bool}\ reply\_expected\ =\ \textcolor{keyword}{false})\ =\ 0;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt32\ getNumSharers()\ =\ 0;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ core\_id\_t\ getOwner()\ =\ 0;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setOwner(core\_id\_t\ owner\_id)\ =\ 0;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ core\_id\_t\ getForwarder()}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_forwarder\_id;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setForwarder(core\_id\_t\ forwarder\_id)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ m\_forwarder\_id\ =\ forwarder\_id;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ IntPtr\ getAddress()\ \{\ \textcolor{keywordflow}{return}\ m\_address;\ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setAddress(IntPtr\ address)\ \{\ m\_address\ =\ address;\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ core\_id\_t\ getOneSharer()\ =\ 0;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ std::pair<bool,\ std::vector<core\_id\_t>\ >\ getSharersList()\ =\ 0;}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ getLatency()\ =\ 0;}
+\DoxyCodeLine{00080\ \};}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00083\ \textcolor{keyword}{class\ }DirectoryEntrySized\ :\ \textcolor{keyword}{public}\ DirectoryEntry}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ DirectorySharers\ m\_sharers;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ DirectoryEntrySized(UInt32\ max\_hw\_sharers,\ UInt32\ max\_num\_sharers)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ :\ DirectoryEntry()}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ ,\ m\_sharers(max\_num\_sharers)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt32\ getNumSharers()\ \{\ \textcolor{keywordflow}{return}\ m\_sharers.count();\ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ std::pair<bool,\ std::vector<core\_id\_t>\ >\ getSharersList()}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ std::pair<bool,\ std::vector<core\_id\_t>\ >\ sharers\_list;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ sharers\_list.first\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ sharers\_list.second.resize(getNumSharers());}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ SInt32\ i\ =\ 0;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ j\ =\ 0;\ j\ <\ m\_sharers.size();\ ++j)\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sharers[j])\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ new\_sharer\ =\ j;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sharers\_list.second[i]\ =\ new\_sharer;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i++;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\ (i\ <=\ (core\_id\_t)\ m\_sharers.size());}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sharers\_list;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \};}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_DIRECTORY\_ENTRY\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

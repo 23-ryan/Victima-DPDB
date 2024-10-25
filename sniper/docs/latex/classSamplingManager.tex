@@ -1,0 +1,635 @@
+\doxysection{Sampling\+Manager Class Reference}
+\label{classSamplingManager}\index{SamplingManager@{SamplingManager}}
+
+
+{\ttfamily \#include $<$sampling\+\_\+manager.\+h$>$}
+
+
+
+Collaboration diagram for Sampling\+Manager\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=282pt]{classSamplingManager__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Sampling\+Manager} ()
+\item 
+\textbf{ $\sim$\+Sampling\+Manager} ()
+\item 
+void \textbf{ enable\+Fast\+Forward} (\textbf{ Subsecond\+Time} until, bool warmup, bool detailed\+\_\+sync)
+\item 
+void \textbf{ disable\+Fast\+Forward} ()
+\item 
+\textbf{ Sampling\+Provider} $\ast$ \textbf{ get\+Sampling\+Provider} ()
+\item 
+\textbf{ Subsecond\+Time} \textbf{ get\+Core\+Historic\+CPI} (\textbf{ Core} $\ast$core, bool non\+\_\+idle, \textbf{ Subsecond\+Time} min\+\_\+nonidle\+\_\+time) const
+\item 
+void \textbf{ reset\+Core\+Historic\+CPIs} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ recalibrate\+Instructions\+Callback} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ set\+Instrumentation\+Mode} (\textbf{ Inst\+Mode\+::inst\+\_\+mode\+\_\+t} mode)
+\item 
+void \textbf{ periodic} (\textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ instr\+\_\+count} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \textbf{ hook\+\_\+instr\+\_\+count} (\textbf{ Sampling\+Manager} $\ast$self, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\item 
+static void \textbf{ hook\+\_\+periodic} (\textbf{ Sampling\+Manager} $\ast$self, \textbf{ subsecond\+\_\+time\+\_\+t} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+bool \textbf{ m\+\_\+sampling\+\_\+enabled}
+\item 
+bool \textbf{ m\+\_\+uncoordinated}
+\item 
+bool \textbf{ m\+\_\+fastforward}
+\item 
+bool \textbf{ m\+\_\+warmup}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+target\+\_\+ffend}
+\item 
+\textbf{ Sampling\+Provider} $\ast$ \textbf{ m\+\_\+sampling\+\_\+provider}
+\item 
+\textbf{ Sampling\+Algorithm} $\ast$ \textbf{ m\+\_\+sampling\+\_\+algorithm}
+\item 
+std\+::vector$<$ \textbf{ UInt64} $>$ \textbf{ m\+\_\+instructions}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+time\+\_\+total}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+time\+\_\+nonidle}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Fastforward\+Performance\+Model}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 15} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{SamplingManager@{SamplingManager}!SamplingManager@{SamplingManager}}
+\index{SamplingManager@{SamplingManager}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{SamplingManager()}
+{\footnotesize\ttfamily \label{classSamplingManager_ab8d3d810255d0b95aacf110e20dcd502} 
+Sampling\+Manager\+::\+Sampling\+Manager (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 14} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Sampling\+Algorithm\+::create()}, \textbf{ Sampling\+Provider\+::create()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+INSTR\+\_\+\+COUNT}, \textbf{ hook\+\_\+instr\+\_\+count()}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+PERIODIC}, \textbf{ hook\+\_\+periodic()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+sampling\+\_\+algorithm}, \textbf{ m\+\_\+sampling\+\_\+enabled}, \textbf{ m\+\_\+sampling\+\_\+provider}, \textbf{ m\+\_\+uncoordinated}, and \textbf{ Config\+::\+PINTOOL}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_ab8d3d810255d0b95aacf110e20dcd502_cgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!````~SamplingManager@{$\sim$SamplingManager}}
+\index{````~SamplingManager@{$\sim$SamplingManager}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{$\sim$SamplingManager()}
+{\footnotesize\ttfamily \label{classSamplingManager_a6f47ee7c4a9ac395cf9b74e2b609640a} 
+Sampling\+Manager\+::$\sim$\+Sampling\+Manager (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+sampling\+\_\+algorithm}, and \textbf{ m\+\_\+sampling\+\_\+provider}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{SamplingManager@{SamplingManager}!disableFastForward@{disableFastForward}}
+\index{disableFastForward@{disableFastForward}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{disableFastForward()}
+{\footnotesize\ttfamily \label{classSamplingManager_a4df82e31f8973717dfddc6e34fd2d06d} 
+void Sampling\+Manager\+::disable\+Fast\+Forward (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Inst\+Mode\+::\+DETAILED}, \textbf{ Core\+::disable\+Instructions\+Callback()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Performance\+Model\+::get\+Fastforward\+Performance\+Model()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Fastforward\+Performance\+Model\+::increment\+Elapsed\+Time()}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+uncoordinated}, \textbf{ m\+\_\+warmup}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Performance\+Model\+::set\+Fast\+Forward()}, \textbf{ set\+Instrumentation\+Mode()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Periodic\+Sampling\+::callback\+Fast\+Forward()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a4df82e31f8973717dfddc6e34fd2d06d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=342pt]{classSamplingManager_a4df82e31f8973717dfddc6e34fd2d06d_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!enableFastForward@{enableFastForward}}
+\index{enableFastForward@{enableFastForward}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{enableFastForward()}
+{\footnotesize\ttfamily \label{classSamplingManager_acb414e28fb330285635555db50a01325} 
+void Sampling\+Manager\+::enable\+Fast\+Forward (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{until}{, }\item[{bool}]{warmup}{, }\item[{bool}]{detailed\+\_\+sync}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Inst\+Mode\+::\+CACHE\+\_\+\+ONLY}, \textbf{ Inst\+Mode\+::\+FAST\+\_\+\+FORWARD}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+sampling\+\_\+provider}, \textbf{ m\+\_\+target\+\_\+ffend}, \textbf{ m\+\_\+warmup}, \textbf{ recalibrate\+Instructions\+Callback()}, \textbf{ Performance\+Model\+::set\+Fast\+Forward()}, \textbf{ set\+Instrumentation\+Mode()}, \textbf{ Sampling\+Provider\+::start\+Sampling()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Periodic\+Sampling\+::step\+Fast\+Forward()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_acb414e28fb330285635555db50a01325_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_acb414e28fb330285635555db50a01325_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!getCoreHistoricCPI@{getCoreHistoricCPI}}
+\index{getCoreHistoricCPI@{getCoreHistoricCPI}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{getCoreHistoricCPI()}
+{\footnotesize\ttfamily \label{classSamplingManager_a3719cc57770c48e972803b1b618d739a} 
+\textbf{ Subsecond\+Time} Sampling\+Manager\+::get\+Core\+Historic\+CPI (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{bool}]{non\+\_\+idle}{, }\item[{\textbf{ Subsecond\+Time}}]{min\+\_\+nonidle\+\_\+time}{}\end{DoxyParamCaption}) const}
+
+
+
+Definition at line \textbf{ 146} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Performance\+Model\+::get\+Instruction\+Count()}, \textbf{ Performance\+Model\+::get\+Non\+Idle\+Elapsed\+Time()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ m\+\_\+instructions}, \textbf{ m\+\_\+time\+\_\+nonidle}, \textbf{ m\+\_\+time\+\_\+total}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Periodic\+Sampling\+::callback\+Detailed()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a3719cc57770c48e972803b1b618d739a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classSamplingManager_a3719cc57770c48e972803b1b618d739a_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!getSamplingProvider@{getSamplingProvider}}
+\index{getSamplingProvider@{getSamplingProvider}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{getSamplingProvider()}
+{\footnotesize\ttfamily \label{classSamplingManager_a9b045dfdec227bc84763bf900023e746} 
+\textbf{ Sampling\+Provider} $\ast$ Sampling\+Manager\+::get\+Sampling\+Provider (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+References \textbf{ m\+\_\+sampling\+\_\+provider}.
+
+\index{SamplingManager@{SamplingManager}!hook\_instr\_count@{hook\_instr\_count}}
+\index{hook\_instr\_count@{hook\_instr\_count}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{hook\_instr\_count()}
+{\footnotesize\ttfamily \label{classSamplingManager_a7f942b2458c91b3adf2160c31da4c664} 
+static void Sampling\+Manager\+::hook\+\_\+instr\+\_\+count (\begin{DoxyParamCaption}\item[{\textbf{ Sampling\+Manager} $\ast$}]{self}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 36} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+References \textbf{ instr\+\_\+count()}.
+
+
+
+Referenced by \textbf{ Sampling\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a7f942b2458c91b3adf2160c31da4c664_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=339pt]{classSamplingManager_a7f942b2458c91b3adf2160c31da4c664_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!hook\_periodic@{hook\_periodic}}
+\index{hook\_periodic@{hook\_periodic}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{hook\_periodic()}
+{\footnotesize\ttfamily \label{classSamplingManager_a7eae24d7219e96c59733e8a28e2852fa} 
+static void Sampling\+Manager\+::hook\+\_\+periodic (\begin{DoxyParamCaption}\item[{\textbf{ Sampling\+Manager} $\ast$}]{self}{, }\item[{\textbf{ subsecond\+\_\+time\+\_\+t}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+References \textbf{ periodic()}.
+
+
+
+Referenced by \textbf{ Sampling\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a7eae24d7219e96c59733e8a28e2852fa_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=339pt]{classSamplingManager_a7eae24d7219e96c59733e8a28e2852fa_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!instr\_count@{instr\_count}}
+\index{instr\_count@{instr\_count}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{instr\_count()}
+{\footnotesize\ttfamily \label{classSamplingManager_af6b6793b10d1546a0a9952edee9aeade} 
+void Sampling\+Manager\+::instr\+\_\+count (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 202} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+uncoordinated}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ hook\+\_\+instr\+\_\+count()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_af6b6793b10d1546a0a9952edee9aeade_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_af6b6793b10d1546a0a9952edee9aeade_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!periodic@{periodic}}
+\index{periodic@{periodic}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{periodic()}
+{\footnotesize\ttfamily \label{classSamplingManager_a75053502c03818866e010d04ff8134be} 
+void Sampling\+Manager\+::periodic (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Sampling\+Algorithm\+::callback\+Detailed()}, \textbf{ Sampling\+Algorithm\+::callback\+Fast\+Forward()}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+sampling\+\_\+algorithm}, \textbf{ m\+\_\+warmup}, and \textbf{ Timer\+::now()}.
+
+
+
+Referenced by \textbf{ hook\+\_\+periodic()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{classSamplingManager_a75053502c03818866e010d04ff8134be_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a75053502c03818866e010d04ff8134be_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!recalibrateInstructionsCallback@{recalibrateInstructionsCallback}}
+\index{recalibrateInstructionsCallback@{recalibrateInstructionsCallback}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{recalibrateInstructionsCallback()}
+{\footnotesize\ttfamily \label{classSamplingManager_abf3d382c2c6b7ec54c1c6708bfa2aa36} 
+void Sampling\+Manager\+::recalibrate\+Instructions\+Callback (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 184} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Subsecond\+Time\+::divide\+Rounded()}, \textbf{ Fastforward\+Performance\+Model\+::get\+Current\+CPI()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Performance\+Model\+::get\+Fastforward\+Performance\+Model()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ m\+\_\+target\+\_\+ffend}, \textbf{ Core\+::set\+Instructions\+Callback()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ enable\+Fast\+Forward()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_abf3d382c2c6b7ec54c1c6708bfa2aa36_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_abf3d382c2c6b7ec54c1c6708bfa2aa36_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!resetCoreHistoricCPIs@{resetCoreHistoricCPIs}}
+\index{resetCoreHistoricCPIs@{resetCoreHistoricCPIs}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{resetCoreHistoricCPIs()}
+{\footnotesize\ttfamily \label{classSamplingManager_a1ab4b88bb6d0996b163d79a36c9f7bb3} 
+void Sampling\+Manager\+::reset\+Core\+Historic\+CPIs (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 172} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Id()}, \textbf{ Performance\+Model\+::get\+Instruction\+Count()}, \textbf{ Performance\+Model\+::get\+Non\+Idle\+Elapsed\+Time()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ m\+\_\+instructions}, \textbf{ m\+\_\+time\+\_\+nonidle}, and \textbf{ m\+\_\+time\+\_\+total}.
+
+
+
+Referenced by \textbf{ Periodic\+Sampling\+::callback\+Detailed()}, and \textbf{ Periodic\+Sampling\+::callback\+Fast\+Forward()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a1ab4b88bb6d0996b163d79a36c9f7bb3_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_a1ab4b88bb6d0996b163d79a36c9f7bb3_icgraph}
+\end{center}
+\end{figure}
+\index{SamplingManager@{SamplingManager}!setInstrumentationMode@{setInstrumentationMode}}
+\index{setInstrumentationMode@{setInstrumentationMode}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{setInstrumentationMode()}
+{\footnotesize\ttfamily \label{classSamplingManager_abc2d12063520b0eb9540a59f8b65c894} 
+void Sampling\+Manager\+::set\+Instrumentation\+Mode (\begin{DoxyParamCaption}\item[{\textbf{ Inst\+Mode\+::inst\+\_\+mode\+\_\+t}}]{mode}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ sampling\+\_\+manager.\+cc}.
+
+
+
+Referenced by \textbf{ disable\+Fast\+Forward()}, and \textbf{ enable\+Fast\+Forward()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSamplingManager_abc2d12063520b0eb9540a59f8b65c894_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Friends And Related Symbol Documentation}
+\index{SamplingManager@{SamplingManager}!FastforwardPerformanceModel@{FastforwardPerformanceModel}}
+\index{FastforwardPerformanceModel@{FastforwardPerformanceModel}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{FastforwardPerformanceModel}
+{\footnotesize\ttfamily \label{classSamplingManager_adecf58cbd265ad8437804f75f6c99c58} 
+friend class \textbf{ Fastforward\+Performance\+Model}\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{SamplingManager@{SamplingManager}!m\_fastforward@{m\_fastforward}}
+\index{m\_fastforward@{m\_fastforward}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_fastforward}
+{\footnotesize\ttfamily \label{classSamplingManager_a0211a8c6dc62be4294643e7e566172ff} 
+bool Sampling\+Manager\+::m\+\_\+fastforward\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 21} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ disable\+Fast\+Forward()}, \textbf{ enable\+Fast\+Forward()}, \textbf{ instr\+\_\+count()}, and \textbf{ periodic()}.
+
+\index{SamplingManager@{SamplingManager}!m\_instructions@{m\_instructions}}
+\index{m\_instructions@{m\_instructions}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_instructions}
+{\footnotesize\ttfamily \label{classSamplingManager_adc0f600c8c7062a8e0113d7773765eca} 
+std\+::vector$<$\textbf{ UInt64}$>$ Sampling\+Manager\+::m\+\_\+instructions\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core\+Historic\+CPI()}, and \textbf{ reset\+Core\+Historic\+CPIs()}.
+
+\index{SamplingManager@{SamplingManager}!m\_sampling\_algorithm@{m\_sampling\_algorithm}}
+\index{m\_sampling\_algorithm@{m\_sampling\_algorithm}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_sampling\_algorithm}
+{\footnotesize\ttfamily \label{classSamplingManager_af7c804b32484473c6a478798b177f869} 
+\textbf{ Sampling\+Algorithm}$\ast$ Sampling\+Manager\+::m\+\_\+sampling\+\_\+algorithm\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ periodic()}, \textbf{ Sampling\+Manager()}, and \textbf{ $\sim$\+Sampling\+Manager()}.
+
+\index{SamplingManager@{SamplingManager}!m\_sampling\_enabled@{m\_sampling\_enabled}}
+\index{m\_sampling\_enabled@{m\_sampling\_enabled}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_sampling\_enabled}
+{\footnotesize\ttfamily \label{classSamplingManager_a2946068b376e4511deac3645cd7fd2e3} 
+bool Sampling\+Manager\+::m\+\_\+sampling\+\_\+enabled\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 18} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ Sampling\+Manager()}.
+
+\index{SamplingManager@{SamplingManager}!m\_sampling\_provider@{m\_sampling\_provider}}
+\index{m\_sampling\_provider@{m\_sampling\_provider}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_sampling\_provider}
+{\footnotesize\ttfamily \label{classSamplingManager_aec5a3b1e2406f68abe572917e1983478} 
+\textbf{ Sampling\+Provider}$\ast$ Sampling\+Manager\+::m\+\_\+sampling\+\_\+provider\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ enable\+Fast\+Forward()}, \textbf{ get\+Sampling\+Provider()}, \textbf{ Sampling\+Manager()}, and \textbf{ $\sim$\+Sampling\+Manager()}.
+
+\index{SamplingManager@{SamplingManager}!m\_target\_ffend@{m\_target\_ffend}}
+\index{m\_target\_ffend@{m\_target\_ffend}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_target\_ffend}
+{\footnotesize\ttfamily \label{classSamplingManager_a31bdd28e1c9b459b99741c45da026b80} 
+\textbf{ Subsecond\+Time} Sampling\+Manager\+::m\+\_\+target\+\_\+ffend\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 23} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ enable\+Fast\+Forward()}, and \textbf{ recalibrate\+Instructions\+Callback()}.
+
+\index{SamplingManager@{SamplingManager}!m\_time\_nonidle@{m\_time\_nonidle}}
+\index{m\_time\_nonidle@{m\_time\_nonidle}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_time\_nonidle}
+{\footnotesize\ttfamily \label{classSamplingManager_a7caad08cb22c28f06ed674416abfa7b0} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Sampling\+Manager\+::m\+\_\+time\+\_\+nonidle\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core\+Historic\+CPI()}, and \textbf{ reset\+Core\+Historic\+CPIs()}.
+
+\index{SamplingManager@{SamplingManager}!m\_time\_total@{m\_time\_total}}
+\index{m\_time\_total@{m\_time\_total}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_time\_total}
+{\footnotesize\ttfamily \label{classSamplingManager_a28782d52c38e21e620392b00b2a6ac0a} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Sampling\+Manager\+::m\+\_\+time\+\_\+total\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core\+Historic\+CPI()}, and \textbf{ reset\+Core\+Historic\+CPIs()}.
+
+\index{SamplingManager@{SamplingManager}!m\_uncoordinated@{m\_uncoordinated}}
+\index{m\_uncoordinated@{m\_uncoordinated}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_uncoordinated}
+{\footnotesize\ttfamily \label{classSamplingManager_ae8d13295ae8aa925881345dea3f31c35} 
+bool Sampling\+Manager\+::m\+\_\+uncoordinated\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 19} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ disable\+Fast\+Forward()}, \textbf{ instr\+\_\+count()}, and \textbf{ Sampling\+Manager()}.
+
+\index{SamplingManager@{SamplingManager}!m\_warmup@{m\_warmup}}
+\index{m\_warmup@{m\_warmup}!SamplingManager@{SamplingManager}}
+\doxysubsubsection{m\_warmup}
+{\footnotesize\ttfamily \label{classSamplingManager_a68ffb282e0ce4afcd68721d6d6357efd} 
+bool Sampling\+Manager\+::m\+\_\+warmup\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ sampling\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ disable\+Fast\+Forward()}, \textbf{ enable\+Fast\+Forward()}, and \textbf{ periodic()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/sampling/\textbf{ sampling\+\_\+manager.\+h}\item 
+common/sampling/\textbf{ sampling\+\_\+manager.\+cc}\end{DoxyCompactItemize}

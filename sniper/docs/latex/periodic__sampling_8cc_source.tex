@@ -1,0 +1,198 @@
+\doxysection{periodic\+\_\+sampling.\+cc}
+\label{periodic__sampling_8cc_source}\index{common/sampling/periodic\_sampling.cc@{common/sampling/periodic\_sampling.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}periodic\_sampling.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}sampling\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fastforward\_performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}average.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ PeriodicSampling::PeriodicSampling(SamplingManager\ *sampling\_manager)}
+\DoxyCodeLine{00012\ \ \ \ :\ SamplingAlgorithm(sampling\_manager)}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{comment}{//\ Duration\ of\ a\ detailed\ interval}}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_detailed\_interval(SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/detailed\_interval"{}})))}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{comment}{//\ Duration\ of\ a\ fast-\/forward\ interval}}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_fastforward\_interval(SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/fastforward\_interval"{}})))}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{comment}{//\ Time\ between\ core\ synchronizations\ in\ fast-\/forward\ mode}}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_fastforward\_sync\_interval(SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/fastforward\_sync\_interval"{}})))}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ Duration\ of\ a\ cache\ warmup\ interval}}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_warmup\_interval(SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/warmup\_interval"{}})))}
+\DoxyCodeLine{00021\ \ \ \ ,\ m\_detailed\_warmup\_interval(SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/detailed\_warmup\_interval"{}})))}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{comment}{//\ Whether\ to\ simulate\ synchronization\ during\ fast-\/forward\ (true,\ our\ method),\ or\ fast-\/forward\ using\ a\ per-\/core\ CPI\ that\ contains\ sync\ (false,\ COTSon\ method)}}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_detailed\_sync(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/periodic/detailed\_sync"{}}))}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{comment}{//\ Whether\ to\ randomly\ place\ the\ detailed\ interval\ inside\ the\ cycle\ (default:\ at\ the\ start)}}
+\DoxyCodeLine{00025\ \ \ \ ,\ m\_random\_placement(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/periodic/random\_placement"{}}))}
+\DoxyCodeLine{00026\ \ \ \ ,\ m\_random\_offset(SubsecondTime::Zero())}
+\DoxyCodeLine{00027\ \ \ \ ,\ m\_random\_start(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/periodic/random\_start"{}}))}
+\DoxyCodeLine{00028\ \ \ \ ,\ m\_periodic\_last(SubsecondTime::Zero())}
+\DoxyCodeLine{00029\ \ \ \ ,\ m\_historic\_cpi\_intervals(Sim()-\/>getConfig()-\/>getApplicationCores(),\ NULL)}
+\DoxyCodeLine{00030\ \ \ \ ,\ m\_dispatch\_width(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/dispatch\_width"{}}))}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \ \ \ LOG\_ASSERT\_ERROR(m\_fastforward\_sync\_interval\ >\ SubsecondTime::Zero()\ \&\&\ m\_fastforward\_sync\_interval\ <=\ std::max(m\_fastforward\_interval,\ m\_warmup\_interval),\ \textcolor{stringliteral}{"{}fastforward\_sync\_interval\ must\ be\ between\ 0\ and\ max(fastforward\_interval,\ warmup\_interval)"{}});}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ UInt32\ num\_intervals\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/num\_historic\_cpi\_intervals"{}});}
+\DoxyCodeLine{00035\ \ \ \ LOG\_ASSERT\_ERROR(num\_intervals\ !=\ 0,\ \textcolor{stringliteral}{"{}Expected\ num\_intervals\ to\ be\ >=\ 1"{}});}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0\ ;\ i\ <\ Sim()-\/>getConfig()-\/>getApplicationCores()\ ;\ i++)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ m\_historic\_cpi\_intervals[i]\ =\ \textcolor{keyword}{new}\ CircularQueue<SubsecondTime>(num\_intervals);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/periodic/oneipc"{}}))\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_constant\_ipc\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ m\_constant\_ipcs.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0\ ;\ i\ <\ Sim()-\/>getConfig()-\/>getApplicationCores()\ ;\ i++)}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ m\_constant\_ipcs[i]\ =\ 1.0;}
+\DoxyCodeLine{00044\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/periodic/xipc\_enabled"{}}))\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ m\_constant\_ipc\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ m\_constant\_ipcs.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0\ ;\ i\ <\ Sim()-\/>getConfig()-\/>getApplicationCores()\ ;\ i++)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ m\_constant\_ipcs[i]\ =\ Sim()-\/>getCfg()-\/>getFloatArray(\textcolor{stringliteral}{"{}sampling/periodic/xipcs"{}},i);}
+\DoxyCodeLine{00049\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ m\_constant\_ipc\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00051\ \ \ \ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{if}\ (m\_random\_placement\ ||\ m\_random\_start)}
+\DoxyCodeLine{00054\ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ UInt64\ seed\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}sampling/periodic/random\_placement\_seed"{}});}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (seed\ ==\ 0)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ seed\ =\ time(NULL);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ m\_prng.seed(seed);}
+\DoxyCodeLine{00059\ \ \ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{if}\ (m\_random\_start)}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ m\_random\_offset\ =\ (m\_fastforward\_interval\ +\ m\_warmup\_interval)\ *\ (m\_prng.next()\ \%\ 100)\ /\ 100;}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00066\ PeriodicSampling::callbackDetailed(SubsecondTime\ time)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{if}\ (m\_random\_start)}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{comment}{//\ First\ interval:\ do\ some\ extra\ detailed\ (but\ ignore\ it's\ IPC)\ to\ offset\ the\ sampling\ intervals}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (time\ <\ m\_random\_offset)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ ;\ \textcolor{comment}{//\ Stay\ in\ detailed}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Done\ initial\ detailed\ of\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ ns,\ now\ starting\ detailed\ interval\ for\ real\(\backslash\)n"{}},\ m\_random\_offset.getNS());}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ m\_sampling\_manager-\/>resetCoreHistoricCPIs();}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ m\_periodic\_last\ =\ time;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ m\_random\_start\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (time\ >\ m\_periodic\_last\ +\ m\_detailed\_interval)}
+\DoxyCodeLine{00081\ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_detailed\_warmup\_time\_remaining\ ==\ SubsecondTime::Zero(),\ \textcolor{stringliteral}{"{}Should\ not\ finish\ detailed\ simulation\ before\ detailed\ warmup\ is\ complete."{}})}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{comment}{//printf("{}IPC\ ="{});}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ core\_id\ =\ 0;\ core\_id\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ SubsecondTime\ period\ =\ core-\/>getDvfsDomain()-\/>getPeriod();}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ SubsecondTime\ cpi;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_constant\_ipc)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ cpi\ =\ (1.0/m\_constant\_ipcs[core\_id])\ *\ period;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ historic\_cpi\ =\ m\_sampling\_manager-\/>getCoreHistoricCPI(core,\ m\_detailed\_sync,\ m\_detailed\_interval\ /\ 5);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ add\ to\ the\ history\ if\ we\ have\ been\ executing\ instructions\ for\ at\ least\ 20\%\ of\ the\ time}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (historic\_cpi\ !=\ SubsecondTime::Zero()\ \&\&\ historic\_cpi\ !=\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_historic\_cpi\_intervals[core\_id]-\/>pushCircular(historic\_cpi);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ not\ empty,\ use\ the\ historic\ cpi\ information}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ it\ is\ empty,\ assume\ one-\/ipc}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_historic\_cpi\_intervals[core\_id]-\/>empty())}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpi\ =\ arithmetic\_mean(*m\_historic\_cpi\_intervals[core\_id]);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpi\ =\ period;}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ min\_cpi\ =\ period\ /\ m\_dispatch\_width;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cpi\ <\ min\_cpi)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpi\ =\ min\_cpi;\ \textcolor{comment}{//\ max.\ m\_dispatch\_width\ IPC}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (cpi\ >\ period\ *\ 100)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpi\ =\ period\ *\ 100;\ \textcolor{comment}{//\ min.\ .01\ IPC}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printf("{}\ \%5.3f"{},\ float(period.getInternalDataForced())\ /\ float(cpi.getInternalDataForced()));}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>getFastforwardPerformanceModel()-\/>setCurrentCPI(cpi);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{comment}{//printf("{}\(\backslash\)n"{});}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_random\_placement)\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ |FFFFFFWWWDFFFFFF|FFFFWWWDFFFFFFFF|}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \string^\string^\string^\string^\string^\string^\ \string^\string^\string^\string^=new\ offset}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |=\ ffwd\ +\ warmup\ -\/\ old\ offset}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ whatever\ fast-\/forward\ we\ have\ left\ from\ the\ previous\ cycle}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ m\_fastforward\_time\_remaining\ =\ m\_fastforward\_interval\ +\ m\_warmup\_interval\ -\/\ m\_random\_offset;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Generate\ a\ new\ offset\ for\ this\ cycle}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ m\_random\_offset\ =\ (m\_prng.next()\ *\ m\_fastforward\_sync\_interval)\ \%\ (m\_fastforward\_interval\ +\ m\_warmup\_interval);}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Fast-\/forward\ until\ the\ new\ offset}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ m\_fastforward\_time\_remaining\ +=\ m\_random\_offset;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ m\_fastforward\_time\_remaining\ =\ m\_fastforward\_interval;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ m\_warmup\_time\_remaining\ =\ m\_warmup\_interval;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ done\ =\ stepFastForward(time,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(done\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}No\ fastforwarding\ to\ be\ done"{}});}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ m\_periodic\_last\ =\ time;}
+\DoxyCodeLine{00137\ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_detailed\_warmup\_time\_remaining\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00139\ \ \ \ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ detailed\ warmup\ is\ enabled\ and\ we\ have\ simulated\ the\ requested\ detailed\ amount,\ reset\ the\ statistics\ and\ continue\ in\ detailed}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ m\_periodic\_last\ +\ m\_detailed\_warmup\_interval)}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ m\_sampling\_manager-\/>resetCoreHistoricCPIs();}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ m\_detailed\_warmup\_time\_remaining\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ \ \ \ \}}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00150\ PeriodicSampling::stepFastForward(SubsecondTime\ time,\ \textcolor{keywordtype}{bool}\ in\_warmup)}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\_time\_remaining\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00153\ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ SubsecondTime\ time\_to\_fastforward\ =\ std::min(m\_fastforward\_time\_remaining,\ m\_fastforward\_sync\_interval);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\_time\_remaining\ <\ time\_to\_fastforward)}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ m\_fastforward\_time\_remaining\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ m\_fastforward\_time\_remaining\ -\/=\ time\_to\_fastforward;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ m\_sampling\_manager-\/>enableFastForward(time\ +\ time\_to\_fastforward,\ \textcolor{keyword}{false},\ m\_detailed\_sync);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00161\ \ \ \ \}}
+\DoxyCodeLine{00162\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_warmup\_time\_remaining\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00163\ \ \ \ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ SubsecondTime\ time\_to\_warmup\ =\ std::min(m\_warmup\_time\_remaining,\ m\_fastforward\_sync\_interval);}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_warmup\_time\_remaining\ <\ time\_to\_warmup)}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ m\_warmup\_time\_remaining\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ m\_warmup\_time\_remaining\ -\/=\ time\_to\_warmup;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ m\_sampling\_manager-\/>enableFastForward(time\ +\ time\_to\_warmup,\ \textcolor{keyword}{true},\ m\_detailed\_sync);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00171\ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00173\ \ \ \ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00175\ \ \ \ \}}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00179\ PeriodicSampling::callbackFastForward(SubsecondTime\ time,\ \textcolor{keywordtype}{bool}\ in\_warmup)}
+\DoxyCodeLine{00180\ \{}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{keywordtype}{bool}\ done\ =\ stepFastForward(time,\ in\_warmup);}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{keywordflow}{if}\ (done)}
+\DoxyCodeLine{00183\ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ m\_sampling\_manager-\/>resetCoreHistoricCPIs();}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ m\_sampling\_manager-\/>disableFastForward();}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ m\_periodic\_last\ =\ time;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_detailed\_warmup\_interval\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ m\_detailed\_warmup\_time\_remaining\ =\ m\_detailed\_warmup\_interval;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \}}
+\DoxyCodeLine{00192\ \}}
+
+\end{DoxyCode}

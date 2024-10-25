@@ -1,0 +1,89 @@
+\doxysection{trace\+\_\+manager.\+h}
+\label{trace__manager_8h_source}\index{common/trace\_frontend/trace\_manager.h@{common/trace\_frontend/trace\_manager.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_TRACE\_MANAGER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_TRACE\_MANAGER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}semaphore.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}\ \textcolor{comment}{//\ for\ lock\_signal\_t\ and\ mem\_op\_t}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}\_thread.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }TraceThread;}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }TraceManager}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{class\ }Monitor\ :\ \textcolor{keyword}{public}\ Runnable}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ run();}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ \_Thread\ *m\_thread;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ TraceManager\ *m\_manager;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ Monitor(TraceManager\ *manager);}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \string~Monitor();}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ spawn();}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }app\_info\_t}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ app\_info\_t()}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ :\ thread\_count(1)}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ num\_threads(1)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ num\_runs(0)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ UInt32\ thread\_count;\ \ \ \ \ \ \ \textcolor{comment}{//<\ Index\ counter\ for\ new\ thread's\ FIFO\ name}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ UInt32\ num\_threads;\ \ \ \ \ \ \ \ \textcolor{comment}{//<\ Number\ of\ active\ threads\ for\ this\ app\ (when\ zero,\ app\ is\ done)}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ UInt32\ num\_runs;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//<\ Number\ of\ completed\ runs}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ Monitor\ *m\_monitor;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ std::vector<TraceThread\ *>\ m\_threads;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ UInt32\ m\_num\_threads\_started;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ UInt32\ m\_num\_threads\_running;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ Semaphore\ m\_done;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_stop\_with\_first\_app;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_app\_restart;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ m\_emulate\_syscalls;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ UInt32\ m\_num\_apps;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ UInt32\ m\_num\_apps\_nonfinish;\ \ \textcolor{comment}{//<\ Number\ of\ applications\ that\ have\ yet\ to\ complete\ their\ first\ run}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ std::vector<app\_info\_t>\ m\_app\_info;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ std::vector<String>\ m\_tracefiles;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ std::vector<String>\ m\_responsefiles;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ String\ m\_trace\_prefix;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ String\ getFifoName(app\_id\_t\ app\_id,\ UInt64\ thread\_num,\ \textcolor{keywordtype}{bool}\ response,\ \textcolor{keywordtype}{bool}\ create);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ thread\_id\_t\ newThread(app\_id\_t\ app\_id,\ \textcolor{keywordtype}{bool}\ first,\ \textcolor{keywordtype}{bool}\ init\_fifo,\ \textcolor{keywordtype}{bool}\ spawn,\ SubsecondTime\ time,\ thread\_id\_t\ creator\_thread\_id);}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }Monitor;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ TraceManager();}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \string~TraceManager();}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ init();}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ start();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ stop();}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ mark\_done();}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ wait();}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ run();}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ cleanup();}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setupTraceFiles(\textcolor{keywordtype}{int}\ index);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ thread\_id\_t\ createThread(app\_id\_t\ app\_id,\ SubsecondTime\ time,\ thread\_id\_t\ creator\_thread\_id);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ app\_id\_t\ createApplication(SubsecondTime\ time,\ thread\_id\_t\ creator\_thread\_id);}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ signalStarted();}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ signalDone(TraceThread\ *thread,\ SubsecondTime\ time,\ \textcolor{keywordtype}{bool}\ aborted);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ endApplication(TraceThread\ *thread,\ SubsecondTime\ time);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ accessMemory(\textcolor{keywordtype}{int}\ core\_id,\ Core::lock\_signal\_t\ lock\_signal,\ Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ UInt64\ getProgressExpect();}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ UInt64\ getProgressValue();}
+\DoxyCodeLine{00081\ \};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_TRACE\_MANAGER\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,520 @@
+\doxysection{Circular\+Log Class Reference}
+\label{classCircularLog}\index{CircularLog@{CircularLog}}
+
+
+{\ttfamily \#include $<$circular\+\_\+log.\+h$>$}
+
+
+
+Collaboration diagram for Circular\+Log\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=319pt]{classCircularLog__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ event\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Circular\+Log} (String filename)
+\item 
+\textbf{ $\sim$\+Circular\+Log} ()
+\item 
+void \textbf{ insert} (const char $\ast$type, const char $\ast$msg,...) \textbf{ \+\_\+\+\_\+attribute\+\_\+\+\_\+}((format(printf
+\item 
+void \textbf{ UInt64} \textbf{ get\+Time} () const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \textbf{ init} (String filename)
+\item 
+static void \textbf{ enable\+Callbacks} ()
+\item 
+static void \textbf{ fini} ()
+\item 
+static void \textbf{ dump} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Circular\+Log} $\ast$ \textbf{ g\+\_\+singleton} = NULL
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ write\+Log} ()
+\item 
+void \textbf{ write\+Entry} (FILE $\ast$fp, int idx)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ SInt64} \textbf{ hook\+\_\+sigusr1} (\textbf{ UInt64}, \textbf{ UInt64})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const String \textbf{ m\+\_\+filename}
+\item 
+\textbf{ event\+\_\+t} $\ast$const \textbf{ m\+\_\+buffer}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+lock}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+eventnum}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+time\+\_\+zero}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const \textbf{ UInt64} \textbf{ BUFFER\+\_\+\+SIZE} = 1024$\ast$1024
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 18} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{CircularLog@{CircularLog}!CircularLog@{CircularLog}}
+\index{CircularLog@{CircularLog}!CircularLog@{CircularLog}}
+\doxysubsubsection{CircularLog()}
+{\footnotesize\ttfamily \label{classCircularLog_a6480175fabe1e187a39f4a3db8fd3f0d} 
+Circular\+Log\+::\+Circular\+Log (\begin{DoxyParamCaption}\item[{String}]{filename}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+Referenced by \textbf{ init()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a6480175fabe1e187a39f4a3db8fd3f0d_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!````~CircularLog@{$\sim$CircularLog}}
+\index{````~CircularLog@{$\sim$CircularLog}!CircularLog@{CircularLog}}
+\doxysubsubsection{$\sim$CircularLog()}
+{\footnotesize\ttfamily \label{classCircularLog_a7b04d98b0d7c1738aa9983e61e18e416} 
+Circular\+Log\+::$\sim$\+Circular\+Log (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ m\+\_\+buffer}, and \textbf{ write\+Log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a7b04d98b0d7c1738aa9983e61e18e416_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Function Documentation}
+\index{CircularLog@{CircularLog}!dump@{dump}}
+\index{dump@{dump}!CircularLog@{CircularLog}}
+\doxysubsubsection{dump()}
+{\footnotesize\ttfamily \label{classCircularLog_a8fc28d9dac9f467bdc2affbdd396c828} 
+void Circular\+Log\+::dump (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ g\+\_\+singleton}, \textbf{ m\+\_\+lock}, and \textbf{ write\+Log()}.
+
+
+
+Referenced by \textbf{ hook\+\_\+sigusr1()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a8fc28d9dac9f467bdc2affbdd396c828_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a8fc28d9dac9f467bdc2affbdd396c828_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!enableCallbacks@{enableCallbacks}}
+\index{enableCallbacks@{enableCallbacks}!CircularLog@{CircularLog}}
+\doxysubsubsection{enableCallbacks()}
+{\footnotesize\ttfamily \label{classCircularLog_a54cb799e91cbac01bd3026bdc65551ba} 
+void Circular\+Log\+::enable\+Callbacks (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 15} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ g\+\_\+singleton}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+SIGUSR1}, and \textbf{ hook\+\_\+sigusr1()}.
+
+
+
+Referenced by \textbf{ Simulator\+::start()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a54cb799e91cbac01bd3026bdc65551ba_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{classCircularLog_a54cb799e91cbac01bd3026bdc65551ba_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!fini@{fini}}
+\index{fini@{fini}!CircularLog@{CircularLog}}
+\doxysubsubsection{fini()}
+{\footnotesize\ttfamily \label{classCircularLog_ac34f6a61de7a604cd8fc1cb86792f5ad} 
+void Circular\+Log\+::fini (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 21} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ g\+\_\+singleton}.
+
+
+
+Referenced by \textbf{ Log\+::log()}, and \textbf{ Log\+::$\sim$\+Log()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=221pt]{classCircularLog_ac34f6a61de7a604cd8fc1cb86792f5ad_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!getTime@{getTime}}
+\index{getTime@{getTime}!CircularLog@{CircularLog}}
+\doxysubsubsection{getTime()}
+{\footnotesize\ttfamily \label{classCircularLog_a23401e3a834e431b50c5452aec5de6d3} 
+void \textbf{ UInt64} Circular\+Log\+::get\+Time (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+References \textbf{ m\+\_\+time\+\_\+zero}, and \textbf{ rdtsc()}.
+
+
+
+Referenced by \textbf{ insert()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=223pt]{classCircularLog_a23401e3a834e431b50c5452aec5de6d3_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{classCircularLog_a23401e3a834e431b50c5452aec5de6d3_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!hook\_sigusr1@{hook\_sigusr1}}
+\index{hook\_sigusr1@{hook\_sigusr1}!CircularLog@{CircularLog}}
+\doxysubsubsection{hook\_sigusr1()}
+{\footnotesize\ttfamily \label{classCircularLog_a403431fae32dddd5c60a1a05f1354e2d} 
+static \textbf{ SInt64} Circular\+Log\+::hook\+\_\+sigusr1 (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{}{, }\item[{\textbf{ UInt64}}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+References \textbf{ dump()}.
+
+
+
+Referenced by \textbf{ enable\+Callbacks()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a403431fae32dddd5c60a1a05f1354e2d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a403431fae32dddd5c60a1a05f1354e2d_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!init@{init}}
+\index{init@{init}!CircularLog@{CircularLog}}
+\doxysubsubsection{init()}
+{\footnotesize\ttfamily \label{classCircularLog_af1692031f09b92d61c7a361d85abb49c} 
+void Circular\+Log\+::init (\begin{DoxyParamCaption}\item[{String}]{filename}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 10} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ Circular\+Log()}, and \textbf{ g\+\_\+singleton}.
+
+
+
+Referenced by \textbf{ Log\+::\+Log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=282pt]{classCircularLog_af1692031f09b92d61c7a361d85abb49c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=216pt]{classCircularLog_af1692031f09b92d61c7a361d85abb49c_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!insert@{insert}}
+\index{insert@{insert}!CircularLog@{CircularLog}}
+\doxysubsubsection{insert()}
+{\footnotesize\ttfamily \label{classCircularLog_ab99dc3fece7fdcaecd41bb8a73031c78} 
+void Circular\+Log\+::insert (\begin{DoxyParamCaption}\item[{const char $\ast$}]{type}{, }\item[{const char $\ast$}]{msg}{, }\item[{}]{...}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ BUFFER\+\_\+\+SIZE}, \textbf{ get\+Time()}, \textbf{ m\+\_\+buffer}, \textbf{ m\+\_\+eventnum}, \textbf{ Circular\+Log\+::event\+\_\+t\+::msg}, \textbf{ Circular\+Log\+::event\+\_\+t\+::time}, and \textbf{ Circular\+Log\+::event\+\_\+t\+::type}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_ab99dc3fece7fdcaecd41bb8a73031c78_cgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!writeEntry@{writeEntry}}
+\index{writeEntry@{writeEntry}!CircularLog@{CircularLog}}
+\doxysubsubsection{writeEntry()}
+{\footnotesize\ttfamily \label{classCircularLog_ab964222072acb6d72db47f51a81b768d} 
+void Circular\+Log\+::write\+Entry (\begin{DoxyParamCaption}\item[{FILE $\ast$}]{fp}{, }\item[{int}]{idx}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 87} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ Circular\+Log\+::event\+\_\+t\+::args}, \textbf{ m\+\_\+buffer}, \textbf{ Circular\+Log\+::event\+\_\+t\+::msg}, \textbf{ Circular\+Log\+::event\+\_\+t\+::time}, and \textbf{ Circular\+Log\+::event\+\_\+t\+::type}.
+
+
+
+Referenced by \textbf{ write\+Log()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_ab964222072acb6d72db47f51a81b768d_icgraph}
+\end{center}
+\end{figure}
+\index{CircularLog@{CircularLog}!writeLog@{writeLog}}
+\index{writeLog@{writeLog}!CircularLog@{CircularLog}}
+\doxysubsubsection{writeLog()}
+{\footnotesize\ttfamily \label{classCircularLog_a736a043c25bcdf894cf3c044ec54cd47} 
+void Circular\+Log\+::write\+Log (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ circular\+\_\+log.\+cc}.
+
+
+
+References \textbf{ BUFFER\+\_\+\+SIZE}, \textbf{ m\+\_\+eventnum}, \textbf{ m\+\_\+filename}, and \textbf{ write\+Entry()}.
+
+
+
+Referenced by \textbf{ dump()}, and \textbf{ $\sim$\+Circular\+Log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{classCircularLog_a736a043c25bcdf894cf3c044ec54cd47_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCircularLog_a736a043c25bcdf894cf3c044ec54cd47_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{CircularLog@{CircularLog}!BUFFER\_SIZE@{BUFFER\_SIZE}}
+\index{BUFFER\_SIZE@{BUFFER\_SIZE}!CircularLog@{CircularLog}}
+\doxysubsubsection{BUFFER\_SIZE}
+{\footnotesize\ttfamily \label{classCircularLog_a9f702a04debaaf15c7916861ea76c040} 
+const \textbf{ UInt64} Circular\+Log\+::\+BUFFER\+\_\+\+SIZE = 1024$\ast$1024\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ insert()}, and \textbf{ write\+Log()}.
+
+\index{CircularLog@{CircularLog}!g\_singleton@{g\_singleton}}
+\index{g\_singleton@{g\_singleton}!CircularLog@{CircularLog}}
+\doxysubsubsection{g\_singleton}
+{\footnotesize\ttfamily \label{classCircularLog_a0f6e0d46e5b601a14a46207c34a130ab} 
+\textbf{ Circular\+Log} $\ast$ Circular\+Log\+::g\+\_\+singleton = NULL\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ dump()}, \textbf{ enable\+Callbacks()}, \textbf{ fini()}, and \textbf{ init()}.
+
+\index{CircularLog@{CircularLog}!m\_buffer@{m\_buffer}}
+\index{m\_buffer@{m\_buffer}!CircularLog@{CircularLog}}
+\doxysubsubsection{m\_buffer}
+{\footnotesize\ttfamily \label{classCircularLog_a19bdee7e62c2adfab132b8861f26ed09} 
+\textbf{ event\+\_\+t}$\ast$ const Circular\+Log\+::m\+\_\+buffer\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ insert()}, \textbf{ write\+Entry()}, and \textbf{ $\sim$\+Circular\+Log()}.
+
+\index{CircularLog@{CircularLog}!m\_eventnum@{m\_eventnum}}
+\index{m\_eventnum@{m\_eventnum}!CircularLog@{CircularLog}}
+\doxysubsubsection{m\_eventnum}
+{\footnotesize\ttfamily \label{classCircularLog_a5374bc5ca1add6a0a398a40b0008ed66} 
+\textbf{ UInt64} Circular\+Log\+::m\+\_\+eventnum\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ insert()}, and \textbf{ write\+Log()}.
+
+\index{CircularLog@{CircularLog}!m\_filename@{m\_filename}}
+\index{m\_filename@{m\_filename}!CircularLog@{CircularLog}}
+\doxysubsubsection{m\_filename}
+{\footnotesize\ttfamily \label{classCircularLog_adf36f7809832f5aebf08de4022525a31} 
+const String Circular\+Log\+::m\+\_\+filename\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ write\+Log()}.
+
+\index{CircularLog@{CircularLog}!m\_lock@{m\_lock}}
+\index{m\_lock@{m\_lock}!CircularLog@{CircularLog}}
+\doxysubsubsection{m\_lock}
+{\footnotesize\ttfamily \label{classCircularLog_a9659179b718913003e6d0771acda794b} 
+\textbf{ Lock} Circular\+Log\+::m\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ dump()}.
+
+\index{CircularLog@{CircularLog}!m\_time\_zero@{m\_time\_zero}}
+\index{m\_time\_zero@{m\_time\_zero}!CircularLog@{CircularLog}}
+\doxysubsubsection{m\_time\_zero}
+{\footnotesize\ttfamily \label{classCircularLog_a2d9a868dd43989924132e504c93cf784} 
+\textbf{ UInt64} Circular\+Log\+::m\+\_\+time\+\_\+zero\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ circular\+\_\+log.\+h}.
+
+
+
+Referenced by \textbf{ get\+Time()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/misc/\textbf{ circular\+\_\+log.\+h}\item 
+common/misc/\textbf{ circular\+\_\+log.\+cc}\end{DoxyCompactItemize}

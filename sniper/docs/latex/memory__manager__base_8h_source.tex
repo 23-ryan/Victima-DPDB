@@ -1,0 +1,126 @@
+\doxysection{memory\+\_\+manager\+\_\+base.\+h}
+\label{memory__manager__base_8h_source}\index{common/core/memory\_subsystem/memory\_manager\_base.h@{common/core/memory\_subsystem/memory\_manager\_base.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_MEMORY\_MANAGER\_BASE\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_MEMORY\_MANAGER\_BASE\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}tlb.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}nuca\_cache.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_msg.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{void}\ MemoryManagerNetworkCallback(\textcolor{keywordtype}{void}*\ obj,\ NetPacket\ packet);}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }MemoryManagerBase}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ CachingProtocol\_t}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ PARAMETRIC\_DRAM\_DIRECTORY\_MSI,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ FAST\_NEHALEM,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ NUM\_CACHING\_PROTOCOL\_TYPES}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ Core*\ m\_core;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ Network*\ m\_network;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ parseMemoryControllerList(String\&\ memory\_controller\_positions,\ std::vector<core\_id\_t>\&\ core\_list\_from\_cfg\_file,\ SInt32\ application\_core\_count);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ Network*\ getNetwork()\ \{\ \textcolor{keywordflow}{return}\ m\_network;\ \}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ std::vector<core\_id\_t>\ getCoreListWithMemoryControllers(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ printCoreListWithMemoryControllers(std::vector<core\_id\_t>\&\ core\_list\_with\_memory\_controllers);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ MemoryManagerBase(Core*\ core,\ Network*\ network,\ ShmemPerfModel*\ shmem\_perf\_model):}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ m\_core(core),}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ m\_network(network),}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model(shmem\_perf\_model)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~MemoryManagerBase()\ \{\}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ HitWhere::where\_t\ coreInitiateMemoryAccess(}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,\ UInt32\ offset,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ Core::MemModeled\ modeled)\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ coreInitiateMemoryAccessFast(}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ icache,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emulate\ fast\ interface\ by\ calling\ into\ slow\ interface}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ SubsecondTime\ initial\_time\ =\ getCore()-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,\ initial\_time);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ coreInitiateMemoryAccess(}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ icache\ ?\ MemComponent::L1\_ICACHE\ :\ MemComponent::L1\_DCACHE,}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::NONE,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_op\_type,}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ address\ -\/\ (address\ \%\ getCacheBlockSize()),\ 0,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ getCacheBlockSize(),}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::MEM\_MODELED\_COUNT\_TLBTIME);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ the\ final\ cycle\ time}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ SubsecondTime\ final\_time\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ SubsecondTime\ latency\ =\ final\_time\ -\/\ initial\_time;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ handleMsgFromNetwork(NetPacket\&\ packet)\ =\ 0;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ Take\ this\ out\ of\ here}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt64\ getCacheBlockSize()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ Might\ take\ this\ out\ of\ here\ as\ well}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt64\ getMegapageSize()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00087\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ ParametricDramDirectoryMSI::TLB*\ getTLB()\ =\ 0;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ SubsecondTime\ getL1HitLatency(\textcolor{keywordtype}{void})\ =\ 0;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ addL1Hits(\textcolor{keywordtype}{bool}\ icache,\ Core::mem\_op\_t\ mem\_op\_type,\ UInt64\ hits)\ =\ 0;}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ core\_id\_t\ getShmemRequester(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ pkt\_data)\ =\ 0;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ enableModels()\ =\ 0;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ disableModels()\ =\ 0;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ ParametricDramDirectoryMSI::PageTableWalker*\ getPTW()\ =\ 0;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{comment}{//\ Modeling}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt32\ getModeledLength(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ pkt\_data)\ =\ 0;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ measureNucaStats()\ =\ 0;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ NucaCache*\ getNucaCache()\ =\ 0;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ Cache*\ getCache(MemComponent::component\_t\ mem\_component)\ =\ 0;}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ Core*\ getCore()\ \{\ \textcolor{keywordflow}{return}\ m\_core;\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ sendMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ msg\_type,\ MemComponent::component\_t\ sender\_mem\_component,\ MemComponent::component\_t\ receiver\_mem\_component,\ core\_id\_t\ requester,\ core\_id\_t\ receiver,\ IntPtr\ address,\ Byte*\ data\_buf\ =\ NULL,\ UInt32\ data\_length\ =\ 0,\ HitWhere::where\_t\ where\ =\ HitWhere::UNKNOWN,\ ShmemPerf\ *perf\ =\ NULL,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS,\ CacheBlockInfo::block\_type\_t\ block\_type\ =\ CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE\ )\ =\ 0;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ broadcastMsg(PrL1PrL2DramDirectoryMSI::ShmemMsg::msg\_t\ msg\_type,\ MemComponent::component\_t\ sender\_mem\_component,\ MemComponent::component\_t\ receiver\_mem\_component,\ core\_id\_t\ requester,\ IntPtr\ address,\ Byte*\ data\_buf\ =\ NULL,\ UInt32\ data\_length\ =\ 0,\ ShmemPerf\ *perf\ =\ NULL,\ ShmemPerfModel::Thread\_t\ thread\_num\ =\ ShmemPerfModel::NUM\_CORE\_THREADS)\ =\ 0;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keyword}{static}\ CachingProtocol\_t\ parseProtocolType(String\&\ protocol\_type);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{keyword}{static}\ MemoryManagerBase*\ createMMU(String\ protocol\_type,}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ Core*\ core,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ Network*\ network,}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model);}
+\DoxyCodeLine{00118\ \};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_MEMORY\_MANAGER\_BASE\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

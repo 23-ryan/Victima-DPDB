@@ -1,0 +1,112 @@
+\doxysection{saturating\+\_\+predictor.\+h}
+\label{saturating__predictor_8h_source}\index{common/performance\_model/branch\_predictors/saturating\_predictor.h@{common/performance\_model/branch\_predictors/saturating\_predictor.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SATURATING\_PREDICTOR\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SATURATING\_PREDICTOR\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ From\ http://www.josuttis.com/tmplbook/meta/pow3.hpp.html}}
+\DoxyCodeLine{00008\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ N>\ \textcolor{keyword}{class\ }Pow2}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{enum}\ \{\ pow\ =\ 2\ *\ Pow2<N-\/1>::pow\ \};}
+\DoxyCodeLine{00012\ \};}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{template}\ <>\ \textcolor{keyword}{class\ }Pow2<0>}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{enum}\ \{\ pow\ =\ 1\ \};}
+\DoxyCodeLine{00018\ \};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ SAT\_PRED\_DEBUG\ 0}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{unsigned}\ n>}
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }SaturatingPredictor\ \{}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ SaturatingPredictor(UInt32\ initial\_value)}
+\DoxyCodeLine{00028\ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ m\_counter\ =\ initial\_value;}
+\DoxyCodeLine{00030\ \ \ \ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordtype}{bool}\ predict()}
+\DoxyCodeLine{00033\ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_counter\ >=\ 0);}
+\DoxyCodeLine{00035\ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordtype}{void}\ reset(\textcolor{keywordtype}{bool}\ prediction\ =\ 0)}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prediction)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ this\ counter\ favor\ taken}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ m\_counter\ =\ Pow2<n-\/1>::pow\ -\/\ 1;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ this\ counter\ favor\ not-\/taken}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ m\_counter\ =\ -\/Pow2<n-\/1>::pow;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \textcolor{comment}{//\ update}}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{comment}{//\ true\ -\/\ branch\ taken}}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{comment}{//\ false\ -\/\ branch\ not-\/taken}}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{bool}\ actual)}
+\DoxyCodeLine{00055\ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (actual)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ towards\ taken}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ ++(*this);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ towards\ not-\/taken}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ -\/-\/(*this);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ SaturatingPredictor\&\ operator++()}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#if\ SAT\_PRED\_DEBUG}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}operator++\ called!\ Old\ val\ =\ "{}}\ <<\ (int)\ m\_counter;}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{comment}{//\ Maximum\ signed\ value\ for\ n\ bits\ is\ (2\string^(n-\/1)-\/1)}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_counter\ !=\ (Pow2<n-\/1>::pow\ -\/\ 1))}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ ++m\_counter;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#if\ SAT\_PRED\_DEBUG}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}\ New\ val\ =\ "{}}\ <<\ (int)\ m\_counter\ <<\ endl;}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00082\ \ \ \ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ SaturatingPredictor\&\ operator-\/-\/()}
+\DoxyCodeLine{00085\ \ \ \ \{}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#if\ SAT\_PRED\_DEBUG}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}operator-\/-\/\ called!\ Old\ val\ =\ "{}}\ <<\ (int)\ m\_counter;}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{comment}{//\ Minimum\ signed\ value\ for\ n\ bits\ is\ -\/(2\string^(n-\/1))}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_counter\ !=\ (-\/Pow2<n-\/1>::pow))}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ -\/-\/m\_counter;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#if\ SAT\_PRED\_DEBUG}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ cout\ <<\ \textcolor{stringliteral}{"{}\ New\ val\ =\ "{}}\ <<\ (int)\ m\_counter\ <<\ endl;}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00098\ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ int8\_t\ m\_counter;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ SATURATING\_PREDICTOR\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

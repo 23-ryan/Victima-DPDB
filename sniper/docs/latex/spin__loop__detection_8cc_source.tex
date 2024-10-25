@@ -1,0 +1,156 @@
+\doxysection{spin\+\_\+loop\+\_\+detection.\+cc}
+\label{spin__loop__detection_8cc_source}\index{pin/spin\_loop\_detection.cc@{pin/spin\_loop\_detection.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Pin\ front-\/end\ for\ the\ spin\ loop\ detector\ implemented\ by\ the\ SpinLoopDetector\ class}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}spin\_loop\_detection.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}inst\_mode\_macros.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{static}\ ADDRINT\ spinloopIfInSpin(THREADID\ thread\_id)}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{comment}{//\ Condition\ used\ for\ If/Then\ instrumentation,\ should\ be\ inlineable}}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keywordflow}{return}\ localStore[thread\_id].sld.sld-\/>inCandidateSpin();}
+\DoxyCodeLine{00016\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ spinloopHandleBranch(THREADID\ thread\_id,\ ADDRINT\ eip,\ BOOL\ taken,\ ADDRINT\ target)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{if}\ (taken\ \&\&\ target\ <\ eip)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ localStore[thread\_id].sld.sld-\/>commitBCT(eip);}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ spinloopHandleWriteBefore(THREADID\ thread\_id,\ ADDRINT\ addr)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{comment}{//\ Remember\ store\ address\ and\ old\ value}}
+\DoxyCodeLine{00029\ \ \ \ localStore[thread\_id].sld.write\_addr\ =\ addr;}
+\DoxyCodeLine{00030\ \ \ \ localStore[thread\_id].sld.write\_value\ =\ *(uint64\_t\ *)addr;}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ spinloopHandleWriteAfter(THREADID\ thread\_id)}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ intptr\_t\ addr\ =\ localStore[thread\_id].sld.write\_addr;}
+\DoxyCodeLine{00036\ \ \ \ uint64\_t\ old\_value\ =\ localStore[thread\_id].sld.write\_value;}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordtype}{bool}\ silent\ =\ *(uint64\_t\ *)addr\ ==\ old\_value;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{if}\ (silent\ ==\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00040\ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ localStore[thread\_id].sld.sld-\/>commitNonSilentStore();}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ spinloopHandleRegWriteBefore(THREADID\ thread\_id,\ UINT32\ reg,\ ADDRINT\ value)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//\ Remember\ old\ value\ for\ register\ that\ is\ about\ to\ be\ written}}
+\DoxyCodeLine{00048\ \ \ \ localStore[thread\_id].sld.reg\_value[reg]\ =\ value;}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ spinloopHandleRegWriteAfter(THREADID\ thread\_id,\ UINT32\ \_reg,\ ADDRINT\ value)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ REG\ reg\ =\ (REG)\_reg;}
+\DoxyCodeLine{00054\ \ \ \ ADDRINT\ old\_value\ =\ localStore[thread\_id].sld.reg\_value[reg];}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ localStore[thread\_id].sld.sld-\/>commitRegisterWrite(reg,\ old\_value,\ value);}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keywordtype}{void}\ addSpinLoopDetection(TRACE\ trace,\ INS\ ins,\ InstMode::inst\_mode\_t\ inst\_mode)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_HasFallThrough(ins))}
+\DoxyCodeLine{00062\ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//\ Always\ look\ for\ new\ BCTs}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsBranch(ins))}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ INSTRUMENT\_PREDICATED(}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_TAKEN\_BRANCH,\ (AFUNPTR)spinloopHandleBranch,}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ TRUE,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BRANCH\_TARGET\_ADDR,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ INSTRUMENT\_PREDICATED(}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_AFTER,\ (AFUNPTR)spinloopHandleBranch,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ FALSE,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_BRANCH\_TARGET\_ADDR,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{comment}{//\ The\ below\ (non-\/silent\ store\ detection,\ and\ RUB\ updates),\ are\ only\ needed}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{comment}{//\ when\ the\ SDT\ is\ non-\/empty\ (i.e.,\ we\ may\ be\ in\ a\ spin).\ Use\ If/Then\ instrumentation}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{comment}{//\ to\ only\ execute\ these\ calls\ when\ needed.}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsMemoryWrite(ins))}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ INSTRUMENT\_IF\_PREDICATED(}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,\ (AFUNPTR)spinloopIfInSpin,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ INSTRUMENT\_THEN\_PREDICATED(}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,\ (AFUNPTR)spinloopHandleWriteBefore,}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_MEMORYWRITE\_EA,}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ INSTRUMENT\_IF\_PREDICATED(}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,\ (AFUNPTR)spinloopIfInSpin,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ INSTRUMENT\_THEN\_PREDICATED(}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_AFTER,\ (AFUNPTR)spinloopHandleWriteAfter,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ INS\_MaxNumWRegs(ins);\ i++)}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ REG\ reg\ =\ INS\_RegW(ins,\ i);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Limit\ ourselves\ to\ those\ registers\ for\ which\ IARG\_REG\_VALUE\ is\ valid}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ excludes\ YMM\ registers,\ but\ hopefully\ a\ loop\ that\ updates\ YMM\ registers\ also\ updates\ an\ iteration\ counter}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ in\ a\ general\ purpose\ register\ so\ we'll\ still\ recognize\ the\ loop\ as\ updating\ architecture\ state\ (and\ hence\ not\ a\ spin)}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (reg\ <\ REG\_MACHINE\_LAST\ \&\&\ (REG\_is\_gr(reg)\ ||\ REG\_is\_gr8(reg)\ ||\ REG\_is\_gr16(reg)\ ||\ REG\_is\_gr32(reg)\ ||\ REG\_is\_gr64(reg)))}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT\_IF\_PREDICATED(}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,\ (AFUNPTR)spinloopIfInSpin,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT\_THEN\_PREDICATED(}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,\ (AFUNPTR)spinloopHandleRegWriteBefore,}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ (uint32\_t)reg,}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ reg,}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT\_IF\_PREDICATED(}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_BEFORE,\ (AFUNPTR)spinloopIfInSpin,}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ INSTRUMENT\_THEN\_PREDICATED(}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_AFTER,\ (AFUNPTR)spinloopHandleRegWriteAfter,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_UINT32,\ (uint32\_t)reg,}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ reg,}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \}}
+\DoxyCodeLine{00150\ \}}
+
+\end{DoxyCode}

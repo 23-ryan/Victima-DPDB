@@ -1,0 +1,228 @@
+\doxysection{common/core/core.cc File Reference}
+\label{core_8cc}\index{common/core/core.cc@{common/core/core.cc}}
+{\ttfamily \#include "{}core.\+h"{}}\newline
+{\ttfamily \#include "{}network.\+h"{}}\newline
+{\ttfamily \#include "{}syscall\+\_\+model.\+h"{}}\newline
+{\ttfamily \#include "{}branch\+\_\+predictor.\+h"{}}\newline
+{\ttfamily \#include "{}memory\+\_\+manager\+\_\+base.\+h"{}}\newline
+{\ttfamily \#include "{}performance\+\_\+model.\+h"{}}\newline
+{\ttfamily \#include "{}instruction.\+h"{}}\newline
+{\ttfamily \#include "{}clock\+\_\+skew\+\_\+minimization\+\_\+object.\+h"{}}\newline
+{\ttfamily \#include "{}core\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}dvfs\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}hooks\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}trace\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include "{}simulator.\+h"{}}\newline
+{\ttfamily \#include "{}log.\+h"{}}\newline
+{\ttfamily \#include "{}config.\+hpp"{}}\newline
+{\ttfamily \#include "{}stats.\+h"{}}\newline
+{\ttfamily \#include "{}topology\+\_\+info.\+h"{}}\newline
+{\ttfamily \#include "{}cheetah\+\_\+manager.\+h"{}}\newline
+{\ttfamily \#include $<$cmath$>$}\newline
+{\ttfamily \#include $<$cstring$>$}\newline
+Include dependency graph for core.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{core_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ MYLOG}(...)
+\item 
+\#define \textbf{ VERBOSE}~0
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+const char $\ast$ \textbf{ Modeled\+String} (\textbf{ Core\+::\+Mem\+Modeled} modeled)
+\item 
+\textbf{ Memory\+Result} \textbf{ make\+Memory\+Result} (\textbf{ Hit\+Where\+::where\+\_\+t} \+\_\+hit\+\_\+where, \textbf{ Subsecond\+Time} \+\_\+latency)
+\item 
+\textbf{ \+\_\+\+\_\+attribute\+\_\+\+\_\+} ((weak)) void \textbf{ application\+Mem\+Copy}(void $\ast$dest
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+const char $\ast$ \textbf{ core\+\_\+state\+\_\+names} [$\,$]
+\item 
+const void $\ast$ \textbf{ src}
+\item 
+const void size\+\_\+t \textbf{ n}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{core.cc@{core.cc}!MYLOG@{MYLOG}}
+\index{MYLOG@{MYLOG}!core.cc@{core.cc}}
+\doxysubsubsection{MYLOG}
+{\footnotesize\ttfamily \label{core_8cc_a89c1d049d328e0198a53a0bfdf856c23} 
+\#define MYLOG(\begin{DoxyParamCaption}\item[{}]{}...{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 26} of file \textbf{ core.\+cc}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::access\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::acquire\+Lock()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::acquire\+Stack\+Lock()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::broadcast\+Msg()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::copy\+Data\+From\+Next\+Level()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::do\+Prefetch()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Cntlr\+::get\+Data\+From\+Dram()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::handle\+Msg\+From\+DRAM()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::handle\+Msg\+From\+Dram\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::handle\+Msg\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::handle\+Msg\+From\+Network()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::incr\+Elapsed\+Time()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::initiate\+Directory\+Access()}, \textbf{ Core\+::initiate\+Memory\+Access()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::insert\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::invalidate\+Cache\+Block()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::notify\+Prev\+Level\+Evict()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::operation\+Permissiblein\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Directory\+Entry\+Allocation\+Req()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+DRAMReply()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Ex\+Rep\+From\+Dram\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Ex\+Req\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Ex\+Req\+To\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Flush\+Rep\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Flush\+Req\+From\+Dram\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Inv\+Rep\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Inv\+Req\+From\+Dram\+Directory()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Mem\+Op\+From\+Core()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Next\+Req\+From\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Nullify\+Req()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Shmem\+Req\+From\+Prev\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Sh\+Rep\+From\+Dram\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Sh\+Req\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Sh\+Req\+To\+Directory()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Upgrade\+Rep\+From\+Dram\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Upgrade\+Req\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Upgrade\+Req\+To\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Wb\+Rep\+From\+L2\+Cache()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::process\+Wb\+Req\+From\+Dram\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Cntlr\+::put\+Data\+To\+Dram()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::release\+Lock()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::release\+Stack\+Lock()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::retrieve\+Data\+And\+Send\+To\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::send\+Data\+To\+Dram()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::send\+Data\+To\+NUCA()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::send\+Msg()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::update\+Cache\+Block()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::write\+Cache\+Block()}.
+
+\index{core.cc@{core.cc}!VERBOSE@{VERBOSE}}
+\index{VERBOSE@{VERBOSE}!core.cc@{core.cc}}
+\doxysubsubsection{VERBOSE}
+{\footnotesize\ttfamily \label{core_8cc_a42f8c497a1968074f38bf5055c650dca} 
+\#define VERBOSE~0}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ core.\+cc}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{core.cc@{core.cc}!\_\_attribute\_\_@{\_\_attribute\_\_}}
+\index{\_\_attribute\_\_@{\_\_attribute\_\_}!core.cc@{core.cc}}
+\doxysubsubsection{\_\_attribute\_\_()}
+{\footnotesize\ttfamily \label{core_8cc_aaacdb3992a609cfa5da63ea6dad4cf45} 
+\+\_\+\+\_\+attribute\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{(weak)}]{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ pthread\+\_\+lock.\+cc}.
+
+
+
+Referenced by \textbf{ Fxsupport\+::\+Fxsupport()}, \textbf{ Performance\+Model\+::handle\+Idle\+Instruction()}, \textbf{ Pthread\+Emu\+::init()}, \textbf{ Cache\+::insert\+Single\+Line()}, \textbf{ Cache\+::insert\+Single\+Line\+TLB()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::invalidate\+Cache\+Block()}, \textbf{ Unstructured\+Buffer\+::operator$>$$>$()}, \textbf{ Unstructured\+Buffer\+::operator$>$$>$()}, \textbf{ Unstructured\+Buffer\+::operator$>$$>$()}, \textbf{ print\+Ins\+Info()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::retrieve\+Cache\+Block()}, \textbf{ Pin\+TLS\+::set()}, \textbf{ Sim\+Thread\+Manager\+::spawn\+Sim\+Threads()}, \textbf{ Syscall\+Mdl\+::\+Syscall\+Mdl()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::update\+Cache\+Block()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Cntlr\+::write\+Cache\+Block()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{core_8cc_aaacdb3992a609cfa5da63ea6dad4cf45_icgraph}
+\end{center}
+\end{figure}
+\index{core.cc@{core.cc}!makeMemoryResult@{makeMemoryResult}}
+\index{makeMemoryResult@{makeMemoryResult}!core.cc@{core.cc}}
+\doxysubsubsection{makeMemoryResult()}
+{\footnotesize\ttfamily \label{core_8cc_ae61ac8fe5a12be46fe21ca95db0d0664} 
+\textbf{ Memory\+Result} make\+Memory\+Result (\begin{DoxyParamCaption}\item[{\textbf{ Hit\+Where\+::where\+\_\+t}}]{\+\_\+hit\+\_\+where}{, }\item[{\textbf{ Subsecond\+Time}}]{\+\_\+latency}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 219} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Memory\+Result\+::hit\+\_\+where}, \textbf{ Memory\+Result\+::latency}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}.
+
+
+
+Referenced by \textbf{ Core\+::access\+Memory()}, \textbf{ lite\+::handle\+Memory\+Read\+Detailed\+Issue()}, \textbf{ lite\+::handle\+Memory\+Write\+Detailed\+Issue()}, \textbf{ Core\+::initiate\+Memory\+Access()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Lock()}, \textbf{ Pthread\+Emu\+::\+Mutex\+Unlock()}, \textbf{ Core\+::native\+Mem\+Op()}, and \textbf{ Core\+::read\+Instruction\+Memory()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{core_8cc_ae61ac8fe5a12be46fe21ca95db0d0664_icgraph}
+\end{center}
+\end{figure}
+\index{core.cc@{core.cc}!ModeledString@{ModeledString}}
+\index{ModeledString@{ModeledString}!core.cc@{core.cc}}
+\doxysubsubsection{ModeledString()}
+{\footnotesize\ttfamily \label{core_8cc_a06784c5c1edaa4c702b8739140561b9f} 
+const char $\ast$ Modeled\+String (\begin{DoxyParamCaption}\item[{\textbf{ Core\+::\+Mem\+Modeled}}]{modeled}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 31} of file \textbf{ core.\+cc}.
+
+
+
+References \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+COUNT}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+COUNT\+\_\+\+TLBTIME}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+FENCED}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+NONE}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+RETURN}, and \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+TIME}.
+
+
+
+Referenced by \textbf{ Core\+::initiate\+Memory\+Access()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{core_8cc_a06784c5c1edaa4c702b8739140561b9f_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{core.cc@{core.cc}!core\_state\_names@{core\_state\_names}}
+\index{core\_state\_names@{core\_state\_names}!core.cc@{core.cc}}
+\doxysubsubsection{core\_state\_names}
+{\footnotesize\ttfamily \label{core_8cc_a828444a2ca31b0816d8fac8a923f0bb5} 
+const char$\ast$ core\+\_\+state\+\_\+names[$\,$]}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}running"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}initializing"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}stalled"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}sleeping"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}waking\_up"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}idle"{}},}
+\DoxyCodeLine{\ \ \ \textcolor{stringliteral}{"{}broken"{}},}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 45} of file \textbf{ core.\+cc}.
+
+
+
+Referenced by \textbf{ Core\+::\+Core\+State\+String()}.
+
+\index{core.cc@{core.cc}!n@{n}}
+\index{n@{n}!core.cc@{core.cc}}
+\doxysubsubsection{n}
+{\footnotesize\ttfamily \label{core_8cc_a5a8464156e218440bed8aa10828319c5} 
+const void size\+\_\+t n}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ memcpy(dest,\ src,\ n)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 527} of file \textbf{ core.\+cc}.
+
+
+
+Referenced by \textbf{ application\+Mem\+Copy()}, \textbf{ ceil\+Log2()}, \textbf{ count\+Bits()}, \textbf{ Barrier\+Sync\+Server\+::do\+Release()}, \textbf{ floor\+Log2()}, \textbf{ get\+Hash\+By\+Stacktrace()}, \textbf{ Simple\+Bimodal\+Table\+::ilog2()}, \textbf{ is\+Power2()}, \textbf{ config\+::config\+\_\+parser\+::\+Name\+::operator()()}, \textbf{ Saturating\+Predictor$<$ n $>$\+::reset()}, \textbf{ Trace\+Manager\+::\+Monitor\+::run()}, and \textbf{ secure\+\_\+zero\+\_\+memory()}.
+
+\index{core.cc@{core.cc}!src@{src}}
+\index{src@{src}!core.cc@{core.cc}}
+\doxysubsubsection{src}
+{\footnotesize\ttfamily \label{core_8cc_ab3b4066b211a3d1de8f72e90b2bca8ab} 
+const void$\ast$ src}
+
+
+
+Definition at line \textbf{ 527} of file \textbf{ core.\+cc}.
+
+
+
+Referenced by \textbf{ application\+Mem\+Copy()}, \textbf{ load16()}, \textbf{ load32()}, \textbf{ load48()}, \textbf{ load64()}, \textbf{ Network\+::net\+Recv()}, \textbf{ Network\+::net\+Recv\+From()}, and \textbf{ Stable\+Iterator$<$ T $>$\+::operator=()}.
+

@@ -1,0 +1,42 @@
+\doxysection{fxsupport.\+h}
+\label{fxsupport_8h_source}\index{common/misc/fxsupport.h@{common/misc/fxsupport.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ FXSUPPORT\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ FXSUPPORT\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }Fxsupport}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ init();}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ fini();}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keyword}{static}\ Fxsupport\ *getSingleton();}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ fxsave();}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ fxrstor();}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ Fxsupport(core\_id\_t\ core\_count);}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \string~Fxsupport();}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{comment}{//\ Per-\/thread\ buffers\ for\ storing\ fx\ state}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ **m\_fx\_buf;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{comment}{//\ Per-\/thread\ buffers\ for\ storing\ the\ reference\ count}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ uint64\_t\ **m\_ref\_count;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ core\_id\_t\ m\_core\_count;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{static}\ Fxsupport\ *m\_singleton;}
+\DoxyCodeLine{00027\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{class\ }ScopedFxsave}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ ScopedFxsave()\ \{\ Fxsupport::getSingleton()-\/>fxsave();\ \}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \string~ScopedFxsave()\ \{\ Fxsupport::getSingleton()-\/>fxrstor();\ \}}
+\DoxyCodeLine{00034\ \};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

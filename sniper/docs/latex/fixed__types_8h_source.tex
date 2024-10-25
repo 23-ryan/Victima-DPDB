@@ -1,0 +1,73 @@
+\doxysection{fixed\+\_\+types.\+h}
+\label{fixed__types_8h_source}\index{common/misc/fixed\_types.h@{common/misc/fixed\_types.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_FIXED\_TYPES\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_FIXED\_TYPES\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#ifndef\ \_\_STDC\_LIMIT\_MACROS}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#\ define\ \_\_STDC\_LIMIT\_MACROS}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#ifndef\ \_\_STDC\_CONSTANT\_MACROS}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#\ define\ \_\_STDC\_CONSTANT\_MACROS}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#\ define\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <inttypes.h>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ We\ define\ \_\_STDC\_LIMIT\_MACROS\ and\ then\ include\ stdint.h}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ But\ if\ someone\ else\ already\ included\ stdint.h\ without\ first\ defining\ \_\_STDC\_LIMIT\_MACROS,}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ UINT64\_MAX\ and\ friends\ will\ not\ be\ defined.\ Test\ for\ this\ here.}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ UINT64\_MAX}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#\ error\ "{}UINT64\_MAX\ is\ not\ defined.\ Make\ sure\ fixed\_types.h\ is\ first\ in\ the\ include\ order."{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifndef\ PRId64}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#\ error\ "{}PRId64\ is\ not\ defined.\ Make\ sure\ fixed\_types.h\ is\ first\ in\ the\ include\ order."{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{typedef}\ uint64\_t\ UInt64;}
+\DoxyCodeLine{00028\ \textcolor{keyword}{typedef}\ uint32\_t\ UInt32;}
+\DoxyCodeLine{00029\ \textcolor{keyword}{typedef}\ uint16\_t\ UInt16;}
+\DoxyCodeLine{00030\ \textcolor{keyword}{typedef}\ uint8\_t\ \ UInt8;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{typedef}\ int64\_t\ SInt64;}
+\DoxyCodeLine{00033\ \textcolor{keyword}{typedef}\ int32\_t\ SInt32;}
+\DoxyCodeLine{00034\ \textcolor{keyword}{typedef}\ int16\_t\ SInt16;}
+\DoxyCodeLine{00035\ \textcolor{keyword}{typedef}\ int8\_t\ \ SInt8;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{typedef}\ UInt8\ Byte;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{typedef}\ UInt8\ Boolean;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{typedef}\ uintptr\_t\ IntPtr;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{typedef}\ uintptr\_t\ carbon\_reg\_t;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ Carbon\ core\ types}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{typedef}\ SInt32\ thread\_id\_t;}
+\DoxyCodeLine{00046\ \textcolor{keyword}{typedef}\ SInt32\ app\_id\_t;}
+\DoxyCodeLine{00047\ \textcolor{keyword}{typedef}\ SInt32\ core\_id\_t;}
+\DoxyCodeLine{00048\ \textcolor{keyword}{typedef}\ SInt32\ carbon\_thread\_t;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ INVALID\_THREAD\_ID\ ((thread\_id\_t)\ -\/1)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#define\ INVALID\_APP\_ID\ ((app\_id\_t)\ -\/1)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#define\ INVALID\_CORE\_ID\ ((core\_id\_t)\ -\/1)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#define\ INVALID\_ADDRESS\ \ ((IntPtr)\ -\/1)}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#\ if\ !defined(PIN\_CRT)}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ std::string\ isn't\ tread-\/safe\ when\ making\ copies}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ See\ http://gcc.gnu.org/bugzilla/show\_bug.cgi?id=21334}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#\ \ include\ <ext/vstring.h>}}
+\DoxyCodeLine{00060\ \textcolor{keyword}{typedef}\ \_\_gnu\_cxx::\_\_versa\_string<char>\ String;}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#\ \ include\ <string>}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{typedef}\ std::string\ String;}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#\ endif\ }\textcolor{comment}{/*\ \_\_cplusplus\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

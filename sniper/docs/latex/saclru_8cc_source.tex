@@ -1,0 +1,350 @@
+\doxysection{saclru.\+cc}
+\label{saclru_8cc_source}\index{common/core/memory\_subsystem/cheetah/saclru.cc@{common/core/memory\_subsystem/cheetah/saclru.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/************************************************************************}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ Copyright\ (C)\ 1989,\ 1990,\ 1991,\ 1992,\ 1993\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rabin\ A.\ Sugumar\ and\ Santosh\ G.\ Abraham\ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*\ This\ software\ is\ distributed\ absolutely\ without\ warranty.\ You\ are\ \ \ \ \ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ free\ to\ use\ and\ modify\ the\ software\ as\ you\ wish.\ \ You\ are\ also\ free\ \ \ *}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ to\ distribute\ the\ software\ as\ long\ as\ it\ is\ not\ for\ commercial\ gain,\ \ *}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*\ you\ retain\ the\ above\ copyright\ notice,\ and\ you\ make\ clear\ what\ your\ \ \ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ modifications\ were.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*\ Send\ comments\ and\ bug\ reports\ to\ rabin@eecs.umich.edu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ (c)\ 2013\ Wim\ Heirman\ <wim@heirman.net>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ Converted\ to\ C++\ classes,\ use\ 64-\/bit\ data\ types\ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00016\ \textcolor{comment}{************************************************************************/}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{comment}{/*\ GBT\ method\ for\ simulating\ set\ associative\ caches\ of\ fixed\ line\ size.\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ ONE\ 1U}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ TWO\ 2}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#define\ B80000000\ 0x80000000}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ INVALID\ 0}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ MEM\_AVAIL\_HITARR\ 2097152\ }\textcolor{comment}{/*\ Memory\ available\ for\ hitarr\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}saclru.h"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}util.h"{}}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ CheetahSACLRU::CheetahSACLRU(\textcolor{keywordtype}{int}\ \_N,\ \textcolor{keywordtype}{int}\ \_B,\ \textcolor{keywordtype}{int}\ \_A,\ \textcolor{keywordtype}{int}\ \_L)}
+\DoxyCodeLine{00036\ \ \ \ :\ N(\_N),\ B(\_B),\ A(\_A),\ L(\_L)}
+\DoxyCodeLine{00037\ \ \ \ ,\ SAVE\_INTERVAL(0),\ P\_INTERVAL(0)\ \textcolor{comment}{/*\ unsupported\ for\ now\ */}}
+\DoxyCodeLine{00038\ \ \ \ ,\ t\_entries(0),\ depths(NULL),\ hitarr0(0),\ tag(0)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ init\_saclru();}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ CheetahSACLRU::\string~CheetahSACLRU()}
+\DoxyCodeLine{00044\ \{\textcolor{comment}{/*}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ \ free(arr);}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ \ free(hitarr);}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ free(base\_pwr\_array);}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ \ free(rm\_arr);}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ \ free(depths);}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ \ free(sac\_hits[0]);}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ free(sac\_hits);*/}}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00056\ CheetahSACLRU::flush(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i=0;\ i<=MAX\_DEPTH;i++)}
+\DoxyCodeLine{00059\ \ \ \ \ sac\_hits[0][i]\ +=\ hitarr0;}
+\DoxyCodeLine{00060\ \ \ hitarr0\ =\ 0;}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{comment}{/****************************************************************}}
+\DoxyCodeLine{00065\ \textcolor{comment}{Output\ routine.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{}}
+\DoxyCodeLine{00067\ \textcolor{comment}{Input:\ None}}
+\DoxyCodeLine{00068\ \textcolor{comment}{Output:\ None}}
+\DoxyCodeLine{00069\ \textcolor{comment}{Side\ effects:\ None}}
+\DoxyCodeLine{00070\ \textcolor{comment}{****************************************************************/}}
+\DoxyCodeLine{00071\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00072\ CheetahSACLRU::outpr\_saclru(FILE\ *fd)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordtype}{unsigned}\ i,\ j;}
+\DoxyCodeLine{00075\ \ \ uint64\_t\ sum;}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ flush();}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}Addresses\ processed:\ \%ld\(\backslash\)n"{}},\ t\_entries);}
+\DoxyCodeLine{00080\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}Line\ size:\ \%d\ bytes\(\backslash\)n"{}},\ (ONE\ <<\ L));}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#ifdef\ PERF}}
+\DoxyCodeLine{00082\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}compares\ \ \%d\(\backslash\)n"{}},\ compares);}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00084\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00085\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}Miss\ Ratios\(\backslash\)n"{}});}
+\DoxyCodeLine{00086\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\_\_\_\_\_\_\_\_\_\_\_\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{00087\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\(\backslash\)t\(\backslash\)tAssociativity\(\backslash\)n"{}});}
+\DoxyCodeLine{00088\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\(\backslash\)t\(\backslash\)t"{}});}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordflow}{for}\ (i=0;i<TWO\_PWR\_N;i++)}
+\DoxyCodeLine{00090\ \ \ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\%d\(\backslash\)t\(\backslash\)t"{}},\ (i+1));}
+\DoxyCodeLine{00091\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00092\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}No.\ of\ sets\(\backslash\)n"{}});}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i\ <=\ MAX\_DEPTH;\ i++)}
+\DoxyCodeLine{00094\ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ sum\ =\ 0;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\%d\(\backslash\)t\(\backslash\)t"{}},\ (ONE\ <<\ (i+A)));}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j=0;\ j\ <\ TWO\_PWR\_N;\ j++)}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ sum\ +=\ sac\_hits[j][i];}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\%f\(\backslash\)t"{}},\ (1.0\ -\/\ ((\textcolor{keywordtype}{double})sum/(\textcolor{keywordtype}{double})t\_entries)));}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ fprintf(fd,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ uint64\_t}
+\DoxyCodeLine{00109\ CheetahSACLRU::hits(\textcolor{keywordtype}{unsigned}\ sets\_log2,\ \textcolor{keywordtype}{unsigned}\ assoc)}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ assert(sets\_log2\ >=\ A);}
+\DoxyCodeLine{00112\ \ \ \ assert(sets\_log2\ <=\ B);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \textcolor{keywordflow}{if}\ (hitarr0)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ flush();}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ uint64\_t\ hits\ =\ 0;}
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ assoc;\ ++j)}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ hits\ +=\ sac\_hits[j][sets\_log2-\/A];}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordflow}{return}\ hits;}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{comment}{/**********************************************************************}}
+\DoxyCodeLine{00126\ \textcolor{comment}{Initialization\ routine.\ Allocates\ space\ for\ the\ various\ arrays\ and}}
+\DoxyCodeLine{00127\ \textcolor{comment}{initializes\ them.}}
+\DoxyCodeLine{00128\ \textcolor{comment}{}}
+\DoxyCodeLine{00129\ \textcolor{comment}{Input:\ None}}
+\DoxyCodeLine{00130\ \textcolor{comment}{Output:\ None}}
+\DoxyCodeLine{00131\ \textcolor{comment}{Side\ effects:\ Allocates\ space\ for\ the\ arrays\ and\ initializes\ the\ array}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ locations.}}
+\DoxyCodeLine{00133\ \textcolor{comment}{**********************************************************************/}}
+\DoxyCodeLine{00134\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00135\ CheetahSACLRU::init\_saclru(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00136\ \{}
+\DoxyCodeLine{00137\ \ \ uint64\_t\ i,\ j,\ k,\ l;}
+\DoxyCodeLine{00138\ \ \ uint64\_t\ init\_value;}
+\DoxyCodeLine{00139\ \ \ uint64\_t\ *arr\_ptr,\ *slot\_ptr;}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ next\_save\_time\ =\ SAVE\_INTERVAL;}
+\DoxyCodeLine{00142\ \ \ TWO\_PWR\_N\ =\ (ONE\ <<\ N);}
+\DoxyCodeLine{00143\ \ \ MAX\_DEPTH\ =\ B-\/A;}
+\DoxyCodeLine{00144\ \ \ TWO\_POWER\_MAX\_DEPTH\ =\ (ONE\ <<\ MAX\_DEPTH);}
+\DoxyCodeLine{00145\ \ \ SET\_MASK\ =\ ((ONE\ <<\ A)\ -\/\ 1);}
+\DoxyCodeLine{00146\ \ \ DIFF\_SET\_MASK\ =\ ((ONE\ <<\ MAX\_DEPTH)\ -\/\ 1);}
+\DoxyCodeLine{00147\ \ \ BASE\ =\ (TWO\_PWR\_N+1);}
+\DoxyCodeLine{00148\ \ \ SIZE\_OF\_TREE\ =\ (TWO\_POWER\_MAX\_DEPTH\ *\ TWO\ *\ BASE);}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ assert(((uint64\_t)(ONE\ <<\ A)*TWO\_POWER\_MAX\_DEPTH*TWO*BASE)\ <\ (uint64\_t(1)<<32));}
+\DoxyCodeLine{00151\ \ \ arr\ =\ (uint64\_t\ *)calloc((uint64\_t(ONE\ <<\ A)*TWO\_POWER\_MAX\_DEPTH*TWO*BASE),\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00152\ \ \ \textcolor{keywordflow}{if}\ (!arr)}
+\DoxyCodeLine{00153\ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ BASE\_PWR\_MAX\_DEPTH\_PLUS\_ONE\ =\ power(BASE,\ MAX\_DEPTH+1);}
+\DoxyCodeLine{00156\ \ \ \textcolor{keywordflow}{if}\ ((BASE\_PWR\_MAX\_DEPTH\_PLUS\_ONE\ *\ \textcolor{keyword}{sizeof}(uint64\_t))\ <\ MEM\_AVAIL\_HITARR)}
+\DoxyCodeLine{00157\ \ \ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ hitarr\ =\ (int64\_t\ *)calloc(BASE\_PWR\_MAX\_DEPTH\_PLUS\_ONE,\ \textcolor{keyword}{sizeof}(int64\_t));}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!hitarr)}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00161\ \ \ \ \ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ base\_pwr\_array\ =\ (uint64\_t\ *)calloc((MAX\_DEPTH+1),\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{if}\ (!base\_pwr\_array)}
+\DoxyCodeLine{00165\ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ rm\_arr\ =\ (uint64\_t\ *)calloc((TWO\_POWER\_MAX\_DEPTH),\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00168\ \ \ \textcolor{keywordflow}{if}\ (!rm\_arr)}
+\DoxyCodeLine{00169\ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ sac\_hits\ =\ idim2((TWO\_PWR\_N),\ (MAX\_DEPTH\ +\ 2));}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i\ <\ ONE\ <<\ A;\ i++)}
+\DoxyCodeLine{00174\ \ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ arr\_ptr\ =\ arr\ +\ i\ *\ SIZE\_OF\_TREE;}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ init\_value\ =\ B80000000;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ slot\_ptr\ =\ arr\_ptr;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ *slot\_ptr\ =\ 1;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (l=1;\ l<=TWO\_PWR\_N;\ l++)}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ *(slot\_ptr\ +\ l)\ =\ init\_value;}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ ++init\_value;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j=1;\ j\ <=\ MAX\_DEPTH;\ j++)}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (k=((ONE\ <<\ j)\ -\/\ 1);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ k\ <\ (((ONE\ <<\ j)\ -\/\ 1)\ +\ (ONE\ <<\ (j-\/1)));}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ k++)}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *(arr\_ptr\ +\ (k*(TWO\_PWR\_N+1)))\ =\ TWO\_PWR\_N+1;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (k=\ (((ONE\ <<\ j)\ -\/\ 1)\ +\ (ONE\ <<\ (j-\/1)));}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ k\ <\ ((ONE\ <<\ (j+1))\ -\/\ 1);}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ k++)}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ slot\_ptr\ =\ arr\_ptr\ +\ (k\ *\ (TWO\_PWR\_N+1));}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *slot\_ptr\ =\ 1;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (l=1;\ l<=TWO\_PWR\_N;\ l++)}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *(slot\_ptr\ +\ l)\ =\ init\_value;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++init\_value;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \}}
+\DoxyCodeLine{00202\ \ \ rm\_arr[0]\ =\ MAX\_DEPTH;}
+\DoxyCodeLine{00203\ \ \ \textcolor{keywordflow}{for}\ (i=1;\ i\ <\ (ONE\ <<\ MAX\_DEPTH);\ i++)}
+\DoxyCodeLine{00204\ \ \ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j=0;\ j<=MAX\_DEPTH;\ j++)}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ \&\ (ONE\ <<\ j))}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rm\_arr[i]\ =\ j;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ j\ =\ 1;}
+\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<=MAX\_DEPTH;\ i++)}
+\DoxyCodeLine{00216\ \ \ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ base\_pwr\_array[i]\ =\ j;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ j\ *=\ BASE;}
+\DoxyCodeLine{00219\ \ \ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ depths\ =\ (uint64\_t\ *)calloc((MAX\_DEPTH+1),\ \textcolor{keyword}{sizeof}(uint64\_t));}
+\DoxyCodeLine{00222\ \ \ \textcolor{keywordflow}{if}\ (!depths)}
+\DoxyCodeLine{00223\ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \textcolor{keywordflow}{for}\ (i=0;i<=MAX\_DEPTH;i++)}
+\DoxyCodeLine{00226\ \ \ \ \ depths[i]\ =\ 0;}
+\DoxyCodeLine{00227\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \textcolor{comment}{/*****************************************************************}}
+\DoxyCodeLine{00231\ \textcolor{comment}{Main\ simulation\ routine\ used\ when\ size\ of\ hitarr\ exceeds\ memory\ limit.}}
+\DoxyCodeLine{00232\ \textcolor{comment}{Does\ a\ GBT\ lookup\ and\ update\ as\ similar\ to\ 'sacnmul'\ but\ updates}}
+\DoxyCodeLine{00233\ \textcolor{comment}{the\ 'sac\_hits'\ array\ directly\ instead\ of\ 'hitarr'.}}
+\DoxyCodeLine{00234\ \textcolor{comment}{}}
+\DoxyCodeLine{00235\ \textcolor{comment}{Input:\ None}}
+\DoxyCodeLine{00236\ \textcolor{comment}{Output:\ None}}
+\DoxyCodeLine{00237\ \textcolor{comment}{Side\ effects:\ Updates\ GBT.\ Increments\ 'sac\_hits'\ array\ locations.}}
+\DoxyCodeLine{00238\ \textcolor{comment}{*****************************************************************/}}
+\DoxyCodeLine{00239\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00240\ CheetahSACLRU::sacnmul\_woarr(intptr\_t\ addr)}
+\DoxyCodeLine{00241\ \{}
+\DoxyCodeLine{00242\ \ \ uint64\_t\ t,\ t1;}
+\DoxyCodeLine{00243\ \ \ \textcolor{keywordtype}{int}\ i,\ fst;}
+\DoxyCodeLine{00244\ \ \ uint64\_t\ orig\_tag,\ \ atag,\ depth,\ entry,\ set\_no;}
+\DoxyCodeLine{00245\ \ \ uint64\_t\ sum,\ hit;}
+\DoxyCodeLine{00246\ \ \ uint64\_t\ *arr\_ptr,\ *slot\_ptr;}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00249\ \ \ \textcolor{keywordflow}{if}\ (t\_entries\ >\ next\_save\_time)}
+\DoxyCodeLine{00250\ \ \ \ \ \{}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#if\ 0\ }\textcolor{comment}{/*\ tma:\ is\ this\ needed?\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<=MAX\_DEPTH;i++)}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ sac\_hits[0][i]\ +=\ hitarr0;}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ hitarr0\ =\ 0;}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ outpr\_saclru(stderr);}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ next\_save\_time\ +=\ SAVE\_INTERVAL;}
+\DoxyCodeLine{00258\ \ \ \ \ \}}
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ ++t\_entries;}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00263\ \ \ \textcolor{keywordflow}{if}\ ((t\_entries\ \%\ P\_INTERVAL)\ ==\ 0)}
+\DoxyCodeLine{00264\ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}libcheetah:\ addresses\ processed\ \%d\(\backslash\)n"{}},\ t\_entries);}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ addr\ >>=\ L;}
+\DoxyCodeLine{00268\ \ \ set\_no\ =\ addr\ \&\ SET\_MASK;}
+\DoxyCodeLine{00269\ \ \ arr\_ptr\ =\ arr\ +\ set\_no\ *\ SIZE\_OF\_TREE;}
+\DoxyCodeLine{00270\ \ \ orig\_tag\ =\ addr\ >>\ A;}
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\#ifdef\ PERF}}
+\DoxyCodeLine{00272\ \ \ ++compares;}
+\DoxyCodeLine{00273\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00274\ \ \ \textcolor{keywordflow}{if}\ (*(arr\_ptr\ +\ 1)\ ==\ orig\_tag)}
+\DoxyCodeLine{00275\ \ \ \ \ ++hitarr0;}
+\DoxyCodeLine{00276\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00277\ \ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ atag\ =\ orig\_tag;}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ depth\ =\ 0;}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ hit\ =\ 0;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ fst\ =\ 1;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ slot\_ptr\ =\ arr\_ptr;}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (depth\ <=\ MAX\_DEPTH)}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=fst;\ i<=(int)TWO\_PWR\_N;\ i++)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00287\ \textcolor{preprocessor}{\#ifdef\ PERF}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++compares;}
+\DoxyCodeLine{00289\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((t1\ =\ *(slot\_ptr\ +\ i))\ ==\ orig\_tag)}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *(slot\_ptr+i)\ =\ tag;}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ hit\ =\ 1;}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t\ =\ rm\_arr[(orig\_tag\ \string^\ t1)\ \&\ DIFF\_SET\_MASK];}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++depths[t];}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *(slot\_ptr\ +\ i)\ =\ tag;}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tag\ =\ t1;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ ++*slot\_ptr;}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ entry\ =}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ (((ONE\ <<\ depth)\ +\ (atag\ \&\ ((ONE\ <<\ depth)\ -\/\ 1)))\ -\/\ 1)\ *\ BASE;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ slot\_ptr\ =\ arr\_ptr\ +\ entry;}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ -\/-\/*slot\_ptr;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ slot\_ptr[*slot\_ptr]\ =\ atag;}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit==1)}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sum\ =\ 0;}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i\ =\ MAX\_DEPTH;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (i\ >=\ 0)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sum\ +=\ depths[i];}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sum\ <\ TWO\_PWR\_N)}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++sac\_hits[sum][i];}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/i;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ ++depth;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ atag\ =\ tag;}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ entry\ =}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ (((ONE\ <<\ depth)\ +\ (orig\_tag\ \&\ ((ONE\ <<\ depth)-\/1)))-\/1)\ *\ BASE;}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ ((depth\ <=\ MAX\_DEPTH)\ \&\&\ (*(arr\_ptr\ +\ entry)\ >\ TWO\_PWR\_N))}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++depth;}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry\ =}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (((ONE\ <<\ depth)\ +\ (orig\_tag\ \&\ ((ONE\ <<\ depth)-\/1)))-\/1)\ *\ BASE;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (depth\ <=\ MAX\_DEPTH)}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ slot\_ptr\ =\ arr\_ptr\ +\ entry;}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fst\ =\ *slot\_ptr;}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;i<=(int)MAX\_DEPTH;i++)}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ depths[i]\ =\ 0;}
+\DoxyCodeLine{00343\ \ \ \ \ \}\ \textcolor{comment}{/*\ else\ */}}
+\DoxyCodeLine{00344\ \}}
+
+\end{DoxyCode}

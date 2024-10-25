@@ -1,0 +1,190 @@
+\doxysection{elastic\+\_\+cuckoo\+\_\+table.\+h}
+\label{elastic__cuckoo__table_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/elastic\_cuckoo\_table.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/elastic\_cuckoo\_table.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ Author:\ Dimitrios\ Skarlatos}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Contact:\ skarlat2@illinois.edu\ -\/\ http://skarlat2.web.engr.illinois.edu/}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ ELASTIC\_CUCKOO\_TABLE\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ ELASTIC\_CUCKOO\_TABLE\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}blake2-\/impl.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}blake2.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}city.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <immintrin.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#define\ uint64\_t\ unsigned\ long\ long}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#define\ uint32\_t\ unsigned\ long}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ hsize(n)\ ((uint64\_t)1\ <<\ (n))}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ hmask(n)\ (hsize(n)\ -\/\ 1)}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }elem\_t\ \{}
+\DoxyCodeLine{00024\ \ \ uint8\_t\ valid;}
+\DoxyCodeLine{00025\ \ \ uint64\_t\ value;}
+\DoxyCodeLine{00026\ \}\ elem\_t;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }cuckooTable\_t\ \{}
+\DoxyCodeLine{00029\ \ \ elem\_t\ **hashtable;\ \ \textcolor{comment}{//\ hashtable\ structure}}
+\DoxyCodeLine{00030\ \ \ uint32\_t\ d;\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ d-\/ary\ cuckoo\ hashtable}}
+\DoxyCodeLine{00031\ \ \ uint64\_t\ hash\_size;\ \ \textcolor{comment}{//\ number\ of\ bits\ required\ for\ hashing}}
+\DoxyCodeLine{00032\ \ \ \textcolor{keywordtype}{char}\ hash\_func[20];\ \ \textcolor{comment}{//\ hash\ function\ to\ be\ used}}
+\DoxyCodeLine{00033\ \ \ uint64\_t\ size;\ \ \ \ \ \ \ \textcolor{comment}{//\ size\ per\ d\ way}}
+\DoxyCodeLine{00034\ \ \ uint64\_t\ *num\_elems;\ \textcolor{comment}{//\ current\ \#\ elements\ per\ d\ way}}
+\DoxyCodeLine{00035\ \ \ uint64\_t\ *keys;\ \ \ \ \ \ \textcolor{comment}{//\ key\ per\ d\ way}}
+\DoxyCodeLine{00036\ \ \ uint64\_t\ *rehashed;\ \ \textcolor{comment}{//\ current\ rehashed\ entries}}
+\DoxyCodeLine{00037\ \ \ \textcolor{keywordtype}{float}\ *util;\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ utilization\ per\ d\ way}}
+\DoxyCodeLine{00038\ \ \ \textcolor{keywordtype}{float}\ occupancy;\ \ \ \ \ \textcolor{comment}{//\ overall\ hashtable\ occupancy}}
+\DoxyCodeLine{00039\ \}\ cuckooTable\_t;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }elasticCuckooTable\_t\ \{}
+\DoxyCodeLine{00042\ \ \ cuckooTable\_t\ *current;\ \textcolor{comment}{//\ current\ hashtable}}
+\DoxyCodeLine{00043\ \ \ cuckooTable\_t\ *migrate;\ \textcolor{comment}{//\ migrate\ hashtable}}
+\DoxyCodeLine{00044\ \ \ \textcolor{keywordtype}{float}\ rehash\_threshold;\ \textcolor{comment}{//\ rehash\ treshold}}
+\DoxyCodeLine{00045\ \ \ uint8\_t\ rehashing;\ \ \ \ \ \ \textcolor{comment}{//\ flag\ if\ rehashing}}
+\DoxyCodeLine{00046\ \ \ uint32\_t\ d;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ d-\/ary\ cuckoo\ hashtable}}
+\DoxyCodeLine{00047\ \ \ uint64\_t\ curr\_size;\ \ \ \ \ \textcolor{comment}{//\ size\ per\ d\ hashtable\ of\ current}}
+\DoxyCodeLine{00048\ \ \ uint32\_t\ scale;\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ scaling\ factor}}
+\DoxyCodeLine{00049\ \ \ uint32\_t\ swaps;\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ number\ of\ swaps}}
+\DoxyCodeLine{00050\ \ \ uint8\_t\ priority;\ \ \ \ \ \ \ \textcolor{comment}{//\ priority\ of\ table\ during\ rehashing}}
+\DoxyCodeLine{00051\ \ \ uint64\_t\ rehash\_probes;\ \textcolor{comment}{//\ number\ of\ rehash\ probes}}
+\DoxyCodeLine{00052\ \ \ uint64\_t\ rehash\_elems;\ \ \textcolor{comment}{//\ number\ of\ rehash\ elements}}
+\DoxyCodeLine{00053\ \ \ \textcolor{keywordtype}{char}\ hash\_func[20];\ \ \ \ \ \textcolor{comment}{//\ hash\ function\ to\ be\ used}}
+\DoxyCodeLine{00054\ \}\ elasticCuckooTable\_t;}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00057\ \textcolor{comment}{*\ create\_elastic\ allocates\ an\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00058\ \textcolor{comment}{*\ @d\ number\ of\ ways/nests}}
+\DoxyCodeLine{00059\ \textcolor{comment}{*\ @size\ size\ of\ each\ way/nest}}
+\DoxyCodeLine{00060\ \textcolor{comment}{*\ @hashtable\ the\ hashtable}}
+\DoxyCodeLine{00061\ \textcolor{comment}{*\ @hash\_func\ name\ of\ the\ hash\ function}}
+\DoxyCodeLine{00062\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00063\ \textcolor{keywordtype}{void}\ create(uint32\_t\ d,\ uint64\_t\ size,\ cuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *hash\_func);}
+\DoxyCodeLine{00065\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00066\ \textcolor{comment}{*\ create\_elastic\ allocates\ an\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00067\ \textcolor{comment}{*\ @d\ number\ of\ ways/nests}}
+\DoxyCodeLine{00068\ \textcolor{comment}{*\ @size\ size\ of\ each\ way/nest}}
+\DoxyCodeLine{00069\ \textcolor{comment}{*\ @hashtable\ the\ hashtable}}
+\DoxyCodeLine{00070\ \textcolor{comment}{*\ @hash\_func\ name\ of\ the\ hash\ function}}
+\DoxyCodeLine{00071\ \textcolor{comment}{*\ @rehash\_treshold\ resizing\ threshold\ as\ a\ fraction}}
+\DoxyCodeLine{00072\ \textcolor{comment}{*\ @scale\ scaling\ factor\ during\ resizing}}
+\DoxyCodeLine{00073\ \textcolor{comment}{*\ @swaps\ number\ of\ swaps\ during\ rehashing}}
+\DoxyCodeLine{00074\ \textcolor{comment}{*\ @priority\ bias\ the\ rehashing\ inserts\ vs\ random}}
+\DoxyCodeLine{00075\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{void}\ create\_elastic(uint32\_t\ d,\ uint64\_t\ size,\ elasticCuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *hash\_func,\ \textcolor{keywordtype}{float}\ rehash\_threshold,\ uint32\_t\ scale,}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ swaps,\ uint8\_t\ priority);}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00081\ \textcolor{comment}{*\ rehash\ rehash\ elements\ in\ th\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00082\ \textcolor{comment}{*\ @hashtable\ the\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00083\ \textcolor{comment}{*\ @swaps\ the\ number\ of\ swaps\ to\ perform}}
+\DoxyCodeLine{00084\ \textcolor{comment}{*\ @return\ number\ of\ tries}}
+\DoxyCodeLine{00085\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00086\ uint64\_t\ rehash(elasticCuckooTable\_t\ *hashtable,\ uint64\_t\ swaps);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00089\ \textcolor{comment}{*\ evaluate\_elasticity\ evaluates\ the\ "{}elasticity"{}\ of\ the\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00090\ \textcolor{comment}{*\ if\ a\ threhold\ of\ occupancy\ is\ passed\ reszing\ is\ initiated}}
+\DoxyCodeLine{00091\ \textcolor{comment}{*\ @hashtable\ elastic\ cuckoo\ hashtable\ to\ be\ evaluated}}
+\DoxyCodeLine{00092\ \textcolor{comment}{*\ @complete\ if\ a\ resize\ is\ triggered\ perform\ a\ complete\ or\ gradual\ resize}}
+\DoxyCodeLine{00093\ \textcolor{comment}{*\ @return\ number\ of\ retries\ if\ rehash\ was\ initiated}}
+\DoxyCodeLine{00094\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00095\ uint64\_t\ evaluate\_elasticity(elasticCuckooTable\_t\ *hashtable,\ uint8\_t\ complete);}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00098\ \textcolor{comment}{*\ destroy\ de-\/allocate\ the\ cuckoo\ hashtable}}
+\DoxyCodeLine{00099\ \textcolor{comment}{*\ @hashtable\ the\ cuckoo\ hashtable\ to\ de-\/allocate}}
+\DoxyCodeLine{00100\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00101\ \textcolor{keywordtype}{void}\ destroy(cuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00104\ \textcolor{comment}{*\ destroy\_elastic\ de-\/allocate\ the\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00105\ \textcolor{comment}{*\ @hashtable\ the\ elastic\ cuckoo\ hashtable\ to\ de-\/allocate}}
+\DoxyCodeLine{00106\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00107\ \textcolor{keywordtype}{void}\ destroy\_elastic(elasticCuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00110\ \textcolor{comment}{*\ insert\ try\ to\ insert\ an\ element\ in\ the\ cuckoo\ hashtable\ with\ recursion}}
+\DoxyCodeLine{00111\ \textcolor{comment}{*\ @elem\ element\ to\ insert}}
+\DoxyCodeLine{00112\ \textcolor{comment}{*\ @hashtable\ cuckoo\ hashtable\ to\ be\ updated}}
+\DoxyCodeLine{00113\ \textcolor{comment}{*\ @nest\ nest/way\ to\ insert}}
+\DoxyCodeLine{00114\ \textcolor{comment}{*\ @tries\ number\ of\ tries\ before\ aborting}}
+\DoxyCodeLine{00115\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00116\ uint32\_t\ insert\_recursion(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable,\ uint32\_t\ nest,}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ tries);}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ std::vector<elem\_t>\ find\_elastic\_ptw(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00120\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00121\ \textcolor{comment}{*\ insert\ try\ to\ insert\ an\ element\ in\ the\ cuckoo\ hashtable}}
+\DoxyCodeLine{00122\ \textcolor{comment}{*\ @elem\ element\ to\ insert}}
+\DoxyCodeLine{00123\ \textcolor{comment}{*\ @hashtable\ cuckoo\ hashtable\ to\ be\ updated}}
+\DoxyCodeLine{00124\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00125\ uint32\_t\ insert(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00128\ \textcolor{comment}{*\ insert\_elastic\ try\ to\ insert\ an\ element\ in\ the\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00129\ \textcolor{comment}{*\ @elem\ element\ to\ insert}}
+\DoxyCodeLine{00130\ \textcolor{comment}{*\ @hashtable\ elasticCuckoo\ hashtable\ to\ be\ updated}}
+\DoxyCodeLine{00131\ \textcolor{comment}{*\ @bias\ enable\ to\ selected\ the\ bias\_nest}}
+\DoxyCodeLine{00132\ \textcolor{comment}{*\ @bias\_nest\ when\ bias\ is\ enabled\ select\ @bias\_nest\ as\ the\ first\ try}}
+\DoxyCodeLine{00133\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00134\ uint32\_t\ insert\_elastic(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable,}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ bias,\ uint16\_t\ bias\_nest);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00138\ \textcolor{comment}{*\ find\ find\ an\ element\ in\ the\ cuckoo\ hashtable}}
+\DoxyCodeLine{00139\ \textcolor{comment}{*\ @elem\ element\ to\ search\ for}}
+\DoxyCodeLine{00140\ \textcolor{comment}{*\ @hashtable\ cuckoo\ hashtable\ to\ search\ in}}
+\DoxyCodeLine{00141\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00142\ std::vector<elem\_t>\ find(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00145\ \textcolor{comment}{*\ find\_elastic\ find\ an\ element\ in\ the\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00146\ \textcolor{comment}{*\ @elem\ element\ to\ search\ for}}
+\DoxyCodeLine{00147\ \textcolor{comment}{*\ @hashtable\ elasticCuckoo\ hashtable\ to\ search\ in}}
+\DoxyCodeLine{00148\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00149\ elem\_t\ *find\_elastic(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00152\ \textcolor{comment}{*\ delete\ marks\ an\ element\ invalid\ from\ the\ cuckoo\ hashtable}}
+\DoxyCodeLine{00153\ \textcolor{comment}{*\ @elem\ element\ to\ be\ marked\ invalid\ (if\ found)}}
+\DoxyCodeLine{00154\ \textcolor{comment}{*\ @hashtable\ cuckoo\ hashtable\ to\ update}}
+\DoxyCodeLine{00155\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{void}\ delete\_normal\ (elem\_t\ *elem,\ cuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00159\ \textcolor{comment}{*\ delete\_elastic\ marks\ an\ element\ invalid\ from\ the\ elastic\ cuckoo\ hashtable}}
+\DoxyCodeLine{00160\ \textcolor{comment}{*\ @elem\ element\ to\ be\ marked\ invalid\ (if\ found)}}
+\DoxyCodeLine{00161\ \textcolor{comment}{*\ @hashtable\ elasticCuckoo\ hashtable\ to\ update}}
+\DoxyCodeLine{00162\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00163\ \textcolor{keywordtype}{void}\ delete\_elastic(elem\_t\ *elem,\ elasticCuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00166\ \textcolor{comment}{*\ update\_occupancy\ updates\ the\ occupancy\ of\ the\ hashtable}}
+\DoxyCodeLine{00167\ \textcolor{comment}{*\ @hashtable\ the\ cuckoo\ hashtable\ of\ which\ the\ occupancy\ will\ be\ updated}}
+\DoxyCodeLine{00168\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00169\ \textcolor{keywordtype}{void}\ update\_occupancy(cuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00172\ \textcolor{comment}{*\ gen\_hash\ generates\ a\ hash\ index}}
+\DoxyCodeLine{00173\ \textcolor{comment}{*\ @elem\ used\ to\ generate\ the\ hash}}
+\DoxyCodeLine{00174\ \textcolor{comment}{*\ @hashtable\ use\ the\ hash\ function\ defined\ in\ the\ hashtable}}
+\DoxyCodeLine{00175\ \textcolor{comment}{*\ @nest\ the\ nest/way\ for\ which\ a\ hash\ is\ generated}}
+\DoxyCodeLine{00176\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00177\ uint64\_t\ gen\_hash(elem\_t\ *elem,\ cuckooTable\_t\ *hashtable,\ uint32\_t\ nest);}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00180\ \textcolor{comment}{*\ printTable\ prints\ is\ a\ helper\ functions\ that\ prints\ the\ hashtable}}
+\DoxyCodeLine{00181\ \textcolor{comment}{*\ @hashtable\ is\ a\ cuckoo\ hashtable}}
+\DoxyCodeLine{00182\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00183\ \textcolor{keywordtype}{void}\ printTable(cuckooTable\_t\ *hashtable);}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

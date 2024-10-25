@@ -1,0 +1,52 @@
+\doxysection{pagetable\+\_\+walker\+\_\+radix.\+h}
+\label{pagetable__walker__radix_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_radix.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_radix.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PTWV2\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PTWV2\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}page\_table\_walker\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}utopia\_cache\_template.h"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{keyword}{class\ }PageTableWalkerRadix:\ \textcolor{keyword}{public}\ PageTableWalker\{}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct}\{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ number\_of\_levels;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *address\_bit\_indices;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *hit\_percentages;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ stats\_radix;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ counter;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ UtopiaCache*\ shadow\_cache;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<IntPtr>\ addresses;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ Core*\ core;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ CacheCntlr\ *cache;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ String\ name;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ PageTableWalkerRadix(\textcolor{keywordtype}{int}\ number\_of\_levels,Core*\ \_core,ShmemPerfModel*\ \_m\_shmem\_perf\_model,\textcolor{keywordtype}{int}\ *level\_bit\_indices,\textcolor{keywordtype}{int}\ *level\_percentages,\ PWC*\ pwc,\ \textcolor{keywordtype}{bool}\ pwc\_enabled,UtopiaCache*\ shadow\_cache);}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ ptw\_table*\ starting\_table;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ *latency\_per\_level;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ init\_walk(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,\ CacheCntlr\ *\_cache,Core::lock\_signal\_t\ lock\_signal,Byte*\ data\_buf,\ UInt32\ data\_length,\textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\ ;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ InitializeWalkRecursive(IntPtr\ eip,\ IntPtr\ address,\textcolor{keywordtype}{int}\ level,ptw\_table*\ new\_table,Core::lock\_signal\_t\ lock\_signal,Byte*\ data\_buf,\ UInt32\ data\_length,\textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ init\_walk\_functional(IntPtr\ address);}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ init\_walk\_recursive\_functional(IntPtr\ address,\textcolor{keywordtype}{int}\ level,ptw\_table*\ new\_table);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isPageFault(IntPtr\ address);}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isPageFaultHelper(uint64\_t\ address,\textcolor{keywordtype}{int}\ level,ptw\_table*\ new\_table);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<IntPtr>\ getAddresses()\{\textcolor{keywordflow}{return}\ addresses;\}}
+\DoxyCodeLine{00043\ \ \ \ \ \};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif\ }}
+
+\end{DoxyCode}

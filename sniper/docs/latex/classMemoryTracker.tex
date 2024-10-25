@@ -1,0 +1,363 @@
+\doxysection{Memory\+Tracker Class Reference}
+\label{classMemoryTracker}\index{MemoryTracker@{MemoryTracker}}
+
+
+{\ttfamily \#include $<$memory\+\_\+tracker.\+h$>$}
+
+
+
+Collaboration diagram for Memory\+Tracker\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{classMemoryTracker__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ Allocation}
+\item 
+struct \textbf{ Allocation\+Site}
+\item 
+class \textbf{ Routine\+Tracer}
+\item 
+class \textbf{ Routine\+Tracer\+Thread}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Memory\+Tracker} ()
+\item 
+\textbf{ $\sim$\+Memory\+Tracker} ()
+\item 
+void \textbf{ log\+Malloc} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ UInt64} eip, \textbf{ UInt64} address, \textbf{ UInt64} size)
+\item 
+void \textbf{ log\+Free} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ UInt64} eip, \textbf{ UInt64} address)
+\item 
+void \textbf{ do\+Mem\+Alloc} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\+::unordered\+\_\+map$<$ \textbf{ Call\+Stack}, \textbf{ Allocation\+Site} $\ast$ $>$ \textbf{ Allocation\+Sites}
+\item 
+typedef std\+::map$<$ \textbf{ UInt64}, \textbf{ Allocation} $>$ \textbf{ Allocations}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt64} \textbf{ ce\+\_\+get\+\_\+owner} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ UInt64} address)
+\item 
+void \textbf{ ce\+\_\+notify\+\_\+access} (\textbf{ UInt64} owner, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Hit\+Where\+::where\+\_\+t} hit\+\_\+where)
+\item 
+void \textbf{ ce\+\_\+notify\+\_\+evict} (bool on\+\_\+roi\+\_\+end, \textbf{ UInt64} owner, \textbf{ UInt64} evictor, \textbf{ Cache\+Block\+Info\+::\+Bits\+Used\+Type} bits\+\_\+used, \textbf{ UInt32} bits\+\_\+total)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ UInt64} \textbf{ \+\_\+\+\_\+ce\+\_\+get\+\_\+owner} (\textbf{ UInt64} user, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ UInt64} address)
+\item 
+static void \textbf{ \+\_\+\+\_\+ce\+\_\+notify\+\_\+access} (\textbf{ UInt64} user, \textbf{ UInt64} owner, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Hit\+Where\+::where\+\_\+t} hit\+\_\+where)
+\item 
+static void \textbf{ \+\_\+\+\_\+ce\+\_\+notify\+\_\+evict} (\textbf{ UInt64} user, bool on\+\_\+roi\+\_\+end, \textbf{ UInt64} owner, \textbf{ UInt64} evictor, \textbf{ Cache\+Block\+Info\+::\+Bits\+Used\+Type} bits\+\_\+used, \textbf{ UInt32} bits\+\_\+total)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+lock}
+\item 
+\textbf{ Allocations} \textbf{ m\+\_\+allocations}
+\item 
+\textbf{ Allocation\+Sites} \textbf{ m\+\_\+allocation\+\_\+sites}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 18} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{MemoryTracker@{MemoryTracker}!Allocations@{Allocations}}
+\index{Allocations@{Allocations}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{Allocations}
+{\footnotesize\ttfamily \label{classMemoryTracker_a8ea9852d6459b06c8a92cf262d5b1a95} 
+std\+::map$<$\textbf{ UInt64}, \textbf{ Allocation}$>$ \textbf{ Memory\+Tracker\+::\+Allocations}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 84} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+\index{MemoryTracker@{MemoryTracker}!AllocationSites@{AllocationSites}}
+\index{AllocationSites@{AllocationSites}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{AllocationSites}
+{\footnotesize\ttfamily \label{classMemoryTracker_ae319388056f22dc06a3e0930c103b402} 
+std\+::unordered\+\_\+map$<$\textbf{ Call\+Stack}, \textbf{ Allocation\+Site}$\ast$$>$ \textbf{ Memory\+Tracker\+::\+Allocation\+Sites}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{MemoryTracker@{MemoryTracker}!MemoryTracker@{MemoryTracker}}
+\index{MemoryTracker@{MemoryTracker}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{MemoryTracker()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a6280dccbc7768728c14a11fbf0d4040a} 
+Memory\+Tracker\+::\+Memory\+Tracker (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 10} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ \+\_\+\+\_\+ce\+\_\+get\+\_\+owner()}, \textbf{ \+\_\+\+\_\+ce\+\_\+notify\+\_\+access()}, and \textbf{ \+\_\+\+\_\+ce\+\_\+notify\+\_\+evict()}.
+
+
+
+Referenced by \textbf{ Memory\+Tracker\+::\+Routine\+Tracer\+::\+Routine\+Tracer()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classMemoryTracker_a6280dccbc7768728c14a11fbf0d4040a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryTracker_a6280dccbc7768728c14a11fbf0d4040a_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryTracker@{MemoryTracker}!````~MemoryTracker@{$\sim$MemoryTracker}}
+\index{````~MemoryTracker@{$\sim$MemoryTracker}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{$\sim$MemoryTracker()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a7ab4613a015d6883128eecbf5ab81533} 
+Memory\+Tracker\+::$\sim$\+Memory\+Tracker (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 17} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ Hit\+Where\+Is\+Valid()}, \textbf{ Hit\+Where\+String()}, \textbf{ m\+\_\+allocation\+\_\+sites}, \textbf{ Routine\+Tracer\+::\+Routine\+::m\+\_\+location}, \textbf{ Routine\+Tracer\+::\+Routine\+::m\+\_\+name}, \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}, \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::total\+\_\+loads}, \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::total\+\_\+stores}, and \textbf{ Hit\+Where\+::\+WHERE\+\_\+\+FIRST}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryTracker_a7ab4613a015d6883128eecbf5ab81533_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Function Documentation}
+\index{MemoryTracker@{MemoryTracker}!\_\_ce\_get\_owner@{\_\_ce\_get\_owner}}
+\index{\_\_ce\_get\_owner@{\_\_ce\_get\_owner}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{\_\_ce\_get\_owner()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a8c8a733f3b629bdd6a882fd408843e6c} 
+static \textbf{ UInt64} Memory\+Tracker\+::\+\_\+\+\_\+ce\+\_\+get\+\_\+owner (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{user}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ UInt64}}]{address}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+Referenced by \textbf{ Memory\+Tracker()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryTracker_a8c8a733f3b629bdd6a882fd408843e6c_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryTracker@{MemoryTracker}!\_\_ce\_notify\_access@{\_\_ce\_notify\_access}}
+\index{\_\_ce\_notify\_access@{\_\_ce\_notify\_access}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{\_\_ce\_notify\_access()}
+{\footnotesize\ttfamily \label{classMemoryTracker_aa0444ba22c85e45ac7b742342a1be58c} 
+static void Memory\+Tracker\+::\+\_\+\+\_\+ce\+\_\+notify\+\_\+access (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{user}{, }\item[{\textbf{ UInt64}}]{owner}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Hit\+Where\+::where\+\_\+t}}]{hit\+\_\+where}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+Referenced by \textbf{ Memory\+Tracker()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryTracker_aa0444ba22c85e45ac7b742342a1be58c_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryTracker@{MemoryTracker}!\_\_ce\_notify\_evict@{\_\_ce\_notify\_evict}}
+\index{\_\_ce\_notify\_evict@{\_\_ce\_notify\_evict}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{\_\_ce\_notify\_evict()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a7fdc19fce0d1e3f632153fb6c7d15100} 
+static void Memory\+Tracker\+::\+\_\+\+\_\+ce\+\_\+notify\+\_\+evict (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{user}{, }\item[{bool}]{on\+\_\+roi\+\_\+end}{, }\item[{\textbf{ UInt64}}]{owner}{, }\item[{\textbf{ UInt64}}]{evictor}{, }\item[{\textbf{ Cache\+Block\+Info\+::\+Bits\+Used\+Type}}]{bits\+\_\+used}{, }\item[{\textbf{ UInt32}}]{bits\+\_\+total}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 104} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+Referenced by \textbf{ Memory\+Tracker()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryTracker_a7fdc19fce0d1e3f632153fb6c7d15100_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryTracker@{MemoryTracker}!ce\_get\_owner@{ce\_get\_owner}}
+\index{ce\_get\_owner@{ce\_get\_owner}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{ce\_get\_owner()}
+{\footnotesize\ttfamily \label{classMemoryTracker_acf5eb11fa77b7fc2b8b2ab1c0b34f6c9} 
+\textbf{ UInt64} Memory\+Tracker\+::ce\+\_\+get\+\_\+owner (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ UInt64}}]{address}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 136} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+WARNING}, \textbf{ m\+\_\+allocations}, and \textbf{ m\+\_\+lock}.
+
+\index{MemoryTracker@{MemoryTracker}!ce\_notify\_access@{ce\_notify\_access}}
+\index{ce\_notify\_access@{ce\_notify\_access}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{ce\_notify\_access()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a671563248ea8395ec694ae5fb45e4cf7} 
+void Memory\+Tracker\+::ce\+\_\+notify\+\_\+access (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{owner}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Hit\+Where\+::where\+\_\+t}}]{hit\+\_\+where}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 156} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::hit\+\_\+where\+\_\+load}, \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::hit\+\_\+where\+\_\+store}, \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::total\+\_\+loads}, \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::total\+\_\+stores}, and \textbf{ Core\+::\+WRITE}.
+
+\index{MemoryTracker@{MemoryTracker}!ce\_notify\_evict@{ce\_notify\_evict}}
+\index{ce\_notify\_evict@{ce\_notify\_evict}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{ce\_notify\_evict()}
+{\footnotesize\ttfamily \label{classMemoryTracker_aa16b55609a4ba1d1619176e9120d5ca1} 
+void Memory\+Tracker\+::ce\+\_\+notify\+\_\+evict (\begin{DoxyParamCaption}\item[{bool}]{on\+\_\+roi\+\_\+end}{, }\item[{\textbf{ UInt64}}]{owner}{, }\item[{\textbf{ UInt64}}]{evictor}{, }\item[{\textbf{ Cache\+Block\+Info\+::\+Bits\+Used\+Type}}]{bits\+\_\+used}{, }\item[{\textbf{ UInt32}}]{bits\+\_\+total}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 174} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::evicted\+\_\+by}.
+
+\index{MemoryTracker@{MemoryTracker}!doMemAlloc@{doMemAlloc}}
+\index{doMemAlloc@{doMemAlloc}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{doMemAlloc()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a72772dfe91a905577aeb52b364ec66de} 
+void Memory\+Tracker\+::do\+Mem\+Alloc (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 124} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+\index{MemoryTracker@{MemoryTracker}!logFree@{logFree}}
+\index{logFree@{logFree}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{logFree()}
+{\footnotesize\ttfamily \label{classMemoryTracker_accce176a68b86b81b02680fd9e8d1b1d} 
+void Memory\+Tracker\+::log\+Free (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ UInt64}}]{eip}{, }\item[{\textbf{ UInt64}}]{address}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 129} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ m\+\_\+lock}.
+
+\index{MemoryTracker@{MemoryTracker}!logMalloc@{logMalloc}}
+\index{logMalloc@{logMalloc}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{logMalloc()}
+{\footnotesize\ttfamily \label{classMemoryTracker_a00f4fd339ecad395bbc29facefbec1bf} 
+void Memory\+Tracker\+::log\+Malloc (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ UInt64}}]{eip}{, }\item[{\textbf{ UInt64}}]{address}{, }\item[{\textbf{ UInt64}}]{size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ memory\+\_\+tracker.\+cc}.
+
+
+
+References \textbf{ m\+\_\+allocation\+\_\+sites}, \textbf{ m\+\_\+allocations}, \textbf{ m\+\_\+lock}, and \textbf{ Memory\+Tracker\+::\+Allocation\+Site\+::num\+\_\+allocations}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{MemoryTracker@{MemoryTracker}!m\_allocation\_sites@{m\_allocation\_sites}}
+\index{m\_allocation\_sites@{m\_allocation\_sites}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{m\_allocation\_sites}
+{\footnotesize\ttfamily \label{classMemoryTracker_aa7f60f0a0aa040333729d628150d7bd2} 
+\textbf{ Allocation\+Sites} Memory\+Tracker\+::m\+\_\+allocation\+\_\+sites\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+Referenced by \textbf{ log\+Malloc()}, and \textbf{ $\sim$\+Memory\+Tracker()}.
+
+\index{MemoryTracker@{MemoryTracker}!m\_allocations@{m\_allocations}}
+\index{m\_allocations@{m\_allocations}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{m\_allocations}
+{\footnotesize\ttfamily \label{classMemoryTracker_a176886fb793c71dbf9a80215da9d0b6a} 
+\textbf{ Allocations} Memory\+Tracker\+::m\+\_\+allocations\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 89} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+Referenced by \textbf{ ce\+\_\+get\+\_\+owner()}, and \textbf{ log\+Malloc()}.
+
+\index{MemoryTracker@{MemoryTracker}!m\_lock@{m\_lock}}
+\index{m\_lock@{m\_lock}!MemoryTracker@{MemoryTracker}}
+\doxysubsubsection{m\_lock}
+{\footnotesize\ttfamily \label{classMemoryTracker_a56b75ac0b06cd60f84f60b9dc6385960} 
+\textbf{ Lock} Memory\+Tracker\+::m\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 88} of file \textbf{ memory\+\_\+tracker.\+h}.
+
+
+
+Referenced by \textbf{ Memory\+Tracker\+::\+Routine\+Tracer\+::add\+Routine()}, \textbf{ ce\+\_\+get\+\_\+owner()}, \textbf{ Memory\+Tracker\+::\+Routine\+Tracer\+::has\+Routine()}, \textbf{ log\+Free()}, and \textbf{ log\+Malloc()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ memory\+\_\+tracker.\+h}\item 
+common/system/\textbf{ memory\+\_\+tracker.\+cc}\end{DoxyCompactItemize}

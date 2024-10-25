@@ -1,0 +1,85 @@
+\doxysection{interval\+\_\+contention\+\_\+nehalem.\+cc}
+\label{interval__contention__nehalem_8cc_source}\index{common/performance\_model/performance\_models/interval\_performance\_model/interval\_contention\_nehalem.cc@{common/performance\_model/performance\_models/interval\_performance\_model/interval\_contention\_nehalem.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}interval\_contention\_nehalem.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ IntervalContentionNehalem::IntervalContentionNehalem(\textcolor{keyword}{const}\ Core\ *core,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model)}
+\DoxyCodeLine{00010\ \ \ \ :\ m\_core\_model(core\_model)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ DynamicMicroOpNehalem::UOP\_PORT\_SIZE;\ ++i)}
+\DoxyCodeLine{00013\ \ \ \ \{}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ m\_cpContrByPort[i]\ =\ 0;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ String\ name\ =\ String(\textcolor{stringliteral}{"{}cpContr\_"{}})\ +\ DynamicMicroOpNehalem::PortTypeString((DynamicMicroOpNehalem::uop\_port\_t)i);}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpContrByPort[i]));}
+\DoxyCodeLine{00017\ \ \ \ \}}
+\DoxyCodeLine{00018\ \}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keywordtype}{void}\ IntervalContentionNehalem::clearFunctionalUnitStats()}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ (\textcolor{keywordtype}{unsigned}\ int)DynamicMicroOpNehalem::UOP\_PORT\_SIZE;\ ++i)}
+\DoxyCodeLine{00023\ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ m\_count\_byport[i]\ =\ 0;}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keywordtype}{void}\ IntervalContentionNehalem::addFunctionalUnitStats(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop)}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ m\_count\_byport[uop-\/>getCoreSpecificInfo<DynamicMicroOpNehalem>()-\/>getPort()]++;}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{void}\ IntervalContentionNehalem::removeFunctionalUnitStats(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop)}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ m\_count\_byport[uop-\/>getCoreSpecificInfo<DynamicMicroOpNehalem>()-\/>getPort()]-\/-\/;}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ uint64\_t\ IntervalContentionNehalem::getEffectiveCriticalPathLength(uint64\_t\ critical\_path\_length,\ \textcolor{keywordtype}{bool}\ update\_reason)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ DynamicMicroOpNehalem::uop\_port\_t\ reason\ =\ DynamicMicroOpNehalem::UOP\_PORT\_SIZE;}
+\DoxyCodeLine{00041\ \ \ \ uint64\_t\ effective\_cp\_length\ =\ critical\_path\_length;}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \textcolor{comment}{//\ For\ the\ standard\ ports,\ check\ if\ we\ have\ exceeded\ our\ execution\ limit}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ DynamicMicroOpNehalem::UOP\_PORT\_SIZE\ ;\ i++)}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{comment}{//\ Skip\ shared\ ports}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ DynamicMicroOpNehalem::UOP\_PORT015}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \&\&\ i\ !=\ DynamicMicroOpNehalem::UOP\_PORT05}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \&\&\ effective\_cp\_length\ <\ m\_count\_byport[i]}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ )}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ effective\_cp\_length\ =\ m\_count\_byport[i];}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ reason\ =\ (DynamicMicroOpNehalem::uop\_port\_t)i;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{comment}{//\ Check\ shared\ port\ usage}}
+\DoxyCodeLine{00057\ \ \ \ uint64\_t\ port05\_use\ =\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT0]\ +\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT5]}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT05];}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{if}\ (port05\_use\ >\ (2*effective\_cp\_length))}
+\DoxyCodeLine{00060\ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ effective\_cp\_length\ =\ (port05\_use+1)\ /\ 2;\ \textcolor{comment}{//\ +1\ to\ round\ up\ to\ the\ next\ cycle}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ reason\ =\ DynamicMicroOpNehalem::UOP\_PORT05;}
+\DoxyCodeLine{00063\ \ \ \ \}}
+\DoxyCodeLine{00064\ \ \ \ uint64\_t\ port015\_use\ =\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT0]\ +\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT1]}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT5]\ +\ m\_count\_byport[DynamicMicroOpNehalem::UOP\_PORT015];}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{if}\ (port015\_use\ >\ (3*effective\_cp\_length))}
+\DoxyCodeLine{00067\ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ effective\_cp\_length\ =\ (port015\_use+2)\ /\ 3;\ \textcolor{comment}{//\ +2\ to\ round\ up\ to\ the\ next\ cycle}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ reason\ =\ DynamicMicroOpNehalem::UOP\_PORT015;}
+\DoxyCodeLine{00070\ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{if}\ (update\_reason\ \&\&\ effective\_cp\_length\ >\ critical\_path\_length)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(reason\ !=\ DynamicMicroOpNehalem::UOP\_PORT\_SIZE,\ \textcolor{stringliteral}{"{}There\ should\ be\ a\ reason\ for\ the\ cp\ extention,\ but\ there\ isn't"{}});}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ m\_cpContrByPort[reason]\ +=\ 1000000\ *\ (effective\_cp\_length\ -\/\ critical\_path\_length)\ /\ effective\_cp\_length;}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{return}\ effective\_cp\_length;}
+\DoxyCodeLine{00079\ \}}
+
+\end{DoxyCode}

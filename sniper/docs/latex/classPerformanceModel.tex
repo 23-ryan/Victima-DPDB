@@ -1,0 +1,1614 @@
+\doxysection{Performance\+Model Class Reference}
+\label{classPerformanceModel}\index{PerformanceModel@{PerformanceModel}}
+
+
+{\ttfamily \#include $<$performance\+\_\+model.\+h$>$}
+
+
+
+Inheritance diagram for Performance\+Model\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Performance\+Model\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Performance\+Model} (\textbf{ Core} $\ast$core)
+\item 
+virtual \textbf{ $\sim$\+Performance\+Model} ()
+\item 
+void \textbf{ queue\+Instruction} (\textbf{ Dynamic\+Instruction} $\ast$i)
+\item 
+void \textbf{ queue\+Pseudo\+Instruction} (\textbf{ Pseudo\+Instruction} $\ast$i)
+\item 
+void \textbf{ handle\+Idle\+Instruction} (\textbf{ Pseudo\+Instruction} $\ast$i)
+\item 
+void \textbf{ iterate} ()
+\item 
+virtual void \textbf{ synchronize} ()
+\item 
+\textbf{ UInt64} \textbf{ get\+Instruction\+Count} () const
+\item 
+\textbf{ Subsecond\+Time} \textbf{ get\+Elapsed\+Time} () const
+\item 
+\textbf{ Subsecond\+Time} \textbf{ get\+Non\+Idle\+Elapsed\+Time} () const
+\item 
+void \textbf{ count\+Instructions} (\textbf{ Int\+Ptr} address, \textbf{ UInt32} count)
+\item 
+void \textbf{ handle\+Memory\+Latency} (\textbf{ Subsecond\+Time} latency, \textbf{ Hit\+Where\+::where\+\_\+t} hit\+\_\+where)
+\item 
+void \textbf{ handle\+Branch\+Mispredict} ()
+\item 
+\textbf{ Branch\+Predictor} $\ast$ \textbf{ get\+Branch\+Predictor} ()
+\item 
+\textbf{ Branch\+Predictor} const $\ast$ \textbf{ get\+Const\+Branch\+Predictor} () const
+\item 
+\textbf{ Fastforward\+Performance\+Model} $\ast$ \textbf{ get\+Fastforward\+Performance\+Model} ()
+\item 
+\textbf{ Fastforward\+Performance\+Model} const $\ast$ \textbf{ get\+Fastforward\+Performance\+Model} () const
+\item 
+\textbf{ Dynamic\+Instruction} $\ast$ \textbf{ create\+Dynamic\+Instruction} (\textbf{ Instruction} $\ast$ins, \textbf{ Int\+Ptr} eip)
+\item 
+void \textbf{ trace\+Instruction} (const \textbf{ Dynamic\+Micro\+Op} $\ast$uop, \textbf{ Instruction\+Tracer\+::uop\+\_\+times\+\_\+t} $\ast$times)
+\item 
+virtual void \textbf{ barrier\+Enter} ()
+\item 
+virtual void \textbf{ barrier\+Exit} ()
+\item 
+void \textbf{ disable} ()
+\item 
+void \textbf{ enable} ()
+\item 
+bool \textbf{ is\+Enabled} ()
+\item 
+void \textbf{ set\+Hold} (bool hold)
+\item 
+bool \textbf{ is\+Fast\+Forward} ()
+\item 
+void \textbf{ set\+Fast\+Forward} (bool fastforward, bool detailed\+\_\+sync=true)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Performance\+Model} $\ast$ \textbf{ create} (\textbf{ Core} $\ast$core)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef \textbf{ Circular\+Queue}$<$ \textbf{ Dynamic\+Instruction} $\ast$ $>$ \textbf{ Instruction\+Queue}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ set\+Elapsed\+Time} (\textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ increment\+Elapsed\+Time} (\textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ increment\+Idle\+Elapsed\+Time} (\textbf{ Subsecond\+Time} time)
+\item 
+\textbf{ Core} $\ast$ \textbf{ get\+Core} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+instruction\+\_\+count}
+\item 
+\textbf{ Component\+Time} \textbf{ m\+\_\+elapsed\+\_\+time}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual void \textbf{ handle\+Instruction} (\textbf{ Dynamic\+Instruction} $\ast$instruction)=0
+\item 
+virtual void \textbf{ notify\+Elapsed\+Time\+Update} ()
+\item 
+virtual void \textbf{ enable\+Detailed\+Model} ()
+\item 
+virtual void \textbf{ disable\+Detailed\+Model} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Core} $\ast$ \textbf{ m\+\_\+core}
+\item 
+\textbf{ Allocator} $\ast$ \textbf{ m\+\_\+dynins\+\_\+alloc}
+\item 
+bool \textbf{ m\+\_\+enabled}
+\item 
+bool \textbf{ m\+\_\+fastforward}
+\item 
+\textbf{ Fastforward\+Performance\+Model} $\ast$ \textbf{ m\+\_\+fastforward\+\_\+model}
+\item 
+bool \textbf{ m\+\_\+detailed\+\_\+sync}
+\item 
+bool \textbf{ m\+\_\+hold}
+\item 
+\textbf{ Component\+Time} \textbf{ m\+\_\+idle\+\_\+elapsed\+\_\+time}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Start\+Time}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Futex}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Mutex}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Cond}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Barrier}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Join}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Pause}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Sleep}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Syscall}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Unscheduled}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Sync\+Dvfs\+Transition}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Recv}
+\item 
+\textbf{ Instruction\+Queue} \textbf{ m\+\_\+instruction\+\_\+queue}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+current\+\_\+ins\+\_\+index}
+\item 
+\textbf{ Branch\+Predictor} $\ast$ \textbf{ m\+\_\+bp}
+\item 
+\textbf{ Instruction\+Tracer} $\ast$ \textbf{ m\+\_\+instruction\+\_\+tracer}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Spawn\+Instruction}
+\item 
+class \textbf{ Fastforward\+Performance\+Model}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 24} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{PerformanceModel@{PerformanceModel}!InstructionQueue@{InstructionQueue}}
+\index{InstructionQueue@{InstructionQueue}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{InstructionQueue}
+{\footnotesize\ttfamily \label{classPerformanceModel_ab5d42193adb6d9ac5c492da99fa6874f} 
+\textbf{ Circular\+Queue}$<$\textbf{ Dynamic\+Instruction}$\ast$$>$ \textbf{ Performance\+Model\+::\+Instruction\+Queue}\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{PerformanceModel@{PerformanceModel}!PerformanceModel@{PerformanceModel}}
+\index{PerformanceModel@{PerformanceModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{PerformanceModel()}
+{\footnotesize\ttfamily \label{classPerformanceModel_aeb3f5f56c0159410825bfeb872ef8d37} 
+Performance\+Model\+::\+Performance\+Model (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Branch\+Predictor\+::create()}, \textbf{ Instruction\+Tracer\+::create()}, \textbf{ Core\+::get\+Id()}, \textbf{ m\+\_\+bp}, \textbf{ m\+\_\+cpi\+Recv}, \textbf{ m\+\_\+cpi\+Start\+Time}, \textbf{ m\+\_\+cpi\+Sync\+Dvfs\+Transition}, \textbf{ m\+\_\+cpi\+Sync\+Futex}, \textbf{ m\+\_\+cpi\+Sync\+Join}, \textbf{ m\+\_\+cpi\+Sync\+Pause}, \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Barrier}, \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Cond}, \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Mutex}, \textbf{ m\+\_\+cpi\+Sync\+Sleep}, \textbf{ m\+\_\+cpi\+Sync\+Syscall}, \textbf{ m\+\_\+cpi\+Sync\+Unscheduled}, \textbf{ m\+\_\+elapsed\+\_\+time}, \textbf{ m\+\_\+idle\+\_\+elapsed\+\_\+time}, \textbf{ m\+\_\+instruction\+\_\+count}, \textbf{ m\+\_\+instruction\+\_\+tracer}, and \textbf{ register\+Stats\+Metric()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_aeb3f5f56c0159410825bfeb872ef8d37_cgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!````~PerformanceModel@{$\sim$PerformanceModel}}
+\index{````~PerformanceModel@{$\sim$PerformanceModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{$\sim$PerformanceModel()}
+{\footnotesize\ttfamily \label{classPerformanceModel_acd9da2188e2f44b5760e9620c0c78964} 
+Performance\+Model\+::$\sim$\+Performance\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 94} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ m\+\_\+bp}, \textbf{ m\+\_\+fastforward\+\_\+model}, and \textbf{ m\+\_\+instruction\+\_\+tracer}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{PerformanceModel@{PerformanceModel}!barrierEnter@{barrierEnter}}
+\index{barrierEnter@{barrierEnter}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{barrierEnter()}
+{\footnotesize\ttfamily \label{classPerformanceModel_af536bdb6b5c0df89f6c578f0bc971f95} 
+virtual void Performance\+Model\+::barrier\+Enter (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 61} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ Barrier\+Sync\+Server\+::synchronize()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{classPerformanceModel_af536bdb6b5c0df89f6c578f0bc971f95_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!barrierExit@{barrierExit}}
+\index{barrierExit@{barrierExit}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{barrierExit()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a1dbd408a9c37a3ad406d36b0d640e74a} 
+virtual void Performance\+Model\+::barrier\+Exit (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ Barrier\+Sync\+Server\+::abort\+Barrier()}, \textbf{ Barrier\+Sync\+Server\+::barrier\+Release()}, and \textbf{ Barrier\+Sync\+Server\+::synchronize()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a1dbd408a9c37a3ad406d36b0d640e74a_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!countInstructions@{countInstructions}}
+\index{countInstructions@{countInstructions}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{countInstructions()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a3bff8fb87f479ed3d2d72bd4f5326e72} 
+void Performance\+Model\+::count\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ UInt32}}]{count}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 116} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Fastforward\+Performance\+Model\+::count\+Instructions()}, \textbf{ m\+\_\+fastforward}, and \textbf{ m\+\_\+fastforward\+\_\+model}.
+
+
+
+Referenced by \textbf{ Core\+::count\+Instructions()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a3bff8fb87f479ed3d2d72bd4f5326e72_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a3bff8fb87f479ed3d2d72bd4f5326e72_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!create@{create}}
+\index{create@{create}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{create()}
+{\footnotesize\ttfamily \label{classPerformanceModel_ad4f7a7b5fd33ba5f97994d8b165dc64b} 
+\textbf{ Performance\+Model} $\ast$ Performance\+Model\+::create (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 17} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Id()}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ Core\+::\+Core()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=272pt]{classPerformanceModel_ad4f7a7b5fd33ba5f97994d8b165dc64b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=270pt]{classPerformanceModel_ad4f7a7b5fd33ba5f97994d8b165dc64b_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!createDynamicInstruction@{createDynamicInstruction}}
+\index{createDynamicInstruction@{createDynamicInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{createDynamicInstruction()}
+{\footnotesize\ttfamily \label{classPerformanceModel_afb76db0d8d69d15101fb67d3d22902a0} 
+\textbf{ Dynamic\+Instruction} $\ast$ Performance\+Model\+::create\+Dynamic\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ Instruction} $\ast$}]{ins}{, }\item[{\textbf{ Int\+Ptr}}]{eip}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 140} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Dynamic\+Instruction\+::alloc()}, and \textbf{ m\+\_\+dynins\+\_\+alloc}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::handle\+Instruction()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Detailed()}, and \textbf{ queue\+Pseudo\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_afb76db0d8d69d15101fb67d3d22902a0_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_afb76db0d8d69d15101fb67d3d22902a0_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!disable@{disable}}
+\index{disable@{disable}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{disable()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a3c8e247d69b3cbb51bc2a6faafcd56e5} 
+void Performance\+Model\+::disable (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ disable\+Detailed\+Model()}, and \textbf{ m\+\_\+enabled}.
+
+
+
+Referenced by \textbf{ Core\+::disable\+Performance\+Models()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=346pt]{classPerformanceModel_a3c8e247d69b3cbb51bc2a6faafcd56e5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a3c8e247d69b3cbb51bc2a6faafcd56e5_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!disableDetailedModel@{disableDetailedModel}}
+\index{disableDetailedModel@{disableDetailedModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{disableDetailedModel()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a068982f17fadec53036ff3e57ae78c3a} 
+virtual void Performance\+Model\+::disable\+Detailed\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [private]}, {\ttfamily [virtual]}}
+
+
+
+Reimplemented in \textbf{ Rob\+Smt\+Performance\+Model} \doxyref{}{p.}{classRobSmtPerformanceModel_a9b291ab3a303b93f276893649064198e}.
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ disable()}, and \textbf{ set\+Fast\+Forward()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a068982f17fadec53036ff3e57ae78c3a_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!enable@{enable}}
+\index{enable@{enable}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{enable()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a988ad2a01b697c7d9c79368c731d931e} 
+void Performance\+Model\+::enable (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ enable\+Detailed\+Model()}, and \textbf{ m\+\_\+enabled}.
+
+
+
+Referenced by \textbf{ Core\+::enable\+Performance\+Models()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=342pt]{classPerformanceModel_a988ad2a01b697c7d9c79368c731d931e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a988ad2a01b697c7d9c79368c731d931e_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!enableDetailedModel@{enableDetailedModel}}
+\index{enableDetailedModel@{enableDetailedModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{enableDetailedModel()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a621b08b594ef28012ade21dd82c7464b} 
+virtual void Performance\+Model\+::enable\+Detailed\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [private]}, {\ttfamily [virtual]}}
+
+
+
+Reimplemented in \textbf{ Rob\+Smt\+Performance\+Model} \doxyref{}{p.}{classRobSmtPerformanceModel_acfb337c2805d17c57316c9c95eb99ec4}.
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ enable()}, and \textbf{ set\+Fast\+Forward()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a621b08b594ef28012ade21dd82c7464b_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!getBranchPredictor@{getBranchPredictor}}
+\index{getBranchPredictor@{getBranchPredictor}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getBranchPredictor()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a93ab0ef5d192caab72bbf5916b5d0d4f} 
+\textbf{ Branch\+Predictor} $\ast$ Performance\+Model\+::get\+Branch\+Predictor (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+bp}.
+
+
+
+Referenced by \textbf{ Core\+::access\+Branch\+Predictor()}, \textbf{ Dynamic\+Instruction\+::get\+Branch\+Cost()}, and \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a93ab0ef5d192caab72bbf5916b5d0d4f_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!getConstBranchPredictor@{getConstBranchPredictor}}
+\index{getConstBranchPredictor@{getConstBranchPredictor}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getConstBranchPredictor()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a347f22f6f811a8b286af984a62c94e5a} 
+\textbf{ Branch\+Predictor} const  $\ast$ Performance\+Model\+::get\+Const\+Branch\+Predictor (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+bp}.
+
+\index{PerformanceModel@{PerformanceModel}!getCore@{getCore}}
+\index{getCore@{getCore}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getCore()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a5ee99d2971bb2ed2e5d698eb0664cd5e} 
+\textbf{ Core} $\ast$ Performance\+Model\+::get\+Core (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+core}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, \textbf{ Micro\+Op\+Performance\+Model\+::handle\+Instruction()}, \textbf{ One\+IPCPerformance\+Model\+::handle\+Instruction()}, and \textbf{ Rob\+Smt\+Performance\+Model\+::$\sim$\+Rob\+Smt\+Performance\+Model()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a5ee99d2971bb2ed2e5d698eb0664cd5e_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!getElapsedTime@{getElapsedTime}}
+\index{getElapsedTime@{getElapsedTime}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getElapsedTime()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a139f83f70bff853d074de709d362c420} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::get\+Elapsed\+Time (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, and \textbf{ m\+\_\+elapsed\+\_\+time}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}, \textbf{ Sync\+Client\+::barrier\+Wait()}, \textbf{ Spin\+Loop\+Detector\+::commit\+BCT()}, \textbf{ Sync\+Client\+::cond\+Broadcast()}, \textbf{ Sync\+Client\+::cond\+Signal()}, \textbf{ Sync\+Client\+::cond\+Wait()}, \textbf{ Memory\+Manager\+Base\+::core\+Initiate\+Memory\+Access\+Fast()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}, \textbf{ Sampling\+Manager\+::disable\+Fast\+Forward()}, \textbf{ lite\+::emu\+Clock\+Gettime()}, \textbf{ lite\+::emu\+Gettimeofday()}, \textbf{ Sampling\+Manager\+::enable\+Fast\+Forward()}, \textbf{ Sampling\+Manager\+::get\+Core\+Historic\+CPI()}, \textbf{ Trace\+Thread\+::get\+Current\+Time()}, \textbf{ get\+Non\+Idle\+Elapsed\+Time()}, \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ handle\+Check\+Scheduled()}, \textbf{ Syscall\+Mdl\+::handle\+Futex\+Call()}, \textbf{ handle\+Idle\+Instruction()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ handle\+Rdtsc()}, \textbf{ Core\+::initiate\+Memory\+Access()}, \textbf{ Thread\+Manager\+::join\+Thread()}, \textbf{ Sync\+Client\+::mutex\+Unlock()}, \textbf{ Network\+::net\+Recv()}, \textbf{ Network\+::net\+Send()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, \textbf{ lite\+::pthread\+After()}, \textbf{ lite\+::pthread\+Before()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::recalibrate\+Instructions\+Callback()}, \textbf{ Sampling\+Manager\+::recalibrate\+Instructions\+Callback()}, \textbf{ Sampling\+Manager\+::reset\+Core\+Historic\+CPIs()}, \textbf{ Trace\+Thread\+::run()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, \textbf{ set\+Elapsed\+Time()}, \textbf{ Thread\+Manager\+::spawn\+Thread()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::step()}, \textbf{ Barrier\+Sync\+Client\+::synchronize()}, \textbf{ Scheduler\+Pinned\+Base\+::thread\+Set\+Affinity()}, \textbf{ Scheduler\+Pinned\+Base\+::thread\+Yield()}, and \textbf{ Pthread\+Emu\+::update\+State()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a139f83f70bff853d074de709d362c420_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classPerformanceModel_a139f83f70bff853d074de709d362c420_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!getFastforwardPerformanceModel@{getFastforwardPerformanceModel}}
+\index{getFastforwardPerformanceModel@{getFastforwardPerformanceModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getFastforwardPerformanceModel()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classPerformanceModel_a834e93f4ebc3f3383470860e7ee68ed3} 
+\textbf{ Fastforward\+Performance\+Model} $\ast$ Performance\+Model\+::get\+Fastforward\+Performance\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 50} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+fastforward\+\_\+model}.
+
+
+
+Referenced by \textbf{ Periodic\+Sampling\+::callback\+Detailed()}, \textbf{ Sampling\+Manager\+::disable\+Fast\+Forward()}, \textbf{ Magic\+Server\+::disable\+Performance()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::recalibrate\+Instructions\+Callback()}, and \textbf{ Sampling\+Manager\+::recalibrate\+Instructions\+Callback()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a834e93f4ebc3f3383470860e7ee68ed3_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!getFastforwardPerformanceModel@{getFastforwardPerformanceModel}}
+\index{getFastforwardPerformanceModel@{getFastforwardPerformanceModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getFastforwardPerformanceModel()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classPerformanceModel_aa87497a72d8eff2923ffe3262b6509d7} 
+\textbf{ Fastforward\+Performance\+Model} const  $\ast$ Performance\+Model\+::get\+Fastforward\+Performance\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+fastforward\+\_\+model}.
+
+\index{PerformanceModel@{PerformanceModel}!getInstructionCount@{getInstructionCount}}
+\index{getInstructionCount@{getInstructionCount}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getInstructionCount()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a8dde6c36738c98b0cedc6f2059028355} 
+\textbf{ UInt64} Performance\+Model\+::get\+Instruction\+Count (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 36} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+instruction\+\_\+count}.
+
+
+
+Referenced by \textbf{ Interval\+Timer\+::dispatch\+Instruction()}, \textbf{ Interval\+Timer\+::dispatch\+Window()}, \textbf{ Sampling\+Manager\+::get\+Core\+Historic\+CPI()}, \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}, \textbf{ Thread\+Stats\+Manager\+::metric\+Callback()}, \textbf{ Sampling\+Manager\+::reset\+Core\+Historic\+CPIs()}, and \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stats\+::update()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a8dde6c36738c98b0cedc6f2059028355_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!getNonIdleElapsedTime@{getNonIdleElapsedTime}}
+\index{getNonIdleElapsedTime@{getNonIdleElapsedTime}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{getNonIdleElapsedTime()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a409d11fa0eabac942f3c126b693637cb} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::get\+Non\+Idle\+Elapsed\+Time (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, \textbf{ get\+Elapsed\+Time()}, and \textbf{ m\+\_\+idle\+\_\+elapsed\+\_\+time}.
+
+
+
+Referenced by \textbf{ Magic\+Server\+::disable\+Performance()}, \textbf{ Sampling\+Manager\+::get\+Core\+Historic\+CPI()}, \textbf{ Thread\+Stats\+Manager\+::metric\+Callback()}, \textbf{ Sampling\+Manager\+::reset\+Core\+Historic\+CPIs()}, and \textbf{ Thread\+Stats\+Manager\+::\+Thread\+Stats\+::update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a409d11fa0eabac942f3c126b693637cb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a409d11fa0eabac942f3c126b693637cb_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!handleBranchMispredict@{handleBranchMispredict}}
+\index{handleBranchMispredict@{handleBranchMispredict}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{handleBranchMispredict()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a0bde2937ba985fe7965720ea84ee0bb1} 
+void Performance\+Model\+::handle\+Branch\+Mispredict (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 132} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Fastforward\+Performance\+Model\+::handle\+Branch\+Mispredict()}, \textbf{ m\+\_\+fastforward}, and \textbf{ m\+\_\+fastforward\+\_\+model}.
+
+
+
+Referenced by \textbf{ handle\+Branch\+Warming()}, \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, and \textbf{ Trace\+Thread\+::handle\+Instruction\+Warmup()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a0bde2937ba985fe7965720ea84ee0bb1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a0bde2937ba985fe7965720ea84ee0bb1_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!handleIdleInstruction@{handleIdleInstruction}}
+\index{handleIdleInstruction@{handleIdleInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{handleIdleInstruction()}
+{\footnotesize\ttfamily \label{classPerformanceModel_acdeec0e69ce9752a645d4797977fb4d7} 
+void Performance\+Model\+::handle\+Idle\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ Pseudo\+Instruction} $\ast$}]{i}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 203} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ \+\_\+\+\_\+attribute\+\_\+\+\_\+()}, \textbf{ Delay\+Instruction\+::\+DVFS\+\_\+\+TRANSITION}, \textbf{ Sync\+Instruction\+::\+FUTEX}, \textbf{ get\+Core()}, \textbf{ Pseudo\+Instruction\+::get\+Cost()}, \textbf{ Delay\+Instruction\+::get\+Delay\+Type()}, \textbf{ get\+Elapsed\+Time()}, \textbf{ Sync\+Instruction\+::get\+Sync\+Type()}, \textbf{ Sync\+Instruction\+::get\+Time()}, \textbf{ Instruction\+::get\+Type()}, \textbf{ increment\+Idle\+Elapsed\+Time()}, \textbf{ INST\+\_\+\+DELAY}, \textbf{ INST\+\_\+\+RECV}, \textbf{ INST\+\_\+\+SYNC}, \textbf{ Sync\+Instruction\+::\+JOIN}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ m\+\_\+cpi\+Recv}, \textbf{ m\+\_\+cpi\+Sync\+Dvfs\+Transition}, \textbf{ m\+\_\+cpi\+Sync\+Futex}, \textbf{ m\+\_\+cpi\+Sync\+Join}, \textbf{ m\+\_\+cpi\+Sync\+Pause}, \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Barrier}, \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Cond}, \textbf{ m\+\_\+cpi\+Sync\+Pthread\+Mutex}, \textbf{ m\+\_\+cpi\+Sync\+Sleep}, \textbf{ m\+\_\+cpi\+Sync\+Syscall}, \textbf{ m\+\_\+cpi\+Sync\+Unscheduled}, \textbf{ m\+\_\+detailed\+\_\+sync}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+fastforward\+\_\+model}, \textbf{ Fastforward\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, \textbf{ Sync\+Instruction\+::\+PAUSE}, \textbf{ Sync\+Instruction\+::\+PTHREAD\+\_\+\+BARRIER}, \textbf{ Sync\+Instruction\+::\+PTHREAD\+\_\+\+COND}, \textbf{ Sync\+Instruction\+::\+PTHREAD\+\_\+\+MUTEX}, \textbf{ Sync\+Instruction\+::\+SLEEP}, \textbf{ Sync\+Instruction\+::\+SYSCALL}, \textbf{ Sync\+Instruction\+::\+UNSCHEDULED}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ queue\+Pseudo\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_acdeec0e69ce9752a645d4797977fb4d7_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_acdeec0e69ce9752a645d4797977fb4d7_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!handleInstruction@{handleInstruction}}
+\index{handleInstruction@{handleInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{handleInstruction()}
+{\footnotesize\ttfamily \label{classPerformanceModel_abe815897d77f582179d6d2ca4be6f435} 
+virtual void Performance\+Model\+::handle\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ Dynamic\+Instruction} $\ast$}]{instruction}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Micro\+Op\+Performance\+Model} \doxyref{}{p.}{classMicroOpPerformanceModel_a36a6e1d318144e28609c2cd234bbde95}, and \textbf{ One\+IPCPerformance\+Model} \doxyref{}{p.}{classOneIPCPerformanceModel_a2b0cc89e280b3409a680232696d05bad}.
+
+
+
+Referenced by \textbf{ iterate()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_abe815897d77f582179d6d2ca4be6f435_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!handleMemoryLatency@{handleMemoryLatency}}
+\index{handleMemoryLatency@{handleMemoryLatency}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{handleMemoryLatency()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a10388ca03edf1b96230dfd48bfeb87a1} 
+void Performance\+Model\+::handle\+Memory\+Latency (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{latency}{, }\item[{\textbf{ Hit\+Where\+::where\+\_\+t}}]{hit\+\_\+where}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 124} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Fastforward\+Performance\+Model\+::handle\+Memory\+Latency()}, \textbf{ m\+\_\+fastforward}, and \textbf{ m\+\_\+fastforward\+\_\+model}.
+
+
+
+Referenced by \textbf{ Core\+::access\+Memory\+Fast()}, and \textbf{ Core\+::initiate\+Memory\+Access()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a10388ca03edf1b96230dfd48bfeb87a1_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a10388ca03edf1b96230dfd48bfeb87a1_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!incrementElapsedTime@{incrementElapsedTime}}
+\index{incrementElapsedTime@{incrementElapsedTime}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{incrementElapsedTime()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a820b1e9745afe5d5e4d9e680279de715} 
+void Performance\+Model\+::increment\+Elapsed\+Time (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 91} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ Component\+Time\+::add\+Latency()}, and \textbf{ m\+\_\+elapsed\+\_\+time}.
+
+
+
+Referenced by \textbf{ Fastforward\+Performance\+Model\+::increment\+Elapsed\+Time()}, and \textbf{ increment\+Idle\+Elapsed\+Time()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a820b1e9745afe5d5e4d9e680279de715_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a820b1e9745afe5d5e4d9e680279de715_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!incrementIdleElapsedTime@{incrementIdleElapsedTime}}
+\index{incrementIdleElapsedTime@{incrementIdleElapsedTime}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{incrementIdleElapsedTime()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a26ba9957e1ce9503647972c290ec0d77} 
+void Performance\+Model\+::increment\+Idle\+Elapsed\+Time (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 326} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Component\+Time\+::add\+Latency()}, \textbf{ increment\+Elapsed\+Time()}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+fastforward\+\_\+model}, \textbf{ m\+\_\+idle\+\_\+elapsed\+\_\+time}, \textbf{ Fastforward\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, and \textbf{ notify\+Elapsed\+Time\+Update()}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ set\+Elapsed\+Time()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a26ba9957e1ce9503647972c290ec0d77_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a26ba9957e1ce9503647972c290ec0d77_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!isEnabled@{isEnabled}}
+\index{isEnabled@{isEnabled}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{isEnabled()}
+{\footnotesize\ttfamily \label{classPerformanceModel_aa61d37d2d154ce74ace91434cd17f445} 
+bool Performance\+Model\+::is\+Enabled (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 66} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+enabled}.
+
+
+
+Referenced by \textbf{ Core\+::initiate\+Memory\+Access()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_aa61d37d2d154ce74ace91434cd17f445_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!isFastForward@{isFastForward}}
+\index{isFastForward@{isFastForward}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{isFastForward()}
+{\footnotesize\ttfamily \label{classPerformanceModel_ab8ccc60ae972a388afc0f75acc199a78} 
+bool Performance\+Model\+::is\+Fast\+Forward (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 69} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+fastforward}.
+
+\index{PerformanceModel@{PerformanceModel}!iterate@{iterate}}
+\index{iterate@{iterate}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{iterate()}
+{\footnotesize\ttfamily \label{classPerformanceModel_ab9403e90276f1c676d6d55991c33f855} 
+void Performance\+Model\+::iterate (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 294} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ handle\+Instruction()}, \textbf{ Dynamic\+Instruction\+::instruction}, \textbf{ Instruction\+::is\+Idle()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+enabled}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+hold}, \textbf{ m\+\_\+instruction\+\_\+queue}, \textbf{ Circular\+Queue$<$ T $>$\+::pop()}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, and \textbf{ synchronize()}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Detailed()}, and \textbf{ Core\+Thread\+::run()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_ab9403e90276f1c676d6d55991c33f855_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_ab9403e90276f1c676d6d55991c33f855_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!notifyElapsedTimeUpdate@{notifyElapsedTimeUpdate}}
+\index{notifyElapsedTimeUpdate@{notifyElapsedTimeUpdate}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{notifyElapsedTimeUpdate()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a7f807550dd50a5bac72685b7dfdf0552} 
+virtual void Performance\+Model\+::notify\+Elapsed\+Time\+Update (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [private]}, {\ttfamily [virtual]}}
+
+
+
+Reimplemented in \textbf{ Interval\+Performance\+Model} \doxyref{}{p.}{classIntervalPerformanceModel_adf5eee015d86f47910fe1db4ac25e26b}, \textbf{ Micro\+Op\+Performance\+Model} \doxyref{}{p.}{classMicroOpPerformanceModel_a05625fe59fd8fd0849fa32c0d94b5120}, \textbf{ Rob\+Performance\+Model} \doxyref{}{p.}{classRobPerformanceModel_a754cab20832cc1f965c72b0720b5fe6c}, and \textbf{ Rob\+Smt\+Performance\+Model} \doxyref{}{p.}{classRobSmtPerformanceModel_a593fdaf9dbb781752e6a891040379490}.
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ increment\+Idle\+Elapsed\+Time()}, and \textbf{ set\+Fast\+Forward()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a7f807550dd50a5bac72685b7dfdf0552_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!queueInstruction@{queueInstruction}}
+\index{queueInstruction@{queueInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{queueInstruction()}
+{\footnotesize\ttfamily \label{classPerformanceModel_af5b0bb85d01ca426d3417a5dccc2cad2} 
+void Performance\+Model\+::queue\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ Dynamic\+Instruction} $\ast$}]{i}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 186} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ m\+\_\+enabled}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+instruction\+\_\+queue}, and \textbf{ Circular\+Queue$<$ T $>$\+::push()}.
+
+
+
+Referenced by \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ Instruction\+Modeling\+::handle\+Instruction()}, and \textbf{ Trace\+Thread\+::handle\+Instruction\+Detailed()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_af5b0bb85d01ca426d3417a5dccc2cad2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_af5b0bb85d01ca426d3417a5dccc2cad2_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!queuePseudoInstruction@{queuePseudoInstruction}}
+\index{queuePseudoInstruction@{queuePseudoInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{queuePseudoInstruction()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a7152714406b3cfc08f4d4a325d43d9fc} 
+void Performance\+Model\+::queue\+Pseudo\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ Pseudo\+Instruction} $\ast$}]{i}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 145} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ create\+Dynamic\+Instruction()}, \textbf{ Spawn\+Instruction\+::get\+Time()}, \textbf{ Instruction\+::get\+Type()}, \textbf{ handle\+Idle\+Instruction()}, \textbf{ INST\+\_\+\+SPAWN}, \textbf{ Instruction\+::is\+Idle()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+enabled}, \textbf{ m\+\_\+fastforward}, \textbf{ m\+\_\+fastforward\+\_\+model}, \textbf{ m\+\_\+instruction\+\_\+queue}, \textbf{ Circular\+Queue$<$ T $>$\+::push()}, \textbf{ Fastforward\+Performance\+Model\+::queue\+Pseudo\+Instruction()}, and \textbf{ set\+Elapsed\+Time()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}, \textbf{ Sync\+Client\+::barrier\+Wait()}, \textbf{ Sync\+Client\+::cond\+Wait()}, \textbf{ Instruction\+Modeling\+::count\+Instructions()}, \textbf{ handle\+Check\+Scheduled()}, \textbf{ Syscall\+Mdl\+::handle\+Futex\+Call()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ Core\+::initiate\+Memory\+Access()}, \textbf{ Thread\+Manager\+::join\+Thread()}, \textbf{ Sync\+Client\+::mutex\+Unlock()}, \textbf{ Network\+::net\+Recv()}, \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, \textbf{ Thread\+::reschedule()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, and \textbf{ Trace\+Thread\+::unblock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a7152714406b3cfc08f4d4a325d43d9fc_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a7152714406b3cfc08f4d4a325d43d9fc_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!setElapsedTime@{setElapsedTime}}
+\index{setElapsedTime@{setElapsedTime}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{setElapsedTime()}
+{\footnotesize\ttfamily \label{classPerformanceModel_aa09a3b789723cd3d4cb47a083d1464a0} 
+void Performance\+Model\+::set\+Elapsed\+Time (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 339} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ get\+Elapsed\+Time()}, \textbf{ increment\+Idle\+Elapsed\+Time()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+cpi\+Start\+Time}, \textbf{ m\+\_\+cpi\+Sync\+Unscheduled}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ queue\+Pseudo\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_aa09a3b789723cd3d4cb47a083d1464a0_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_aa09a3b789723cd3d4cb47a083d1464a0_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!setFastForward@{setFastForward}}
+\index{setFastForward@{setFastForward}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{setFastForward()}
+{\footnotesize\ttfamily \label{classPerformanceModel_aef429f8d9c25afd747e57f49573d09a8} 
+void Performance\+Model\+::set\+Fast\+Forward (\begin{DoxyParamCaption}\item[{bool}]{fastforward}{, }\item[{bool}]{detailed\+\_\+sync}{ = {\ttfamily true}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ disable\+Detailed\+Model()}, \textbf{ enable\+Detailed\+Model()}, \textbf{ m\+\_\+detailed\+\_\+sync}, \textbf{ m\+\_\+fastforward}, and \textbf{ notify\+Elapsed\+Time\+Update()}.
+
+
+
+Referenced by \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}, \textbf{ Sampling\+Manager\+::disable\+Fast\+Forward()}, \textbf{ Sampling\+Manager\+::enable\+Fast\+Forward()}, and \textbf{ Fast\+Forward\+Performance\+Manager\+::step()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=348pt]{classPerformanceModel_aef429f8d9c25afd747e57f49573d09a8_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_aef429f8d9c25afd747e57f49573d09a8_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!setHold@{setHold}}
+\index{setHold@{setHold}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{setHold()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a269382fee9438e233ba47083269c9501} 
+void Performance\+Model\+::set\+Hold (\begin{DoxyParamCaption}\item[{bool}]{hold}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 67} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+hold}.
+
+\index{PerformanceModel@{PerformanceModel}!synchronize@{synchronize}}
+\index{synchronize@{synchronize}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{synchronize()}
+{\footnotesize\ttfamily \label{classPerformanceModel_a4a30cd667c59e0cc382da1302cb2f749} 
+void Performance\+Model\+::synchronize (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reimplemented in \textbf{ Rob\+Smt\+Performance\+Model} \doxyref{}{p.}{classRobSmtPerformanceModel_a74cbf11a9c44f529a30cef1ac444e818}.
+
+
+
+Definition at line \textbf{ 319} of file \textbf{ performance\+\_\+model.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Clock\+Skew\+Minimization\+Client()}, \textbf{ m\+\_\+core}, \textbf{ Clock\+Skew\+Minimization\+Client\+::synchronize()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ iterate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a4a30cd667c59e0cc382da1302cb2f749_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_a4a30cd667c59e0cc382da1302cb2f749_icgraph}
+\end{center}
+\end{figure}
+\index{PerformanceModel@{PerformanceModel}!traceInstruction@{traceInstruction}}
+\index{traceInstruction@{traceInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{traceInstruction()}
+{\footnotesize\ttfamily \label{classPerformanceModel_af018e5c3fb7375dbf55c7e772b981bbd} 
+void Performance\+Model\+::trace\+Instruction (\begin{DoxyParamCaption}\item[{const \textbf{ Dynamic\+Micro\+Op} $\ast$}]{uop}{, }\item[{\textbf{ Instruction\+Tracer\+::uop\+\_\+times\+\_\+t} $\ast$}]{times}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+References \textbf{ m\+\_\+instruction\+\_\+tracer}, and \textbf{ Instruction\+Tracer\+::trace\+Instruction()}.
+
+
+
+Referenced by \textbf{ Interval\+Timer\+::dispatch\+Window()}, \textbf{ Rob\+Smt\+Timer\+::do\+Commit()}, and \textbf{ Rob\+Timer\+::do\+Commit()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=344pt]{classPerformanceModel_af018e5c3fb7375dbf55c7e772b981bbd_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classPerformanceModel_af018e5c3fb7375dbf55c7e772b981bbd_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Friends And Related Symbol Documentation}
+\index{PerformanceModel@{PerformanceModel}!FastforwardPerformanceModel@{FastforwardPerformanceModel}}
+\index{FastforwardPerformanceModel@{FastforwardPerformanceModel}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{FastforwardPerformanceModel}
+{\footnotesize\ttfamily \label{classPerformanceModel_adecf58cbd265ad8437804f75f6c99c58} 
+friend class \textbf{ Fastforward\+Performance\+Model}\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 88} of file \textbf{ performance\+\_\+model.\+h}.
+
+\index{PerformanceModel@{PerformanceModel}!SpawnInstruction@{SpawnInstruction}}
+\index{SpawnInstruction@{SpawnInstruction}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{SpawnInstruction}
+{\footnotesize\ttfamily \label{classPerformanceModel_a3ca511bd1776a48b5dfda007aff0cf9a} 
+friend class \textbf{ Spawn\+Instruction}\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Definition at line \textbf{ 87} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\index{PerformanceModel@{PerformanceModel}!m\_bp@{m\_bp}}
+\index{m\_bp@{m\_bp}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_bp}
+{\footnotesize\ttfamily \label{classPerformanceModel_acb2033c9e03689de34b1168637332d17} 
+\textbf{ Branch\+Predictor}$\ast$ Performance\+Model\+::m\+\_\+bp\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 150} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ get\+Branch\+Predictor()}, \textbf{ get\+Const\+Branch\+Predictor()}, \textbf{ Performance\+Model()}, and \textbf{ $\sim$\+Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_core@{m\_core}}
+\index{m\_core@{m\_core}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_core}
+{\footnotesize\ttfamily \label{classPerformanceModel_a093189e2f1cb9e6bdd08400aa8fcedb7} 
+\textbf{ Core}$\ast$ Performance\+Model\+::m\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 114} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core()}, and \textbf{ synchronize()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiRecv@{m\_cpiRecv}}
+\index{m\_cpiRecv@{m\_cpiRecv}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiRecv}
+{\footnotesize\ttfamily \label{classPerformanceModel_a7606d15f945aafd5a2a4ba01cb355d98} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Recv\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 144} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiStartTime@{m\_cpiStartTime}}
+\index{m\_cpiStartTime@{m\_cpiStartTime}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiStartTime}
+{\footnotesize\ttfamily \label{classPerformanceModel_acb9bdd098702a380675ed1466b960fda} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Start\+Time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 132} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ Performance\+Model()}, and \textbf{ set\+Elapsed\+Time()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncDvfsTransition@{m\_cpiSyncDvfsTransition}}
+\index{m\_cpiSyncDvfsTransition@{m\_cpiSyncDvfsTransition}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncDvfsTransition}
+{\footnotesize\ttfamily \label{classPerformanceModel_ac59cd6a7bb06bfe2a75a86aec45b402a} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Dvfs\+Transition\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 143} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncFutex@{m\_cpiSyncFutex}}
+\index{m\_cpiSyncFutex@{m\_cpiSyncFutex}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncFutex}
+{\footnotesize\ttfamily \label{classPerformanceModel_a8ec9af5ec9a5a7c628ee8c54a5812e41} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Futex\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 134} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncJoin@{m\_cpiSyncJoin}}
+\index{m\_cpiSyncJoin@{m\_cpiSyncJoin}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncJoin}
+{\footnotesize\ttfamily \label{classPerformanceModel_aff43bfa066162bcf45b6e56d78c9e48e} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Join\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 138} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncPause@{m\_cpiSyncPause}}
+\index{m\_cpiSyncPause@{m\_cpiSyncPause}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncPause}
+{\footnotesize\ttfamily \label{classPerformanceModel_afa06bb4baa870d33468ebb214e2b848a} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Pause\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 139} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncPthreadBarrier@{m\_cpiSyncPthreadBarrier}}
+\index{m\_cpiSyncPthreadBarrier@{m\_cpiSyncPthreadBarrier}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncPthreadBarrier}
+{\footnotesize\ttfamily \label{classPerformanceModel_ae0f56373ef7bc9c31544b9f42b125408} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Pthread\+Barrier\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 137} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncPthreadCond@{m\_cpiSyncPthreadCond}}
+\index{m\_cpiSyncPthreadCond@{m\_cpiSyncPthreadCond}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncPthreadCond}
+{\footnotesize\ttfamily \label{classPerformanceModel_a3889b61543d8a421ad1a8787c858a513} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Pthread\+Cond\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 136} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncPthreadMutex@{m\_cpiSyncPthreadMutex}}
+\index{m\_cpiSyncPthreadMutex@{m\_cpiSyncPthreadMutex}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncPthreadMutex}
+{\footnotesize\ttfamily \label{classPerformanceModel_aea9e7582302c72b6b0bb172d13966382} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Pthread\+Mutex\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 135} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncSleep@{m\_cpiSyncSleep}}
+\index{m\_cpiSyncSleep@{m\_cpiSyncSleep}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncSleep}
+{\footnotesize\ttfamily \label{classPerformanceModel_a795ee526a0d1066bf3811a0484597b68} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Sleep\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 140} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncSyscall@{m\_cpiSyncSyscall}}
+\index{m\_cpiSyncSyscall@{m\_cpiSyncSyscall}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncSyscall}
+{\footnotesize\ttfamily \label{classPerformanceModel_a1d28caab827d59314aba028dc7ce6327} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Syscall\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 141} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_cpiSyncUnscheduled@{m\_cpiSyncUnscheduled}}
+\index{m\_cpiSyncUnscheduled@{m\_cpiSyncUnscheduled}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_cpiSyncUnscheduled}
+{\footnotesize\ttfamily \label{classPerformanceModel_a9019ba8a9a3fcdee1cf1586123547650} 
+\textbf{ Subsecond\+Time} Performance\+Model\+::m\+\_\+cpi\+Sync\+Unscheduled\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 142} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, \textbf{ Performance\+Model()}, and \textbf{ set\+Elapsed\+Time()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_current\_ins\_index@{m\_current\_ins\_index}}
+\index{m\_current\_ins\_index@{m\_current\_ins\_index}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_current\_ins\_index}
+{\footnotesize\ttfamily \label{classPerformanceModel_a815e7c588b9a865a95ece6474ed45f29} 
+\textbf{ UInt32} Performance\+Model\+::m\+\_\+current\+\_\+ins\+\_\+index\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 148} of file \textbf{ performance\+\_\+model.\+h}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_detailed\_sync@{m\_detailed\_sync}}
+\index{m\_detailed\_sync@{m\_detailed\_sync}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_detailed\_sync}
+{\footnotesize\ttfamily \label{classPerformanceModel_a202a35fdef28a548387c3f579bdbbca1} 
+bool Performance\+Model\+::m\+\_\+detailed\+\_\+sync\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 121} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ handle\+Idle\+Instruction()}, and \textbf{ set\+Fast\+Forward()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_dynins\_alloc@{m\_dynins\_alloc}}
+\index{m\_dynins\_alloc@{m\_dynins\_alloc}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_dynins\_alloc}
+{\footnotesize\ttfamily \label{classPerformanceModel_a161f125ed189af63fa90d54462b2f296} 
+\textbf{ Allocator}$\ast$ Performance\+Model\+::m\+\_\+dynins\+\_\+alloc\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ create\+Dynamic\+Instruction()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_elapsed\_time@{m\_elapsed\_time}}
+\index{m\_elapsed\_time@{m\_elapsed\_time}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_elapsed\_time}
+{\footnotesize\ttfamily \label{classPerformanceModel_aad2d701a24d61047bccaf2d096b1afe1} 
+\textbf{ Component\+Time} Performance\+Model\+::m\+\_\+elapsed\+\_\+time\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 128} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ get\+Elapsed\+Time()}, \textbf{ Micro\+Op\+Performance\+Model\+::handle\+Instruction()}, \textbf{ One\+IPCPerformance\+Model\+::handle\+Instruction()}, \textbf{ increment\+Elapsed\+Time()}, \textbf{ Interval\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, \textbf{ Rob\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, \textbf{ Rob\+Smt\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, \textbf{ Performance\+Model()}, \textbf{ Rob\+Performance\+Model\+::simulate()}, and \textbf{ Rob\+Smt\+Performance\+Model\+::simulate()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_enabled@{m\_enabled}}
+\index{m\_enabled@{m\_enabled}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_enabled}
+{\footnotesize\ttfamily \label{classPerformanceModel_a6bebc5c8a206d769bab980926935f194} 
+bool Performance\+Model\+::m\+\_\+enabled\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 117} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ disable()}, \textbf{ enable()}, \textbf{ is\+Enabled()}, \textbf{ iterate()}, \textbf{ queue\+Instruction()}, and \textbf{ queue\+Pseudo\+Instruction()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_fastforward@{m\_fastforward}}
+\index{m\_fastforward@{m\_fastforward}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_fastforward}
+{\footnotesize\ttfamily \label{classPerformanceModel_a663da8f07a7cfd3e0a5d7baef37144c7} 
+bool Performance\+Model\+::m\+\_\+fastforward\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}, \textbf{ handle\+Branch\+Mispredict()}, \textbf{ handle\+Idle\+Instruction()}, \textbf{ handle\+Memory\+Latency()}, \textbf{ increment\+Idle\+Elapsed\+Time()}, \textbf{ is\+Fast\+Forward()}, \textbf{ iterate()}, \textbf{ queue\+Instruction()}, \textbf{ queue\+Pseudo\+Instruction()}, and \textbf{ set\+Fast\+Forward()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_fastforward\_model@{m\_fastforward\_model}}
+\index{m\_fastforward\_model@{m\_fastforward\_model}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_fastforward\_model}
+{\footnotesize\ttfamily \label{classPerformanceModel_a03a107057c96f01221b36b08aa2daf4c} 
+\textbf{ Fastforward\+Performance\+Model}$\ast$ Performance\+Model\+::m\+\_\+fastforward\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 120} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ count\+Instructions()}, \textbf{ get\+Fastforward\+Performance\+Model()}, \textbf{ get\+Fastforward\+Performance\+Model()}, \textbf{ handle\+Branch\+Mispredict()}, \textbf{ handle\+Idle\+Instruction()}, \textbf{ handle\+Memory\+Latency()}, \textbf{ increment\+Idle\+Elapsed\+Time()}, \textbf{ queue\+Pseudo\+Instruction()}, and \textbf{ $\sim$\+Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_hold@{m\_hold}}
+\index{m\_hold@{m\_hold}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_hold}
+{\footnotesize\ttfamily \label{classPerformanceModel_abd644b17b6197e6076833b58f835282b} 
+bool Performance\+Model\+::m\+\_\+hold\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 123} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ iterate()}, and \textbf{ set\+Hold()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_idle\_elapsed\_time@{m\_idle\_elapsed\_time}}
+\index{m\_idle\_elapsed\_time@{m\_idle\_elapsed\_time}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_idle\_elapsed\_time}
+{\footnotesize\ttfamily \label{classPerformanceModel_ab9be487980e38543cb9f632e2f375ac6} 
+\textbf{ Component\+Time} Performance\+Model\+::m\+\_\+idle\+\_\+elapsed\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 130} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ get\+Non\+Idle\+Elapsed\+Time()}, \textbf{ increment\+Idle\+Elapsed\+Time()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_instruction\_count@{m\_instruction\_count}}
+\index{m\_instruction\_count@{m\_instruction\_count}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_instruction\_count}
+{\footnotesize\ttfamily \label{classPerformanceModel_a8a9d8c60ca3936759e9c850f95716f47} 
+\textbf{ UInt64} Performance\+Model\+::m\+\_\+instruction\+\_\+count\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 126} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ get\+Instruction\+Count()}, \textbf{ Micro\+Op\+Performance\+Model\+::handle\+Instruction()}, \textbf{ One\+IPCPerformance\+Model\+::handle\+Instruction()}, and \textbf{ Performance\+Model()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_instruction\_queue@{m\_instruction\_queue}}
+\index{m\_instruction\_queue@{m\_instruction\_queue}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_instruction\_queue}
+{\footnotesize\ttfamily \label{classPerformanceModel_a3159f8674d55941a776416917e6f14bb} 
+\textbf{ Instruction\+Queue} Performance\+Model\+::m\+\_\+instruction\+\_\+queue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 146} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ iterate()}, \textbf{ queue\+Instruction()}, and \textbf{ queue\+Pseudo\+Instruction()}.
+
+\index{PerformanceModel@{PerformanceModel}!m\_instruction\_tracer@{m\_instruction\_tracer}}
+\index{m\_instruction\_tracer@{m\_instruction\_tracer}!PerformanceModel@{PerformanceModel}}
+\doxysubsubsection{m\_instruction\_tracer}
+{\footnotesize\ttfamily \label{classPerformanceModel_ac81e4d6745aab398277c9cb42a58b72d} 
+\textbf{ Instruction\+Tracer}$\ast$ Performance\+Model\+::m\+\_\+instruction\+\_\+tracer\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 152} of file \textbf{ performance\+\_\+model.\+h}.
+
+
+
+Referenced by \textbf{ Performance\+Model()}, \textbf{ trace\+Instruction()}, and \textbf{ $\sim$\+Performance\+Model()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/performance\+\_\+model/\textbf{ performance\+\_\+model.\+h}\item 
+common/performance\+\_\+model/\textbf{ performance\+\_\+model.\+cc}\end{DoxyCompactItemize}

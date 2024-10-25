@@ -1,0 +1,71 @@
+\doxysection{barrier\+\_\+sync\+\_\+server.\+h}
+\label{barrier__sync__server_8h_source}\index{common/system/barrier\_sync\_server.h@{common/system/barrier\_sync\_server.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_BARRIER\_SYNC\_SERVER\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_BARRIER\_SYNC\_SERVER\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cond.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }CoreManager;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }BarrierSyncServer\ :\ \textcolor{keyword}{public}\ ClockSkewMinimizationServer}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ SubsecondTime\ m\_barrier\_interval;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ SubsecondTime\ m\_next\_barrier\_time;}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ std::vector<SubsecondTime>\ m\_local\_clock\_list;}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ std::vector<bool>\ m\_barrier\_acquire\_list;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ std::vector<ConditionVariable*>\ m\_core\_cond;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ std::vector<core\_id\_t>\ m\_to\_release;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ std::vector<core\_id\_t>\ m\_core\_group;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ std::vector<thread\_id\_t>\ m\_core\_thread;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ SubsecondTime\ m\_global\_time;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_fastforward;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{bool}\ m\_disable;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isBarrierReached(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ barrierRelease(thread\_id\_t\ thread\_id\ =\ INVALID\_THREAD\_ID,\ \textcolor{keywordtype}{bool}\ continue\_until\_release\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ abortBarrier(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isCoreRunning(core\_id\_t\ core\_id,\ \textcolor{keywordtype}{bool}\ siblings\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ releaseThread(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ signal();}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ doRelease(\textcolor{keywordtype}{int}\ n);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hookThreadExit(UInt64\ \textcolor{keywordtype}{object},\ UInt64\ argument)\ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ ((BarrierSyncServer*)\textcolor{keywordtype}{object})-\/>threadExit((HooksManager::ThreadTime*)argument);\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hookThreadStall(UInt64\ \textcolor{keywordtype}{object},\ UInt64\ argument)\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ ((BarrierSyncServer*)\textcolor{keywordtype}{object})-\/>threadStall((HooksManager::ThreadStall*)argument);\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hookThreadMigrate(UInt64\ \textcolor{keywordtype}{object},\ UInt64\ argument)\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ ((BarrierSyncServer*)\textcolor{keywordtype}{object})-\/>threadMigrate((HooksManager::ThreadMigrate*)argument);\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ threadExit(HooksManager::ThreadTime\ *argument);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ threadStall(HooksManager::ThreadStall\ *argument);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ threadMigrate(HooksManager::ThreadMigrate\ *argument);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ BarrierSyncServer();}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \string~BarrierSyncServer();}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setDisable(\textcolor{keywordtype}{bool}\ disable);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setGroup(core\_id\_t\ core\_id,\ core\_id\_t\ master\_core\_id);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ synchronize(core\_id\_t\ core\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ release()\ \{\ abortBarrier();\ \}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ advance();}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setFastForward(\textcolor{keywordtype}{bool}\ fastforward,\ SubsecondTime\ next\_barrier\_time\ =\ SubsecondTime::MaxTime());}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ SubsecondTime\ getGlobalTime(\textcolor{keywordtype}{bool}\ upper\_bound\ =\ \textcolor{keyword}{false})\ \{\ \textcolor{keywordflow}{return}\ upper\_bound\ ?\ m\_next\_barrier\_time\ :\ m\_global\_time;\ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setBarrierInterval(SubsecondTime\ barrier\_interval)\ \{\ m\_barrier\_interval\ =\ barrier\_interval;\ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ SubsecondTime\ getBarrierInterval()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_barrier\_interval;\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ printState(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_BARRIER\_SYNC\_SERVER\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

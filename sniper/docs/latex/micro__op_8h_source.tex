@@ -1,0 +1,192 @@
+\doxysection{micro\+\_\+op.\+h}
+\label{micro__op_8h_source}\index{common/performance\_model/performance\_models/micro\_op/micro\_op.h@{common/performance\_model/performance\_models/micro\_op/micro\_op.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ MICROOP\_HPP\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ MICROOP\_HPP\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}memory\_access.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}tools.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <decoder.h>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//extern\ "{}C"{}\ \{}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\#include\ <xed-\/iclass-\/enum.h>}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\#include\ <xed-\/reg-\/enum.h>}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }Instruction;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ MAX\_SRC\_REGS\ 3}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#define\ MAX\_MEM\_SRC\_REGS\ 2}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ MAX\_DEST\_REGS\ 3}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ MAX\_MEM\_DEST\_REGS\ 2}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ MAX\_CF\_REGS\ 11}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS\ (MAX\_SRC\_REGS\ +\ MAX\_CF\_REGS)}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ MAXIMUM\_NUMBER\_OF\_ADDRESS\_REGISTERS\ MAX\_MEM\_SRC\_REGS}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#define\ MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS\ (MAX\_DEST\_REGS\ +\ MAX\_CF\_REGS)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ MAXIMUM\_NUMBER\_OF\_DEPENDENCIES\ MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{const}\ uint64\_t\ INVALID\_SEQNR\ =\ UINT64\_MAX;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ Define\ to\ store\ debug\ strings\ inside\ the\ MicroOp\ for\ MicroOp::toString}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\#define\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{struct\ }MicroOp}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ MicroOp();}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keyword}{enum}\ uop\_type\_t\ \{\ UOP\_INVALID\ =\ 0,\ UOP\_LOAD,\ UOP\_EXECUTE,\ UOP\_STORE\ \};}
+\DoxyCodeLine{00066\ \ \ \ uop\_type\_t\ uop\_type;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keyword}{enum}\ uop\_subtype\_t\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ UOP\_SUBTYPE\_FP\_ADDSUB,}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ UOP\_SUBTYPE\_FP\_MULDIV,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ UOP\_SUBTYPE\_LOAD,}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ UOP\_SUBTYPE\_STORE,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ UOP\_SUBTYPE\_GENERIC,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ UOP\_SUBTYPE\_BRANCH,}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ UOP\_SUBTYPE\_SIZE,}
+\DoxyCodeLine{00076\ \ \ \ \};}
+\DoxyCodeLine{00077\ \ \ \ uop\_subtype\_t\ uop\_subtype;}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordtype}{bool}\ first;}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordtype}{bool}\ last;}
+\DoxyCodeLine{00083\ \ \ \ }
+\DoxyCodeLine{00084\ \ \ \ dl::Decoder::decoder\_opcode\ instructionOpcode;}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keyword}{const}\ dl::DecodedInst*\ decodedInstruction;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ Instruction*\ instruction;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00090\ \ \ \ String\ instructionOpcodeName;}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00094\ \ \ \ uint32\_t\ microOpTypeOffset;}
+\DoxyCodeLine{00096\ \ \ \ uint32\_t\ intraInstructionDependencies;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00099\ \ \ \ uint32\_t\ sourceRegistersLength;}
+\DoxyCodeLine{00101\ \ \ \ dl::Decoder::decoder\_reg\ sourceRegisters[MAXIMUM\_NUMBER\_OF\_SOURCE\_REGISTERS];}
+\DoxyCodeLine{00103\ \ \ \ uint32\_t\ addressRegistersLength;}
+\DoxyCodeLine{00104\ \ \ \ dl::Decoder::decoder\_reg\ addressRegisters[MAXIMUM\_NUMBER\_OF\_ADDRESS\_REGISTERS];}
+\DoxyCodeLine{00105\ \ \ \ uint32\_t\ destinationRegistersLength;}
+\DoxyCodeLine{00107\ \ \ \ dl::Decoder::decoder\_reg\ destinationRegisters[MAXIMUM\_NUMBER\_OF\_DESTINATION\_REGISTERS];}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00110\ \ \ \ std::vector<String>\ sourceRegisterNames;}
+\DoxyCodeLine{00111\ \ \ \ std::vector<String>\ addressRegisterNames;}
+\DoxyCodeLine{00112\ \ \ \ std::vector<String>\ destinationRegisterNames;}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00116\ \ \ \ Memory::Access\ instructionPointer;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keywordtype}{bool}\ interrupt;}
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordtype}{bool}\ serializing;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00124\ \ \ \ \textcolor{keywordtype}{bool}\ branch;}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00128\ \ \ \ String\ debugInfo;}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordtype}{bool}\ m\_membar;}
+\DoxyCodeLine{00132\ \ \ \ \textcolor{keywordtype}{bool}\ is\_x87;}
+\DoxyCodeLine{00133\ \ \ \ uint16\_t\ operand\_size;}
+\DoxyCodeLine{00134\ \ \ \ uint16\_t\ memoryAccessSize;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordtype}{void}\ makeLoad(uint32\_t\ offset,\ dl::Decoder::decoder\_opcode\ instructionOpcode,\ \textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ uint16\_t\ mem\_size);}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keywordtype}{void}\ makeExecute(uint32\_t\ offset,\ uint32\_t\ num\_loads,\ dl::Decoder::decoder\_opcode\ instructionOpcode,\ \textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ \textcolor{keywordtype}{bool}\ isBranch);}
+\DoxyCodeLine{00138\ \ \ \ \textcolor{keywordtype}{void}\ makeStore(uint32\_t\ offset,\ uint32\_t\ num\_execute,\ dl::Decoder::decoder\_opcode\ instructionOpcode,\ \textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ uint16\_t\ mem\_size);}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordtype}{void}\ makeDynamic(\textcolor{keyword}{const}\ String\&\ instructionOpcodeName,\ uint32\_t\ execLatency);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keyword}{static}\ uop\_subtype\_t\ getSubtype\_Exec(\textcolor{keyword}{const}\ MicroOp\&\ uop);}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keyword}{static}\ uop\_subtype\_t\ getSubtype(\textcolor{keyword}{const}\ MicroOp\&\ uop);}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{keyword}{static}\ String\ getSubtypeString(uop\_subtype\_t\ uop\_subtype);}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keywordtype}{void}\ setTypes()\ \{\ uop\_subtype\ =\ getSubtype(*\textcolor{keyword}{this});\ \}}
+\DoxyCodeLine{00146\ \ \ \ uop\_subtype\_t\ getSubtype(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ uop\_subtype;\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \textcolor{keywordtype}{bool}\ isFpLoadStore()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keywordtype}{void}\ setIsX87(\textcolor{keywordtype}{bool}\ \_is\_x87)\ \{\ is\_x87\ =\ \_is\_x87;\ \}}
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keywordtype}{bool}\ isX87(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ is\_x87;\ \}}
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keywordtype}{void}\ setOperandSize(\textcolor{keywordtype}{int}\ size)\ \{\ operand\_size\ =\ size;\ \}}
+\DoxyCodeLine{00152\ \ \ \ uint16\_t\ getOperandSize(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ operand\_size;\ \}}
+\DoxyCodeLine{00153\ \ \ \ uint16\_t\ getMemoryAccessSize(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ memoryAccessSize;\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \textcolor{keywordtype}{void}\ setInstruction(Instruction*\ instr)\ \{\ instruction\ =\ instr;\ \}}
+\DoxyCodeLine{00156\ \ \ \ Instruction*\ getInstruction(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ instruction;\ \}\ \ \ }
+\DoxyCodeLine{00157\ \ \ \ }
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordtype}{void}\ setDecodedInstruction(\textcolor{keyword}{const}\ dl::DecodedInst*\ instr)\ \{\ decodedInstruction\ =\ instr;\ \}}
+\DoxyCodeLine{00159\ \ \ \ \textcolor{keyword}{const}\ dl::DecodedInst*\ getDecodedInstruction(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ decodedInstruction;\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ dl::Decoder::decoder\_opcode\ getInstructionOpcode()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ instructionOpcode;\ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \textcolor{keywordtype}{void}\ setFirst(\textcolor{keywordtype}{bool}\ first)\ \{\ this-\/>first\ =\ first;\ \}}
+\DoxyCodeLine{00164\ \ \ \ \textcolor{keywordtype}{bool}\ isFirst()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>first;\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \textcolor{keywordtype}{void}\ setLast(\textcolor{keywordtype}{bool}\ last)\ \{\ this-\/>last\ =\ last;\ \}}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordtype}{bool}\ isLast()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>last;\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordtype}{void}\ verify()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ uint32\_t\ getSourceRegistersLength()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00172\ \ \ \ dl::Decoder::decoder\_reg\ getSourceRegister(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00173\ \ \ \ \textcolor{keywordtype}{void}\ addSourceRegister(dl::Decoder::decoder\_reg\ registerId,\ \textcolor{keyword}{const}\ String\&\ registerName);}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ uint32\_t\ getAddressRegistersLength()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00176\ \ \ \ dl::Decoder::decoder\_reg\ getAddressRegister(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00177\ \ \ \ \textcolor{keywordtype}{void}\ addAddressRegister(dl::Decoder::decoder\_reg\ registerId,\ \textcolor{keyword}{const}\ String\&\ registerName);}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ uint32\_t\ getDestinationRegistersLength()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00180\ \ \ \ dl::Decoder::decoder\_reg\ getDestinationRegister(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{keywordtype}{void}\ addDestinationRegister(dl::Decoder::decoder\_reg\ registerId,\ \textcolor{keyword}{const}\ String\&\ registerName);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00184\ \ \ \ \textcolor{keyword}{const}\ String\&\ getSourceRegisterName(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00185\ \ \ \ \textcolor{keyword}{const}\ String\&\ getAddressRegisterName(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00186\ \ \ \ \textcolor{keyword}{const}\ String\&\ getDestinationRegisterName(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \textcolor{keyword}{const}\ Memory::Access\&\ getInstructionPointer()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>instructionPointer;\ \}}
+\DoxyCodeLine{00190\ \ \ \ \textcolor{keywordtype}{void}\ setInstructionPointer(\textcolor{keyword}{const}\ Memory::Access\&\ ip)\ \{\ this-\/>instructionPointer\ =\ ip;\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \textcolor{keywordtype}{bool}\ isBranch()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>branch;\ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \textcolor{keywordtype}{bool}\ isInterrupt()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>interrupt;\ \}}
+\DoxyCodeLine{00195\ \ \ \ \textcolor{keywordtype}{void}\ setInterrupt(\textcolor{keywordtype}{bool}\ interrupt)\ \{\ this-\/>interrupt\ =\ interrupt;\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \textcolor{keywordtype}{bool}\ isSerializing()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>serializing;\ \}}
+\DoxyCodeLine{00198\ \ \ \ \textcolor{keywordtype}{void}\ setSerializing(\textcolor{keywordtype}{bool}\ serializing)\ \{\ this-\/>serializing\ =\ serializing;\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordtype}{bool}\ isMemBarrier()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_membar;\ \}}
+\DoxyCodeLine{00201\ \ \ \ \textcolor{keywordtype}{void}\ setMemBarrier(\textcolor{keywordtype}{bool}\ membar)\ \{\ this-\/>m\_membar\ =\ membar;\ \}}
+\DoxyCodeLine{00202\ \ \ \ \textcolor{keywordtype}{bool}\ isCacheFlush()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ Sim()-\/>getDecoder()-\/>is\_cache\_flush\_opcode(this-\/>instructionOpcode);\ \}}
+\DoxyCodeLine{00203\ \ \ \ \textcolor{keywordtype}{bool}\ isDiv()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ Sim()-\/>getDecoder()-\/>is\_div\_opcode(this-\/>instructionOpcode);\ \}}
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keywordtype}{bool}\ isPause()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ Sim()-\/>getDecoder()-\/>is\_pause\_opcode(this-\/>instructionOpcode);\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \textcolor{keywordtype}{bool}\ isLoad()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>uop\_type\ ==\ UOP\_LOAD;\ \}}
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keywordtype}{bool}\ isStore()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>uop\_type\ ==\ UOP\_STORE;\ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \textcolor{keywordtype}{void}\ setDebugInfo(String\ debugInfo);}
+\DoxyCodeLine{00210\ \ \ \ String\ toString()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00211\ \ \ \ String\ toShortString(\textcolor{keywordtype}{bool}\ withDisassembly\ =\ \textcolor{keyword}{false})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \textcolor{keywordtype}{bool}\ isExecute()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ uop\_type\ ==\ UOP\_EXECUTE;\ \};}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ uop\_type\_t\ getType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ uop\_type;\ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00218\ \ \ \ \textcolor{keyword}{const}\ String\&\ getInstructionOpcodeName()\ \{\ \textcolor{keywordflow}{return}\ instructionOpcodeName;\ \}}
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00220\ \};}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ MICROOP\_HPP\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

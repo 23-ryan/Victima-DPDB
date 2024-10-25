@@ -1,0 +1,36 @@
+\doxysection{callstack.\+cc}
+\label{callstack_8cc_source}\index{common/misc/callstack.cc@{common/misc/callstack.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}callstack.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{keyword}{struct\ }stack\_frame\ \{}
+\DoxyCodeLine{00004\ \ \ \ \textcolor{keyword}{struct\ }stack\_frame*\ next;}
+\DoxyCodeLine{00005\ \ \ \ \textcolor{keywordtype}{void}*\ ret;}
+\DoxyCodeLine{00006\ \};}
+\DoxyCodeLine{00007\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{void}\ *\_\_libc\_stack\_end;}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keywordtype}{int}\ get\_call\_stack\_from(\textcolor{keywordtype}{void}**\ retaddrs,\ \textcolor{keywordtype}{int}\ max\_size,\ \textcolor{keywordtype}{void}*\ sp,\ \textcolor{keywordtype}{void}*\ bp)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{comment}{/*\ find\ the\ frame\ pointer\ */}}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keyword}{struct\ }stack\_frame*\ frame\ =\ (\textcolor{keyword}{struct\ }stack\_frame*)bp;}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordtype}{void}*\ top\_stack\ =\ sp;}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{comment}{/*\ the\ rest\ just\ walks\ through\ the\ linked\ list\ */}}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keywordtype}{int}\ i\ =\ 0;}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordflow}{while}(i\ <\ max\_size)}
+\DoxyCodeLine{00017\ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(frame\ <\ top\_stack\ ||\ frame\ >\ \_\_libc\_stack\_end)}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ retaddrs[i++]\ =\ frame-\/>ret;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ frame\ =\ frame-\/>next;}
+\DoxyCodeLine{00022\ \ \ \ \}}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{return}\ i;}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{int}\ get\_call\_stack(\textcolor{keywordtype}{void}**\ retaddrs,\ \textcolor{keywordtype}{int}\ max\_size)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordtype}{int}\ stack\_top;}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{return}\ get\_call\_stack\_from(retaddrs,\ max\_size,\ \&stack\_top,\ \_\_builtin\_frame\_address(0));}
+\DoxyCodeLine{00030\ \}}
+
+\end{DoxyCode}

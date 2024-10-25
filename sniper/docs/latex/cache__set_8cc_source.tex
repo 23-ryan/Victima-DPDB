@@ -1,0 +1,339 @@
+\doxysection{cache\+\_\+set.\+cc}
+\label{cache__set_8cc_source}\index{common/core/memory\_subsystem/cache/cache\_set.cc@{common/core/memory\_subsystem/cache/cache\_set.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_lru.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_mru.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_nmru.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_nru.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_plru.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_random.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_round\_robin.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_srrip.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}cache\_base.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ CacheSet::CacheSet(CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set):}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ m\_associativity(associativity),\ m\_blocksize(blocksize),\ m\_is\_tlb\_set(is\_tlb\_set),\ inserts(0),\ evictions(0),\ invalidations(0)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ m\_cache\_block\_info\_array\ =\ \textcolor{keyword}{new}\ CacheBlockInfo*[m\_associativity];}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ m\_cache\_block\_info\_array[i]\ =\ CacheBlockInfo::create(cache\_type);}
+\DoxyCodeLine{00024\ \ \ \ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getFaultinjectionManager())}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ m\_blocks\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{char}[m\_associativity\ *\ m\_blocksize];}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ memset(m\_blocks,\ 0x00,\ m\_associativity\ *\ m\_blocksize);}
+\DoxyCodeLine{00030\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ m\_blocks\ =\ NULL;}
+\DoxyCodeLine{00032\ \ \ \ \}}
+\DoxyCodeLine{00033\ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ CacheSet::\string~CacheSet()}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_cache\_block\_info\_array[i];}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_cache\_block\_info\_array;}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_blocks;}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00044\ CacheSet::read\_line(UInt32\ line\_index,\ UInt32\ offset,\ Byte\ *out\_buff,\ UInt32\ bytes,\ \textcolor{keywordtype}{bool}\ update\_replacement)}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ assert(offset\ +\ bytes\ <=\ m\_blocksize);}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//assert((out\_buff\ ==\ NULL)\ ==\ (bytes\ ==\ 0));}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{if}\ (out\_buff\ !=\ NULL\ \&\&\ m\_blocks\ !=\ NULL)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ memcpy((\textcolor{keywordtype}{void}*)\ out\_buff,\ \&m\_blocks[line\_index\ *\ m\_blocksize\ +\ offset],\ bytes);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{if}\ (update\_replacement)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ updateReplacementIndex(line\_index);}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00057\ CacheSet::write\_line(UInt32\ line\_index,\ UInt32\ offset,\ Byte\ *in\_buff,\ UInt32\ bytes,\ \textcolor{keywordtype}{bool}\ update\_replacement)}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \ assert(offset\ +\ bytes\ <=\ m\_blocksize);}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{comment}{//assert((in\_buff\ ==\ NULL)\ ==\ (bytes\ ==\ 0));}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{if}\ (in\_buff\ !=\ NULL\ \&\&\ m\_blocks\ !=\ NULL)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ memcpy(\&m\_blocks[line\_index\ *\ m\_blocksize\ +\ offset],\ (\textcolor{keywordtype}{void}*)\ in\_buff,\ bytes);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{if}\ (update\_replacement)}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ updateReplacementIndex(line\_index);}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ CacheBlockInfo*}
+\DoxyCodeLine{00070\ CacheSet::find(IntPtr\ tag,\ UInt32*\ line\_index)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity-\/1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>getTag()\ ==\ tag)}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (line\_index\ !=\ NULL)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ *line\_index\ =\ index;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_cache\_block\_info\_array[index]);}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00085\ CacheSet::invalidate(IntPtr\&\ tag)}
+\DoxyCodeLine{00086\ \{}
+\DoxyCodeLine{00087\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity-\/1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00088\ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>getTag()\ ==\ tag)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ m\_cache\_block\_info\_array[index]-\/>invalidate();}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ invalidations++;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00100\ CacheSet::insert(CacheBlockInfo*\ cache\_block\_info,\ Byte*\ fill\_buff,\ \textcolor{keywordtype}{bool}*\ eviction,\ CacheBlockInfo*\ evict\_block\_info,\ Byte*\ evict\_buff,\ CacheCntlr\ *cntlr)}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \ \textcolor{comment}{//\ This\ replacement\ strategy\ does\ not\ take\ into\ account\ the\ fact\ that}}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{comment}{//\ cache\ blocks\ can\ be\ voluntarily\ flushed\ or\ invalidated\ due\ to\ another\ write\ request}}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keyword}{const}\ UInt32\ index\ =\ getReplacementIndex(cntlr);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{comment}{//\ \ if(getAssociativity()\ \ ==\ 16\ \&\&\ cntlr)\ }}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{comment}{//\ \ \ \ \ std::cout\ <<\ "{}L2\ insert\ "{}\ <<\ cache\_block\_info-\/>getTag()\ <<\ "{}\ at\ index\ "{}\ <<\ index\ <<\ std::endl;}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ assert(index\ <\ m\_associativity);}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ assert(eviction\ !=\ NULL);}
+\DoxyCodeLine{00112\ \ \ \ }
+\DoxyCodeLine{00113\ \ \ \ \textcolor{comment}{//\ \ if(getAssociativity()\ ==\ 16\ \&\&\ cntlr\ \&\&\ (\ (inserts\ -\/\ evictions)\ >\ getAssociativity())\ )\{\ }}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ std::cout\ <<\ "{}Problem\ :\ inserts\ =\ "{}\ <<\ inserts\ <<\ "{}\ evictions\ =\ "{}\ <<\ evictions\ <<\ "{}\ invalidations\ =\ "{}\ <<\ invalidations\ \ <<\ std::endl;}}
+\DoxyCodeLine{00116\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ for\ (int\ i\ =\ 0;\ i\ <\ getAssociativity();\ i++)}}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ std::cout\ <<\ "{}L2\ Set\ with\ index\ "{}\ <<\ i\ <<\ "{}\ has\ tag\ "{}\ <<\ \ m\_cache\_block\_info\_array[index]-\/>getTag()\ <<\ std::endl;}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ \ \}}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>isValid())}
+\DoxyCodeLine{00122\ \ \ \ \{}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{comment}{//\ if(getAssociativity()\ ==\ 16\ \&\&\ cntlr)\ }}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ std::cout\ <<\ "{}L2\ evict\ before\ insert"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ *eviction\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ This\ is\ a\ hack.\ I\ dont\ know\ if\ this\ is\ the\ best\ way\ to\ do}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ evict\_block\_info-\/>clone(m\_cache\_block\_info\_array[index]);}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (evict\_buff\ !=\ NULL\ \&\&\ m\_blocks\ !=\ NULL)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ memcpy((\textcolor{keywordtype}{void}*)\ evict\_buff,\ \&m\_blocks[index\ *\ m\_blocksize],\ m\_blocksize);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ evictions++;}
+\DoxyCodeLine{00132\ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00134\ \ \ \ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ *eviction\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00136\ \ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \textcolor{comment}{//\ FIXME:\ This\ is\ a\ hack.\ I\ dont\ know\ if\ this\ is\ the\ best\ way\ to\ do}}
+\DoxyCodeLine{00139\ \ \ \ m\_cache\_block\_info\_array[index]-\/>clone(cache\_block\_info);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \textcolor{comment}{//\ if(getAssociativity()\ ==\ 16\ \&\&\ cntlr)\{}}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ std::cout\ <<\ "{}L2\ inserted\ block\ with\ tag\ =\ "{}\ <<\ m\_cache\_block\_info\_array[index]-\/>getTag()\ \ <<\ std::endl;}}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ for\ (int\ i\ =\ 0;\ i\ <\ getAssociativity();\ i++)}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ std::cout\ <<\ "{}L2\ Set\ with\ index\ "{}\ <<\ i\ <<\ "{}\ has\ tag\ "{}\ <<\ \ m\_cache\_block\_info\_array[index]-\/>getTag()\ <<\ std::endl;}}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keywordflow}{if}\ (fill\_buff\ !=\ NULL\ \&\&\ m\_blocks\ !=\ NULL)}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ memcpy(\&m\_blocks[index\ *\ m\_blocksize],\ (\textcolor{keywordtype}{void}*)\ fill\_buff,\ m\_blocksize);}
+\DoxyCodeLine{00149\ \ \ \ }
+\DoxyCodeLine{00150\ \ \ \ inserts++;}
+\DoxyCodeLine{00151\ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{keywordtype}{char}*}
+\DoxyCodeLine{00154\ CacheSet::getDataPtr(UInt32\ line\_index,\ UInt32\ offset)}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ \ \ \ \textcolor{keywordflow}{return}\ \&m\_blocks[line\_index\ *\ m\_blocksize\ +\ offset];}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ CacheSet*}
+\DoxyCodeLine{00160\ CacheSet::createCacheSet(String\ cfgname,\ core\_id\_t\ core\_id,}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ String\ replacement\_policy,}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ CacheSetInfo*\ set\_info,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set)}
+\DoxyCodeLine{00164\ \{}
+\DoxyCodeLine{00165\ \ \ \ CacheBase::ReplacementPolicy\ policy\ =\ parsePolicyType(replacement\_policy);}
+\DoxyCodeLine{00166\ \ \ \ \textcolor{keywordflow}{switch}(policy)}
+\DoxyCodeLine{00167\ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::ROUND\_ROBIN:}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetRoundRobin(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set);}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::LRU:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::LRU\_QBS:}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetLRU(cache\_type,\ associativity,\ blocksize,\ \textcolor{keyword}{dynamic\_cast<}CacheSetInfoLRU*\textcolor{keyword}{>}(set\_info),\ getNumQBSAttempts(policy,\ cfgname,\ core\_id),\ is\_tlb\_set);}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::NRU:}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetNRU(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set);}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::MRU:}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetMRU(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set);}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::NMRU:}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetNMRU(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::PLRU:}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetPLRU(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::SRRIP:}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::SRRIP\_QBS:}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetSRRIP(cfgname,\ core\_id,\ cache\_type,\ associativity,\ blocksize,\ \textcolor{keyword}{dynamic\_cast<}CacheSetInfoLRU*\textcolor{keyword}{>}(set\_info),\ getNumQBSAttempts(policy,\ cfgname,\ core\_id),\ is\_tlb\_set);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::RANDOM:}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetRandom(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set);}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Cache\ Replacement\ Policy:\ \%i"{}},}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ policy);}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00198\ \ \ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{return}\ (CacheSet*)\ NULL;}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ CacheSetInfo*}
+\DoxyCodeLine{00204\ CacheSet::createCacheSetInfo(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ String\ replacement\_policy,\ UInt32\ associativity)}
+\DoxyCodeLine{00205\ \{}
+\DoxyCodeLine{00206\ \ \ \ CacheBase::ReplacementPolicy\ policy\ =\ parsePolicyType(replacement\_policy);}
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keywordflow}{switch}(policy)}
+\DoxyCodeLine{00208\ \ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::LRU:}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::LRU\_QBS:}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::SRRIP:}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::SRRIP\_QBS:}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ CacheSetInfoLRU(name,\ cfgname,\ core\_id,\ associativity,\ getNumQBSAttempts(policy,\ cfgname,\ core\_id));}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00216\ \ \ \ \}}
+\DoxyCodeLine{00217\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ UInt8}
+\DoxyCodeLine{00220\ CacheSet::getNumQBSAttempts(CacheBase::ReplacementPolicy\ policy,\ String\ cfgname,\ core\_id\_t\ core\_id)}
+\DoxyCodeLine{00221\ \{}
+\DoxyCodeLine{00222\ \ \ \ \textcolor{keywordflow}{switch}(policy)}
+\DoxyCodeLine{00223\ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::LRU\_QBS:}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheBase::SRRIP\_QBS:}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getCfg()-\/>getIntArray(cfgname\ +\ \textcolor{stringliteral}{"{}/qbs/attempts"{}},\ core\_id);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00229\ \ \ \ \}}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ CacheBase::ReplacementPolicy}
+\DoxyCodeLine{00233\ CacheSet::parsePolicyType(String\ policy)}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}round\_robin"{}})}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::ROUND\_ROBIN;}
+\DoxyCodeLine{00237\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}lru"{}})}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::LRU;}
+\DoxyCodeLine{00239\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}lru\_qbs"{}})}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::LRU\_QBS;}
+\DoxyCodeLine{00241\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}nru"{}})}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::NRU;}
+\DoxyCodeLine{00243\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}mru"{}})}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::MRU;}
+\DoxyCodeLine{00245\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}nmru"{}})}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::NMRU;}
+\DoxyCodeLine{00247\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}plru"{}})}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::PLRU;}
+\DoxyCodeLine{00249\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}srrip"{}})}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::SRRIP;}
+\DoxyCodeLine{00251\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}srrip\_qbs"{}})}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::SRRIP\_QBS;}
+\DoxyCodeLine{00253\ \ \ \ \textcolor{keywordflow}{if}\ (policy\ ==\ \textcolor{stringliteral}{"{}random"{}})}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CacheBase::RANDOM;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ replacement\ policy\ \%s"{}},\ policy.c\_str());}
+\DoxyCodeLine{00257\ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \textcolor{keywordtype}{bool}\ CacheSet::isValidReplacement(UInt32\ index)}
+\DoxyCodeLine{00260\ \{}
+\DoxyCodeLine{00261\ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>getCState()\ ==\ CacheState::SHARED\_UPGRADING)}
+\DoxyCodeLine{00262\ \ \ \ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00264\ \ \ \ \}}
+\DoxyCodeLine{00265\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00266\ \ \ \ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00268\ \ \ \ \}}
+\DoxyCodeLine{00269\ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ uint64\_t\ CacheSet::countPageWalkCacheBlocks()}
+\DoxyCodeLine{00272\ \{}
+\DoxyCodeLine{00273\ \ \ \ uint64\_t\ count\ =\ 0;}
+\DoxyCodeLine{00274\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity\ -\/\ 1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00275\ \ \ \ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>isPageTableBlock())}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ count++;}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ \ \ \ \}}
+\DoxyCodeLine{00281\ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00282\ \}}
+\DoxyCodeLine{00283\ uint64\_t\ CacheSet::countSecurityCacheBlocks()}
+\DoxyCodeLine{00284\ \{}
+\DoxyCodeLine{00285\ \ \ \ uint64\_t\ count\ =\ 0;}
+\DoxyCodeLine{00286\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity\ -\/\ 1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00287\ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>isSecurityBlock())}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ count++;}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00292\ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00294\ \}}
+\DoxyCodeLine{00295\ uint64\_t\ CacheSet::countExpressiveCacheBlocks()}
+\DoxyCodeLine{00296\ \{}
+\DoxyCodeLine{00297\ \ \ \ uint64\_t\ count\ =\ 0;}
+\DoxyCodeLine{00298\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity\ -\/\ 1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00299\ \ \ \ \{}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>isExpressiveBlock())}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ count++;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \ \}}
+\DoxyCodeLine{00305\ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00306\ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ uint64\_t\ CacheSet::countUtopiaCacheBlocks()}
+\DoxyCodeLine{00309\ \{}
+\DoxyCodeLine{00310\ \ \ \ uint64\_t\ count\ =\ 0;}
+\DoxyCodeLine{00311\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity\ -\/\ 1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00312\ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>isUtopiaBlock())}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ count++;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \}}
+\DoxyCodeLine{00318\ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00319\ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ uint64\_t\ CacheSet::countTLBCacheBlocks()}
+\DoxyCodeLine{00323\ \{}
+\DoxyCodeLine{00324\ \ \ \ uint64\_t\ count\ =\ 0;}
+\DoxyCodeLine{00325\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ index\ =\ m\_associativity\ -\/\ 1;\ index\ >=\ 0;\ index-\/-\/)}
+\DoxyCodeLine{00326\ \ \ \ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_block\_info\_array[index]-\/>isTLBBlock())}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ count++;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00333\ \}}
+
+\end{DoxyCode}

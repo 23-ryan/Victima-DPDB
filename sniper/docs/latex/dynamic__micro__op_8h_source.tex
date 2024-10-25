@@ -1,0 +1,143 @@
+\doxysection{dynamic\+\_\+micro\+\_\+op.\+h}
+\label{dynamic__micro__op_8h_source}\index{common/performance\_model/performance\_models/micro\_op/dynamic\_micro\_op.h@{common/performance\_model/performance\_models/micro\_op/dynamic\_micro\_op.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DYNAMIC\_MICRO\_OP\_INFO\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DYNAMIC\_MICRO\_OP\_INFO\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}allocator.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}memory\_access.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}hit\_where.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}allocator.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }CoreModel;}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }DynamicMicroOp}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MicroOp\ *m\_uop;}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{const}\ CoreModel\ *m\_core\_model;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{comment}{//\ architecture-\/independent\ information}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SubsecondTime\ m\_period;}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ uint64\_t\ sequenceNumber;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ Memory::Access\ address;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ squashed;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ uint32\_t\ intraInstructionDependencies;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ uint32\_t\ microOpTypeOffset;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ uint32\_t\ squashedCount;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ uint32\_t\ dependenciesLength;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ uint64\_t\ dependencies[MAXIMUM\_NUMBER\_OF\_DEPENDENCIES];}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ uint32\_t\ execLatency;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ branchTaken;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ branchMispredicted;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ IntPtr\ branchTargetAddress;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ HitWhere::where\_t\ dCacheHitWhere;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ HitWhere::where\_t\ iCacheHitWhere;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ uint32\_t\ iCacheLatency;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_forceLongLatencyLoad;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ first;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ last;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{comment}{//\ architecture-\/specific\ information\ to\ be\ defined\ in\ derived\ classes}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ DynamicMicroOp(\textcolor{keyword}{const}\ MicroOp\ *uop,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ ComponentPeriod\ period);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~DynamicMicroOp();}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{static}\ T*\ alloc(Allocator\ *alloc,\ \textcolor{keyword}{const}\ MicroOp\ *uop,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,\ ComponentPeriod\ period)}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *ptr\ =\ alloc-\/>alloc(\textcolor{keyword}{sizeof}(T));}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ T\ *t\ =\ \textcolor{keyword}{new}(ptr)\ T(uop,\ core\_model,\ period);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \textcolor{keyword}{operator}\ \textcolor{keyword}{delete}(\textcolor{keywordtype}{void}*\ ptr)\ \{\ Allocator::dealloc(ptr);\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MicroOp\ *getMicroOp()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_uop;\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{const}\ T*\ getCoreSpecificInfo()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ T\ *ptr\ =\ \textcolor{keyword}{dynamic\_cast<}\textcolor{keyword}{const\ }T*\textcolor{keyword}{>}(\textcolor{keyword}{this});}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(ptr\ !=\ NULL,\ \textcolor{stringliteral}{"{}DynamicMicroOp\ of\ the\ wrong\ type:\ expected\ \%s,\ got\ \%s"{}},\ \textcolor{comment}{/*T::getType()*/}\textcolor{stringliteral}{"{}???"{}},\ this-\/>getType());}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ptr;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ this\ micro-\/op\ as\ squashed\ so\ it\ will\ be\ ignored\ in\ further\ pipeline\ stages}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ squash(std::vector<DynamicMicroOp*>*\ array\ =\ NULL);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isSquashed()\ \{\ \textcolor{keywordflow}{return}\ squashed;\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ uint32\_t\ getDependenciesLength()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>intraInstructionDependencies\ +\ this-\/>dependenciesLength;\ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ uint64\_t\ getDependency(uint32\_t\ index)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addDependency(uint64\_t\ sequenceNumber);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ removeDependency(uint64\_t\ sequenceNumber);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ uint32\_t\ getIntraInstrDependenciesLength()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>intraInstructionDependencies;\ \}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setIntraInstrDependenciesLength(uint32\_t\ deps)\ \{\ intraInstructionDependencies\ =\ deps;\}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ uint32\_t\ getMicroOpTypeOffset()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ microOpTypeOffset;\ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setMicroOpTypeOffset(uint32\_t\ offset)\ \{\ microOpTypeOffset\ =\ offset;\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ uint32\_t\ getSquashedCount()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ squashedCount;\ \}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setSquashedCount(uint32\_t\ count)\ \{\ squashedCount\ =\ count;\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setFirst(\textcolor{keywordtype}{bool}\ \_first)\ \{\ first\ =\ \_first;\ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isFirst()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ first;\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setLast(\textcolor{keywordtype}{bool}\ \_last)\ \{\ last\ =\ \_last;\ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isLast()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ last;\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isBranchTaken()\textcolor{keyword}{\ const\ }\{\ LOG\_ASSERT\_ERROR(m\_uop-\/>isBranch(),\ \textcolor{stringliteral}{"{}Expected\ a\ branch\ instruction."{}});\ \textcolor{keywordflow}{return}\ this-\/>branchTaken;\ \}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setBranchTaken(\textcolor{keywordtype}{bool}\ \_branch\_taken)\ \{\ LOG\_ASSERT\_ERROR(m\_uop-\/>isBranch(),\ \textcolor{stringliteral}{"{}Expected\ a\ branch\ instruction."{}});\ branchTaken\ =\ \_branch\_taken;\ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isBranchMispredicted()\textcolor{keyword}{\ const\ }\{\ LOG\_ASSERT\_ERROR(m\_uop-\/>isBranch(),\ \textcolor{stringliteral}{"{}Expected\ a\ branch\ instruction."{}});\ \textcolor{keywordflow}{return}\ this-\/>branchMispredicted;\ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setBranchMispredicted(\textcolor{keywordtype}{bool}\ mispredicted)\ \{\ this-\/>branchMispredicted\ =\ mispredicted;\ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ IntPtr\ getBranchTarget()\textcolor{keyword}{\ const\ }\{\ LOG\_ASSERT\_ERROR(m\_uop-\/>isBranch(),\ \textcolor{stringliteral}{"{}Expected\ a\ branch\ instruction."{}});\ \textcolor{keywordflow}{return}\ this-\/>branchTargetAddress;\ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setBranchTarget(IntPtr\ address)\ \{\ this-\/>branchTargetAddress\ =\ address;\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Memory::Access\&\ getLoadAccess()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isLongLatencyLoad()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Memory::Access\&\ getStoreAccess()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ uint32\_t\ getExecLatency()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>execLatency;\ \}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setExecLatency(uint32\_t\ latency)\ \{\ this-\/>execLatency\ =\ latency;\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ uint64\_t\ getSequenceNumber()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>sequenceNumber;\ \}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setSequenceNumber(uint64\_t\ number)\ \{\ this-\/>sequenceNumber\ =\ number;\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ HitWhere::where\_t\ getDCacheHitWhere()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ dCacheHitWhere;\ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setDCacheHitWhere(HitWhere::where\_t\ \_hitWhere)\ \{\ dCacheHitWhere\ =\ \_hitWhere;\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ HitWhere::where\_t\ getICacheHitWhere()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ iCacheHitWhere;\ \}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setICacheHitWhere(HitWhere::where\_t\ \_hitWhere)\ \{\ iCacheHitWhere\ =\ \_hitWhere;\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ uint32\_t\ getICacheLatency()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ iCacheLatency;\ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setICacheLatency(uint32\_t\ \_latency)\ \{\ iCacheLatency\ =\ \_latency;\ \};}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setAddress(\textcolor{keyword}{const}\ Memory::Access\&\ loadAccess)\ \{\ this-\/>address\ =\ loadAccess;\ \}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Memory::Access\&\ getAddress(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>address;\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setForceLongLatencyLoad(\textcolor{keywordtype}{bool}\ forceLLL)\ \{\ m\_forceLongLatencyLoad\ =\ forceLLL;\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ SubsecondTime\ getPeriod()\textcolor{keyword}{\ const\ }\{\ LOG\_ASSERT\_ERROR(m\_period\ !=\ SubsecondTime::Zero(),\ \textcolor{stringliteral}{"{}MicroOp\ Period\ is\ ==\ SubsecondTime::Zero()"{}});\ \textcolor{keywordflow}{return}\ m\_period;\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{comment}{//\ More\ dynamic,\ architecture-\/dependent\ information\ to\ be\ defined\ by\ derived\ classes}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getType()\ \textcolor{keyword}{const}\ =\ 0;\ \textcolor{comment}{//\ Make\ this\ class\ pure\ virtual}}
+\DoxyCodeLine{00151\ \};}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_DYNAMIC\_MICRO\_OP\_INFO\_H}}
+
+\end{DoxyCode}

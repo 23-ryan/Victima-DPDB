@@ -1,0 +1,343 @@
+\doxysection{utopia.\+cc}
+\label{utopia_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/utopia.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/utopia.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}utopia.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}hash\_map\_set.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00017\ \ \ UTR::UTR(\textcolor{keywordtype}{int}\ \_id,\ \textcolor{keywordtype}{int}\ \_size,\ \textcolor{keywordtype}{int}\ \_page\_size,\ \textcolor{keywordtype}{int}\ \_assoc,\ String\ \_repl,\ String\ \_hash,\ Utopia\ *\_utopia):}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ id(\_id),}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ size(\_size),}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ page\_size(\_page\_size),}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ assoc(\_assoc),}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ hash(\_hash),}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ repl(\_repl),}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ m\_utr\_conflicts(0),}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ m\_utr\_accesses(0),}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ m\_utr\_hits(0),}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ utopia(\_utopia)}
+\DoxyCodeLine{00028\ \ \ \{}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ }
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ utr\_lock\ =\ \textcolor{keyword}{new}\ Lock();}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ }
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ num\_sets\ =\ k\_MEGA\ *\ size\ /\ (assoc\ *\ (1\ <<\ page\_size));}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU]\ Creating\ UTR\ with\ sets\ :\ "{}}\ <<\ num\_sets\ <<\ \textcolor{stringliteral}{"{}\ -\/\ page\_size:\ "{}}\ <<\ page\_size\ <<\ \textcolor{stringliteral}{"{}\ -\/\ assoc:\ "{}}\ <<\ assoc\ <<\ std::endl\ ;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{//LOG\_ASSERT\_ERROR(\ k\_MEGA\ *\ size\ /\ (assoc\ *\ (1\ <<\ page\_size)),\ "{}Invalid\ utopia\ \ configuration:\ size(\%d\ MB)\ !=\ sets(\%d)\ *\ associativity(\%d)\ *\ block\_size(\%d)"{},\ size,\ num\_sets,\ assoc,\ (1\ <<\ page\_size);}}
+\DoxyCodeLine{00041\ \ \ \ \ m\_utr\_cache\ =\ \textcolor{keyword}{new}\ Cache((\textcolor{stringliteral}{"{}utr\_cache\_"{}}+std::to\_string(\textcolor{keywordtype}{id})).c\_str(),\ \textcolor{stringliteral}{"{}perf\_model/utopia/utr"{}},\ 0,\ num\_sets,\ assoc,\ (1L\ <<\ page\_size),\ repl,\ CacheBase::PR\_L1\_CACHE,CacheBase::parseAddressHash(hash));}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{int}\ permission\_size\ =\ (num\_sets*log2(assoc))/8;}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{int}\ tag\_size\ =\ (48-\/page\_size-\/ceil(log2(num\_sets))+3);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{int}\ core\_num;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ core\_num\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =0;\ i\ <\ core\_num;\ i++)\{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ an\ address\ from\ the\ mem\ allocator}}
+\DoxyCodeLine{00052\ \ \ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *utr\_per\_base\ =\ (\textcolor{keywordtype}{char}*)\ malloc\ ((num\_sets*log2(assoc))/8);\ }
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ IntPtr\ permission\_bounds\ \ =\ (IntPtr)utr\_per\_base\ +\ permission\_size;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR:CoreID-\/"{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}]"{}}\ <<\ \textcolor{stringliteral}{"{}Permission\ base:\ "{}}\ <<\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(utr\_per\_base)\ <<\ \textcolor{stringliteral}{"{}\ Size(KB):\ "{}}\ <<\ permission\_size/1024\ <<\ \ std::endl\ ;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00062\ \ \ \ \ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ utr\_tags\_base\ =\ (\textcolor{keywordtype}{char}*)\ malloc(num\_sets*(tag\_size/8));}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR:CoreID-\/"{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}]"{}}\ <<\ \textcolor{stringliteral}{"{}\ Tag\ Base:\ "{}}\ <<\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(utr\_tags\_base)\ <<std::endl\ ;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR:CoreID-\/"{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}]"{}}\ <<\ \textcolor{stringliteral}{"{}\ Metadata\ Tag\ Size\ (KB):\ "{}}\ <<\ \ num\_sets*(tag\_size/8)/1024\ <<\ std::endl\ ;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_num\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ permissions.push\_back((IntPtr)\ utr\_per\_base);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ tags.push\_back((IntPtr)\ utr\_tags\_base);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00078\ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ registerStatsMetric((\textcolor{stringliteral}{"{}utr\_"{}}+std::to\_string(\textcolor{keywordtype}{id})).c\_str(),\ 0,\ \textcolor{stringliteral}{"{}allocation\_conflicts"{}},\ \&m\_utr\_conflicts);}
+\DoxyCodeLine{00083\ \ \ \ \ registerStatsMetric((\textcolor{stringliteral}{"{}utr\_"{}}+std::to\_string(\textcolor{keywordtype}{id})).c\_str(),\ 0,\ \textcolor{stringliteral}{"{}hits"{}},\ \&m\_utr\_hits);}
+\DoxyCodeLine{00084\ \ \ \ \ registerStatsMetric((\textcolor{stringliteral}{"{}utr\_"{}}+std::to\_string(\textcolor{keywordtype}{id})).c\_str(),\ 0,\ \textcolor{stringliteral}{"{}accesses"{}},\ \&m\_utr\_accesses);}
+\DoxyCodeLine{00085\ \ \ \ \ registerStatsMetric((\textcolor{stringliteral}{"{}utr\_"{}}+std::to\_string(\textcolor{keywordtype}{id})).c\_str(),\ 0,\ \textcolor{stringliteral}{"{}allocations"{}},\ \&m\_allocations);}
+\DoxyCodeLine{00086\ \ \ \ \ registerStatsMetric((\textcolor{stringliteral}{"{}utr\_"{}}+std::to\_string(\textcolor{keywordtype}{id})).c\_str(),\ 0,\ \textcolor{stringliteral}{"{}utr\_utilization"{}},\ \&m\_utr\_conflicts,\textcolor{keyword}{true});}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ }
+\DoxyCodeLine{00091\ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ }
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordtype}{bool}\ UTR::inUTR(IntPtr\ address,\ \textcolor{keywordtype}{bool}\ count,\ SubsecondTime\ now,\textcolor{keywordtype}{int}\ core\_id)\{}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ utr\_lock-\/>acquire();}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ m\_utr\_accesses++;}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{bool}\ hit\ =\ m\_utr\_cache-\/>accessSingleLine(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00102\ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00103\ \ \ \ \ m\_utr\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ owner\_hit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ m\_utr\_cache-\/>getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ ==\ tag)\ \&\&\ (m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getOwner()\ ==\ (core\_id+1)))\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>increaseReuse();}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ owner\_hit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \ \ \ \ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{if}\ (count\ \&\&\ hit\ \&\&\ owner\_hit)\ m\_utr\_hits++;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ utr\_lock-\/>release();}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{return}\ \ (owner\_hit);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordtype}{bool}\ UTR::inUTRnostats(IntPtr\ address,\ \textcolor{keywordtype}{bool}\ count,\ SubsecondTime\ now,\ \textcolor{keywordtype}{int}\ core\_id)\{}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ utr\_lock-\/>acquire();}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{bool}\ hit\ =\ m\_utr\_cache-\/>accessSingleLine(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00131\ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00132\ \ \ \ \ m\_utr\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//if(hit\ ==\ true)\ std::cout\ <<"{}Hit\ in\ tag:\ "{}\ <<\ tag\ <<\ "{}\ for\ core\ id"{}\ <<\ core\_id\ <<\ std::endl;}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{bool}\ owner\_hit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Starting\ search\ for\ owner"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ m\_utr\_cache-\/>getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Tag\ of\ set:\ "{}\ <<\ set\_index\ <<\ "{}\ is\ "{}\ <<\ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ <<\ std::endl;}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//if(m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ ==\ tag)}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<"{}Hit\ in\ tag:\ "{}\ <<\ tag\ <<\ \ "{}\ The\ owner\ of\ block\ with\ tag\ :\ "{}\ <<\ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ <<\ "{}\ is\ "{}\ <<\ \ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getOwner()\ <<\ std::endl;}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ ==\ tag)\ \&\&\ (m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getOwner()\ ==\ (core\_id+1)))\{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<"{}Hit\ in\ tag"{}\ <<\ tag\ <<\ \ "{}\ The\ owner\ of\ block\ with\ tag\ :\ "{}\ <<\ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ <<\ "{}\ is\ "{}\ <<\ \ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getOwner()\ <<\ std::endl;}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ owner\_hit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00147\ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ \ }
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ utr\_lock-\/>release();}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ owner\_hit);}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ IntPtr\ UTR::calculate\_permission\_address(IntPtr\ address,\ \textcolor{keywordtype}{int}\ core\_id)\{}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (IntPtr)(permissions[core\_id]\ +\ (set\_index\ *\ (int)(log2(assoc)))/8);}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ IntPtr\ UTR::calculate\_tag\_address(IntPtr\ address,\ \textcolor{keywordtype}{int}\ core\_id)\{}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Accessing\ tag\ "{}\ <<\ \ tags[core\_id]+set\_index*assoc*(metadata\_size/8)\ <<\ std::endl;}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (IntPtr)(tags[core\_id]+set\_index*assoc*(tag\_size/8));\ \textcolor{comment}{//\ We\ assume\ 4byte\ tags\ including\ read/write\ permissions\ +\ PCID}}
+\DoxyCodeLine{00173\ \ \ }
+\DoxyCodeLine{00174\ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \textcolor{keywordtype}{bool}\ UTR::permission\_filter(IntPtr\ address,\ \textcolor{keywordtype}{int}\ core\_id\ )\{}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ utr\_lock-\/>acquire();}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ set\_is\_empty\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ m\_utr\_cache-\/>getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ set\ is\ empty\ from\ blocks\ }}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_utr\_cache-\/>getCacheSet(set\_index)-\/>peekBlock(i)-\/>isValid()\ \&\&\ m\_utr\_cache-\/>getCacheSet(set\_index)-\/>peekBlock(i)-\/>getOwner()\ ==\ (core\_id\ +1)\ )\{\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ set\_is\_empty\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ utr\_lock-\/>release();}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ set\_is\_empty;}
+\DoxyCodeLine{00197\ \ \ \ \ }
+\DoxyCodeLine{00198\ \ \ \ \ }
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \textcolor{keywordtype}{void}\ UTR::allocate(IntPtr\ address,\ \ SubsecondTime\ now,\ \textcolor{keywordtype}{int}\ core\_id)\{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ utr\_lock-\/>acquire();}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ IntPtr\ evict\_addr;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ m\_allocations++;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>insertSingleLine(address,\ NULL,\ \&eviction,\ \&evict\_addr,\ \&evict\_block\_info,\ NULL,\ now);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Adding\ address\ with\ set\_index:\ "{}\ <<\ set\_index\ <<\ "{}\ and\ tag:\ "{}\ <<\ tag\ <<\ std::endl;}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ m\_utr\_cache-\/>getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getTag()\ ==\ tag\ \&\&\ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getOwner()\ ==\ 0\ )\{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Found\ where\ we\ inserted\ the\ block\ in\ UTR"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>setOwner(core\_id+1);\ \textcolor{comment}{//\ Set\ core\_id\ as\ owner\ of\ the\ page\ to\ track\ the\ permission\_filter\ correctly}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ std::cout\ <<\ "{}Set\ the\ owner\ to:\ "{}\ <<\ \ m\_utr\_cache-\/>peekBlock(set\_index,i)-\/>getOwner()\ <<\ std::endl;}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eviction)\{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ evict\_addr\_vpn\ =\ evict\_addr\ >>\ page\_size;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ ComponentLatency\ latency\_migration(Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getDvfsDomain(),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/migration\_latency"{}}));}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<IntPtr,SubsecondTime>\ *map;}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ map\ =\ (utopia-\/>getMigrationMap());}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(map-\/>find(evict\_addr\_vpn)\ ==\ map-\/>end())}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ map-\/>insert(\{evict\_addr\_vpn,Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD)\ \ +latency\_migration.getLatency()\});}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_conflicts++;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ utr\_lock-\/>release();}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \textcolor{keywordtype}{void}\ UTR::track\_utilization()\{}
+\DoxyCodeLine{00251\ \ \ \ \ }
+\DoxyCodeLine{00252\ \ \ \ \ utr\_lock-\/>acquire();}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{int}\ accum\ =\ 0;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ set\_index\ =\ 0;\ set\_index\ <\ m\_utr\_cache-\/>getNumSets();\ ++set\_index)}
+\DoxyCodeLine{00257\ \ \ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ m\_utr\_cache-\/>getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_utr\_cache-\/>getCacheSet(set\_index)-\/>peekBlock(i)-\/>isValid())\ accum+=1;}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ utilization.push\_back(accum);}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ printf(\textcolor{stringliteral}{"{}UTR\ utilization\ =\ \%d,\ \%d,\ \%d\ \(\backslash\)n"{}},\ accum,\ m\_utr\_cache-\/>getNumSets(),m\_utr\_cache-\/>getAssociativity());}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ utr\_lock-\/>release();}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ Utopia::Utopia()\{}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ page\_faults\ =\ 0;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ shadow\_mode\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/utopia/shadow\_mode\_enabled"{}});}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ serial\_l2\_tlb\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/utopia/serial\_l2ltb"{}});}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ migration\_map\ =\ \textcolor{keyword}{new}\ std::unordered\_map<IntPtr,\ SubsecondTime>();}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(shadow\_mode\_enabled)\{}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ utr\_size\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/shadow\_utr/size"{}});}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ utr\_page\_size\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/shadow\_utr/page\_size"{}});}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ utr\_assoc=\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/shadow\_utr/assoc"{}});}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ String\ utr\_repl=\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/utopia/shadow\_utr/repl"{}});}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ String\ utr\_hash=\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/utopia/shadow\_utr/hash"{}});}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ shadow\_utr\ =\ \textcolor{keyword}{new}\ UTR(-\/1,\ utr\_size,\ utr\_page\_size,\ utr\_assoc,\ utr\_repl,\ utr\_hash,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}utopia"{}},\ 0,\ \textcolor{stringliteral}{"{}page\_faults"{}},\ \&page\_faults);}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ utrs\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/utrs"{}});}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ }
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \ \ heur\_type\_primary\ =\ (Utopia::utopia\_heuristic)\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/heuristic\_primary"{}});}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ heur\_type\_secondary\ =\ (Utopia::utopia\_heuristic)\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/heuristic\_secondary"{}});}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR]\ Heuristic\ primary\ \ "{}}\ <<\ heur\_type\_primary\ <<\ std::endl\ ;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR]\ Heuristic\ secondary\ \ "{}}\ <<\ heur\_type\_secondary\ <<\ std::endl\ ;}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ tlb\_eviction\_thr\ =\ (UInt32)(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/tlb\_eviction\_thr"{}}));}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ pte\_eviction\_thr\ =\ (UInt32)(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/utopia/pte\_eviction\_thr"{}}));}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR]\ TLB\ threshold:\ \ "{}}\ <<\ tlb\_eviction\_thr\ <<\ std::endl\ ;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[MMU:UTR]\ PTE\ threshold:\ \ "{}}\ <<\ pte\_eviction\_thr\ <<\ std::endl\ ;}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \ \ }
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ utrs;\ i++)}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ utr\_size\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/utopia/utr/size"{}},\ i);}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ utr\_page\_size\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/utopia/utr/page\_size"{}},\ i);}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ utr\_assoc=\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/utopia/utr/assoc"{}},\ i);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ String\ utr\_repl=\ Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}perf\_model/utopia/utr/repl"{}},\ i);}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ String\ utr\_hash=\ Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}perf\_model/utopia/utr/hash"{}},\ i);}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ UTR\ *utr\_object;}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ utr\_object\ =\ \textcolor{keyword}{new}\ UTR(i+1,\ utr\_size,\ utr\_page\_size,\ utr\_assoc,\ utr\_repl,\ utr\_hash,\textcolor{keyword}{this});}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ utr\_vector.push\_back(utr\_object);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \}}
+
+\end{DoxyCode}

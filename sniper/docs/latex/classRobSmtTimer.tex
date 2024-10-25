@@ -1,0 +1,1585 @@
+\doxysection{Rob\+Smt\+Timer Class Reference}
+\label{classRobSmtTimer}\index{RobSmtTimer@{RobSmtTimer}}
+
+
+{\ttfamily \#include $<$rob\+\_\+smt\+\_\+timer.\+h$>$}
+
+
+
+Inheritance diagram for Rob\+Smt\+Timer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=120pt]{classRobSmtTimer__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Rob\+Smt\+Timer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Rob\+Entry}
+\item 
+class \textbf{ Rob\+Thread}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Rob\+Smt\+Timer} (int num\+\_\+threads, \textbf{ Core} $\ast$core, \textbf{ Performance\+Model} $\ast$\textbf{ perf}, const \textbf{ Core\+Model} $\ast$core\+\_\+model, int \textbf{ misprediction\+\_\+penalty}, int dispatch\+\_\+width, int window\+\_\+size)
+\item 
+virtual \textbf{ $\sim$\+Rob\+Smt\+Timer} ()
+\item 
+virtual void \textbf{ initialize\+Thread} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\item 
+virtual \textbf{ uint64\+\_\+t} \textbf{ thread\+Num\+Surplus\+Instructions} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\item 
+virtual bool \textbf{ thread\+Has\+Enough\+Instructions} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\item 
+virtual void \textbf{ notify\+Num\+Active\+Threads\+Change} ()
+\item 
+virtual void \textbf{ push\+Instructions} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id, const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&insts)
+\item 
+virtual boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ Subsecond\+Time} $>$ \textbf{ return\+Latency} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+virtual void \textbf{ execute} ()
+\item 
+virtual void \textbf{ synchronize} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \textbf{ Smt\+Timer}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Smt\+Timer} (\textbf{ uint64\+\_\+t} num\+\_\+threads)
+\item 
+virtual \textbf{ $\sim$\+Smt\+Timer} ()
+\item 
+\textbf{ UInt8} \textbf{ register\+Thread} (\textbf{ Core} $\ast$core, \textbf{ Performance\+Model} $\ast$perf)
+\item 
+void \textbf{ simulate} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+void \textbf{ enable} ()
+\item 
+void \textbf{ disable} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef \textbf{ Circular\+Queue}$<$ \textbf{ Rob\+Entry} $>$ \textbf{ Rob}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ set\+Dependencies} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Rob\+Entry} $\ast$entry)
+\item 
+void \textbf{ set\+Store\+Address\+Producers} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Rob\+Entry} $\ast$entry, \textbf{ uint64\+\_\+t} lowest\+Valid\+Sequence\+Number)
+\item 
+\textbf{ Rob\+Entry} $\ast$ \textbf{ find\+Entry\+By\+Sequence\+Number} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num, \textbf{ UInt64} sequence\+Number)
+\item 
+void \textbf{ count\+Outstanding\+Memop} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ print\+Rob} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\item 
+void \textbf{ print\+Rob} ()
+\item 
+\textbf{ Subsecond\+Time} \textbf{ execute\+Cycle} ()
+\item 
+\textbf{ Subsecond\+Time} \textbf{ do\+Dispatch} ()
+\item 
+\textbf{ Subsecond\+Time} \textbf{ do\+Issue} ()
+\item 
+\textbf{ Subsecond\+Time} \textbf{ do\+Commit} ()
+\item 
+bool \textbf{ can\+Execute} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\item 
+bool \textbf{ can\+Execute} ()
+\item 
+bool \textbf{ try\+Dispatch} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num, \textbf{ Subsecond\+Time} \&next\+\_\+event)
+\item 
+\textbf{ Subsecond\+Time} $\ast$ \textbf{ find\+Cpi\+Component} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\item 
+bool \textbf{ try\+Issue} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num, \textbf{ Subsecond\+Time} \&next\+\_\+event, bool would\+\_\+have\+\_\+skipped=false)
+\item 
+void \textbf{ issue\+Instruction} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num, \textbf{ uint64\+\_\+t} idx, \textbf{ Subsecond\+Time} \&next\+\_\+event)
+\item 
+void \textbf{ compute\+Current\+Windowsize} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ dispatch\+Width}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ commit\+Width}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ window\+Size}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ rs\+Entries}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ current\+Window\+Size}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ misprediction\+\_\+penalty}
+\item 
+const bool \textbf{ m\+\_\+store\+\_\+to\+\_\+load\+\_\+forwarding}
+\item 
+const bool \textbf{ m\+\_\+no\+\_\+address\+\_\+disambiguation}
+\item 
+const bool \textbf{ inorder}
+\item 
+const bool \textbf{ window\+Repartition}
+\item 
+const bool \textbf{ simultaneous\+Issue}
+\item 
+std\+::vector$<$ \textbf{ Rob\+Thread} $\ast$ $>$ \textbf{ m\+\_\+rob\+\_\+threads}
+\item 
+\textbf{ Rob\+Contention} $\ast$ \textbf{ m\+\_\+rob\+\_\+contention}
+\item 
+\textbf{ UInt8} \textbf{ dispatch\+\_\+thread}
+\item 
+\textbf{ UInt8} \textbf{ issue\+\_\+thread}
+\item 
+\textbf{ Component\+Time} \textbf{ now}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ last\+\_\+store\+\_\+done}
+\item 
+\textbf{ Contention\+Model} \textbf{ load\+\_\+queue}
+\item 
+\textbf{ Contention\+Model} \textbf{ store\+\_\+queue}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}
+\item 
+bool \textbf{ will\+\_\+skip}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ time\+\_\+skipped}
+\item 
+int \textbf{ address\+Mask}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+ICache\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+BPred\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+DCache\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Long\+Latency\+Loads}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Serialization\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Serialization\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Hidden\+Longer\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Hidden\+Longer\+DCache\+Latency}
+\item 
+\textbf{ Performance\+Model} $\ast$ \textbf{ perf}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Mfence\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Mfence\+Latency}
+\item 
+const bool \textbf{ m\+\_\+mlp\+\_\+histogram}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const unsigned int \textbf{ MAX\+\_\+\+OUTSTANDING} = 32
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Additional Inherited Members}
+\doxysubsection*{Public Attributes inherited from \textbf{ Smt\+Timer}}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+lock}
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Types inherited from \textbf{ Smt\+Timer}}
+\begin{DoxyCompactItemize}
+\item 
+typedef uint8\+\_\+t \textbf{ smtthread\+\_\+id\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions inherited from \textbf{ Smt\+Timer}}
+\begin{DoxyCompactItemize}
+\item 
+char \textbf{ get\+State\+Str} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes inherited from \textbf{ Smt\+Timer}}
+\begin{DoxyCompactItemize}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+\_\+threads}
+\item 
+std\+::vector$<$ \textbf{ Smt\+Thread} $\ast$ $>$ \textbf{ m\+\_\+threads}
+\item 
+bool \textbf{ in\+\_\+sync}
+\item 
+bool \textbf{ enabled}
+\item 
+\textbf{ smtthread\+\_\+id\+\_\+t} \textbf{ execute\+\_\+thread}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 14} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{RobSmtTimer@{RobSmtTimer}!Rob@{Rob}}
+\index{Rob@{Rob}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{Rob}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ae6fef6d35431151fb61fe6d3aae27de5} 
+\textbf{ Circular\+Queue}$<$\textbf{ Rob\+Entry}$>$ \textbf{ Rob\+Smt\+Timer\+::\+Rob}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{RobSmtTimer@{RobSmtTimer}!RobSmtTimer@{RobSmtTimer}}
+\index{RobSmtTimer@{RobSmtTimer}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{RobSmtTimer()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a0950a5bc1014f22dd8893f5198ec5eb9} 
+Rob\+Smt\+Timer\+::\+Rob\+Smt\+Timer (\begin{DoxyParamCaption}\item[{int}]{num\+\_\+threads}{, }\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Performance\+Model} $\ast$}]{perf}{, }\item[{const \textbf{ Core\+Model} $\ast$}]{core\+\_\+model}{, }\item[{int}]{misprediction\+\_\+penalty}{, }\item[{int}]{dispatch\+\_\+width}{, }\item[{int}]{window\+\_\+size}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ compute\+Current\+Windowsize()}, \textbf{ Core\+::get\+Id()}, \textbf{ m\+\_\+num\+Mfence\+Insns}, \textbf{ m\+\_\+num\+Serialization\+Insns}, \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}, \textbf{ m\+\_\+total\+Mfence\+Latency}, \textbf{ m\+\_\+total\+Serialization\+Latency}, \textbf{ register\+Stats\+Metric()}, and \textbf{ time\+\_\+skipped}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a0950a5bc1014f22dd8893f5198ec5eb9_cgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!````~RobSmtTimer@{$\sim$RobSmtTimer}}
+\index{````~RobSmtTimer@{$\sim$RobSmtTimer}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{$\sim$RobSmtTimer()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a139d19fda6560d2f6b393704aef03b99} 
+Rob\+Smt\+Timer\+::$\sim$\+Rob\+Smt\+Timer (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 104} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ m\+\_\+rob\+\_\+threads}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{RobSmtTimer@{RobSmtTimer}!canExecute@{canExecute}}
+\index{canExecute@{canExecute}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{canExecute()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a9b1b7d0f7aa58aad9052ba3fa4527c73} 
+bool Rob\+Smt\+Timer\+::can\+Execute (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1116} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ can\+Execute()}, \textbf{ dispatch\+Width}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, and \textbf{ Circular\+Queue$<$ T $>$\+::size()}.
+
+
+
+Referenced by \textbf{ can\+Execute()}, and \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=310pt]{classRobSmtTimer_a9b1b7d0f7aa58aad9052ba3fa4527c73_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=325pt]{classRobSmtTimer_a9b1b7d0f7aa58aad9052ba3fa4527c73_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!canExecute@{canExecute}}
+\index{canExecute@{canExecute}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{canExecute()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a63e9cf0887a2e10a63335121b1d6ee55} 
+bool Rob\+Smt\+Timer\+::can\+Execute (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1096} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ current\+Window\+Size}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::frontend\+\_\+stalled\+\_\+until}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::now}, and \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}.
+
+\index{RobSmtTimer@{RobSmtTimer}!computeCurrentWindowsize@{computeCurrentWindowsize}}
+\index{computeCurrentWindowsize@{computeCurrentWindowsize}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{computeCurrentWindowsize()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a3df6a5bad269b39686c6850bdc3be6a1} 
+void Rob\+Smt\+Timer\+::compute\+Current\+Windowsize (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 110} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ current\+Window\+Size}, \textbf{ Smt\+Timer\+::m\+\_\+num\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ uint64\+\_\+t}, \textbf{ window\+Repartition}, and \textbf{ window\+Size}.
+
+
+
+Referenced by \textbf{ notify\+Num\+Active\+Threads\+Change()}, and \textbf{ Rob\+Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a3df6a5bad269b39686c6850bdc3be6a1_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!countOutstandingMemop@{countOutstandingMemop}}
+\index{countOutstandingMemop@{countOutstandingMemop}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{countOutstandingMemop()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a600b374fba2e9e513520df1eb5e17a55} 
+void Rob\+Smt\+Timer\+::count\+Outstanding\+Memop (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1213} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Loads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Loads\+All}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ MAX\+\_\+\+OUTSTANDING}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a600b374fba2e9e513520df1eb5e17a55_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a600b374fba2e9e513520df1eb5e17a55_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!doCommit@{doCommit}}
+\index{doCommit@{doCommit}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{doCommit()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a092e35a8e14caed80f7174c2c9443705} 
+\textbf{ Subsecond\+Time} Rob\+Smt\+Timer\+::do\+Commit (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1049} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ commit\+Width}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::core}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::dispatched}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::free()}, \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::instrs}, \textbf{ Dynamic\+Micro\+Op\+::is\+Last()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::issued}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Circular\+Queue$<$ T $>$\+::pop()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ Performance\+Model\+::trace\+Instruction()}, \textbf{ uint64\+\_\+t}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ will\+\_\+skip}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a092e35a8e14caed80f7174c2c9443705_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a092e35a8e14caed80f7174c2c9443705_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!doDispatch@{doDispatch}}
+\index{doDispatch@{doDispatch}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{doDispatch()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ac0dc07653e355e4167cbcba6eacded53} 
+\textbf{ Subsecond\+Time} Rob\+Smt\+Timer\+::do\+Dispatch (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 671} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ current\+Window\+Size}, \textbf{ dispatch\+\_\+thread}, \textbf{ find\+Cpi\+Component()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::frontend\+\_\+stalled\+\_\+until}, \textbf{ Component\+Time\+::get\+Period()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Base}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Current\+Front\+End\+Stall}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Idle}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+SMT}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::now}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}, and \textbf{ try\+Dispatch()}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_ac0dc07653e355e4167cbcba6eacded53_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_ac0dc07653e355e4167cbcba6eacded53_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!doIssue@{doIssue}}
+\index{doIssue@{doIssue}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{doIssue()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ad727f9c4f401e0f21db2da1e3889c07a} 
+\textbf{ Subsecond\+Time} Rob\+Smt\+Timer\+::do\+Issue (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1012} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Contention\+::init\+Cycle()}, \textbf{ issue\+\_\+thread}, \textbf{ m\+\_\+rob\+\_\+contention}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::next\+\_\+event}, \textbf{ now}, \textbf{ simultaneous\+Issue}, and \textbf{ try\+Issue()}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_ad727f9c4f401e0f21db2da1e3889c07a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_ad727f9c4f401e0f21db2da1e3889c07a_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!execute@{execute}}
+\index{execute@{execute}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{execute()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a4a24d4e31b2e63d294b7572ac519003c} 
+void Rob\+Smt\+Timer\+::execute (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_ab8864fcd6ff50d838bffed443e82dfc0}.
+
+
+
+Definition at line \textbf{ 510} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ can\+Execute()}, and \textbf{ execute\+Cycle()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a4a24d4e31b2e63d294b7572ac519003c_cgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!executeCycle@{executeCycle}}
+\index{executeCycle@{executeCycle}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{executeCycle()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a258b9e1ed8f9b001039ebc4abfb48ec4} 
+\textbf{ Subsecond\+Time} Rob\+Smt\+Timer\+::execute\+Cycle (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1137} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ count\+Outstanding\+Memop()}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ Component\+Time\+::get\+Period()}, \textbf{ m\+\_\+mlp\+\_\+histogram}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, \textbf{ print\+Rob()}, \textbf{ time\+\_\+skipped}, \textbf{ will\+\_\+skip}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ execute()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a258b9e1ed8f9b001039ebc4abfb48ec4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=333pt]{classRobSmtTimer_a258b9e1ed8f9b001039ebc4abfb48ec4_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!findCpiComponent@{findCpiComponent}}
+\index{findCpiComponent@{findCpiComponent}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{findCpiComponent()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a91b27b4c004f48fe4726af92074718a0} 
+\textbf{ Subsecond\+Time} $\ast$ Rob\+Smt\+Timer\+::find\+Cpi\+Component (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 642} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Mem\+Barrier()}, \textbf{ Micro\+Op\+::is\+Serializing()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::issued}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Data\+Cache}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Serialization}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ uint64\+\_\+t}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a91b27b4c004f48fe4726af92074718a0_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a91b27b4c004f48fe4726af92074718a0_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!findEntryBySequenceNumber@{findEntryBySequenceNumber}}
+\index{findEntryBySequenceNumber@{findEntryBySequenceNumber}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{findEntryBySequenceNumber()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a08bb5fc1591a9ec1ad1594ee21fc8b98} 
+\textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry} $\ast$ Rob\+Smt\+Timer\+::find\+Entry\+By\+Sequence\+Number (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{, }\item[{\textbf{ UInt64}}]{sequence\+Number}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 426} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, \textbf{ set\+Dependencies()}, and \textbf{ set\+Store\+Address\+Producers()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a08bb5fc1591a9ec1ad1594ee21fc8b98_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a08bb5fc1591a9ec1ad1594ee21fc8b98_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!initializeThread@{initializeThread}}
+\index{initializeThread@{initializeThread}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{initializeThread()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_aa9ec59773f75f52c8731bd2e2c3fcc5e} 
+void Rob\+Smt\+Timer\+::initialize\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_aa9df1dfa7dd8d1e63e72bedf2d08977a}.
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Id()}, \textbf{ Micro\+Op\+::get\+Subtype\+String()}, \textbf{ Hit\+Where\+Is\+Valid()}, \textbf{ Hit\+Where\+String()}, \textbf{ itostr()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Base}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Branch\+Predictor}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Data\+Cache}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Idle}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Instruction\+Cache}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+RSFull}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Serialization}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+SMT}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+last\+Accounted\+Memory\+Cycle}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+loads\+\_\+count}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+loads\+\_\+latency}, \textbf{ m\+\_\+mlp\+\_\+histogram}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Loads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Loads\+All}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Long\+Latency\+Cycles}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Long\+Latency\+Insns}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+producer\+Ins\+Distance}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+stores\+\_\+count}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+stores\+\_\+latency}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+total\+Consumers}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+total\+Producer\+Ins\+Distance}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uop\+\_\+type\+\_\+count}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uops\+\_\+pause}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uops\+\_\+total}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uops\+\_\+x87}, \textbf{ MAX\+\_\+\+OUTSTANDING}, \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}, \textbf{ register\+Stats\+Metric()}, \textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}, \textbf{ Hit\+Where\+::\+WHERE\+\_\+\+FIRST}, \textbf{ window\+Size}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_aa9ec59773f75f52c8731bd2e2c3fcc5e_cgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!issueInstruction@{issueInstruction}}
+\index{issueInstruction@{issueInstruction}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{issueInstruction()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a9c55532a000a2cb6b3de9b4248e42fb4} 
+void Rob\+Smt\+Timer\+::issue\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{, }\item[{\textbf{ uint64\+\_\+t}}]{idx}{, }\item[{\textbf{ Subsecond\+Time} \&}]{next\+\_\+event}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 747} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Memory\+::\+Access\+::address}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::address\+Ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::address\+Ready\+Max}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::core}, \textbf{ Subsecond\+Time\+::divide\+Rounded()}, \textbf{ Rob\+Contention\+::do\+Issue()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::frontend\+\_\+stalled\+\_\+until}, \textbf{ Dynamic\+Micro\+Op\+::get\+Address()}, \textbf{ Instruction\+::get\+Address()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Address\+Producer()}, \textbf{ Contention\+Model\+::get\+Completion\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Dependant()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependencies\+Length()}, \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Micro\+Op\+::get\+Instruction()}, \textbf{ Micro\+Op\+::get\+Memory\+Access\+Size()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Num\+Address\+Producers()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Num\+Dependants()}, \textbf{ Component\+Time\+::get\+Period()}, \textbf{ Subsecond\+Time\+::get\+PS()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ Memory\+Result\+::hit\+\_\+where}, \textbf{ Micro\+Op\+::is\+Branch()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Branch\+Mispredicted()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::issued}, \textbf{ last\+\_\+store\+\_\+done}, \textbf{ Memory\+Result\+::latency}, \textbf{ load\+\_\+queue}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+loads\+\_\+count}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+loads\+\_\+latency}, \textbf{ m\+\_\+rob\+\_\+contention}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+stores\+\_\+count}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+stores\+\_\+latency}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+RETURN}, \textbf{ misprediction\+\_\+penalty}, \textbf{ Core\+::\+NONE}, \textbf{ now}, \textbf{ Core\+::\+READ}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready\+Max}, \textbf{ Dynamic\+Micro\+Op\+::remove\+Dependency()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ Dynamic\+Micro\+Op\+::set\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::set\+Exec\+Latency()}, \textbf{ store\+\_\+queue}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ uint64\+\_\+t}, \textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ Core\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ try\+Issue()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classRobSmtTimer_a9c55532a000a2cb6b3de9b4248e42fb4_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a9c55532a000a2cb6b3de9b4248e42fb4_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!notifyNumActiveThreadsChange@{notifyNumActiveThreadsChange}}
+\index{notifyNumActiveThreadsChange@{notifyNumActiveThreadsChange}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{notifyNumActiveThreadsChange()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a1573bb6d4db5a81a90b77a6445c26037} 
+void Rob\+Smt\+Timer\+::notify\+Num\+Active\+Threads\+Change (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Reimplemented from \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_a1c95b82f1ec495d6ae73a1b7702f73d0}.
+
+
+
+Definition at line \textbf{ 449} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ compute\+Current\+Windowsize()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a1573bb6d4db5a81a90b77a6445c26037_cgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!printRob@{printRob}}
+\index{printRob@{printRob}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{printRob()\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a12cbb4903c69a7d2e0fa1cb41699ff7c} 
+void Rob\+Smt\+Timer\+::print\+Rob (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1298} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Contention\+Model\+::get\+Num\+Used()}, \textbf{ load\+\_\+queue}, \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ now}, \textbf{ print\+Rob()}, and \textbf{ store\+\_\+queue}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}, and \textbf{ print\+Rob()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a12cbb4903c69a7d2e0fa1cb41699ff7c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a12cbb4903c69a7d2e0fa1cb41699ff7c_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!printRob@{printRob}}
+\index{printRob@{printRob}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{printRob()\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a50f8a13a726f68f14583b14a169f9e51} 
+void Rob\+Smt\+Timer\+::print\+Rob (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 1235} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Memory\+::\+Access\+::address}, \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::frontend\+\_\+stalled\+\_\+until}, \textbf{ Dynamic\+Micro\+Op\+::get\+Address()}, \textbf{ Instruction\+::get\+Address()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependencies\+Length()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependency()}, \textbf{ Instruction\+::get\+Disassembly()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Micro\+Op\+::get\+Instruction()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::in\+\_\+icache\+\_\+miss}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+wakeup}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::next\+\_\+event}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a50f8a13a726f68f14583b14a169f9e51_cgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!pushInstructions@{pushInstructions}}
+\index{pushInstructions@{pushInstructions}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{pushInstructions()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_aff960df886ed94a604ac88a389bbb289} 
+void Rob\+Smt\+Timer\+::push\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&}]{insts}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_add366cd876225144a262363a2980a64d}.
+
+
+
+Definition at line \textbf{ 454} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::init()}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING\+\_\+\+ONCE}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uop\+\_\+type\+\_\+count}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uops\+\_\+pause}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uops\+\_\+total}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+uops\+\_\+x87}, \textbf{ Circular\+Queue$<$ T $>$\+::next()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::next\+Sequence\+Number}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ Micro\+Op\+::to\+Short\+String()}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_aff960df886ed94a604ac88a389bbb289_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_aff960df886ed94a604ac88a389bbb289_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!returnLatency@{returnLatency}}
+\index{returnLatency@{returnLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{returnLatency()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a028638db975c0016d73a15d86449cdf5} 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ Subsecond\+Time} $>$ Rob\+Smt\+Timer\+::return\+Latency (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_a5621907df60a3722060d96d9dfb78650}.
+
+
+
+Definition at line \textbf{ 485} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::instrs}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::instrs\+\_\+returned}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::now}, \textbf{ uint64\+\_\+t}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a028638db975c0016d73a15d86449cdf5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a028638db975c0016d73a15d86449cdf5_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!setDependencies@{setDependencies}}
+\index{setDependencies@{setDependencies}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{setDependencies()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a46ae975dd717644b2e4ff4a25ed7053c} 
+void Rob\+Smt\+Timer\+::set\+Dependencies (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Rob\+Entry} $\ast$}]{entry}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 295} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::add\+Dependant()}, \textbf{ Dynamic\+Micro\+Op\+::add\+Dependency()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ Circular\+Queue$<$ T $>$\+::front()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Address\+Producer()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Dependant()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependencies\+Length()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependency()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Num\+Address\+Producers()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Num\+Dependants()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Sequence\+Number()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+producer\+Ins\+Distance}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ m\+\_\+store\+\_\+to\+\_\+load\+\_\+forwarding}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+total\+Consumers}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+total\+Producer\+Ins\+Distance}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::memory\+Dependencies}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready\+Max}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::register\+Dependencies}, \textbf{ Dynamic\+Micro\+Op\+::remove\+Dependency()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ Memory\+Dependencies\+::set\+Dependencies()}, \textbf{ Register\+Dependencies\+::set\+Dependencies()}, \textbf{ set\+Store\+Address\+Producers()}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ uint64\+\_\+t}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ try\+Dispatch()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classRobSmtTimer_a46ae975dd717644b2e4ff4a25ed7053c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a46ae975dd717644b2e4ff4a25ed7053c_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!setStoreAddressProducers@{setStoreAddressProducers}}
+\index{setStoreAddressProducers@{setStoreAddressProducers}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{setStoreAddressProducers()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a92d64d36f40849f1d6716db2bc1a73c6} 
+void Rob\+Smt\+Timer\+::set\+Store\+Address\+Producers (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Rob\+Entry} $\ast$}]{entry}{, }\item[{\textbf{ uint64\+\_\+t}}]{lowest\+Valid\+Sequence\+Number}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 405} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::add\+Address\+Producer()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::address\+Ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::address\+Ready\+Max}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ Micro\+Op\+::get\+Address\+Register()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::get\+Num\+Address\+Producers()}, \textbf{ INVALID\+\_\+\+SEQNR}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Register\+Dependencies\+::peek\+Producer()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::register\+Dependencies}, \textbf{ uint64\+\_\+t}, and \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}.
+
+
+
+Referenced by \textbf{ set\+Dependencies()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a92d64d36f40849f1d6716db2bc1a73c6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a92d64d36f40849f1d6716db2bc1a73c6_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!synchronize@{synchronize}}
+\index{synchronize@{synchronize}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{synchronize()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a196978c60584357035a04281fc16089c} 
+void Rob\+Smt\+Timer\+::synchronize (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_a8dc2f4ba8482fd9e31f7eab26f955567}.
+
+
+
+Definition at line \textbf{ 520} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Smt\+Timer\+::m\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ now}, and \textbf{ Component\+Time\+::set\+Elapsed\+Time()}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a196978c60584357035a04281fc16089c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classRobSmtTimer_a196978c60584357035a04281fc16089c_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!threadHasEnoughInstructions@{threadHasEnoughInstructions}}
+\index{threadHasEnoughInstructions@{threadHasEnoughInstructions}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{threadHasEnoughInstructions()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a4ed17f27e2de540e1766f0373acb9d61} 
+bool Rob\+Smt\+Timer\+::thread\+Has\+Enough\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_a1ba42c6ee716ccad190e6c1a81239f7a}.
+
+
+
+Definition at line \textbf{ 444} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ dispatch\+Width}, and \textbf{ thread\+Num\+Surplus\+Instructions()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a4ed17f27e2de540e1766f0373acb9d61_cgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!threadNumSurplusInstructions@{threadNumSurplusInstructions}}
+\index{threadNumSurplusInstructions@{threadNumSurplusInstructions}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{threadNumSurplusInstructions()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a137d47bb5fe87e6386f15d7c3b959ecf} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::thread\+Num\+Surplus\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Smt\+Timer} \doxyref{}{p.}{classSmtTimer_abfd6665eaaaf300d3fe3e64e18a970fe}.
+
+
+
+Definition at line \textbf{ 438} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, and \textbf{ Circular\+Queue$<$ T $>$\+::size()}.
+
+
+
+Referenced by \textbf{ thread\+Has\+Enough\+Instructions()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=341pt]{classRobSmtTimer_a137d47bb5fe87e6386f15d7c3b959ecf_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a137d47bb5fe87e6386f15d7c3b959ecf_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!tryDispatch@{tryDispatch}}
+\index{tryDispatch@{tryDispatch}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{tryDispatch()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ab0b3c79ffb3164d92c27c97d87aa3be3} 
+bool Rob\+Smt\+Timer\+::try\+Dispatch (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{, }\item[{\textbf{ Subsecond\+Time} \&}]{next\+\_\+event}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 543} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ current\+Window\+Size}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::dispatched}, \textbf{ dispatch\+Width}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::frontend\+\_\+stalled\+\_\+until}, \textbf{ Dynamic\+Micro\+Op\+::get\+ICache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+ICache\+Latency()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::in\+\_\+icache\+\_\+miss}, \textbf{ Micro\+Op\+::is\+Branch()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Branch\+Mispredicted()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Last()}, \textbf{ Hit\+Where\+::\+L1I}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Branch\+Predictor}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Current\+Front\+End\+Stall}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+Instruction\+Cache}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+cpi\+RSFull}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ m\+\_\+rs\+\_\+entries\+\_\+used}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::next\+\_\+event}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ rs\+Entries}, \textbf{ set\+Dependencies()}, \textbf{ Circular\+Queue$<$ T $>$\+::size()}, \textbf{ Micro\+Op\+::to\+Short\+String()}, \textbf{ uint32\+\_\+t}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ will\+\_\+skip}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_ab0b3c79ffb3164d92c27c97d87aa3be3_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_ab0b3c79ffb3164d92c27c97d87aa3be3_icgraph}
+\end{center}
+\end{figure}
+\index{RobSmtTimer@{RobSmtTimer}!tryIssue@{tryIssue}}
+\index{tryIssue@{tryIssue}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{tryIssue()}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a520c44549032c0ab68f2a2f27e358bf6} 
+bool Rob\+Smt\+Timer\+::try\+Issue (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{, }\item[{\textbf{ Subsecond\+Time} \&}]{next\+\_\+event}{, }\item[{bool}]{would\+\_\+have\+\_\+skipped}{ = {\ttfamily false}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 875} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::address\+Ready}, \textbf{ Circular\+Queue$<$ T $>$\+::at()}, \textbf{ dispatch\+Width}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::done}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Component\+Time\+::get\+Elapsed\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Micro\+Op()}, \textbf{ Contention\+Model\+::has\+Free\+Slot()}, \textbf{ inorder}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Long\+Latency\+Load()}, \textbf{ Micro\+Op\+::is\+Mem\+Barrier()}, \textbf{ Micro\+Op\+::is\+Serializing()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ issue\+Instruction()}, \textbf{ Hit\+Where\+::\+L1\+\_\+\+OWN}, \textbf{ last\+\_\+store\+\_\+done}, \textbf{ load\+\_\+queue}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+last\+Accounted\+Memory\+Cycle}, \textbf{ m\+\_\+no\+\_\+address\+\_\+disambiguation}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+num\+\_\+in\+\_\+rob}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Long\+Latency\+Cycles}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::m\+\_\+outstanding\+Long\+Latency\+Insns}, \textbf{ m\+\_\+rob\+\_\+contention}, \textbf{ m\+\_\+rob\+\_\+threads}, \textbf{ Subsecond\+Time\+::\+Max\+Time()}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::next\+\_\+event}, \textbf{ Rob\+Contention\+::no\+More()}, \textbf{ now}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::ready}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Thread\+::rob}, \textbf{ store\+\_\+queue}, \textbf{ Rob\+Contention\+::try\+Issue()}, \textbf{ uint64\+\_\+t}, \textbf{ Rob\+Smt\+Timer\+::\+Rob\+Entry\+::uop}, and \textbf{ will\+\_\+skip}.
+
+
+
+Referenced by \textbf{ do\+Issue()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a520c44549032c0ab68f2a2f27e358bf6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classRobSmtTimer_a520c44549032c0ab68f2a2f27e358bf6_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{RobSmtTimer@{RobSmtTimer}!addressMask@{addressMask}}
+\index{addressMask@{addressMask}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{addressMask}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a27b3b66fb09683a672184e6f9de540e6} 
+int Rob\+Smt\+Timer\+::address\+Mask\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 139} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!commitWidth@{commitWidth}}
+\index{commitWidth@{commitWidth}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{commitWidth}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a89a6276537b334e0341926cf013a70a2} 
+const \textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::commit\+Width\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 113} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Commit()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!currentWindowSize@{currentWindowSize}}
+\index{currentWindowSize@{currentWindowSize}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{currentWindowSize}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a3bd9aa7dfc61a41640e4fd10b4fcc9a2} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::current\+Window\+Size\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 116} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ can\+Execute()}, \textbf{ compute\+Current\+Windowsize()}, \textbf{ do\+Dispatch()}, and \textbf{ try\+Dispatch()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!dispatch\_thread@{dispatch\_thread}}
+\index{dispatch\_thread@{dispatch\_thread}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{dispatch\_thread}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a916096283205644a627c2b3eb460435b} 
+\textbf{ UInt8} Rob\+Smt\+Timer\+::dispatch\+\_\+thread\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Dispatch()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!dispatchWidth@{dispatchWidth}}
+\index{dispatchWidth@{dispatchWidth}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{dispatchWidth}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a1c1a86e34d89c4a10503f992ab5d98f9} 
+const \textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::dispatch\+Width\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ can\+Execute()}, \textbf{ thread\+Has\+Enough\+Instructions()}, \textbf{ try\+Dispatch()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!inorder@{inorder}}
+\index{inorder@{inorder}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{inorder}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a0a6fd5e5135bb47d448bba57b230f05f} 
+const bool Rob\+Smt\+Timer\+::inorder\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 120} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!issue\_thread@{issue\_thread}}
+\index{issue\_thread@{issue\_thread}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{issue\_thread}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a34540b998787777f5ad40a039bad7ac7} 
+\textbf{ UInt8} Rob\+Smt\+Timer\+::issue\+\_\+thread\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 128} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!last\_store\_done@{last\_store\_done}}
+\index{last\_store\_done@{last\_store\_done}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{last\_store\_done}
+{\footnotesize\ttfamily \label{classRobSmtTimer_acf65b8616edcf0a94eb2f4f365161ba5} 
+\textbf{ Subsecond\+Time} Rob\+Smt\+Timer\+::last\+\_\+store\+\_\+done\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!load\_queue@{load\_queue}}
+\index{load\_queue@{load\_queue}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{load\_queue}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a4f4d5b45af26d8a0120e5c590b8bf281} 
+\textbf{ Contention\+Model} Rob\+Smt\+Timer\+::load\+\_\+queue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 132} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_mlp\_histogram@{m\_mlp\_histogram}}
+\index{m\_mlp\_histogram@{m\_mlp\_histogram}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_mlp\_histogram}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a6cc25de52c265ef69c7d58db560a8fc1} 
+const bool Rob\+Smt\+Timer\+::m\+\_\+mlp\+\_\+histogram\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 164} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}, and \textbf{ initialize\+Thread()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_no\_address\_disambiguation@{m\_no\_address\_disambiguation}}
+\index{m\_no\_address\_disambiguation@{m\_no\_address\_disambiguation}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_no\_address\_disambiguation}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a8e30f55d5260169a16620487359a2fd6} 
+const bool Rob\+Smt\+Timer\+::m\+\_\+no\+\_\+address\+\_\+disambiguation\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numBPredOverlapped@{m\_numBPredOverlapped}}
+\index{m\_numBPredOverlapped@{m\_numBPredOverlapped}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numBPredOverlapped}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ab11863cf7502e69ab5b69f59d57373fc} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+BPred\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 142} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numDCacheOverlapped@{m\_numDCacheOverlapped}}
+\index{m\_numDCacheOverlapped@{m\_numDCacheOverlapped}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numDCacheOverlapped}
+{\footnotesize\ttfamily \label{classRobSmtTimer_aceeb009378fc16b4cd81c01224a1d3d0} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+DCache\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 143} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numHiddenLongerDCacheLatency@{m\_numHiddenLongerDCacheLatency}}
+\index{m\_numHiddenLongerDCacheLatency@{m\_numHiddenLongerDCacheLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numHiddenLongerDCacheLatency}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a17be707a11521e364a97cb7ddf2e1b65} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+Hidden\+Longer\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 153} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numICacheOverlapped@{m\_numICacheOverlapped}}
+\index{m\_numICacheOverlapped@{m\_numICacheOverlapped}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numICacheOverlapped}
+{\footnotesize\ttfamily \label{classRobSmtTimer_aaaa090cc88ec4066dc6e8c36a409a161} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+ICache\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 141} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numLongLatencyLoads@{m\_numLongLatencyLoads}}
+\index{m\_numLongLatencyLoads@{m\_numLongLatencyLoads}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numLongLatencyLoads}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a3bff397daefb0d73ddfe374d5e39e515} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+Long\+Latency\+Loads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 145} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numMfenceInsns@{m\_numMfenceInsns}}
+\index{m\_numMfenceInsns@{m\_numMfenceInsns}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numMfenceInsns}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a6bd5680331917df59cb9c0acb013df69} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+Mfence\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 161} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numSerializationInsns@{m\_numSerializationInsns}}
+\index{m\_numSerializationInsns@{m\_numSerializationInsns}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numSerializationInsns}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a85d788a0aa3aa1b3fafe168bb1d40375} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+Serialization\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 148} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_numTotalLongLatencyLoadLatency@{m\_numTotalLongLatencyLoadLatency}}
+\index{m\_numTotalLongLatencyLoadLatency@{m\_numTotalLongLatencyLoadLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_numTotalLongLatencyLoadLatency}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a036bcfff40851e10b38dd9b0bc553a02} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 146} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_rob\_contention@{m\_rob\_contention}}
+\index{m\_rob\_contention@{m\_rob\_contention}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_rob\_contention}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a7047140d0c0f0fa729466ca13d866c95} 
+\textbf{ Rob\+Contention}$\ast$ Rob\+Smt\+Timer\+::m\+\_\+rob\+\_\+contention\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 125} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}, \textbf{ issue\+Instruction()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_rob\_threads@{m\_rob\_threads}}
+\index{m\_rob\_threads@{m\_rob\_threads}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_rob\_threads}
+{\footnotesize\ttfamily \label{classRobSmtTimer_adb65b7f2058778a51e3a453314be199c} 
+std\+::vector$<$\textbf{ Rob\+Thread} $\ast$$>$ Rob\+Smt\+Timer\+::m\+\_\+rob\+\_\+threads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 124} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ can\+Execute()}, \textbf{ can\+Execute()}, \textbf{ count\+Outstanding\+Memop()}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ find\+Cpi\+Component()}, \textbf{ find\+Entry\+By\+Sequence\+Number()}, \textbf{ initialize\+Thread()}, \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, \textbf{ push\+Instructions()}, \textbf{ return\+Latency()}, \textbf{ set\+Dependencies()}, \textbf{ set\+Store\+Address\+Producers()}, \textbf{ synchronize()}, \textbf{ thread\+Num\+Surplus\+Instructions()}, \textbf{ try\+Dispatch()}, \textbf{ try\+Issue()}, and \textbf{ $\sim$\+Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_rs\_entries\_used@{m\_rs\_entries\_used}}
+\index{m\_rs\_entries\_used@{m\_rs\_entries\_used}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_rs\_entries\_used}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ae669c6001c85783a3b62849fd053871a} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+rs\+\_\+entries\+\_\+used\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 134} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, and \textbf{ try\+Dispatch()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_store\_to\_load\_forwarding@{m\_store\_to\_load\_forwarding}}
+\index{m\_store\_to\_load\_forwarding@{m\_store\_to\_load\_forwarding}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_store\_to\_load\_forwarding}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a2e1f2135ceaf771bca2f386aab66f822} 
+const bool Rob\+Smt\+Timer\+::m\+\_\+store\+\_\+to\+\_\+load\+\_\+forwarding\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 118} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ set\+Dependencies()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_totalHiddenDCacheLatency@{m\_totalHiddenDCacheLatency}}
+\index{m\_totalHiddenDCacheLatency@{m\_totalHiddenDCacheLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_totalHiddenDCacheLatency}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a6e2cb2c4746d378610f1e22761f267b4} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+total\+Hidden\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 151} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_totalHiddenLongerDCacheLatency@{m\_totalHiddenLongerDCacheLatency}}
+\index{m\_totalHiddenLongerDCacheLatency@{m\_totalHiddenLongerDCacheLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_totalHiddenLongerDCacheLatency}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ad294033922740f4a5af0bfbe3deadd0e} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+total\+Hidden\+Longer\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 152} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_totalMfenceLatency@{m\_totalMfenceLatency}}
+\index{m\_totalMfenceLatency@{m\_totalMfenceLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_totalMfenceLatency}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a33033cad276383e6c89633cd047af306} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+total\+Mfence\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 162} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!m\_totalSerializationLatency@{m\_totalSerializationLatency}}
+\index{m\_totalSerializationLatency@{m\_totalSerializationLatency}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{m\_totalSerializationLatency}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a70e74e2a95335f4d1d74d22d70662fcd} 
+\textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::m\+\_\+total\+Serialization\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 149} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!MAX\_OUTSTANDING@{MAX\_OUTSTANDING}}
+\index{MAX\_OUTSTANDING@{MAX\_OUTSTANDING}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{MAX\_OUTSTANDING}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a5d864e55e8ec0ae78aa621e64fb55770} 
+const unsigned int Rob\+Smt\+Timer\+::\+MAX\+\_\+\+OUTSTANDING = 32\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 165} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ count\+Outstanding\+Memop()}, and \textbf{ initialize\+Thread()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!misprediction\_penalty@{misprediction\_penalty}}
+\index{misprediction\_penalty@{misprediction\_penalty}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{misprediction\_penalty}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a62aa8f8b3c92cef74a94727de83b5281} 
+const \textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::misprediction\+\_\+penalty\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 117} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!now@{now}}
+\index{now@{now}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{now}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ae14492e02f0cd663b3e075a4f71aef64} 
+\textbf{ Component\+Time} Rob\+Smt\+Timer\+::now\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 130} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ can\+Execute()}, \textbf{ count\+Outstanding\+Memop()}, \textbf{ do\+Commit()}, \textbf{ do\+Dispatch()}, \textbf{ do\+Issue()}, \textbf{ execute\+Cycle()}, \textbf{ find\+Cpi\+Component()}, \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, \textbf{ print\+Rob()}, \textbf{ return\+Latency()}, \textbf{ synchronize()}, \textbf{ try\+Dispatch()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!perf@{perf}}
+\index{perf@{perf}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{perf}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a6e8f60971863608b2acc971941466496} 
+\textbf{ Performance\+Model}$\ast$ Rob\+Smt\+Timer\+::perf\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 155} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+\index{RobSmtTimer@{RobSmtTimer}!rsEntries@{rsEntries}}
+\index{rsEntries@{rsEntries}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{rsEntries}
+{\footnotesize\ttfamily \label{classRobSmtTimer_ac5746e41ec84df21a64f7cdcf816e716} 
+const \textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::rs\+Entries\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ try\+Dispatch()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!simultaneousIssue@{simultaneousIssue}}
+\index{simultaneousIssue@{simultaneousIssue}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{simultaneousIssue}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a98b11bb45f758f4b1ed4bf5a5099dc34} 
+const bool Rob\+Smt\+Timer\+::simultaneous\+Issue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 122} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!store\_queue@{store\_queue}}
+\index{store\_queue@{store\_queue}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{store\_queue}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a16907fa53de354b01d653a370bb70b71} 
+\textbf{ Contention\+Model} Rob\+Smt\+Timer\+::store\+\_\+queue\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 133} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ issue\+Instruction()}, \textbf{ print\+Rob()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!time\_skipped@{time\_skipped}}
+\index{time\_skipped@{time\_skipped}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{time\_skipped}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a3972f1e8bf598ff07183247c8590ba65} 
+\textbf{ Subsecond\+Time} Rob\+Smt\+Timer\+::time\+\_\+skipped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 137} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ execute\+Cycle()}, and \textbf{ Rob\+Smt\+Timer()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!will\_skip@{will\_skip}}
+\index{will\_skip@{will\_skip}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{will\_skip}
+{\footnotesize\ttfamily \label{classRobSmtTimer_aa61e1bc2a35186a7027d8bb391f14596} 
+bool Rob\+Smt\+Timer\+::will\+\_\+skip\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 136} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ do\+Commit()}, \textbf{ execute\+Cycle()}, \textbf{ try\+Dispatch()}, and \textbf{ try\+Issue()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!windowRepartition@{windowRepartition}}
+\index{windowRepartition@{windowRepartition}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{windowRepartition}
+{\footnotesize\ttfamily \label{classRobSmtTimer_a44d33162027f6b129c1cb630e00265ab} 
+const bool Rob\+Smt\+Timer\+::window\+Repartition\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 121} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ compute\+Current\+Windowsize()}.
+
+\index{RobSmtTimer@{RobSmtTimer}!windowSize@{windowSize}}
+\index{windowSize@{windowSize}!RobSmtTimer@{RobSmtTimer}}
+\doxysubsubsection{windowSize}
+{\footnotesize\ttfamily \label{classRobSmtTimer_aba4be7ebdbed08cd4279780b84171d3c} 
+const \textbf{ uint64\+\_\+t} Rob\+Smt\+Timer\+::window\+Size\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 114} of file \textbf{ rob\+\_\+smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ compute\+Current\+Windowsize()}, and \textbf{ initialize\+Thread()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/performance\+\_\+model/performance\+\_\+models/rob\+\_\+performance\+\_\+model/\textbf{ rob\+\_\+smt\+\_\+timer.\+h}\item 
+common/performance\+\_\+model/performance\+\_\+models/rob\+\_\+performance\+\_\+model/\textbf{ rob\+\_\+smt\+\_\+timer.\+cc}\end{DoxyCompactItemize}

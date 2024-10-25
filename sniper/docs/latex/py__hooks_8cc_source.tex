@@ -1,0 +1,228 @@
+\doxysection{py\+\_\+hooks.\+cc}
+\label{py__hooks_8cc_source}\index{common/scripting/py\_hooks.cc@{common/scripting/py\_hooks.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{static}\ SInt64\ hookCallbackResult(PyObject\ *pResult)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ SInt64\ result\ =\ -\/1;}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keywordflow}{if}\ (pResult\ ==\ NULL)}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (PyInt\_Check(pResult))}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ result\ =\ PyInt\_AsLong(pResult);}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (PyLong\_Check(pResult))}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ result\ =\ PyLong\_AsLong(pResult);}
+\DoxyCodeLine{00018\ \ \ \ Py\_DECREF(pResult);}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{static}\ SInt64\ hookCallbackNone(UInt64\ pFunc,\ UInt64)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ NULL);}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{static}\ SInt64\ hookCallbackInt(UInt64\ pFunc,\ UInt64\ argument)}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(L)"{}},\ argument));}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{static}\ SInt64\ hookCallbackSubsecondTime(UInt64\ pFunc,\ UInt64\ argument)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ SubsecondTime\ time(*(subsecond\_time\_t*)\&argument);}
+\DoxyCodeLine{00037\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(L)"{}},\ time.getFS()));}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{static}\ SInt64\ hookCallbackString(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ argument\ =\ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)\_argument;}
+\DoxyCodeLine{00044\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(s)"{}},\ argument));}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{static}\ SInt64\ hookCallbackMagicMarkerType(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ MagicServer::MagicMarkerType*\ argument\ =\ (MagicServer::MagicMarkerType*)\_argument;}
+\DoxyCodeLine{00051\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(iiKKs)"{}},\ argument-\/>thread\_id,\ argument-\/>core\_id,\ argument-\/>arg0,\ argument-\/>arg1,\ argument-\/>str));}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{static}\ SInt64\ hookCallbackThreadCreateType(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ HooksManager::ThreadCreate*\ argument\ =\ (HooksManager::ThreadCreate*)\_argument;}
+\DoxyCodeLine{00058\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(ii)"{}},\ argument-\/>thread\_id,\ argument-\/>creator\_thread\_id));}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{static}\ SInt64\ hookCallbackThreadTimeType(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ HooksManager::ThreadTime*\ argument\ =\ (HooksManager::ThreadTime*)\_argument;}
+\DoxyCodeLine{00065\ \ \ \ SubsecondTime\ time(argument-\/>time);}
+\DoxyCodeLine{00066\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(iL)"{}},\ argument-\/>thread\_id,\ time.getFS()));}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{static}\ SInt64\ hookCallbackThreadStallType(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ HooksManager::ThreadStall*\ argument\ =\ (HooksManager::ThreadStall*)\_argument;}
+\DoxyCodeLine{00073\ \ \ \ SubsecondTime\ time(argument-\/>time);}
+\DoxyCodeLine{00074\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(isL)"{}},\ argument-\/>thread\_id,\ ThreadManager::stall\_type\_names[argument-\/>reason],\ time.getFS()));}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{static}\ SInt64\ hookCallbackThreadResumeType(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00079\ \{}
+\DoxyCodeLine{00080\ \ \ \ HooksManager::ThreadResume*\ argument\ =\ (HooksManager::ThreadResume*)\_argument;}
+\DoxyCodeLine{00081\ \ \ \ SubsecondTime\ time(argument-\/>time);}
+\DoxyCodeLine{00082\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(iiL)"{}},\ argument-\/>thread\_id,\ argument-\/>thread\_by,\ time.getFS()));}
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keyword}{static}\ SInt64\ hookCallbackThreadMigrateType(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \ HooksManager::ThreadMigrate*\ argument\ =\ (HooksManager::ThreadMigrate*)\_argument;}
+\DoxyCodeLine{00089\ \ \ \ SubsecondTime\ time(argument-\/>time);}
+\DoxyCodeLine{00090\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(iiL)"{}},\ argument-\/>thread\_id,\ argument-\/>core\_id,\ time.getFS()));}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{static}\ SInt64\ hookCallbackSyscallEnter(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00095\ \{}
+\DoxyCodeLine{00096\ \ \ \ SyscallMdl::HookSyscallEnter*\ argument\ =\ (SyscallMdl::HookSyscallEnter*)\_argument;}
+\DoxyCodeLine{00097\ \ \ \ SubsecondTime\ time(argument-\/>time);}
+\DoxyCodeLine{00098\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(iiLi(llllll))"{}},\ argument-\/>thread\_id,\ argument-\/>core\_id,\ time.getFS(),}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ argument-\/>syscall\_number,\ argument-\/>args.arg0,\ argument-\/>args.arg1,\ argument-\/>args.arg2,\ argument-\/>args.arg3,\ argument-\/>args.arg4,\ argument-\/>args.arg5));}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keyword}{static}\ SInt64\ hookCallbackSyscallExit(UInt64\ pFunc,\ UInt64\ \_argument)}
+\DoxyCodeLine{00104\ \{}
+\DoxyCodeLine{00105\ \ \ \ SyscallMdl::HookSyscallExit*\ argument\ =\ (SyscallMdl::HookSyscallExit*)\_argument;}
+\DoxyCodeLine{00106\ \ \ \ SubsecondTime\ time(argument-\/>time);}
+\DoxyCodeLine{00107\ \ \ \ PyObject\ *pResult\ =\ HooksPy::callPythonFunction((PyObject\ *)pFunc,\ Py\_BuildValue(\textcolor{stringliteral}{"{}(iiLiO)"{}},\ argument-\/>thread\_id,\ argument-\/>core\_id,\ time.getFS(),}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ argument-\/>ret\_val,\ argument-\/>emulated\ ?\ Py\_True\ :\ Py\_False));}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{return}\ hookCallbackResult(pResult);}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00113\ registerHook(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00114\ \{}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keywordtype}{int}\ hook\ =\ -\/1;}
+\DoxyCodeLine{00116\ \ \ \ PyObject\ *pFunc\ =\ NULL;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}lO"{}},\ \&hook,\ \&pFunc))}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordflow}{if}\ (hook\ <\ 0\ ||\ hook\ >=\ HookType::HOOK\_TYPES\_MAX)\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Hook\ type\ out\ of\ range"{}});}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00124\ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordflow}{if}\ (!PyCallable\_Check(pFunc))\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_TypeError,\ \textcolor{stringliteral}{"{}Second\ argument\ must\ be\ callable"{}});}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00128\ \ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ Py\_INCREF(pFunc);}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ HookType::hook\_type\_t\ type\ =\ HookType::hook\_type\_t(hook);}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{switch}(type)\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_PERIODIC:}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackSubsecondTime,\ (UInt64)pFunc);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_SIM\_START:}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_SIM\_END:}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_ROI\_BEGIN:}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_ROI\_END:}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_APPLICATION\_ROI\_BEGIN:}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_APPLICATION\_ROI\_END:}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_SIGUSR1:}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackNone,\ (UInt64)pFunc);}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_PERIODIC\_INS:}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_CPUFREQ\_CHANGE:}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_INSTR\_COUNT:}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_INSTRUMENT\_MODE:}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_APPLICATION\_START:}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_APPLICATION\_EXIT:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackInt,\ (UInt64)pFunc);}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_PRE\_STAT\_WRITE:}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackString,\ (UInt64)pFunc);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_MAGIC\_MARKER:}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_MAGIC\_USER:}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackMagicMarkerType,\ (UInt64)pFunc);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_THREAD\_CREATE:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackThreadCreateType,\ (UInt64)pFunc);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_THREAD\_START:}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_THREAD\_EXIT:}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackThreadTimeType,\ (UInt64)pFunc);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_THREAD\_STALL:}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackThreadStallType,\ (UInt64)pFunc);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_THREAD\_RESUME:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackThreadResumeType,\ (UInt64)pFunc);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_THREAD\_MIGRATE:}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackThreadMigrateType,\ (UInt64)pFunc);}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_SYSCALL\_ENTER:}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackSyscallEnter,\ (UInt64)pFunc);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_SYSCALL\_EXIT:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(type,\ hookCallbackSyscallExit,\ (UInt64)pFunc);}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ HookType::HOOK\_TYPES\_MAX:}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ assert(0);}
+\DoxyCodeLine{00185\ \ \ \ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ Py\_RETURN\_NONE;}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00191\ triggerHookMagicUser(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00192\ \{}
+\DoxyCodeLine{00193\ \ \ \ UInt64\ a,\ b;}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}ll"{}},\ \&a,\ \&b))}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ UInt64\ res\ =\ Sim()-\/>getMagicServer()-\/>Magic\_unlocked(INVALID\_THREAD\_ID,\ INVALID\_CORE\_ID,\ SIM\_CMD\_USER,\ a,\ b);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{return}\ PyInt\_FromLong(res);}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keyword}{static}\ PyMethodDef\ PyHooksMethods[]\ =\ \{}
+\DoxyCodeLine{00204\ \ \ \ \{\textcolor{stringliteral}{"{}register"{}},\ \ registerHook,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Register\ callback\ function\ to\ a\ Sniper\ hook."{}}\},}
+\DoxyCodeLine{00205\ \ \ \ \{\textcolor{stringliteral}{"{}trigger\_magic\_user"{}},\ triggerHookMagicUser,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Trigger\ HOOK\_MAGIC\_USER\ hook."{}}\},}
+\DoxyCodeLine{00206\ \ \ \ \{NULL,\ NULL,\ 0,\ NULL\}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00207\ \};}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{keywordtype}{void}\ HooksPy::PyHooks::setup()}
+\DoxyCodeLine{00210\ \{}
+\DoxyCodeLine{00211\ \ \ \ PyObject\ *pModule\ =\ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_hooks"{}},\ PyHooksMethods);}
+\DoxyCodeLine{00212\ \ \ \ PyObject\ *pHooks\ =\ PyDict\_New();}
+\DoxyCodeLine{00213\ \ \ \ PyObject\_SetAttrString(pModule,\ \textcolor{stringliteral}{"{}hooks"{}},\ pHooks);}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ int(HookType::HOOK\_TYPES\_MAX);\ ++i)\ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ PyObject\ *pGlobalConst\ =\ PyInt\_FromLong(i);}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ PyObject\_SetAttrString(pModule,\ HookType::hook\_type\_names[i],\ pGlobalConst);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ PyDict\_SetItemString(pHooks,\ HookType::hook\_type\_names[i],\ pGlobalConst);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ Py\_DECREF(pGlobalConst);}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ Py\_DECREF(pHooks);}
+\DoxyCodeLine{00222\ \}}
+
+\end{DoxyCode}

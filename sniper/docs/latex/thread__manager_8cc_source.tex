@@ -1,0 +1,410 @@
+\doxysection{thread\+\_\+manager.\+cc}
+\label{thread__manager_8cc_source}\index{common/system/thread\_manager.cc@{common/system/thread\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}transport.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}clock\_skew\_minimization\_object.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}scheduler.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}syscall\_server.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}os\_compat.h"{}}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ ThreadManager::stall\_type\_names[]\ =\ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{stringliteral}{"{}unscheduled"{}},\ \textcolor{stringliteral}{"{}broken"{}},\ \textcolor{stringliteral}{"{}join"{}},\ \textcolor{stringliteral}{"{}mutex"{}},\ \textcolor{stringliteral}{"{}cond"{}},\ \textcolor{stringliteral}{"{}barrier"{}},\ \textcolor{stringliteral}{"{}futex"{}},\ \textcolor{stringliteral}{"{}pause"{}},\ \textcolor{stringliteral}{"{}sleep"{}},\ \textcolor{stringliteral}{"{}syscall"{}}}
+\DoxyCodeLine{00023\ \};}
+\DoxyCodeLine{00024\ \textcolor{keyword}{static\_assert}(ThreadManager::STALL\_TYPES\_MAX\ ==\ \textcolor{keyword}{sizeof}(ThreadManager::stall\_type\_names)\ /\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{char}*),}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ enough\ values\ in\ ThreadManager::stall\_type\_names"{}});}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ ThreadManager::ThreadManager()}
+\DoxyCodeLine{00028\ \ \ \ :\ m\_thread\_tls(TLS::create())}
+\DoxyCodeLine{00029\ \ \ \ ,\ m\_scheduler(Scheduler::create(this))}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ ThreadManager::\string~ThreadManager()}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_thread\_state.size();\ i++)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \ \ \ \ \#if\ 0\ }\textcolor{comment}{//\ Disabled:\ applications\ are\ not\ required\ to\ do\ proper\ cleanup}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[i].status\ !=\ Core::IDLE)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Thread\ \%d\ still\ active\ when\ ThreadManager\ destructs\(\backslash\)n"{}},\ i);}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_threads[i];}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{delete}\ m\_thread\_tls;}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keyword}{delete}\ m\_scheduler;}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ Thread*\ ThreadManager::getThreadFromID(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ LOG\_ASSERT\_ERROR((\textcolor{keywordtype}{size\_t})thread\_id\ <\ m\_threads.size(),\ \textcolor{stringliteral}{"{}Invalid\ thread\_id\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keywordflow}{return}\ m\_threads.at(thread\_id);}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ Thread*\ ThreadManager::getCurrentThread(\textcolor{keywordtype}{int}\ threadIndex)}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{return}\ m\_thread\_tls-\/>getPtr<Thread>(threadIndex);}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ Thread*\ ThreadManager::findThreadByTid(pid\_t\ tid)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ thread\_id\ =\ 0;\ thread\_id\ <\ m\_threads.size();\ ++thread\_id)}
+\DoxyCodeLine{00061\ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_threads.at(thread\_id)-\/>m\_os\_info.tid\ ==\ tid)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_threads.at(thread\_id);}
+\DoxyCodeLine{00064\ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ Thread*\ ThreadManager::createThread(app\_id\_t\ app\_id,\ thread\_id\_t\ creator\_thread\_id)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ ScopedLock\ sl(m\_thread\_lock);}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordflow}{return}\ createThread\_unlocked(app\_id,\ creator\_thread\_id);}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ Thread*\ ThreadManager::createThread\_unlocked(app\_id\_t\ app\_id,\ thread\_id\_t\ creator\_thread\_id)}
+\DoxyCodeLine{00075\ \{}
+\DoxyCodeLine{00076\ \ \ \ thread\_id\_t\ thread\_id\ =\ m\_threads.size();}
+\DoxyCodeLine{00077\ \ \ \ Thread\ *thread\ =\ \textcolor{keyword}{new}\ Thread(thread\_id,\ app\_id);}
+\DoxyCodeLine{00078\ \ \ \ m\_threads.push\_back(thread);}
+\DoxyCodeLine{00079\ \ \ \ m\_thread\_state.push\_back(ThreadState());}
+\DoxyCodeLine{00080\ \ \ \ m\_thread\_state[thread-\/>getId()].status\ =\ Core::INITIALIZING;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ core\_id\_t\ core\_id\ =\ m\_scheduler-\/>threadCreate(thread\_id);}
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00084\ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ thread-\/>setCore(core);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ core-\/>setState(Core::INITIALIZING);}
+\DoxyCodeLine{00088\ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ Sim()-\/>getStatsManager()-\/>logEvent(StatsManager::EVENT\_THREAD\_CREATE,\ SubsecondTime::MaxTime(),\ core\_id,\ thread\_id,\ app\_id,\ creator\_thread\_id,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ HooksManager::ThreadCreate\ args\ =\ \{\ thread\_id:\ thread\_id,\ creator\_thread\_id:\ creator\_thread\_id\ \};}
+\DoxyCodeLine{00093\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_CREATE,\ (UInt64)\&args);}
+\DoxyCodeLine{00094\ \ \ \ CLOG(\textcolor{stringliteral}{"{}thread"{}},\ \textcolor{stringliteral}{"{}Create\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{return}\ thread;}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keywordtype}{void}\ ThreadManager::onThreadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00100\ \{}
+\DoxyCodeLine{00101\ \ \ \ ScopedLock\ sl(m\_thread\_lock);}
+\DoxyCodeLine{00102\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}onThreadStart(\%i)"{}},\ thread\_id);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ Thread\ *thread\ =\ getThreadFromID(thread\_id);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ m\_thread\_tls-\/>set(thread);}
+\DoxyCodeLine{00107\ \ \ \ thread-\/>updateCoreTLS();}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \textcolor{comment}{//\ Set\ thread\ state\ to\ running\ for\ the\ duration\ of\ HOOK\_THREAD\_START,\ we'll\ move\ it\ to\ stalled\ later\ on\ if\ it\ didn't\ have\ a\ core}}
+\DoxyCodeLine{00110\ \ \ \ m\_thread\_state[thread\_id].status\ =\ Core::RUNNING;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ HooksManager::ThreadTime\ args\ =\ \{\ thread\_id:\ thread\_id,\ time:\ time\ \};}
+\DoxyCodeLine{00113\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_START,\ (UInt64)\&args);}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{comment}{//\ Note:\ we\ may\ have\ been\ rescheduled\ during\ HOOK\_THREAD\_START}}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{comment}{//\ (Happens\ if\ core\ was\ occupied\ during\ our\ createThread()\ but\ became\ free\ since\ then)}}
+\DoxyCodeLine{00116\ \ \ \ CLOG(\textcolor{stringliteral}{"{}thread"{}},\ \textcolor{stringliteral}{"{}Start\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keywordflow}{if}\ (core)}
+\DoxyCodeLine{00120\ \ \ \ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ CoreState\ to\ 'RUNNING'}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ core-\/>setState(Core::RUNNING);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ PerformanceModel\ *pm\ =\ core-\/>getPerformanceModel();}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ core\ already\ has\ a\ later\ time,\ we\ have\ to\ wait}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ time\ =\ std::max(time,\ pm-\/>getElapsedTime());}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ pm-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SpawnInstruction(time));}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Setting\ status[\%i]\ -\/>\ RUNNING"{}},\ thread\_id);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ m\_thread\_state[thread\_id].status\ =\ Core::RUNNING;}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ HooksManager::ThreadMigrate\ args\ =\ \{\ thread\_id:\ thread\_id,\ core\_id:\ core-\/>getId(),\ time:\ time\ \};}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_MIGRATE,\ (UInt64)\&args);}
+\DoxyCodeLine{00134\ \ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00136\ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ m\_thread\_state[thread\_id].status\ =\ Core::STALLED;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ m\_thread\_state[thread\_id].stalled\_reason\ =\ STALL\_UNSCHEDULED;}
+\DoxyCodeLine{00139\ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[thread\_id].waiter\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00142\ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ getThreadFromID(m\_thread\_state[thread\_id].waiter)-\/>signal(time);}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ m\_thread\_state[thread\_id].waiter\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00145\ \ \ \ \}}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keywordtype}{void}\ ThreadManager::onThreadExit(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00149\ \{}
+\DoxyCodeLine{00150\ \ \ \ ScopedLock\ sl(m\_thread\_lock);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ LOG\_ASSERT\_ERROR((UInt32)thread\_id\ <\ m\_thread\_state.size(),\ \textcolor{stringliteral}{"{}Thread\ id\ out\ of\ range:\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ Thread\ *thread\ =\ getThreadFromID(thread\_id);}
+\DoxyCodeLine{00155\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00156\ \ \ \ LOG\_ASSERT\_ERROR(core\ !=\ NULL,\ \textcolor{stringliteral}{"{}Thread\ ended\ while\ not\ running\ on\ a\ core?"{}});}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ SubsecondTime\ time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ assert(m\_thread\_state[thread\_id].status\ ==\ Core::RUNNING);}
+\DoxyCodeLine{00161\ \ \ \ m\_thread\_state[thread\_id].status\ =\ Core::IDLE;}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \textcolor{comment}{//\ Implement\ pthread\_join}}
+\DoxyCodeLine{00164\ \ \ \ wakeUpWaiter(thread\_id,\ time);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \textcolor{comment}{//\ Implement\ CLONE\_CHILD\_CLEARTID}}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>m\_os\_info.clear\_tid)}
+\DoxyCodeLine{00168\ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ uint32\_t\ zero\ =\ 0;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::WRITE,\ thread-\/>m\_os\_info.tid\_ptr,\ (\textcolor{keywordtype}{char}*)\&zero,\ \textcolor{keyword}{sizeof}(zero));}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ SubsecondTime\ end\_time;\ \textcolor{comment}{//\ ignored}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ Sim()-\/>getSyscallServer()-\/>futexWake(thread\_id,\ (\textcolor{keywordtype}{int}*)thread-\/>m\_os\_info.tid\_ptr,\ 1,\ FUTEX\_BITSET\_MATCH\_ANY,\ time,\ end\_time);}
+\DoxyCodeLine{00174\ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \textcolor{comment}{//\ Set\ the\ CoreState\ to\ 'IDLE'}}
+\DoxyCodeLine{00177\ \ \ \ core-\/>setState(Core::IDLE);}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ m\_thread\_tls-\/>set(NULL);}
+\DoxyCodeLine{00180\ \ \ \ thread-\/>setCore(NULL);}
+\DoxyCodeLine{00181\ \ \ \ thread-\/>updateCoreTLS();}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ Sim()-\/>getStatsManager()-\/>logEvent(StatsManager::EVENT\_THREAD\_EXIT,\ SubsecondTime::MaxTime(),\ core-\/>getId(),\ thread\_id,\ 0,\ 0,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ HooksManager::ThreadTime\ args\ =\ \{\ thread\_id:\ thread\_id,\ time:\ time\ \};}
+\DoxyCodeLine{00186\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_EXIT,\ (UInt64)\&args);}
+\DoxyCodeLine{00187\ \ \ \ CLOG(\textcolor{stringliteral}{"{}thread"{}},\ \textcolor{stringliteral}{"{}Exit\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ thread\_id\_t\ ThreadManager::spawnThread(thread\_id\_t\ thread\_id,\ app\_id\_t\ app\_id)}
+\DoxyCodeLine{00191\ \{}
+\DoxyCodeLine{00192\ \ \ \ ScopedLock\ sl(getLock());}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ SubsecondTime\ time\_start\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00195\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00196\ \ \ \ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ Thread\ *thread\ =\ getThreadFromID(thread\_id);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ time\_start\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00200\ \ \ \ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ Thread\ *new\_thread\ =\ createThread\_unlocked(app\_id,\ thread\_id);}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \textcolor{comment}{//\ Insert\ the\ request\ in\ the\ thread\ request\ queue}}
+\DoxyCodeLine{00205\ \ \ \ ThreadSpawnRequest\ req\ =\ \{\ thread\_id,\ new\_thread-\/>getId(),\ time\_start\ \};}
+\DoxyCodeLine{00206\ \ \ \ m\_thread\_spawn\_list.push(req);}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Done\ with\ (2)"{}});}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{return}\ new\_thread-\/>getId();}
+\DoxyCodeLine{00211\ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ thread\_id\_t\ ThreadManager::getThreadToSpawn(SubsecondTime\ \&time)}
+\DoxyCodeLine{00214\ \{}
+\DoxyCodeLine{00215\ \ \ \ ScopedLock\ sl(getLock());}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ LOG\_ASSERT\_ERROR(!m\_thread\_spawn\_list.empty(),\ \textcolor{stringliteral}{"{}Have\ no\ thread\ to\ spawn"{}});}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ ThreadSpawnRequest\ req\ =\ m\_thread\_spawn\_list.front();}
+\DoxyCodeLine{00220\ \ \ \ m\_thread\_spawn\_list.pop();}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ time\ =\ req.time;}
+\DoxyCodeLine{00223\ \ \ \ \textcolor{keywordflow}{return}\ req.thread\_id;}
+\DoxyCodeLine{00224\ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{keywordtype}{void}\ ThreadManager::waitForThreadStart(thread\_id\_t\ thread\_id,\ thread\_id\_t\ wait\_thread\_id)}
+\DoxyCodeLine{00227\ \{}
+\DoxyCodeLine{00228\ \ \ \ ScopedLock\ sl(getLock());}
+\DoxyCodeLine{00229\ \ \ \ Thread\ *self\ =\ getThreadFromID(thread\_id);}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[wait\_thread\_id].status\ ==\ Core::INITIALIZING)}
+\DoxyCodeLine{00232\ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_thread\_state[wait\_thread\_id].waiter\ ==\ INVALID\_THREAD\_ID,}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Multiple\ threads\ waiting\ for\ thread:\ \%d"{}},\ wait\_thread\_id);}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \ \ m\_thread\_state[wait\_thread\_id].waiter\ =\ thread\_id;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ self-\/>wait(getLock());}
+\DoxyCodeLine{00238\ \ \ \ \}}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{keywordtype}{void}\ ThreadManager::moveThread(thread\_id\_t\ thread\_id,\ core\_id\_t\ core\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00242\ \{}
+\DoxyCodeLine{00243\ \ \ \ Thread\ *thread\ =\ getThreadFromID(thread\_id);}
+\DoxyCodeLine{00244\ \ \ \ CLOG(\textcolor{stringliteral}{"{}thread"{}},\ \textcolor{stringliteral}{"{}Move\ \%d\ from\ \%d\ to\ \%d"{}},\ thread\_id,\ thread-\/>getCore()\ ?\ thread-\/>getCore()-\/>getId()\ :\ -\/1,\ core\_id);}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \textcolor{keywordflow}{if}\ (Core\ *core\ =\ thread-\/>getCore())}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ core-\/>setState(Core::IDLE);}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ ==\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00250\ \ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ thread-\/>setCore(NULL);}
+\DoxyCodeLine{00252\ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00254\ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>getCore()\ ==\ NULL)}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unless\ thread\ was\ stalled\ for\ sync/futex/...,\ wake\ it\ up}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ m\_thread\_state[thread\_id].status\ ==\ Core::STALLED}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_thread\_state[thread\_id].stalled\_reason\ ==\ STALL\_UNSCHEDULED}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ resumeThread(thread\_id,\ INVALID\_THREAD\_ID,\ time);}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ thread-\/>setCore(core);}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (getThreadState(thread\_id)\ !=\ Core::STALLED)}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ core-\/>setState(Core::RUNNING);}
+\DoxyCodeLine{00269\ \ \ \ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ HooksManager::ThreadMigrate\ args\ =\ \{\ thread\_id:\ thread\_id,\ core\_id:\ core\_id,\ time:\ time\ \};}
+\DoxyCodeLine{00272\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_MIGRATE,\ (UInt64)\&args);}
+\DoxyCodeLine{00273\ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \textcolor{keywordtype}{bool}\ ThreadManager::areAllCoresRunning()}
+\DoxyCodeLine{00276\ \{}
+\DoxyCodeLine{00277\ \ \ \ \textcolor{comment}{//\ Check\ if\ all\ the\ cores\ are\ running}}
+\DoxyCodeLine{00278\ \ \ \ \textcolor{keywordtype}{bool}\ is\_all\_running\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00279\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ (SInt32)\ m\_thread\_state.size();\ i++)}
+\DoxyCodeLine{00280\ \ \ \ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[i].status\ ==\ Core::IDLE)}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ is\_all\_running\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \textcolor{keywordflow}{return}\ is\_all\_running;}
+\DoxyCodeLine{00289\ \}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \textcolor{keywordtype}{void}\ ThreadManager::joinThread(thread\_id\_t\ thread\_id,\ thread\_id\_t\ join\_thread\_id)}
+\DoxyCodeLine{00292\ \{}
+\DoxyCodeLine{00293\ \ \ \ Thread\ *thread\ =\ getThreadFromID(thread\_id);}
+\DoxyCodeLine{00294\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00295\ \ \ \ SubsecondTime\ end\_time;}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Joining\ on\ thread:\ \%d"{}},\ join\_thread\_id);}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \{}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ ScopedLock\ sl(getLock());}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[join\_thread\_id].status\ ==\ Core::IDLE)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Not\ running."{}});}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \ \ SubsecondTime\ start\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_thread\_state[join\_thread\_id].waiter\ ==\ INVALID\_THREAD\_ID,}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Multiple\ threads\ joining\ on\ thread:\ \%d"{}},\ join\_thread\_id);}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \ \ m\_thread\_state[join\_thread\_id].waiter\ =\ thread\_id;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ end\_time\ =\ stallThread(thread\_id,\ ThreadManager::STALL\_JOIN,\ start\_time);}
+\DoxyCodeLine{00315\ \ \ \ \}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>reschedule(end\_time,\ core))}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(end\_time,\ SyncInstruction::JOIN));}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Exiting\ join\ thread."{}});}
+\DoxyCodeLine{00323\ \}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \textcolor{keywordtype}{void}\ ThreadManager::wakeUpWaiter(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)}
+\DoxyCodeLine{00326\ \{}
+\DoxyCodeLine{00327\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[thread\_id].waiter\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00328\ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Waking\ up\ core:\ \%d\ at\ time:\ \%s"{}},\ m\_thread\_state[thread\_id].waiter,\ itostr(time).c\_str());}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \textcolor{comment}{//\ Resume\ the\ 'pthread\_join'\ caller}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ resumeThread(m\_thread\_state[thread\_id].waiter,\ thread\_id,\ time);}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ m\_thread\_state[thread\_id].waiter\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00335\ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Exiting\ wakeUpWaiter"{}});}
+\DoxyCodeLine{00337\ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \textcolor{keywordtype}{void}\ ThreadManager::stallThread\_async(thread\_id\_t\ thread\_id,\ stall\_type\_t\ reason,\ SubsecondTime\ time)}
+\DoxyCodeLine{00340\ \{}
+\DoxyCodeLine{00341\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Core(\%i)\ -\/>\ STALLED"{}},\ thread\_id);}
+\DoxyCodeLine{00342\ \ \ \ m\_thread\_state[thread\_id].status\ =\ Core::STALLED;}
+\DoxyCodeLine{00343\ \ \ \ m\_thread\_state[thread\_id].stalled\_reason\ =\ reason;}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ HooksManager::ThreadStall\ args\ =\ \{\ thread\_id:\ thread\_id,\ reason:\ reason,\ time:\ time\ \};}
+\DoxyCodeLine{00346\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_STALL,\ (UInt64)\&args);}
+\DoxyCodeLine{00347\ \ \ \ CLOG(\textcolor{stringliteral}{"{}thread"{}},\ \textcolor{stringliteral}{"{}Stall\ \%d\ (\%s)"{}},\ thread\_id,\ ThreadManager::stall\_type\_names[reason]);}
+\DoxyCodeLine{00348\ \}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ SubsecondTime\ ThreadManager::stallThread(thread\_id\_t\ thread\_id,\ stall\_type\_t\ reason,\ SubsecondTime\ time)}
+\DoxyCodeLine{00351\ \{}
+\DoxyCodeLine{00352\ \ \ \ stallThread\_async(thread\_id,\ reason,\ time);}
+\DoxyCodeLine{00353\ \ \ \ \textcolor{comment}{//\ When\ all\ threads\ are\ stalled,\ we\ have\ a\ deadlock\ -\/-\/\ unless\ we\ let\ the\ barrier\ advance\ time}}
+\DoxyCodeLine{00354\ \ \ \ \textcolor{comment}{//\ which\ may\ wake\ up\ threads\ that\ are\ sleeping\ or\ waiting\ on\ a\ futex\ with\ a\ timeout\ value.}}
+\DoxyCodeLine{00355\ \ \ \ \textcolor{keywordflow}{while}(!anyThreadRunning())}
+\DoxyCodeLine{00356\ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ Sim()-\/>getClockSkewMinimizationServer()-\/>advance();}
+\DoxyCodeLine{00358\ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \textcolor{comment}{//\ It's\ possible\ that\ a\ HOOK\_PERIODIC,\ called\ by\ SkewMinServer::signal(),\ called\ by\ stallThread\_async(),\ woke\ us\ up\ again.}}
+\DoxyCodeLine{00360\ \ \ \ \textcolor{comment}{//\ We\ will\ then\ have\ been\ signal()d,\ but\ this\ signal\ was\ lost\ since\ we\ weren't\ in\ wait()}}
+\DoxyCodeLine{00361\ \ \ \ \textcolor{comment}{//\ If\ this\ is\ the\ case,\ don't\ go\ to\ sleep\ but\ return\ our\ wakeup\ time\ immediately}}
+\DoxyCodeLine{00362\ \ \ \ \textcolor{keywordflow}{if}\ (m\_thread\_state[thread\_id].status\ ==\ Core::RUNNING)}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getThreadFromID(thread\_id)-\/>getWakeupTime();}
+\DoxyCodeLine{00364\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getThreadFromID(thread\_id)-\/>wait(m\_thread\_lock);}
+\DoxyCodeLine{00366\ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{keywordtype}{void}\ ThreadManager::resumeThread\_async(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time,\ \textcolor{keywordtype}{void}\ *msg)}
+\DoxyCodeLine{00369\ \{}
+\DoxyCodeLine{00370\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Core(\%i)\ -\/>\ RUNNING"{}},\ thread\_id);}
+\DoxyCodeLine{00371\ \ \ \ m\_thread\_state[thread\_id].status\ =\ Core::RUNNING;}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ HooksManager::ThreadResume\ args\ =\ \{\ thread\_id:\ thread\_id,\ thread\_by:\ thread\_by,\ time:\ time\ \};}
+\DoxyCodeLine{00374\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_THREAD\_RESUME,\ (UInt64)\&args);}
+\DoxyCodeLine{00375\ \ \ \ CLOG(\textcolor{stringliteral}{"{}thread"{}},\ \textcolor{stringliteral}{"{}Resume\ \%d\ (by\ \%d)"{}},\ thread\_id,\ thread\_by);}
+\DoxyCodeLine{00376\ \}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \textcolor{keywordtype}{void}\ ThreadManager::resumeThread(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time,\ \textcolor{keywordtype}{void}\ *msg)}
+\DoxyCodeLine{00379\ \{}
+\DoxyCodeLine{00380\ \ \ \ \textcolor{comment}{//\ We\ still\ have\ the\ m\_thread\_lock,\ so\ thread\ doesn't\ actually\ start\ running\ again\ until\ caller\ releases\ this\ lock}}
+\DoxyCodeLine{00381\ \ \ \ getThreadFromID(thread\_id)-\/>signal(time,\ msg);}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ resumeThread\_async(thread\_id,\ thread\_by,\ time,\ msg);}
+\DoxyCodeLine{00384\ \}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{keywordtype}{bool}\ ThreadManager::isThreadRunning(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00387\ \{}
+\DoxyCodeLine{00388\ \ \ \ \textcolor{keywordflow}{return}\ (m\_thread\_state[thread\_id].status\ ==\ Core::RUNNING);}
+\DoxyCodeLine{00389\ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \textcolor{keywordtype}{bool}\ ThreadManager::isThreadInitializing(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00392\ \{}
+\DoxyCodeLine{00393\ \ \ \ \textcolor{keywordflow}{return}\ (m\_thread\_state[thread\_id].status\ ==\ Core::INITIALIZING);}
+\DoxyCodeLine{00394\ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \textcolor{keywordtype}{bool}\ ThreadManager::anyThreadRunning()}
+\DoxyCodeLine{00397\ \{}
+\DoxyCodeLine{00398\ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ thread\_id\ =\ 0;\ thread\_id\ <\ (thread\_id\_t)getNumThreads();\ ++thread\_id)}
+\DoxyCodeLine{00399\ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (isThreadRunning(thread\_id)\ ||\ isThreadInitializing(thread\_id))}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00402\ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00404\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,363 @@
+\doxysection{hashtable\+\_\+baseline.\+cc}
+\label{hashtable__baseline_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/hashtable\_baseline.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/hashtable\_baseline.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <time.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}hashtable\_baseline.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \ HashTablePTW::HashTablePTW(\textcolor{keywordtype}{int}\ \_table\_size\_in\_bits,\textcolor{keywordtype}{int}\ \_small\_page\_size\_in\_bits,\textcolor{keywordtype}{int}\ \_large\_page\_size\_in\_bits,\textcolor{keywordtype}{int}\ \_small\_page\_percentage,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ Core*\ \_core,ShmemPerfModel*\ \_m\_shmem\_perf\_model,PWC*\ pwc,\ \textcolor{keywordtype}{bool}\ pwc\_enabled)}
+\DoxyCodeLine{00021\ \ \ \ \ :PageTableWalker(\_core-\/>getId(),\ 0,\ \_m\_shmem\_perf\_model,\ pwc,\ pwc\_enabled),page\_table\_walks(0)\{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ this-\/>table\_size\_in\_bits=\_table\_size\_in\_bits;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ this-\/>small\_page\_size\_in\_bits=\_small\_page\_size\_in\_bits;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ this-\/>large\_page\_size\_in\_bits=\_large\_page\_size\_in\_bits;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ this-\/>small\_page\_percentage=\_small\_page\_percentage;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ this-\/>core=\_core;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ this-\/>m\_shmem\_perf\_model=\_m\_shmem\_perf\_model;\ \ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ this-\/>small\_page\_table=(entry\ *)malloc((UInt64)pow(2,table\_size\_in\_bits)*\textcolor{keyword}{sizeof}(entry));}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt64\ i\ =\ 0;\ i\ <\ (UInt64)pow(2,table\_size\_in\_bits);\ i++)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].empty=\textcolor{keyword}{true};}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].vpn=0;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>small\_page\_table[i].next\_entry=NULL;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ this-\/>large\_page\_table=(entry\ *)malloc((UInt64)pow(2,table\_size\_in\_bits)*\textcolor{keyword}{sizeof}(entry));}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt64\ i\ =\ 0;\ i\ <\ (UInt64)pow(2,table\_size\_in\_bits);\ i++)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].empty=\textcolor{keyword}{true};}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].vpn=0;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>large\_page\_table[i].next\_entry=NULL;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ pagefaults\_4KB\ =\ 0;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ pagefaults\_2MB\ =\ 0;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ chain\_per\_entry\_4KB\ =\ 0;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ chain\_per\_entry\_2MB\ =\ 0;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ num\_accesses\_4KB\ =\ 0;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ num\_accesses\_2MB\ =\ 0;}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ total\_latency\_4KB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ total\_latency\_2MB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ total\_latency\_page\_fault\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}page\_table\_walks"{}},\ \&page\_table\_walks);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}page\_faults\_4KB"{}},\ \&pagefaults\_4KB);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}page\_faults\_2MB"{}},\ \&pagefaults\_2MB);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}conflicts\_4KB"{}},\ \&chain\_per\_entry\_4KB);}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}conflicts\_2MB"{}},\ \&chain\_per\_entry\_2MB);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}accesses\_4KB"{}},\ \&num\_accesses\_4KB);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}accesses\_2MB"{}},\ \&num\_accesses\_2MB);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total\_latency\_4KB"{}},\ \&total\_latency\_4KB);}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total\_latency\_2MB"{}},\ \&total\_latency\_2MB);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}hashtable\_walker"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total\_latency\_page\_fault"{}},\ \&total\_latency\_page\_fault);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ }
+\DoxyCodeLine{00070\ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{int}\ HashTablePTW::hash\_function(IntPtr\ address)\{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ uint64\ mask=0;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=0\ ;i<table\_size\_in\_bits;i++)\{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ mask+=(int)pow(2,i);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ \ new\_address\ =\ (\textcolor{keywordtype}{char}*)\ address;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ uint64\ result=CityHash64((\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)\&address,8)\ \&\ (mask);}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00080\ \ \ \ \ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ SubsecondTime\ HashTablePTW::access\_cache(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00083\ \ \ \ \ CacheCntlr\ *cache,\ Core::lock\_signal\_t\ lock\_signal,\ Byte*\ \_data\_buf,\ }
+\DoxyCodeLine{00084\ \ \ \ \ UInt32\ \_data\_length,\ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(address))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf,\ data\_length,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ modeled,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count,\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ SubsecondTime\ t\_end\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ mem\_manager-\/>tagCachesBlockType(address,CacheBlockInfo::block\_type\_t::PAGE\_TABLE);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_end-\/t\_start;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{int}\ HashTablePTW::handle\_page\_fault(IntPtr\ address,\ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB,\ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB)\{}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ random\_number=rand()\%100;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ entry*\ page\_table\_entry;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\_in\_bits;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ allocated\_size;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(random\_number\ <\ small\_page\_percentage)\{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ pagefaults\_4KB++;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ page\_table\_entry\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ page\_size\_in\_bits=small\_page\_size\_in\_bits;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ pagefaults\_2MB++;}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ page\_table\_entry\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ page\_size\_in\_bits=large\_page\_size\_in\_bits;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ entry*\ current\_entry\_small\ =\ page\_table\_entry;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{\ \ \ \ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry\_small-\/>empty)\ \&\&\ (current\_entry\_small-\/>next\_entry\ ==\ NULL))\{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry\ *\_next\_entry\ =\ (entry\ *)\ malloc\ (\textcolor{keyword}{sizeof}(entry));}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_next\_entry-\/>empty=\textcolor{keyword}{false};}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_next\_entry-\/>vpn=address\ >>\ page\_size\_in\_bits;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_next\_entry-\/>next\_entry=NULL;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\_in\_bits\ ==\ small\_page\_size\_in\_bits)\ chain\_per\_entry\_4KB++;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\_in\_bits\ ==\ large\_page\_size\_in\_bits)\ chain\_per\_entry\_2MB++;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small-\/>next\_entry=\_next\_entry;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!(current\_entry\_small-\/>empty)\ \&\&\ (current\_entry\_small-\/>next\_entry\ !=\ NULL))\{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small=current\_entry\_small-\/>next\_entry;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (current\_entry\_small-\/>empty)\{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small-\/>empty=\textcolor{keyword}{false};}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small-\/>vpn\ =\ address\ >>\ page\_size\_in\_bits;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small-\/>next\_entry=\ NULL;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ page\_size\_in\_bits;}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ }
+\DoxyCodeLine{00156\ \ \ \ \ SubsecondTime\ HashTablePTW::init\_walk(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00157\ \ \ \ \ CacheCntlr\ *cache,\ Core::lock\_signal\_t\ lock\_signal,\ Byte*\ \_data\_buf,\ }
+\DoxyCodeLine{00158\ \ \ \ \ UInt32\ \_data\_length,\ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ page\_table\_walks++;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ SubsecondTime\ delay\_4KB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ SubsecondTime\ delay\_2MB\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB\ =\ hash\_function(address\ >>\ small\_page\_size\_in\_bits);}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB\ =\ hash\_function(address\ >>\ large\_page\_size\_in\_bits);}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_4KB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_2MB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accesses\_4KB\ =\ 0;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ delay\_4KB+=access\_cache(eip,address,shadow\_cache,cache,lock\_signal,\_data\_buf,\_data\_length,modeled,count);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ num\_accesses\_4KB++;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry\_small-\/>empty))}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>vpn\ ==\ (address\ >>\ small\_page\_size\_in\_bits))}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_4KB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>next\_entry\ ==\ NULL)}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_small-\/>next\_entry\ !=\ NULL)\{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small=current\_entry\_small-\/>next\_entry;\ \ \ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accesses\_2MB\ =\ 0;}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ delay\_2MB+=access\_cache(eip,address,shadow\_cache,cache,lock\_signal,\_data\_buf,\_data\_length,modeled,count);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ num\_accesses\_2MB++;}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry\_large-\/>empty))}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>vpn\ ==\ (address\ >>\ large\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_2MB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>next\_entry\ ==\ NULL)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_large-\/>next\_entry\ !=\ NULL)}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_large=current\_entry\_large-\/>next\_entry;\ \ \ }
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(found\_it\_4KB)\{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\_4KB+=delay\_4KB;}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ delay\_4KB;}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(found\_it\_2MB)\{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\_2MB+=delay\_2MB;}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ delay\_2MB;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pagesize\ =\ handle\_page\_fault(address,hash\_function\_result\_4KB,hash\_function\_result\_2MB);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\_page\_fault\ =\ std::max(delay\_4KB,delay\_2MB);}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::max(delay\_4KB,delay\_2MB);}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00243\ \ \ \ \ \}}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordtype}{bool}\ HashTablePTW::isPageFault(IntPtr\ address)\{}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB\ =\ hash\_function(address\ >>\ small\_page\_size\_in\_bits);}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB\ =\ hash\_function(address\ >>\ large\_page\_size\_in\_bits);}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ entry\ *current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!(current\_entry\_small-\/>empty))}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>vpn\ ==\ (address\ >>\ small\_page\_size\_in\_bits))}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>next\_entry\ ==\ NULL)}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_small-\/>next\_entry\ !=\ NULL)}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small=current\_entry\_small-\/>next\_entry;\ \ \ \ \ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry\_large-\/>empty))}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>vpn\ ==\ (address\ >>\ large\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>next\_entry\ ==\ NULL)}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_large-\/>next\_entry\ !=\ NULL)}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_large=current\_entry\_large-\/>next\_entry;\ \ \ \ \ }
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ }
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00290\ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00292\ \ \ \ \ }
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordtype}{int}\ HashTablePTW::init\_walk\_functional(IntPtr\ address)\{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_4KB\ =\ hash\_function(address\ >>\ small\_page\_size\_in\_bits);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hash\_function\_result\_2MB\ =\ hash\_function(address\ >>\ large\_page\_size\_in\_bits);}
+\DoxyCodeLine{00298\ \ \ \ \ }
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ entry\ *current\_entry\_small\ =\ \&small\_page\_table[hash\_function\_result\_4KB];}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ entry\ *current\_entry\_large\ =\ \&large\_page\_table[hash\_function\_result\_2MB];}
+\DoxyCodeLine{00301\ \ \ \ \ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_4KB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\_it\_2MB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00304\ \ \ \ \ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00306\ \ \ \ \ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry\_small-\/>empty))}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>vpn\ ==\ (address\ >>\ small\_page\_size\_in\_bits))}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_4KB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_small-\/>next\_entry\ ==\ NULL)}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_small-\/>next\_entry\ !=\ NULL)}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_small=current\_entry\_small-\/>next\_entry;\ \ \ }
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})\{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(current\_entry\_large-\/>empty))}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>vpn\ ==\ (address\ >>\ large\_page\_size\_in\_bits))\{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\_it\_2MB\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(current\_entry\_large-\/>next\_entry\ ==\ NULL)}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(current\_entry\_large-\/>next\_entry\ !=\ NULL)}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_entry\_large=current\_entry\_large-\/>next\_entry;\ \ \ }
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ }
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ }
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(found\_it\_4KB)\{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ small\_page\_size\_in\_bits;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(found\_it\_2MB)\{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ large\_page\_size\_in\_bits;}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ handle\_page\_fault(address,hash\_function\_result\_4KB,hash\_function\_result\_2MB);}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \}}
+
+\end{DoxyCode}

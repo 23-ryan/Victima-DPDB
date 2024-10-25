@@ -1,0 +1,69 @@
+\doxysection{core\+\_\+thread.\+cc}
+\label{core__thread_8cc_source}\index{common/system/core\_thread.cc@{common/system/core\_thread.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core\_thread.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}sim\_thread\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ CoreThread::CoreThread()}
+\DoxyCodeLine{00013\ \ \ \ :\ m\_thread(NULL)}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ CoreThread::\string~CoreThread()}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{delete}\ m\_thread;}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{void}\ CoreThread::run()}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ core\_id\_t\ core\_id\ =\ Sim()-\/>getCoreManager()-\/>registerSimThread(CoreManager::CORE\_THREAD);}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{comment}{//\ Set\ thread\ name\ for\ Sniper-\/in-\/Sniper\ simulations}}
+\DoxyCodeLine{00027\ \ \ \ String\ threadName\ =\ String(\textcolor{stringliteral}{"{}core-\/"{}})\ +\ itostr(core\_id);}
+\DoxyCodeLine{00028\ \ \ \ SimSetThreadName(threadName.c\_str());}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Core\ thread\ starting..."{}});}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ Network\ *net\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getNetwork();}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{bool}\ cont\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ Sim()-\/>getSimThreadManager()-\/>simThreadStartCallback();}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{comment}{//\ Turn\ off\ cont\ when\ we\ receive\ a\ quit\ message}}
+\DoxyCodeLine{00038\ \ \ \ net-\/>registerCallback(CORE\_THREAD\_TERMINATE\_THREADS,}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ terminateFunc,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{void}\ *)\&cont);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ PerformanceModel\ *prfmdl\ =\ Sim()-\/>getCoreManager()-\/>getCurrentCore()-\/>getPerformanceModel();}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{while}\ (cont)\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ prfmdl-\/>iterate();}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ usleep(1000);\ \textcolor{comment}{//\ Reduce\ system\ load\ while\ there's\ nothing\ to\ do\ (outside\ ROI)}}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ Sim()-\/>getSimThreadManager()-\/>simThreadExitCallback();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Core\ thread\ exiting"{}});}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{void}\ CoreThread::spawn()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ m\_thread\ =\ \_Thread::create(\textcolor{keyword}{this});}
+\DoxyCodeLine{00056\ \ \ \ m\_thread-\/>run();}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keywordtype}{void}\ CoreThread::terminateFunc(\textcolor{keywordtype}{void}\ *vp,\ NetPacket\ pkt)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordtype}{bool}\ *pcont\ =\ (\textcolor{keywordtype}{bool}*)\ vp;}
+\DoxyCodeLine{00062\ \ \ \ *pcont\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00063\ \}}
+
+\end{DoxyCode}

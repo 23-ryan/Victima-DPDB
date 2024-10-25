@@ -1,0 +1,40 @@
+\doxysection{dram\+\_\+perf\+\_\+model.\+cc}
+\label{dram__perf__model_8cc_source}\index{common/performance\_model/dram\_perf\_model.cc@{common/performance\_model/dram\_perf\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_constant.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_readwrite.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_normal.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_disagg.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ DramPerfModel*\ DramPerfModel::createDramPerfModel(core\_id\_t\ core\_id,\ UInt32\ cache\_block\_size,AddressHomeLookup*\ address\_home\_lookup)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ }
+\DoxyCodeLine{00012\ \ \ \ String\ type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/dram/type"{}});}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}constant"{}})}
+\DoxyCodeLine{00015\ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DramPerfModelConstant(core\_id,\ cache\_block\_size);}
+\DoxyCodeLine{00017\ \ \ \ \}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}readwrite"{}})}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DramPerfModelReadWrite(core\_id,\ cache\_block\_size);}
+\DoxyCodeLine{00021\ \ \ \ \}}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}normal"{}})}
+\DoxyCodeLine{00023\ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DramPerfModelNormal(core\_id,\ cache\_block\_size);}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(type\ ==\ \textcolor{stringliteral}{"{}ddr"{}})\{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DramPerfModelDisagg(core\_id,cache\_block\_size,address\_home\_lookup);}
+\DoxyCodeLine{00029\ \ \ \ \}}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00031\ \ \ \ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ DRAM\ model\ type\ \%s"{}},\ type.c\_str());}
+\DoxyCodeLine{00033\ \ \ \ \}}
+\DoxyCodeLine{00034\ \}}
+
+\end{DoxyCode}

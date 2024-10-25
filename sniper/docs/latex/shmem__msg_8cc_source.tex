@@ -1,0 +1,128 @@
+\doxysection{shmem\+\_\+msg.\+cc}
+\label{shmem__msg_8cc_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_msg.cc@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_msg.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}shmem\_msg.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{namespace\ }PrL1PrL2DramDirectoryMSI}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ ShmemMsg::ShmemMsg(ShmemPerf*\ perf)\ :}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ m\_msg\_type(INVALID\_MSG\_TYPE),}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ m\_sender\_mem\_component(MemComponent::INVALID\_MEM\_COMPONENT),}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ m\_receiver\_mem\_component(MemComponent::INVALID\_MEM\_COMPONENT),}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ m\_requester(INVALID\_CORE\_ID),}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ m\_where(HitWhere::UNKNOWN),}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ m\_address(INVALID\_ADDRESS),}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ m\_data\_buf(NULL),}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ m\_data\_length(0),}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ m\_perf(perf),}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ m\_block\_type(CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE)}
+\DoxyCodeLine{00019\ \ \ \ \{\}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ ShmemMsg::ShmemMsg(msg\_t\ msg\_type,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ sender\_mem\_component,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ receiver\_mem\_component,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ core\_id\_t\ requester,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ IntPtr\ address,}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ UInt32\ data\_length,}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ ShmemPerf*\ perf,CacheBlockInfo::block\_type\_t\ block\_type)\ :}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ m\_msg\_type(msg\_type),}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ m\_sender\_mem\_component(sender\_mem\_component),}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ m\_receiver\_mem\_component(receiver\_mem\_component),}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ m\_requester(requester),}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ m\_where(HitWhere::UNKNOWN),}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ m\_address(address),}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ m\_data\_buf(data\_buf),}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ m\_data\_length(data\_length),}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ m\_perf(perf),}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ m\_block\_type(block\_type)}
+\DoxyCodeLine{00039\ \ \ \ \{\}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ ShmemMsg::ShmemMsg(ShmemMsg*\ shmem\_msg)\ :}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ m\_msg\_type(shmem\_msg-\/>getMsgType()),}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ m\_sender\_mem\_component(shmem\_msg-\/>getSenderMemComponent()),}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ m\_receiver\_mem\_component(shmem\_msg-\/>getReceiverMemComponent()),}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ m\_requester(shmem\_msg-\/>getRequester()),}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ m\_address(shmem\_msg-\/>getAddress()),}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ m\_data\_buf(shmem\_msg-\/>getDataBuf()),}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ m\_data\_length(shmem\_msg-\/>getDataLength()),}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ m\_perf(shmem\_msg-\/>getPerf()),}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ m\_block\_type(shmem\_msg-\/>getBlockType())}
+\DoxyCodeLine{00051\ \ \ \ \{\}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ ShmemMsg::\string~ShmemMsg()}
+\DoxyCodeLine{00054\ \ \ \ \{\}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ ShmemMsg*}
+\DoxyCodeLine{00057\ \ \ \ ShmemMsg::getShmemMsg(Byte*\ msg\_buf,\ ShmemPerf*\ perf)}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ ShmemMsg*\ shmem\_msg\ =\ \textcolor{keyword}{new}\ ShmemMsg(perf);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ memcpy((\textcolor{keywordtype}{void}*)\ shmem\_msg,\ msg\_buf,\ \textcolor{keyword}{sizeof}(*shmem\_msg));}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_msg-\/>getDataLength()\ >\ 0)}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ shmem\_msg-\/>setDataBuf(\textcolor{keyword}{new}\ Byte[shmem\_msg-\/>getDataLength()]);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ memcpy((\textcolor{keywordtype}{void}*)\ shmem\_msg-\/>getDataBuf(),\ msg\_buf\ +\ \textcolor{keyword}{sizeof}(*shmem\_msg),\ shmem\_msg-\/>getDataLength());}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ shmem\_msg;}
+\DoxyCodeLine{00067\ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ Byte*}
+\DoxyCodeLine{00070\ \ \ \ ShmemMsg::makeMsgBuf()}
+\DoxyCodeLine{00071\ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ Byte*\ msg\_buf\ =\ \textcolor{keyword}{new}\ Byte[getMsgLen()];}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ memcpy(msg\_buf,\ (\textcolor{keywordtype}{void}*)\ \textcolor{keyword}{this},\ \textcolor{keyword}{sizeof}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_data\_length\ >\ 0)}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_data\_buf\ !=\ NULL,\ \textcolor{stringliteral}{"{}m\_data\_buf(\%p)"{}},\ m\_data\_buf);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ memcpy(msg\_buf\ +\ \textcolor{keyword}{sizeof}(*\textcolor{keyword}{this}),\ (\textcolor{keywordtype}{void}*)\ m\_data\_buf,\ m\_data\_length);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ msg\_buf;}
+\DoxyCodeLine{00081\ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ UInt32}
+\DoxyCodeLine{00084\ \ \ \ ShmemMsg::getMsgLen()}
+\DoxyCodeLine{00085\ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{sizeof}(*\textcolor{keyword}{this})\ +\ m\_data\_length);}
+\DoxyCodeLine{00087\ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ UInt32}
+\DoxyCodeLine{00090\ \ \ \ ShmemMsg::getModeledLength()}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(m\_msg\_type)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EX\_REQ:}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SH\_REQ:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ INV\_REQ:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FLUSH\_REQ:}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ WB\_REQ:}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UPGRADE\_REP:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ UPGRADE\_REQ:}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ INV\_REP:}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DRAM\_READ\_REQ:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ msg\_type\ +\ address}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ msg\_type\ -\/\ 1\ byte}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (1\ +\ \textcolor{keyword}{sizeof}(IntPtr));}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EX\_REP:}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SH\_REP:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FLUSH\_REP:}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ WB\_REP:}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DRAM\_WRITE\_REQ:}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DRAM\_READ\_REP:}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ msg\_type\ +\ address\ +\ cache\_block}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (1\ +\ \textcolor{keyword}{sizeof}(IntPtr)\ +\ m\_data\_length);}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Msg\ Type(\%u)"{}},\ m\_msg\_type);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \}}
+
+\end{DoxyCode}

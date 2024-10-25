@@ -1,0 +1,231 @@
+\doxysection{util.\+cc}
+\label{util_8cc_source}\index{common/core/memory\_subsystem/cheetah/util.cc@{common/core/memory\_subsystem/cheetah/util.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/************************************************************************}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ Copyright\ (C)\ 1989,\ 1990,\ 1991,\ 1992,\ 1993\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rabin\ A.\ Sugumar\ and\ Santosh\ G.\ Abraham\ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*\ This\ software\ is\ distributed\ absolutely\ without\ warranty.\ You\ are\ \ \ \ \ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ free\ to\ use\ and\ modify\ the\ software\ as\ you\ wish.\ \ You\ are\ also\ free\ \ \ *}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ to\ distribute\ the\ software\ as\ long\ as\ it\ is\ not\ for\ commercial\ gain,\ \ *}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*\ you\ retain\ the\ above\ copyright\ notice,\ and\ you\ make\ clear\ what\ your\ \ \ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ modifications\ were.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*\ Send\ comments\ and\ bug\ reports\ to\ rabin@eecs.umich.edu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ (c)\ 2013\ Wim\ Heirman\ <wim@heirman.net>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ Converted\ to\ C++\ classes,\ use\ 64-\/bit\ data\ types\ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00016\ \textcolor{comment}{************************************************************************/}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{comment}{/*\ Functions\ used\ by\ the\ simulation\ algorithms\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}util.h"{}}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ fatal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}[CHEETAH]\ Fatal\ error:\ \%s\(\backslash\)n"{}},\ msg);}
+\DoxyCodeLine{00028\ \ \ \ exit(1);}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ Calculates\ x\string^y}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ Input:\ x,\ y}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *\ Output:\ x\string^y}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *\ Side\ effects:\ None}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00039\ power(\textcolor{keywordtype}{int}\ x,\ \textcolor{keywordtype}{int}\ y)}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \textcolor{keywordtype}{int}\ pwr\ =\ 1;}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \textcolor{keywordflow}{while}\ (y\ >\ 0)}
+\DoxyCodeLine{00044\ \ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ pwr\ *=\ x;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ -\/-\/y;}
+\DoxyCodeLine{00047\ \ \ \ \ \}}
+\DoxyCodeLine{00048\ \ \ \textcolor{keywordflow}{return}\ pwr;}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ *\ From\ "{}Advanced\ C:\ tips\ and\ techniques"{},\ Paul\ and\ Gail\ Anderson}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *\ Creates\ a\ two\ dimensional\ array\ dynamically.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ *\ Input:\ Row\ and\ Column\ dimensions}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ *\ Output:\ A\ pointer\ to\ the\ two\ dimensional\ array\ space}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ *\ Side\ effects:\ None}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00061\ uint64\_t\ **}
+\DoxyCodeLine{00062\ idim2(\textcolor{keywordtype}{int}\ row,\ \textcolor{keywordtype}{int}\ col)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \textcolor{keywordtype}{int}\ i;}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{register}\ uint64\_t\ **prow,\ *pdata;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ pdata\ =\ (uint64\_t\ *)calloc(row*col,\ \textcolor{keyword}{sizeof}\ (uint64\_t));}
+\DoxyCodeLine{00068\ \ \ \textcolor{keywordflow}{if}\ (!pdata)}
+\DoxyCodeLine{00069\ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ prow\ =\ (uint64\_t\ **)calloc(row,\ \textcolor{keyword}{sizeof}\ (uint64\_t\ *));}
+\DoxyCodeLine{00072\ \ \ \textcolor{keywordflow}{if}\ (!prow)}
+\DoxyCodeLine{00073\ \ \ \ \ fatal(\textcolor{stringliteral}{"{}out\ of\ virtual\ memory"{}});}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \textcolor{keywordflow}{for}\ (i=0;i<row;i++)}
+\DoxyCodeLine{00076\ \ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ prow\ [i]\ =\ pdata;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ pdata\ +=\ col;}
+\DoxyCodeLine{00079\ \ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \textcolor{keywordflow}{return}\ prow;}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ *\ Free\ list\ handlers}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{static}\ \textcolor{keyword}{struct\ }hash\_table\ *head\_free\_list;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00092\ UHT\_Add\_to\_free\_list(\textcolor{keyword}{struct}\ hash\_table\ *free\_ptr)}
+\DoxyCodeLine{00093\ \{}
+\DoxyCodeLine{00094\ \ \ free\_ptr-\/>nxt\ =\ head\_free\_list;}
+\DoxyCodeLine{00095\ \ \ head\_free\_list\ =\ free\_ptr;}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{struct\ }hash\_table\ *}
+\DoxyCodeLine{00099\ UHT\_Get\_from\_free\_list(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \textcolor{keyword}{struct\ }hash\_table\ *free\_ptr;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \textcolor{keywordflow}{if}\ (head\_free\_list\ ==\ NULL)}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00106\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00107\ \ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ free\_ptr\ =\ head\_free\_list;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ head\_free\_list\ =\ head\_free\_list-\/>nxt;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ free\_ptr;}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ *\ A\ left\ rotation.\ Adapted\ from\ the\ Sleator\ and\ Tarjan\ paper\ on\ Splay\ trees}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ *\ Makes\ use\ of\ p\_stack,\ setup\ during\ the\ lookup.}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ *\ Input:\ Index\ to\ entry\ at\ which\ rotation\ is\ to\ be\ done\ in\ p\_stack.}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ *\ Output:\ None}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ *\ Side\ effects:\ Does\ a\ left\ rotation\ at\ the\ entry}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00124\ rotate\_left(\textcolor{keywordtype}{int}\ y,\ \textcolor{keyword}{struct}\ tree\_node\ **p\_stack)}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordtype}{int}\ x,z;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ z\ =\ y-\/1;}
+\DoxyCodeLine{00129\ \ \ x\ =\ y+1;}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordflow}{if}\ (z\ >\ 0)}
+\DoxyCodeLine{00131\ \ \ \ \ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (p\_stack[z]-\/>lft\ ==\ p\_stack[y])}
+\DoxyCodeLine{00133\ \ \ \ p\_stack[z]-\/>lft\ =\ p\_stack[x];}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00135\ \ \ \ p\_stack[z]-\/>rt\ =\ p\_stack[x];}
+\DoxyCodeLine{00136\ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \ \ p\_stack[y]-\/>rt\ =\ p\_stack[x]-\/>lft;}
+\DoxyCodeLine{00138\ \ \ p\_stack[y]-\/>rtwt\ -\/=\ p\_stack[x]-\/>rtwt\ +\ 1;}
+\DoxyCodeLine{00139\ \ \ p\_stack[x]-\/>lft\ =\ p\_stack[y];}
+\DoxyCodeLine{00140\ \ \ p\_stack[y]\ =\ p\_stack[x];}
+\DoxyCodeLine{00141\ \ \ p\_stack[x]\ =\ p\_stack[x+1];}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ *\ A\ right\ rotation.\ Adapted\ from\ the\ Sleator\ and\ Tarjan\ paper\ on\ Splay\ trees}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ *\ Makes\ use\ of\ p\_stack,\ setup\ during\ the\ lookup.}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ *\ Input:\ Index\ to\ entry\ at\ which\ rotation\ is\ to\ be\ done\ in\ p\_stack.}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ *\ Output:\ None}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ *\ Side\ effects:\ Does\ a\ right\ rotation\ at\ the\ entry}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00153\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00154\ rotate\_right(\textcolor{keywordtype}{int}\ y,\ \textcolor{keyword}{struct}\ tree\_node\ **p\_stack)}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ \ \ \textcolor{keywordtype}{int}\ x,z;}
+\DoxyCodeLine{00157\ \ \ \textcolor{keyword}{register}\ \textcolor{keyword}{struct\ }tree\_node\ *t1,\ *t2,\ *t3;}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ z\ =\ y-\/1;}
+\DoxyCodeLine{00160\ \ \ x\ =\ y+1;}
+\DoxyCodeLine{00161\ \ \ t1\ =\ p\_stack[x];}
+\DoxyCodeLine{00162\ \ \ t2\ =\ p\_stack[y];}
+\DoxyCodeLine{00163\ \ \ t3\ =\ p\_stack[z];}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{if}\ (z>0)}
+\DoxyCodeLine{00165\ \ \ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t3-\/>lft\ ==\ t2)}
+\DoxyCodeLine{00167\ \ \ \ t3-\/>lft\ =\ t1;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00169\ \ \ \ t3-\/>rt\ =\ t1;}
+\DoxyCodeLine{00170\ \ \ \ \ \}}
+\DoxyCodeLine{00171\ \ \ t2-\/>lft\ =\ t1-\/>rt;}
+\DoxyCodeLine{00172\ \ \ t1-\/>rt\ =\ t2;}
+\DoxyCodeLine{00173\ \ \ t1-\/>rtwt\ +=\ t2-\/>rtwt\ +\ 1;}
+\DoxyCodeLine{00174\ \ \ p\_stack[y]\ =\ t1;}
+\DoxyCodeLine{00175\ \ \ p\_stack[x]\ =\ p\_stack[x+1];}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00180\ \textcolor{comment}{\ *\ Adapted\ from\ the\ Sleator\ and\ Tarjan\ paper\ on\ Splay\ trees.}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ *\ Splay\ the\ input\ entry\ to\ the\ top\ of\ the\ stack.}}
+\DoxyCodeLine{00182\ \textcolor{comment}{\ *\ Makes\ use\ of\ p\_stack\ setup\ during\ the\ lookup.}}
+\DoxyCodeLine{00183\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00184\ \textcolor{comment}{\ *\ Input:\ Index\ to\ entry\ to\ be\ splayed\ to\ root\ in\ p\_stack.}}
+\DoxyCodeLine{00185\ \textcolor{comment}{\ *\ Output:\ None}}
+\DoxyCodeLine{00186\ \textcolor{comment}{\ *\ Side\ effects:\ Does\ a\ spay\ on\ the\ tree}}
+\DoxyCodeLine{00187\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00188\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00189\ splay(\textcolor{keywordtype}{int}\ at,\ \textcolor{keyword}{struct}\ tree\_node\ **p\_stack)}
+\DoxyCodeLine{00190\ \{}
+\DoxyCodeLine{00191\ \ \ \textcolor{keywordtype}{int}\ x,\ px,\ gx;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ x\ =\ at;}
+\DoxyCodeLine{00194\ \ \ px\ =\ at-\/1;}
+\DoxyCodeLine{00195\ \ \ gx\ =\ at-\/2;}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \textcolor{comment}{/*\ 'at'\ is\ a\ left\ child\ */}}
+\DoxyCodeLine{00198\ \ \ \textcolor{keywordflow}{if}\ (p\_stack[x]\ ==\ p\_stack[px]-\/>lft)}
+\DoxyCodeLine{00199\ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (gx\ ==\ 0)\ \ \ \textcolor{comment}{/*\ zig\ */}}
+\DoxyCodeLine{00201\ \ \ \ rotate\_right(1,\ p\_stack);}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (p\_stack[px]\ ==\ p\_stack[gx]-\/>lft)\{\ \ \ \textcolor{comment}{/*\ zig-\/zig\ */}}
+\DoxyCodeLine{00203\ \ \ \ rotate\_right(gx,\ p\_stack);}
+\DoxyCodeLine{00204\ \ \ \ rotate\_right(gx,\ p\_stack);}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00207\ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ zig-\/zag\ */}}
+\DoxyCodeLine{00208\ \ \ \ \ \ rotate\_right(px,\ p\_stack);}
+\DoxyCodeLine{00209\ \ \ \ \ \ rotate\_left(gx,\ p\_stack);}
+\DoxyCodeLine{00210\ \ \ \ \}}
+\DoxyCodeLine{00211\ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \textcolor{comment}{/*\ 'at'\ is\ a\ right\ child\ */}}
+\DoxyCodeLine{00213\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (gx\ ==\ 0)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ zig\ */}}
+\DoxyCodeLine{00214\ \ \ \ \ rotate\_left(1,\ p\_stack);}
+\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (p\_stack[px]\ ==\ p\_stack[gx]-\/>rt)}
+\DoxyCodeLine{00216\ \ \ \ \ \{\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ zig-\/zig\ */}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ rotate\_left(gx,\ p\_stack);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ rotate\_left(gx,\ p\_stack);}
+\DoxyCodeLine{00219\ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00221\ \ \ \ \ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ zig-\/zag\ */}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ rotate\_left(px,\ p\_stack);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ rotate\_right(gx,\ p\_stack);}
+\DoxyCodeLine{00224\ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \}}
+
+\end{DoxyCode}

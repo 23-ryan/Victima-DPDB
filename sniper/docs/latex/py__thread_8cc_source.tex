@@ -1,0 +1,157 @@
+\doxysection{py\+\_\+thread.\+cc}
+\label{py__thread_8cc_source}\index{common/scripting/py\_thread.cc@{common/scripting/py\_thread.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_py.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}scheduler.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00008\ getNthreads(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{keywordflow}{return}\ PyInt\_FromLong(Sim()-\/>getThreadManager()-\/>getNumThreads());}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00014\ getThreadAppid(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ thread\_id\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}l"{}},\ \&thread\_id))}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ >=\ Sim()-\/>getThreadManager()-\/>getNumThreads())}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ thread\ id"{}});}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id);}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{if}\ (!thread)}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ thread\ id"{}});}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00032\ \ \ \ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{return}\ PyInt\_FromLong(thread-\/>getAppId());}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00038\ getThreadName(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ thread\_id\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}l"{}},\ \&thread\_id))}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ >=\ Sim()-\/>getThreadManager()-\/>getNumThreads())}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ thread\ id"{}});}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00049\ \ \ \ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id);}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{if}\ (!thread)}
+\DoxyCodeLine{00053\ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ thread\ id"{}});}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00056\ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordflow}{return}\ Py\_BuildValue(\textcolor{stringliteral}{"{}s"{}},\ thread-\/>getName().c\_str());}
+\DoxyCodeLine{00059\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00062\ getThreadAffinity(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ thread\_id\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}l"{}},\ \&thread\_id))}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ >=\ Sim()-\/>getThreadManager()-\/>getNumThreads())}
+\DoxyCodeLine{00070\ \ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ thread\ id"{}});}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ cpu\_set\_t\ mask;}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordtype}{bool}\ success\ =\ Sim()-\/>getThreadManager()-\/>getScheduler()-\/>threadGetAffinity(thread\_id,\ \textcolor{keyword}{sizeof}(cpu\_set\_t),\ \&mask);}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{if}\ (!success)}
+\DoxyCodeLine{00078\ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}threadGetAffinity()\ failed"{}});}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00081\ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ PyObject\ *res\ =\ PyTuple\_New(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ cpu\ =\ 0;\ cpu\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ ++cpu)}
+\DoxyCodeLine{00085\ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ PyObject\ *\_res\ =\ CPU\_ISSET(cpu,\ \&mask)\ ?\ Py\_True\ :\ Py\_False;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ Py\_INCREF(\_res);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ PyTuple\_SET\_ITEM(res,\ cpu,\ \_res);}
+\DoxyCodeLine{00089\ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{static}\ PyObject\ *}
+\DoxyCodeLine{00095\ setThreadAffinity(PyObject\ *self,\ PyObject\ *args)}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ thread\_id\ =\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00098\ \ \ \ PyObject\ *py\_mask;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{if}\ (!PyArg\_ParseTuple(args,\ \textcolor{stringliteral}{"{}lO"{}},\ \&thread\_id,\ \&py\_mask))}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ >=\ Sim()-\/>getThreadManager()-\/>getNumThreads())}
+\DoxyCodeLine{00104\ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Invalid\ thread\ id"{}});}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00107\ \ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{if}\ (!PySequence\_Check(py\_mask))}
+\DoxyCodeLine{00110\ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Second\ argument\ must\ be\ iteratable"{}});}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00113\ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keywordflow}{if}\ (PySequence\_Size(py\_mask)\ >\ (Py\_ssize\_t)Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00116\ \ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ PyErr\_SetString(PyExc\_ValueError,\ \textcolor{stringliteral}{"{}Core\ mask\ is\ longer\ than\ number\ of\ available\ cores"{}});}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00119\ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ cpu\_set\_t\ mask;}
+\DoxyCodeLine{00122\ \ \ \ CPU\_ZERO(\&mask);}
+\DoxyCodeLine{00123\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ cpu\ =\ 0;\ cpu\ <\ (\textcolor{keywordtype}{unsigned}\ int)PySequence\_Size(py\_mask)\ \&\&\ cpu\ <\ 8*\textcolor{keyword}{sizeof}(cpu\_set\_t);\ ++cpu)}
+\DoxyCodeLine{00124\ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ PyObject\ *item\ =\ PySequence\_ITEM(py\_mask,\ cpu);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (PyObject\_IsTrue(item))}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ CPU\_SET(cpu,\ \&mask);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ Py\_DECREF(item);}
+\DoxyCodeLine{00129\ \ \ \ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordtype}{bool}\ result\ =\ Sim()-\/>getThreadManager()-\/>getScheduler()-\/>threadSetAffinity(INVALID\_THREAD\_ID,\ thread\_id,\ \textcolor{keyword}{sizeof}(cpu\_set\_t),\ \&mask);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{if}\ (result)}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ Py\_RETURN\_TRUE;}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ Py\_RETURN\_FALSE;}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{keyword}{static}\ PyMethodDef\ PyThreadMethods[]\ =\ \{}
+\DoxyCodeLine{00140\ \ \ \ \{\ \textcolor{stringliteral}{"{}get\_nthreads"{}},\ getNthreads,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ number\ of\ threads"{}}\ \},}
+\DoxyCodeLine{00141\ \ \ \ \{\ \textcolor{stringliteral}{"{}get\_thread\_appid"{}},\ getThreadAppid,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ application\ ID\ for\ a\ thread"{}}\ \},}
+\DoxyCodeLine{00142\ \ \ \ \{\ \textcolor{stringliteral}{"{}get\_thread\_name"{}},\ getThreadName,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ thread\ name"{}}\ \},}
+\DoxyCodeLine{00143\ \ \ \ \{\ \textcolor{stringliteral}{"{}get\_thread\_affinity"{}},\ getThreadAffinity,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Get\ thread\ affinity"{}}\ \},}
+\DoxyCodeLine{00144\ \ \ \ \{\ \textcolor{stringliteral}{"{}set\_thread\_affinity"{}},\ setThreadAffinity,\ METH\_VARARGS,\ \textcolor{stringliteral}{"{}Set\ thread\ affinity"{}}\ \},}
+\DoxyCodeLine{00145\ \ \ \ \{\ NULL,\ NULL,\ 0,\ NULL\ \}\ \textcolor{comment}{/*\ Sentinel\ */}}
+\DoxyCodeLine{00146\ \};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keywordtype}{void}\ HooksPy::PyThread::setup(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00149\ \{}
+\DoxyCodeLine{00150\ \ \ \ Py\_InitModule(\textcolor{stringliteral}{"{}sim\_thread"{}},\ PyThreadMethods);}
+\DoxyCodeLine{00151\ \}}
+
+\end{DoxyCode}

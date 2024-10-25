@@ -1,0 +1,84 @@
+\doxysection{cache\+\_\+set.\+h}
+\label{cache__set_8h_source}\index{common/core/memory\_subsystem/cache/cache\_set.h@{common/core/memory\_subsystem/cache/cache\_set.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ CACHE\_SET\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ CACHE\_SET\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache\_block\_info.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cache\_base.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}random.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Per-\/cache\ object\ to\ store\ replacement-\/policy\ related\ info\ (e.g.\ statistics),}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ can\ collect\ data\ from\ all\ CacheSet*\ objects\ which\ are\ per\ set\ and\ implement\ the\ actual\ replacement\ policy}}
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }CacheSetInfo}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~CacheSetInfo()\ \{\}}
+\DoxyCodeLine{00019\ \};}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ Everything\ related\ to\ cache\ sets}}
+\DoxyCodeLine{00022\ \textcolor{keyword}{class\ }CacheSet}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{static}\ CacheSet*\ createCacheSet(String\ cfgname,\ core\_id\_t\ core\_id,\ String\ replacement\_policy,\ CacheBase::cache\_t\ cache\_type,\ UInt32\ associativity,\ UInt32\ blocksize,\ CacheSetInfo*\ set\_info\ =\ NULL,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keyword}{static}\ CacheSetInfo*\ createCacheSetInfo(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ String\ replacement\_policy,\ UInt32\ associativity);}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keyword}{static}\ CacheBase::ReplacementPolicy\ parsePolicyType(String\ policy);}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt8\ getNumQBSAttempts(CacheBase::ReplacementPolicy,\ String\ cfgname,\ core\_id\_t\ core\_id);}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ CacheBlockInfo**\ m\_cache\_block\_info\_array;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ m\_blocks;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ UInt32\ m\_associativity;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ UInt32\ m\_blocksize;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_is\_tlb\_set;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ UInt32\ inserts;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ UInt32\ evictions;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ UInt32\ invalidations;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ CacheSet(CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~CacheSet();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ UInt32\ getBlockSize()\ \{\ \textcolor{keywordflow}{return}\ m\_blocksize;\ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ UInt32\ getAssociativity()\ \{\ \textcolor{keywordflow}{return}\ m\_associativity;\ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ Lock\&\ getLock()\ \{\ \textcolor{keywordflow}{return}\ m\_lock;\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ read\_line(UInt32\ line\_index,\ UInt32\ offset,\ Byte\ *out\_buff,\ UInt32\ bytes,\ \textcolor{keywordtype}{bool}\ update\_replacement);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ write\_line(UInt32\ line\_index,\ UInt32\ offset,\ Byte\ *in\_buff,\ UInt32\ bytes,\ \textcolor{keywordtype}{bool}\ update\_replacement);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ CacheBlockInfo*\ find(IntPtr\ tag,\ UInt32*\ line\_index\ =\ NULL);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ invalidate(IntPtr\&\ tag);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ insert(CacheBlockInfo*\ cache\_block\_info,\ Byte*\ fill\_buff,\ \textcolor{keywordtype}{bool}*\ eviction,\ CacheBlockInfo*\ evict\_block\_info,\ Byte*\ evict\_buff,\ CacheCntlr\ *cntlr\ =\ NULL);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ CacheBlockInfo*\ peekBlock(UInt32\ way)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cache\_block\_info\_array[way];\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ getDataPtr(UInt32\ line\_index,\ UInt32\ offset\ =\ 0);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ UInt32\ getBlockSize(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_blocksize;\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt32\ getReplacementIndex(CacheCntlr\ *cntlr)\ =\ 0;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ updateReplacementIndex(UInt32)\ =\ 0;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isValidReplacement(UInt32\ index);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ uint64\_t\ countPageWalkCacheBlocks();}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ uint64\_t\ countSecurityCacheBlocks();}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ uint64\_t\ countExpressiveCacheBlocks();}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ uint64\_t\ countUtopiaCacheBlocks();}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ uint64\_t\ countTLBCacheBlocks();}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CACHE\_SET\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

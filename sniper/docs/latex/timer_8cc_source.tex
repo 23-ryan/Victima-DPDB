@@ -1,0 +1,165 @@
+\doxysection{timer.\+cc}
+\label{timer_8cc_source}\index{common/misc/timer.cc@{common/misc/timer.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <execinfo.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Define\ to\ handle\ processor\ switches\ using\ cpuid\ and\ a\ clock\_gettime()\ fallback\ when\ a\ switch\ is\ detected.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ By\ default,\ only\ the\ faster\ rdtsc\ is\ used,\ but\ this\ can\ give\ errors\ when\ a\ thread\ switches\ cores\ while\ timing.}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\#define\ TIMER\_TRACK\_CPUID}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ Timer::RdtscSpeed\ Timer::rdtsc\_speed\ =\ 0;}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ UInt64\ rdtsc(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ UInt32\ lo,\ hi;}
+\DoxyCodeLine{00019\ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_\ (}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}rdtsc\(\backslash\)n"{}}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}=a"{}}\ (lo),\ \textcolor{stringliteral}{"{}=d"{}}\ (hi)}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ :}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}\%ebx"{}},\ \textcolor{stringliteral}{"{}\%ecx"{}}\ );}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt64)hi\ <<\ 32\ |\ lo;}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{inline}\ UInt64\ rdtsc\_and\_cpuid(UInt32\ *\textcolor{keywordtype}{id})}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ UInt32\ lo,\ hi;}
+\DoxyCodeLine{00030\ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_\ (}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}mov\ \$0xb,\ \%\%eax\(\backslash\)n"{}}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cpuid\(\backslash\)n"{}}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}mov\ \%\%edx,\ \%0\(\backslash\)n"{}}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}rdtsc\(\backslash\)n"{}}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}=r"{}}\ (*\textcolor{keywordtype}{id}),\ \textcolor{stringliteral}{"{}=a"{}}\ (lo),\ \textcolor{stringliteral}{"{}=d"{}}\ (hi)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ :}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}\%ebx"{}},\ \textcolor{stringliteral}{"{}\%ecx"{}}\ );}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt64)hi\ <<\ 32\ |\ lo;}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ Timer::Timer()}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{if}\ (rdtsc\_speed\ ==\ 0)\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ UInt32\ id1,\ id2;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ UInt64\ t\_start\ =\ now(),\ r\_start\ =\ rdtsc\_and\_cpuid(\&id1);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ usleep(100000);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ UInt64\ t\_end\ =\ now(),\ r\_end\ =\ rdtsc\_and\_cpuid(\&id2);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ rdtsc\_speed\ =\ RdtscSpeed(r\_end\ -\/\ r\_start)\ /\ (t\_end\ -\/\ t\_start);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (id1\ !=\ id2);}
+\DoxyCodeLine{00051\ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ start();}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ Timer::\string~Timer()}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ UInt64\ Timer::now()}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ timespec\ t;}
+\DoxyCodeLine{00062\ \ \ \ clock\_gettime(CLOCK\_REALTIME,\ \&t);}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{return}\ (UInt64(t.tv\_sec)\ *\ 1000000000)\ +\ t.tv\_nsec;}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keywordtype}{void}\ Timer::start()}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIMER\_TRACK\_CPUID}}
+\DoxyCodeLine{00069\ \ \ \ t\_start\ =\ now();}
+\DoxyCodeLine{00070\ \ \ \ r\_start\ =\ rdtsc\_and\_cpuid(\&cpu\_start);}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00072\ \ \ \ t\_start\ =\ rdtsc();}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00074\ \ \ \ switched\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ UInt64\ Timer::getTime()}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\ \ \ \#ifdef\ TIMER\_TRACK\_CPUID}}
+\DoxyCodeLine{00080\ \ \ \ UInt32\ cpu\_now;}
+\DoxyCodeLine{00081\ \ \ \ UInt64\ r\_now\ =\ rdtsc\_and\_cpuid(\&cpu\_now);}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{if}\ (cpu\_now\ ==\ cpu\_start)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ RdtscSpeed::floor((r\_now\ -\/\ r\_start)\ /\ rdtsc\_speed);}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ switched\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ now()\ -\/\ t\_start;}
+\DoxyCodeLine{00088\ \ \ \ \}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{return}\ RdtscSpeed::floor((rdtsc()\ -\/\ t\_start)\ /\ rdtsc\_speed);}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{comment}{/*\ Don't\ use\ a\ std::vector\ or\ anything\ fancy\ here,\ as\ this\ may\ be\ initialized\ *after*}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ one\ of\ the\ timers,\ removing\ them\ from\ the\ list\ */}}
+\DoxyCodeLine{00097\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ MAX\_TIMERS\ =\ 1024;}
+\DoxyCodeLine{00098\ \textcolor{keyword}{static}\ TotalTimer*\ alltimers[MAX\_TIMERS];}
+\DoxyCodeLine{00099\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ numtimers\ =\ 0;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ TotalTimer::TotalTimer(String\ \_name,\ UInt32\ \_ignore)}
+\DoxyCodeLine{00102\ \ \ \ :\ name(\_name),\ total(0),\ n(0),\ max(0),\ n\_switched(0),\ backtrace\_ignore(\_ignore)}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keywordflow}{if}\ (numtimers\ <\ MAX\_TIMERS)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ alltimers[numtimers++]\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{00106\ \ \ \ backtrace\_n\ =\ backtrace(backtrace\_buffer,\ BACKTRACE\_SIZE);}
+\DoxyCodeLine{00107\ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ TotalTimer::\string~TotalTimer()}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keywordtype}{void}\ TotalTimer::report(FILE*\ fp)}
+\DoxyCodeLine{00114\ \{}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{comment}{//printf("{}[TIMER]\ <\%-\/20s>\ \%6.1f\ s,\ \%lu\ calls,\ avg\ \%.0f\ us/call,\ max\ \%.0f\ us,\ switched\ =\ \%.3f\%\%\ (\%lu)\ "{},}}
+\DoxyCodeLine{00116\ \ \ \ \textcolor{comment}{//\ \ \ name.c\_str(),\ total\ /\ 1e9,\ n,\ total\ /\ (n\ ?\ n\ :\ 1)\ /\ 1e3,\ max\ /\ 1e3,\ 100.\ *\ n\_switched\ /\ n,\ n\_switched);}}
+\DoxyCodeLine{00117\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRIu64,\ total,\ n,\ max,\ n\_switched);}
+\DoxyCodeLine{00118\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ i\ =\ backtrace\_ignore;\ i\ <\ backtrace\_ignore\ +\ 6;\ ++i)}
+\DoxyCodeLine{00119\ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRIuPTR,\ i\ <\ backtrace\_n\ ?\ (intptr\_t)backtrace\_buffer[i]\ :\ 0);}
+\DoxyCodeLine{00120\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\ \%s\(\backslash\)n"{}},\ name.c\_str());}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{void}\ TotalTimer::reports(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordflow}{if}\ (numtimers\ >\ 0)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *\ timersfile\ =\ strdup(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}sim\_timers.out"{}}).c\_str());}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ FILE*\ fp\ =\ fopen(timersfile,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIuPTR\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}},\ (intptr\_t)rdtsc);}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ numtimers;\ ++i)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ alltimers[i]-\/>report(fp);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ fclose(fp);}
+\DoxyCodeLine{00132\ \ \ \ \}}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{static}\ UInt64\ getHashByStacktrace(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ SIZE\ =\ 12;}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordtype}{void}\ *\ buffer[SIZE];}
+\DoxyCodeLine{00140\ \ \ \ \textcolor{keywordtype}{int}\ n\ =\ backtrace(buffer,\ SIZE);}
+\DoxyCodeLine{00141\ \ \ \ UInt64\ hash\ =\ 1861;}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ n;\ ++i)}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ hash\ =\ ((hash\ *\ \_\_UINT64\_C(1994945959))\ +\ (UInt64)buffer[i])\ \%\ \_\_UINT64\_C(49492920901);}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{return}\ hash;}
+\DoxyCodeLine{00145\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{comment}{/*\ Initialize\ manually,\ as\ some\ objects\ that\ are\ also\ static\ use\ us\ but\ may\ be\ initialized\ earlier.\ */}}
+\DoxyCodeLine{00148\ \textcolor{keyword}{static}\ std::map<UInt64,\ TotalTimer*>\ *\ totaltimershash\ =\ NULL;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ TotalTimer*\ TotalTimer::getTimerByStacktrace(String\ name)}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{if}\ (!\ totaltimershash)}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ totaltimershash\ =\ \textcolor{keyword}{new}\ std::map<UInt64,\ TotalTimer*>();}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ UInt64\ hash\ =\ getHashByStacktrace();}
+\DoxyCodeLine{00156\ \ \ \ \textcolor{keywordflow}{if}\ (totaltimershash-\/>count(hash)\ ==\ 0)}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ (*totaltimershash)[hash]\ =\ \textcolor{keyword}{new}\ TotalTimer(name,\ 1);}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordflow}{return}\ totaltimershash-\/>at(hash);}
+\DoxyCodeLine{00159\ \}}
+
+\end{DoxyCode}

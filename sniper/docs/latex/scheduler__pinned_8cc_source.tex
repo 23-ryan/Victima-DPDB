@@ -1,0 +1,61 @@
+\doxysection{scheduler\+\_\+pinned.\+cc}
+\label{scheduler__pinned_8cc_source}\index{common/scheduler/scheduler\_pinned.cc@{common/scheduler/scheduler\_pinned.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}scheduler\_pinned.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ SchedulerPinned::SchedulerPinned(ThreadManager\ *thread\_manager)}
+\DoxyCodeLine{00005\ \ \ \ :\ SchedulerPinnedBase(thread\_manager,\ SubsecondTime::NS(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}scheduler/pinned/quantum"{}})))}
+\DoxyCodeLine{00006\ \ \ \ ,\ m\_interleaving(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}scheduler/pinned/interleaving"{}}))}
+\DoxyCodeLine{00007\ \ \ \ ,\ m\_next\_core(0)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ m\_core\_mask.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00012\ \ \ \ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ m\_core\_mask[core\_id]\ =\ Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}scheduler/pinned/core\_mask"{}},\ core\_id);}
+\DoxyCodeLine{00014\ \ \ \ \}}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ core\_id\_t\ SchedulerPinned::getNextCore(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})}
+\DoxyCodeLine{00020\ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ core\_id\ +=\ m\_interleaving;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (core\_id\ >=\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores())}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ core\_id\ \%=\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ core\_id\ +=\ 1;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ core\_id\ \%=\ m\_interleaving;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_mask[core\_id])}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_id;}
+\DoxyCodeLine{00030\ \ \ \ \}}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ core\_id\_t\ SchedulerPinned::getFreeCore(core\_id\_t\ core\_first)}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ core\_id\_t\ core\_next\ =\ core\_first;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordflow}{do}}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_thread\_running[core\_next]\ ==\ INVALID\_THREAD\_ID\ \&\&\ m\_core\_mask[core\_next])}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_next;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ core\_next\ =\ getNextCore(core\_next);}
+\DoxyCodeLine{00043\ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{while}(core\_next\ !=\ core\_first);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \textcolor{keywordflow}{return}\ core\_first;}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ SchedulerPinned::threadSetInitialAffinity(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \ core\_id\_t\ core\_id\ =\ getFreeCore(m\_next\_core);}
+\DoxyCodeLine{00052\ \ \ \ m\_next\_core\ =\ getNextCore(core\_id);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ m\_thread\_info[thread\_id].setAffinitySingle(core\_id);}
+\DoxyCodeLine{00055\ \}}
+
+\end{DoxyCode}

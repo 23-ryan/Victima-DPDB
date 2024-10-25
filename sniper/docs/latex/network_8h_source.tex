@@ -1,0 +1,130 @@
+\doxysection{network.\+h}
+\label{network_8h_source}\index{common/network/network.h@{common/network/network.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ NETWORK\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ NETWORK\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}packet\_type.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}cond.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}transport.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}network\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ TODO:\ Do\ we\ need\ to\ support\ multicast\ to\ some\ (but\ not\ all)}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ destinations?}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00019\ \textcolor{keyword}{class\ }Network;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ -\/-\/\ Network\ Packets\ -\/-\/\ //}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }NetPacket}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00026\ \ \ \ subsecond\_time\_t\ start\_time;}
+\DoxyCodeLine{00027\ \ \ \ subsecond\_time\_t\ time;}
+\DoxyCodeLine{00028\ \ \ \ subsecond\_time\_t\ queue\_delay;}
+\DoxyCodeLine{00029\ \ \ \ PacketType\ type;}
+\DoxyCodeLine{00030\ \ \ \ SInt32\ sender;}
+\DoxyCodeLine{00031\ \ \ \ SInt32\ receiver;}
+\DoxyCodeLine{00032\ \ \ \ UInt32\ length;}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *data;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ NetPacket();}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keyword}{explicit}\ NetPacket(Byte*);}
+\DoxyCodeLine{00037\ \ \ \ NetPacket(SubsecondTime\ time,\ PacketType\ type,\ SInt32\ sender,}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ SInt32\ receiver,\ UInt32\ length,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *data);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ UInt32\ bufferSize()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00041\ \ \ \ Byte\ *makeBuffer()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SInt32\ BROADCAST\ =\ 0xDEADBABE;}
+\DoxyCodeLine{00044\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{typedef}\ std::list<NetPacket>\ NetQueue;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ -\/-\/\ Network\ Matches\ -\/-\/\ //}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{class\ }NetMatch}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ std::vector<SInt32>\ senders;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ std::vector<PacketType>\ types;}
+\DoxyCodeLine{00055\ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ -\/-\/\ Network\ -\/-\/\ //}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ This\ is\ the\ managing\ class\ that\ interacts\ with\ the\ physical}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ transport\ layer\ to\ forward\ packets\ from\ source\ to\ destination.}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{class\ }Network}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ Ctor,\ housekeeping,\ etc.\ -\/-\/\ //}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ Network(Core\ *core);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \string~Network();}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ Core\ *getCore()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_core;\ \}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ Transport::Node\ *getTransport()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_transport;\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ void\ (*NetworkCallback)(\textcolor{keywordtype}{void}*,\ NetPacket);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ registerCallback(PacketType\ type,}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NetworkCallback\ callback,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *obj);}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ unregisterCallback(PacketType\ type);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ netPullFromTransport();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ Main\ interface\ -\/-\/\ //}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ SInt32\ netSend(NetPacket\&\ packet);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ NetPacket\ netRecv(\textcolor{keyword}{const}\ NetMatch\ \&match,\ UInt64\ timeout\_ns\ =\ 0);}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ Wrappers\ -\/-\/\ //}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ SInt32\ netSend(SInt32\ dest,\ PacketType\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buf,\ UInt32\ len);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ SInt32\ netBroadcast(PacketType\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buf,\ UInt32\ len);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ NetPacket\ netRecv(SInt32\ src,\ PacketType\ type,\ UInt64\ timeout\_ns\ =\ 0);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ NetPacket\ netRecvFrom(SInt32\ src,\ UInt64\ timeout\_ns\ =\ 0);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ NetPacket\ netRecvType(PacketType\ type,\ UInt64\ timeout\_ns\ =\ 0);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enableModels();}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disableModels();}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/\ Network\ Models\ -\/-\/\ //}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ NetworkModel*\ getNetworkModelFromPacketType(PacketType\ packet\_type);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{comment}{//\ Modeling}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ UInt32\ getModeledLength(\textcolor{keyword}{const}\ NetPacket\&\ pkt);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ NetworkModel\ *\ \_models[NUM\_STATIC\_NETWORKS];}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ NetworkCallback\ *\_callbacks;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ **\_callbackObjs;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ Core\ *\_core;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ Transport::Node\ *\_transport;}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ SInt32\ \_tid;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ SInt32\ \_numMod;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ NetQueue\ \_netQueue;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ Lock\ \_netQueueLock;}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ ConditionVariable\ \_netQueueCond;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ forwardPacket(NetPacket\&\ packet);}
+\DoxyCodeLine{00122\ \};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ NETWORK\_H}}
+
+\end{DoxyCode}

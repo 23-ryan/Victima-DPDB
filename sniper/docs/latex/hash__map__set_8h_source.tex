@@ -1,0 +1,63 @@
+\doxysection{hash\+\_\+map\+\_\+set.\+h}
+\label{hash__map__set_8h_source}\index{common/misc/hash\_map\_set.h@{common/misc/hash\_map\_set.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_HASH\_MAP\_SET\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_HASH\_MAP\_SET\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }HashMapSet}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ std::set<T>**\ m\_set\_list;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ UInt32\ m\_num\_buckets;}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ UInt32\ (*m\_hash\_fn)(T,\ UInt32,\ UInt32);}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ UInt32\ m\_hash\_fn\_param;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ HashMapSet(UInt32\ num\_buckets,\ UInt32\ (*hash\_fn)(T,\ UInt32,\ UInt32),\ UInt32\ hash\_fn\_param)\ :}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ m\_num\_buckets(num\_buckets),}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ m\_hash\_fn(hash\_fn),}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ m\_hash\_fn\_param(hash\_fn\_param)}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ m\_set\_list\ =\ \textcolor{keyword}{new}\ std::set<T>*[m\_num\_buckets];}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_buckets;\ i++)}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ m\_set\_list[i]\ =\ \textcolor{keyword}{new}\ std::set<T>;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \string~HashMapSet()\ \{\}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ insert(T\ elem)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ UInt32\ bucket\ =\ m\_hash\_fn(elem,\ m\_hash\_fn\_param,\ m\_num\_buckets);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ m\_set\_list[bucket]-\/>insert(elem);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ LOG\_ASSERT\_WARNING(m\_set\_list[bucket]-\/>size()\ <=\ 100,}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ "{}m\_set\_list[\%u]\ :\ (\%u\ >\ 100)"{},\ bucket,\ m\_set\_list[bucket]-\/>size());}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ UInt32\ count(T\ elem)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ UInt32\ bucket\ =\ m\_hash\_fn(elem,\ m\_hash\_fn\_param,\ m\_num\_buckets);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_set\_list[bucket]-\/>count(elem);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ erase(T\ elem)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ UInt32\ bucket\ =\ m\_hash\_fn(elem,\ m\_hash\_fn\_param,\ m\_num\_buckets);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ m\_set\_list[bucket]-\/>erase(elem);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clear()}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_buckets;\ i++)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ m\_set\_list[i]-\/>clear();}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_HASH\_MAP\_SET\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

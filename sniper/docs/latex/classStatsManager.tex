@@ -1,0 +1,558 @@
+\doxysection{Stats\+Manager Class Reference}
+\label{classStatsManager}\index{StatsManager@{StatsManager}}
+
+
+{\ttfamily \#include $<$stats.\+h$>$}
+
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ event\+\_\+type\+\_\+t} \{ \newline
+\textbf{ EVENT\+\_\+\+MARKER} = 1
+, \textbf{ EVENT\+\_\+\+THREAD\+\_\+\+NAME}
+, \textbf{ EVENT\+\_\+\+APP\+\_\+\+START}
+, \textbf{ EVENT\+\_\+\+APP\+\_\+\+EXIT}
+, \newline
+\textbf{ EVENT\+\_\+\+THREAD\+\_\+\+CREATE}
+, \textbf{ EVENT\+\_\+\+THREAD\+\_\+\+EXIT}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Stats\+Manager} ()
+\item 
+\textbf{ $\sim$\+Stats\+Manager} ()
+\item 
+void \textbf{ init} ()
+\item 
+void \textbf{ record\+Stats} (String prefix)
+\item 
+void \textbf{ register\+Metric} (\textbf{ Stats\+Metric\+Base} $\ast$metric)
+\item 
+\textbf{ Stats\+Metric\+Base} $\ast$ \textbf{ get\+Metric\+Object} (String object\+Name, \textbf{ UInt32} index, String metric\+Name)
+\item 
+void \textbf{ log\+Topology} (String component, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ core\+\_\+id\+\_\+t} master\+\_\+id)
+\item 
+void \textbf{ log\+Marker} (\textbf{ Subsecond\+Time} time, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ UInt64} value0, \textbf{ UInt64} value1, const char $\ast$description)
+\item 
+void \textbf{ log\+Event} (\textbf{ event\+\_\+type\+\_\+t} event, \textbf{ Subsecond\+Time} time, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ UInt64} value0, \textbf{ UInt64} value1, const char $\ast$description)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\+::unordered\+\_\+map$<$ \textbf{ UInt64}, \textbf{ Stats\+Metric\+Base} $\ast$ $>$ \textbf{ Stats\+Index\+List}
+\item 
+typedef std\+::pair$<$ \textbf{ UInt64}, \textbf{ Stats\+Index\+List} $>$ \textbf{ Stats\+Metric\+With\+Key}
+\item 
+typedef std\+::unordered\+\_\+map$<$ std\+::string, \textbf{ Stats\+Metric\+With\+Key} $>$ \textbf{ Stats\+Metric\+List}
+\item 
+typedef std\+::unordered\+\_\+map$<$ std\+::string, \textbf{ Stats\+Metric\+List} $>$ \textbf{ Stats\+Object\+List}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \textbf{ busy\+\_\+handler} (int count)
+\item 
+void \textbf{ record\+Metric\+Name} (\textbf{ UInt64} key\+Id, std\+::string object\+Name, std\+::string metric\+Name)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static int \textbf{ \+\_\+\+\_\+busy\+\_\+handler} (void $\ast$self, int count)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+keyid}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+prefixnum}
+\item 
+sqlite3 $\ast$ \textbf{ m\+\_\+db}
+\item 
+sqlite3\+\_\+stmt $\ast$ \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+name}
+\item 
+sqlite3\+\_\+stmt $\ast$ \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+prefix}
+\item 
+sqlite3\+\_\+stmt $\ast$ \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+value}
+\item 
+\textbf{ Stats\+Object\+List} \textbf{ m\+\_\+objects}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 72} of file \textbf{ stats.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{StatsManager@{StatsManager}!StatsIndexList@{StatsIndexList}}
+\index{StatsIndexList@{StatsIndexList}!StatsManager@{StatsManager}}
+\doxysubsubsection{StatsIndexList}
+{\footnotesize\ttfamily \label{classStatsManager_a430ecd78a98ea76a348a16739b0d4b4a} 
+std\+::unordered\+\_\+map$<$\textbf{ UInt64}, \textbf{ Stats\+Metric\+Base} $\ast$$>$ \textbf{ Stats\+Manager\+::\+Stats\+Index\+List}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 106} of file \textbf{ stats.\+h}.
+
+\index{StatsManager@{StatsManager}!StatsMetricList@{StatsMetricList}}
+\index{StatsMetricList@{StatsMetricList}!StatsManager@{StatsManager}}
+\doxysubsubsection{StatsMetricList}
+{\footnotesize\ttfamily \label{classStatsManager_a7485ffbb34eae2b289d83edf7247d51c} 
+std\+::unordered\+\_\+map$<$std\+::string, \textbf{ Stats\+Metric\+With\+Key}$>$ \textbf{ Stats\+Manager\+::\+Stats\+Metric\+List}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 108} of file \textbf{ stats.\+h}.
+
+\index{StatsManager@{StatsManager}!StatsMetricWithKey@{StatsMetricWithKey}}
+\index{StatsMetricWithKey@{StatsMetricWithKey}!StatsManager@{StatsManager}}
+\doxysubsubsection{StatsMetricWithKey}
+{\footnotesize\ttfamily \label{classStatsManager_a940b06a6055311f1dcf644674813de5a} 
+std\+::pair$<$\textbf{ UInt64}, \textbf{ Stats\+Index\+List}$>$ \textbf{ Stats\+Manager\+::\+Stats\+Metric\+With\+Key}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 107} of file \textbf{ stats.\+h}.
+
+\index{StatsManager@{StatsManager}!StatsObjectList@{StatsObjectList}}
+\index{StatsObjectList@{StatsObjectList}!StatsManager@{StatsManager}}
+\doxysubsubsection{StatsObjectList}
+{\footnotesize\ttfamily \label{classStatsManager_a88cc1865aa1452c09abcc1a6985c53b7} 
+std\+::unordered\+\_\+map$<$std\+::string, \textbf{ Stats\+Metric\+List}$>$ \textbf{ Stats\+Manager\+::\+Stats\+Object\+List}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 109} of file \textbf{ stats.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{StatsManager@{StatsManager}!event\_type\_t@{event\_type\_t}}
+\index{event\_type\_t@{event\_type\_t}!StatsManager@{StatsManager}}
+\doxysubsubsection{event\_type\_t}
+{\footnotesize\ttfamily \label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+enum \textbf{ Stats\+Manager\+::event\+\_\+type\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{EVENT\_MARKER@{EVENT\_MARKER}!StatsManager@{StatsManager}}\index{StatsManager@{StatsManager}!EVENT\_MARKER@{EVENT\_MARKER}}}\label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+EVENT\+\_\+\+MARKER&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{EVENT\_THREAD\_NAME@{EVENT\_THREAD\_NAME}!StatsManager@{StatsManager}}\index{StatsManager@{StatsManager}!EVENT\_THREAD\_NAME@{EVENT\_THREAD\_NAME}}}\label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+EVENT\+\_\+\+THREAD\+\_\+\+NAME&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{EVENT\_APP\_START@{EVENT\_APP\_START}!StatsManager@{StatsManager}}\index{StatsManager@{StatsManager}!EVENT\_APP\_START@{EVENT\_APP\_START}}}\label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+EVENT\+\_\+\+APP\+\_\+\+START&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{EVENT\_APP\_EXIT@{EVENT\_APP\_EXIT}!StatsManager@{StatsManager}}\index{StatsManager@{StatsManager}!EVENT\_APP\_EXIT@{EVENT\_APP\_EXIT}}}\label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+EVENT\+\_\+\+APP\+\_\+\+EXIT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{EVENT\_THREAD\_CREATE@{EVENT\_THREAD\_CREATE}!StatsManager@{StatsManager}}\index{StatsManager@{StatsManager}!EVENT\_THREAD\_CREATE@{EVENT\_THREAD\_CREATE}}}\label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+EVENT\+\_\+\+THREAD\+\_\+\+CREATE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{EVENT\_THREAD\_EXIT@{EVENT\_THREAD\_EXIT}!StatsManager@{StatsManager}}\index{StatsManager@{StatsManager}!EVENT\_THREAD\_EXIT@{EVENT\_THREAD\_EXIT}}}\label{classStatsManager_a81be52dd0c7f1da382838ead86239536} 
+EVENT\+\_\+\+THREAD\+\_\+\+EXIT&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 76} of file \textbf{ stats.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{StatsManager@{StatsManager}!StatsManager@{StatsManager}}
+\index{StatsManager@{StatsManager}!StatsManager@{StatsManager}}
+\doxysubsubsection{StatsManager()}
+{\footnotesize\ttfamily \label{classStatsManager_a80863381689e33cf13af38fbcaa6944c} 
+Stats\+Manager\+::\+Stats\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ get\+Wallclock\+Time\+Callback()}, \textbf{ init()}, and \textbf{ register\+Metric()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_a80863381689e33cf13af38fbcaa6944c_cgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!````~StatsManager@{$\sim$StatsManager}}
+\index{````~StatsManager@{$\sim$StatsManager}!StatsManager@{StatsManager}}
+\doxysubsubsection{$\sim$StatsManager()}
+{\footnotesize\ttfamily \label{classStatsManager_ae629f2b09e4967df8495c408397312c4} 
+Stats\+Manager\+::$\sim$\+Stats\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ m\+\_\+db}, \textbf{ m\+\_\+objects}, \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+name}, \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+prefix}, and \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+value}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{StatsManager@{StatsManager}!\_\_busy\_handler@{\_\_busy\_handler}}
+\index{\_\_busy\_handler@{\_\_busy\_handler}!StatsManager@{StatsManager}}
+\doxysubsubsection{\_\_busy\_handler()}
+{\footnotesize\ttfamily \label{classStatsManager_ac9dde14183fc524f5b78ffe6865bfa8a} 
+static int Stats\+Manager\+::\+\_\+\+\_\+busy\+\_\+handler (\begin{DoxyParamCaption}\item[{void $\ast$}]{self}{, }\item[{int}]{count}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ init()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_ac9dde14183fc524f5b78ffe6865bfa8a_icgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!busy\_handler@{busy\_handler}}
+\index{busy\_handler@{busy\_handler}!StatsManager@{StatsManager}}
+\doxysubsubsection{busy\_handler()}
+{\footnotesize\ttfamily \label{classStatsManager_a4ee8b5618d8d9675187e1230473ada02} 
+int Stats\+Manager\+::busy\+\_\+handler (\begin{DoxyParamCaption}\item[{int}]{count}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 117} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING}.
+
+\index{StatsManager@{StatsManager}!getMetricObject@{getMetricObject}}
+\index{getMetricObject@{getMetricObject}!StatsManager@{StatsManager}}
+\doxysubsubsection{getMetricObject()}
+{\footnotesize\ttfamily \label{classStatsManager_ac97440945c01e8f52a57ee29ffa1e82b} 
+\textbf{ Stats\+Metric\+Base} $\ast$ Stats\+Manager\+::get\+Metric\+Object (\begin{DoxyParamCaption}\item[{String}]{object\+Name}{, }\item[{\textbf{ UInt32}}]{index}{, }\item[{String}]{metric\+Name}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 564} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ m\+\_\+objects}.
+
+\index{StatsManager@{StatsManager}!init@{init}}
+\index{init@{init}!StatsManager@{StatsManager}}
+\doxysubsubsection{init()}
+{\footnotesize\ttfamily \label{classStatsManager_a83508253d60a50b3369135f65f2c0fff} 
+void Stats\+Manager\+::init (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 82} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ \+\_\+\+\_\+busy\+\_\+handler()}, \textbf{ db\+\_\+create\+\_\+stmts}, \textbf{ db\+\_\+insert\+\_\+stmt\+\_\+name}, \textbf{ db\+\_\+insert\+\_\+stmt\+\_\+prefix}, \textbf{ db\+\_\+insert\+\_\+stmt\+\_\+value}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+db}, \textbf{ m\+\_\+objects}, \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+name}, \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+prefix}, \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+value}, and \textbf{ record\+Metric\+Name()}.
+
+
+
+Referenced by \textbf{ Stats\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{classStatsManager_a83508253d60a50b3369135f65f2c0fff_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=316pt]{classStatsManager_a83508253d60a50b3369135f65f2c0fff_icgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!logEvent@{logEvent}}
+\index{logEvent@{logEvent}!StatsManager@{StatsManager}}
+\doxysubsubsection{logEvent()}
+{\footnotesize\ttfamily \label{classStatsManager_aac0f3d0ac261935827e5cf8dd0e4b38e} 
+void Stats\+Manager\+::log\+Event (\begin{DoxyParamCaption}\item[{\textbf{ event\+\_\+type\+\_\+t}}]{event}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ UInt64}}]{value0}{, }\item[{\textbf{ UInt64}}]{value1}{, }\item[{const char $\ast$}]{description}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 590} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ Subsecond\+Time\+::get\+FS()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+db}, and \textbf{ Subsecond\+Time\+::\+Max\+Time()}.
+
+
+
+Referenced by \textbf{ log\+Marker()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_aac0f3d0ac261935827e5cf8dd0e4b38e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=323pt]{classStatsManager_aac0f3d0ac261935827e5cf8dd0e4b38e_icgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!logMarker@{logMarker}}
+\index{logMarker@{logMarker}!StatsManager@{StatsManager}}
+\doxysubsubsection{logMarker()}
+{\footnotesize\ttfamily \label{classStatsManager_a23130aa477487bd8d82388b31edac9ce} 
+void Stats\+Manager\+::log\+Marker (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ UInt64}}]{value0}{, }\item[{\textbf{ UInt64}}]{value1}{, }\item[{const char $\ast$}]{description}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 92} of file \textbf{ stats.\+h}.
+
+
+
+References \textbf{ EVENT\+\_\+\+MARKER}, and \textbf{ log\+Event()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_a23130aa477487bd8d82388b31edac9ce_cgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!logTopology@{logTopology}}
+\index{logTopology@{logTopology}!StatsManager@{StatsManager}}
+\doxysubsubsection{logTopology()}
+{\footnotesize\ttfamily \label{classStatsManager_ab67457dd752d879502b5847ca488991b} 
+void Stats\+Manager\+::log\+Topology (\begin{DoxyParamCaption}\item[{String}]{component}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{master\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 577} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ m\+\_\+db}.
+
+\index{StatsManager@{StatsManager}!recordMetricName@{recordMetricName}}
+\index{recordMetricName@{recordMetricName}!StatsManager@{StatsManager}}
+\doxysubsubsection{recordMetricName()}
+{\footnotesize\ttfamily \label{classStatsManager_a34dd3d3f37f72b13bae1d5790d8786c6} 
+void Stats\+Manager\+::record\+Metric\+Name (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{key\+Id}{, }\item[{std\+::string}]{object\+Name}{, }\item[{std\+::string}]{metric\+Name}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 129} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+name}.
+
+
+
+Referenced by \textbf{ init()}, and \textbf{ register\+Metric()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_a34dd3d3f37f72b13bae1d5790d8786c6_icgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!recordStats@{recordStats}}
+\index{recordStats@{recordStats}!StatsManager@{StatsManager}}
+\doxysubsubsection{recordStats()}
+{\footnotesize\ttfamily \label{classStatsManager_aa1cab04fcbe1b8864922ad4e34077b0b} 
+void Stats\+Manager\+::record\+Stats (\begin{DoxyParamCaption}\item[{String}]{prefix}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 150} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB\+::\+ADDRESS\+\_\+\+REQUEST\+\_\+\+VEC\+\_\+\+MAX}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+PRE\+\_\+\+STAT\+\_\+\+WRITE}, \textbf{ Mem\+Component\+::\+L1\+\_\+\+DCACHE}, \textbf{ Mem\+Component\+::\+L2\+\_\+\+CACHE}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+db}, \textbf{ m\+\_\+objects}, \textbf{ m\+\_\+prefixnum}, \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+prefix}, and \textbf{ m\+\_\+stmt\+\_\+insert\+\_\+value}.
+
+
+
+Referenced by \textbf{ Simulator\+::start()}, and \textbf{ Simulator\+::$\sim$\+Simulator()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=320pt]{classStatsManager_aa1cab04fcbe1b8864922ad4e34077b0b_icgraph}
+\end{center}
+\end{figure}
+\index{StatsManager@{StatsManager}!registerMetric@{registerMetric}}
+\index{registerMetric@{registerMetric}!StatsManager@{StatsManager}}
+\doxysubsubsection{registerMetric()}
+{\footnotesize\ttfamily \label{classStatsManager_a58a495771103134d69587672705fe521} 
+void Stats\+Manager\+::register\+Metric (\begin{DoxyParamCaption}\item[{\textbf{ Stats\+Metric\+Base} $\ast$}]{metric}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 544} of file \textbf{ stats.\+cc}.
+
+
+
+References \textbf{ Stats\+Metric\+Base\+::index}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+db}, \textbf{ m\+\_\+keyid}, \textbf{ m\+\_\+objects}, \textbf{ Stats\+Metric\+Base\+::metric\+Name}, \textbf{ Stats\+Metric\+Base\+::object\+Name}, and \textbf{ record\+Metric\+Name()}.
+
+
+
+Referenced by \textbf{ Stats\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_a58a495771103134d69587672705fe521_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classStatsManager_a58a495771103134d69587672705fe521_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{StatsManager@{StatsManager}!m\_db@{m\_db}}
+\index{m\_db@{m\_db}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_db}
+{\footnotesize\ttfamily \label{classStatsManager_a693f8e7356c838b07f2d6097997e4fa4} 
+sqlite3$\ast$ Stats\+Manager\+::m\+\_\+db\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ init()}, \textbf{ log\+Event()}, \textbf{ log\+Topology()}, \textbf{ record\+Stats()}, \textbf{ register\+Metric()}, and \textbf{ $\sim$\+Stats\+Manager()}.
+
+\index{StatsManager@{StatsManager}!m\_keyid@{m\_keyid}}
+\index{m\_keyid@{m\_keyid}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_keyid}
+{\footnotesize\ttfamily \label{classStatsManager_abfbd5ec90cb88c086f787933d55d7ff5} 
+\textbf{ UInt64} Stats\+Manager\+::m\+\_\+keyid\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ register\+Metric()}.
+
+\index{StatsManager@{StatsManager}!m\_objects@{m\_objects}}
+\index{m\_objects@{m\_objects}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_objects}
+{\footnotesize\ttfamily \label{classStatsManager_a4740e96a8b7ade01c7a047b663b7410d} 
+\textbf{ Stats\+Object\+List} Stats\+Manager\+::m\+\_\+objects\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 110} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ get\+Metric\+Object()}, \textbf{ init()}, \textbf{ record\+Stats()}, \textbf{ register\+Metric()}, and \textbf{ $\sim$\+Stats\+Manager()}.
+
+\index{StatsManager@{StatsManager}!m\_prefixnum@{m\_prefixnum}}
+\index{m\_prefixnum@{m\_prefixnum}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_prefixnum}
+{\footnotesize\ttfamily \label{classStatsManager_a4edd00b27f040352dc84f0a933bb4a7d} 
+\textbf{ UInt64} Stats\+Manager\+::m\+\_\+prefixnum\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 98} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ record\+Stats()}.
+
+\index{StatsManager@{StatsManager}!m\_stmt\_insert\_name@{m\_stmt\_insert\_name}}
+\index{m\_stmt\_insert\_name@{m\_stmt\_insert\_name}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_stmt\_insert\_name}
+{\footnotesize\ttfamily \label{classStatsManager_a0962e98cd457c705cbe37a744e8a0351} 
+sqlite3\+\_\+stmt$\ast$ Stats\+Manager\+::m\+\_\+stmt\+\_\+insert\+\_\+name\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 101} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ init()}, \textbf{ record\+Metric\+Name()}, and \textbf{ $\sim$\+Stats\+Manager()}.
+
+\index{StatsManager@{StatsManager}!m\_stmt\_insert\_prefix@{m\_stmt\_insert\_prefix}}
+\index{m\_stmt\_insert\_prefix@{m\_stmt\_insert\_prefix}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_stmt\_insert\_prefix}
+{\footnotesize\ttfamily \label{classStatsManager_a922de11f83c1ac941bba643cddb2343c} 
+sqlite3\+\_\+stmt$\ast$ Stats\+Manager\+::m\+\_\+stmt\+\_\+insert\+\_\+prefix\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ init()}, \textbf{ record\+Stats()}, and \textbf{ $\sim$\+Stats\+Manager()}.
+
+\index{StatsManager@{StatsManager}!m\_stmt\_insert\_value@{m\_stmt\_insert\_value}}
+\index{m\_stmt\_insert\_value@{m\_stmt\_insert\_value}!StatsManager@{StatsManager}}
+\doxysubsubsection{m\_stmt\_insert\_value}
+{\footnotesize\ttfamily \label{classStatsManager_a00fff223a04060736bc4e5e9610bd46b} 
+sqlite3\+\_\+stmt$\ast$ Stats\+Manager\+::m\+\_\+stmt\+\_\+insert\+\_\+value\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 103} of file \textbf{ stats.\+h}.
+
+
+
+Referenced by \textbf{ init()}, \textbf{ record\+Stats()}, and \textbf{ $\sim$\+Stats\+Manager()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/misc/\textbf{ stats.\+h}\item 
+common/misc/\textbf{ stats.\+cc}\end{DoxyCompactItemize}

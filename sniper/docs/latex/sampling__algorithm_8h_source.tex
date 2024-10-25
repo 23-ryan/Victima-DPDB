@@ -1,0 +1,36 @@
+\doxysection{sampling\+\_\+algorithm.\+h}
+\label{sampling__algorithm_8h_source}\index{common/sampling/sampling\_algorithm.h@{common/sampling/sampling\_algorithm.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SAMPLING\_ALGORITHM}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SAMPLING\_ALGORITHM}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }SamplingManager;}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Base\ class\ for\ algorithms\ that\ decide\ how\ to\ sample}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ -\/\ an\ algorithm\ receives\ a\ periodic\ callback,\ both\ while\ in\ detailed\ and\ in\ fastforward\ mode}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ -\/\ during\ each\ callback\ the\ algorithm\ can\ examine\ system\ state,\ and\ decide\ to\ switch\ modes}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ by\ calling\ SamplingManager::\{enable|disable\}FastForward}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ -\/\ the\ algorithm\ should\ perform\ the\ proper\ setup\ (configure\ each\ core's\ setCurrentCPI)}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ so\ time\ can\ be\ maintained\ while\ fast-\/forwarding}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }SamplingAlgorithm}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00019\ \ \ \ SamplingManager\ *m\_sampling\_manager;}
+\DoxyCodeLine{00020\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ SamplingAlgorithm(SamplingManager\ *sampling\_manager)\ :\ m\_sampling\_manager(sampling\_manager)\ \{\}}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{virtual}\ \string~SamplingAlgorithm()\ \{\}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ callbackDetailed(SubsecondTime\ now)\ =\ 0;}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ callbackFastForward(SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ in\_warmup)\ =\ 0;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keyword}{static}\ SamplingAlgorithm*\ create(SamplingManager\ *sampling\_manager);}
+\DoxyCodeLine{00028\ \};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_SAMPLING\_ALGORITHM\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

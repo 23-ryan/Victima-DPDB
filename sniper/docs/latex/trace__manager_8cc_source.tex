@@ -1,0 +1,380 @@
+\doxysection{trace\+\_\+manager.\+cc}
+\label{trace__manager_8cc_source}\index{common/trace\_frontend/trace\_manager.cc@{common/trace\_frontend/trace\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}trace\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}trace\_thread.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <sys/types.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <sys/stat.h>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ TraceManager::TraceManager()}
+\DoxyCodeLine{00015\ \ \ \ :\ m\_monitor(new\ Monitor(this))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_threads(0)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_num\_threads\_started(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_num\_threads\_running(0)}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_done(0)}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_stop\_with\_first\_app(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}traceinput/stop\_with\_first\_app"{}}))}
+\DoxyCodeLine{00021\ \ \ \ ,\ m\_app\_restart(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}traceinput/restart\_apps"{}}))}
+\DoxyCodeLine{00022\ \ \ \ ,\ m\_emulate\_syscalls(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}traceinput/emulate\_syscalls"{}}))}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_num\_apps(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}traceinput/num\_apps"{}}))}
+\DoxyCodeLine{00024\ \ \ \ ,\ m\_num\_apps\_nonfinish(m\_num\_apps)}
+\DoxyCodeLine{00025\ \ \ \ ,\ m\_app\_info(m\_num\_apps)}
+\DoxyCodeLine{00026\ \ \ \ ,\ m\_tracefiles(m\_num\_apps)}
+\DoxyCodeLine{00027\ \ \ \ ,\ m\_responsefiles(m\_num\_apps)}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ setupTraceFiles(0);}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ TraceManager::setupTraceFiles(\textcolor{keywordtype}{int}\ index)}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ m\_trace\_prefix\ =\ Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}traceinput/trace\_prefix"{}},\ index);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (m\_emulate\_syscalls)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_trace\_prefix\ ==\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Error:\ a\ trace\ prefix\ is\ required\ when\ emulating\ syscalls."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ exit(1);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{if}\ (m\_trace\_prefix\ !=\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0\ ;\ i\ <\ m\_num\_apps\ ;\ i++\ )}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ m\_tracefiles[i]\ =\ getFifoName(i,\ 0,\ \textcolor{keyword}{false}\ \textcolor{comment}{/*response*/},\ \textcolor{keyword}{false}\ \textcolor{comment}{/*create*/});}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ m\_responsefiles[i]\ =\ getFifoName(i,\ 0,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*response*/},\ \textcolor{keyword}{false}\ \textcolor{comment}{/*create*/});}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00054\ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0\ ;\ i\ <\ m\_num\_apps\ ;\ i++\ )}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ m\_tracefiles[i]\ =\ Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}traceinput/thread\_"{}}\ +\ itostr(i),\ index);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00059\ \ \ \ \}}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keywordtype}{void}\ TraceManager::init()}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0\ ;\ i\ <\ m\_num\_apps\ ;\ i++\ )}
+\DoxyCodeLine{00065\ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ newThread(i\ \textcolor{comment}{/*app\_id*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*first*/},\ \textcolor{keyword}{false}\ \textcolor{comment}{/*init\_fifo*/},\ \textcolor{keyword}{false}\ \textcolor{comment}{/*spawn*/},\ SubsecondTime::Zero(),\ INVALID\_THREAD\_ID);}
+\DoxyCodeLine{00067\ \ \ \ \}}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ String\ TraceManager::getFifoName(app\_id\_t\ app\_id,\ UInt64\ thread\_num,\ \textcolor{keywordtype}{bool}\ response,\ \textcolor{keywordtype}{bool}\ create)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ String\ filename\ =\ m\_trace\_prefix\ +\ (response\ ?\ \textcolor{stringliteral}{"{}\_response"{}}\ :\ \textcolor{stringliteral}{"{}"{}})\ +\ \textcolor{stringliteral}{"{}.app"{}}\ +\ itostr(app\_id)\ +\ \textcolor{stringliteral}{"{}.th"{}}\ +\ itostr(thread\_num)\ +\ \textcolor{stringliteral}{"{}.sift"{}};}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ (create)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ mkfifo(filename.c\_str(),\ 0600);}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{return}\ filename;}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ thread\_id\_t\ TraceManager::createThread(app\_id\_t\ app\_id,\ SubsecondTime\ time,\ thread\_id\_t\ creator\_thread\_id)}
+\DoxyCodeLine{00079\ \{}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{comment}{//\ External\ version:\ acquire\ lock\ first}}
+\DoxyCodeLine{00081\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{return}\ newThread(app\_id,\ \textcolor{keyword}{false}\ \textcolor{comment}{/*first*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*init\_fifo*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*spawn*/},\ time,\ creator\_thread\_id);}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ thread\_id\_t\ TraceManager::newThread(app\_id\_t\ app\_id,\ \textcolor{keywordtype}{bool}\ first,\ \textcolor{keywordtype}{bool}\ init\_fifo,\ \textcolor{keywordtype}{bool}\ spawn,\ SubsecondTime\ time,\ thread\_id\_t\ creator\_thread\_id)}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{comment}{//\ Internal\ version:\ assume\ we're\ already\ holding\ the\ lock}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ assert(\textcolor{keyword}{static\_cast<}decltype(app\_id)\textcolor{keyword}{>}(m\_num\_apps)\ >\ app\_id);}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ String\ tracefile\ =\ \textcolor{stringliteral}{"{}"{}},\ responsefile\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordtype}{int}\ thread\_num;}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{if}\ (first)}
+\DoxyCodeLine{00095\ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ m\_app\_info[app\_id].num\_threads\ =\ 1;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ m\_app\_info[app\_id].thread\_count\ =\ 1;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_APPLICATION\_START,\ (UInt64)app\_id);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ Sim()-\/>getStatsManager()-\/>logEvent(StatsManager::EVENT\_APP\_START,\ SubsecondTime::MaxTime(),\ INVALID\_CORE\_ID,\ INVALID\_THREAD\_ID,\ (UInt64)app\_id,\ 0,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ thread\_num\ =\ 0;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!init\_fifo)}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ tracefile\ =\ m\_tracefiles[app\_id];}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_responsefiles.size())}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ responsefile\ =\ m\_responsefiles[app\_id];}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00110\ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ m\_app\_info[app\_id].num\_threads++;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ thread\_num\ =\ m\_app\_info[app\_id].thread\_count++;}
+\DoxyCodeLine{00113\ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keywordflow}{if}\ (init\_fifo)}
+\DoxyCodeLine{00116\ \ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ tracefile\ =\ getFifoName(app\_id,\ thread\_num,\ \textcolor{keyword}{false}\ \textcolor{comment}{/*response*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*create*/});}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_responsefiles.size())}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ responsefile\ =\ getFifoName(app\_id,\ thread\_num,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*response*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*create*/});}
+\DoxyCodeLine{00120\ \ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ m\_num\_threads\_running++;}
+\DoxyCodeLine{00123\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>createThread(app\_id,\ creator\_thread\_id);}
+\DoxyCodeLine{00124\ \ \ \ TraceThread\ *tthread\ =\ \textcolor{keyword}{new}\ TraceThread(thread,\ time,\ tracefile,\ responsefile,\ app\_id,\ init\_fifo\ \textcolor{comment}{/*cleaup*/});}
+\DoxyCodeLine{00125\ \ \ \ m\_threads.push\_back(tthread);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keywordflow}{if}\ (spawn)}
+\DoxyCodeLine{00128\ \ \ \ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{comment}{/*\ First\ thread\ of\ each\ app\ spawns\ only\ when\ initialization\ is\ done,}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ next\ threads\ are\ created\ once\ we're\ running\ so\ spawn\ them\ right\ away.\ */}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ tthread-\/>spawn();}
+\DoxyCodeLine{00132\ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \textcolor{keywordflow}{return}\ thread-\/>getId();}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ app\_id\_t\ TraceManager::createApplication(SubsecondTime\ time,\ thread\_id\_t\ creator\_thread\_id)}
+\DoxyCodeLine{00138\ \{}
+\DoxyCodeLine{00139\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ app\_id\_t\ app\_id\ =\ m\_num\_apps;}
+\DoxyCodeLine{00143\ \ \ \ m\_num\_apps++;}
+\DoxyCodeLine{00144\ \ \ \ m\_num\_apps\_nonfinish++;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ app\_info\_t\ app\_info;}
+\DoxyCodeLine{00147\ \ \ \ m\_app\_info.push\_back(app\_info);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ newThread(app\_id,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*first*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*init\_fifo*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*spawn*/},\ time,\ creator\_thread\_id);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keywordflow}{return}\ app\_id;}
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keywordtype}{void}\ TraceManager::signalStarted()}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ \ \ \ ++m\_num\_threads\_started;}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{keywordtype}{void}\ TraceManager::signalDone(TraceThread\ *thread,\ SubsecondTime\ time,\ \textcolor{keywordtype}{bool}\ aborted)}
+\DoxyCodeLine{00160\ \{}
+\DoxyCodeLine{00161\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \textcolor{comment}{//\ Make\ sure\ threads\ don't\ call\ signalDone\ twice\ (once\ through\ endApplication,}}
+\DoxyCodeLine{00164\ \ \ \ \textcolor{comment}{//\ \ \ and\ once\ the\ regular\ way),\ as\ this\ would\ throw\ off\ our\ counts}}
+\DoxyCodeLine{00165\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>m\_stopped)}
+\DoxyCodeLine{00166\ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00168\ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ thread-\/>m\_stopped\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ app\_id\_t\ app\_id\ =\ thread-\/>getThread()-\/>getAppId();}
+\DoxyCodeLine{00172\ \ \ \ m\_app\_info[app\_id].num\_threads-\/-\/;}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \textcolor{keywordflow}{if}\ (!aborted)}
+\DoxyCodeLine{00175\ \ \ \ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_app\_info[app\_id].num\_threads\ ==\ 0)}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ m\_app\_info[app\_id].num\_runs++;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_APPLICATION\_EXIT,\ (UInt64)app\_id);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ Sim()-\/>getStatsManager()-\/>logEvent(StatsManager::EVENT\_APP\_EXIT,\ SubsecondTime::MaxTime(),\ INVALID\_CORE\_ID,\ INVALID\_THREAD\_ID,\ (UInt64)app\_id,\ 0,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_app\_info[app\_id].num\_runs\ ==\ 1)}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ m\_num\_apps\_nonfinish-\/-\/;}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_stop\_with\_first\_app)}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ First\ app\ has\ ended:\ stop}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ stop();}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_num\_apps\_nonfinish\ ==\ 0)}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ All\ apps\ have\ completed\ at\ least\ once:\ stop}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ stop();}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Stop\ condition\ not\ met.\ Restart\ app?}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_app\_restart)}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ newThread(app\_id,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*first*/},\ \textcolor{keyword}{false}\ \textcolor{comment}{/*init\_fifo*/},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*spawn*/},\ time,\ INVALID\_THREAD\_ID);}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ m\_num\_threads\_running-\/-\/;}
+\DoxyCodeLine{00207\ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{keywordtype}{void}\ TraceManager::endApplication(TraceThread\ *thread,\ SubsecondTime\ time)}
+\DoxyCodeLine{00210\ \{}
+\DoxyCodeLine{00211\ \ \ \ \textcolor{keywordflow}{for}(std::vector<TraceThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00212\ \ \ \ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \textcolor{comment}{//\ Abort\ all\ threads\ in\ this\ application,\ except\ ourselves\ (we\ should\ end\ normally\ soon)}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it)-\/>getThread()-\/>getAppId()\ ==\ thread-\/>getThread()-\/>getAppId()\ \&\&\ *it\ !=\ thread)}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ask\ thread\ to\ stop}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ (*it)-\/>stop();}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Threads\ are\ often\ blocked\ on\ a\ futex\ in\ this\ case,\ so\ call\ signalDone\ in\ their\ place}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ signalDone(*it,\ time,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ aborted\ */});}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ \}}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keywordtype}{void}\ TraceManager::cleanup()}
+\DoxyCodeLine{00225\ \{}
+\DoxyCodeLine{00226\ \ \ \ \textcolor{keywordflow}{for}(std::vector<TraceThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ *it;}
+\DoxyCodeLine{00228\ \ \ \ m\_threads.clear();}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ m\_num\_threads\_running\ =\ 0;}
+\DoxyCodeLine{00231\ \ \ \ m\_app\_info.clear();}
+\DoxyCodeLine{00232\ \ \ \ m\_app\_info.resize(m\_num\_apps);}
+\DoxyCodeLine{00233\ \ \ \ m\_num\_apps\_nonfinish\ =\ m\_num\_apps;}
+\DoxyCodeLine{00234\ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ TraceManager::\string~TraceManager()}
+\DoxyCodeLine{00237\ \{}
+\DoxyCodeLine{00238\ \ \ \ cleanup();}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{keywordtype}{void}\ TraceManager::start()}
+\DoxyCodeLine{00242\ \{}
+\DoxyCodeLine{00243\ \ \ \ \textcolor{comment}{//\ Begin\ of\ region-\/of-\/interest\ when\ running\ Sniper\ inside\ Sniper}}
+\DoxyCodeLine{00244\ \ \ \ SimRoiStart();}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ m\_monitor-\/>spawn();}
+\DoxyCodeLine{00247\ \ \ \ \textcolor{keywordflow}{for}(std::vector<TraceThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ (*it)-\/>spawn();}
+\DoxyCodeLine{00249\ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{keywordtype}{void}\ TraceManager::stop()}
+\DoxyCodeLine{00252\ \{}
+\DoxyCodeLine{00253\ \ \ \ \textcolor{comment}{//\ End\ of\ region-\/of-\/interest\ when\ running\ Sniper\ inside\ Sniper}}
+\DoxyCodeLine{00254\ \ \ \ SimRoiEnd();}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \textcolor{comment}{//\ Signal\ threads\ to\ stop.}}
+\DoxyCodeLine{00257\ \ \ \ \textcolor{keywordflow}{for}(std::vector<TraceThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ (*it)-\/>stop();}
+\DoxyCodeLine{00259\ \ \ \ \textcolor{comment}{//\ Give\ threads\ some\ time\ to\ end.}}
+\DoxyCodeLine{00260\ \ \ \ sleep(1);}
+\DoxyCodeLine{00261\ \ \ \ \textcolor{comment}{//\ Some\ threads\ may\ be\ blocked\ (SIFT\ reader,\ syscall,\ etc.).\ Don't\ wait\ for\ them\ or\ we'll\ deadlock.}}
+\DoxyCodeLine{00262\ \ \ \ m\_done.signal();}
+\DoxyCodeLine{00263\ \ \ \ \textcolor{comment}{//\ Notify\ SIFT\ recorders\ that\ simulation\ is\ done,}}
+\DoxyCodeLine{00264\ \ \ \ \textcolor{comment}{//\ and\ that\ they\ should\ hide\ their\ errors\ when\ writing\ to\ an\ already-\/closed\ SIFT\ pipe.}}
+\DoxyCodeLine{00265\ \ \ \ mark\_done();}
+\DoxyCodeLine{00266\ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{keywordtype}{void}\ TraceManager::mark\_done()}
+\DoxyCodeLine{00269\ \{}
+\DoxyCodeLine{00270\ \ \ \ FILE\ *fp\ =\ fopen((m\_trace\_prefix\ +\ \textcolor{stringliteral}{"{}.sift\_done"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00271\ \ \ \ fclose(fp);}
+\DoxyCodeLine{00272\ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{keywordtype}{void}\ TraceManager::wait()}
+\DoxyCodeLine{00275\ \{}
+\DoxyCodeLine{00276\ \ \ \ m\_done.wait();}
+\DoxyCodeLine{00277\ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{keywordtype}{void}\ TraceManager::run()}
+\DoxyCodeLine{00280\ \{}
+\DoxyCodeLine{00281\ \ \ \ start();}
+\DoxyCodeLine{00282\ \ \ \ wait();}
+\DoxyCodeLine{00283\ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ UInt64\ TraceManager::getProgressExpect()}
+\DoxyCodeLine{00286\ \{}
+\DoxyCodeLine{00287\ \ \ \ \textcolor{keywordflow}{return}\ 1000000;}
+\DoxyCodeLine{00288\ \}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ UInt64\ TraceManager::getProgressValue()}
+\DoxyCodeLine{00291\ \{}
+\DoxyCodeLine{00292\ \ \ \ UInt64\ value\ =\ 0;}
+\DoxyCodeLine{00293\ \ \ \ \textcolor{keywordflow}{for}(std::vector<TraceThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00294\ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ uint64\_t\ expect\ =\ (*it)-\/>getProgressExpect();}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (expect)}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ UInt64\ this\_value\ =\ 1000000\ *\ (*it)-\/>getProgressValue()\ /\ expect;}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_stop\_with\_first\_app)}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Stop\ with\ first\ app}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ std::max(value,\ this\_value);}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Stop\ with\ last\ app}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ std::min(value,\ this\_value);}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \}}
+\DoxyCodeLine{00308\ \ \ \ \textcolor{keywordflow}{return}\ value;}
+\DoxyCodeLine{00309\ \}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \textcolor{comment}{//\ This\ should\ only\ be\ called\ when\ already\ holding\ the\ thread\ lock\ to\ prevent\ migrations\ while\ we\ scan\ for\ a\ core\ id\ match}}
+\DoxyCodeLine{00312\ \textcolor{keywordtype}{void}\ TraceManager::accessMemory(\textcolor{keywordtype}{int}\ core\_id,\ Core::lock\_signal\_t\ lock\_signal,\ Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size)}
+\DoxyCodeLine{00313\ \{}
+\DoxyCodeLine{00314\ \ \ \ \textcolor{keywordflow}{for}(std::vector<TraceThread\ *>::iterator\ it\ =\ m\_threads.begin();\ it\ !=\ m\_threads.end();\ ++it)}
+\DoxyCodeLine{00315\ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ TraceThread\ *tthread\ =\ *it;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ assert(tthread\ !=\ NULL);}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tthread-\/>getThread()\ \&\&\ tthread-\/>getThread()-\/>getCore()\ \&\&\ core\_id\ ==\ tthread-\/>getThread()-\/>getCore()-\/>getId())}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tthread-\/>m\_stopped)}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ should\ we\ try\ doing\ the\ memory\ access\ through\ another\ thread\ in\ the\ same\ application?}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}accessMemory()\ called\ but\ thread\ already\ killed\ since\ application\ ended"{}});}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ tthread-\/>handleAccessMemory(lock\_signal,\ mem\_op\_type,\ d\_addr,\ data\_buffer,\ data\_size);}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \}}
+\DoxyCodeLine{00330\ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unable\ to\ find\ core\ \%d"{}},\ core\_id);}
+\DoxyCodeLine{00331\ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ TraceManager::Monitor::Monitor(TraceManager\ *manager)}
+\DoxyCodeLine{00334\ \ \ \ :\ m\_manager(manager)}
+\DoxyCodeLine{00335\ \{}
+\DoxyCodeLine{00336\ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ TraceManager::Monitor::\string~Monitor()}
+\DoxyCodeLine{00339\ \{}
+\DoxyCodeLine{00340\ \ \ \ \textcolor{keyword}{delete}\ m\_thread;}
+\DoxyCodeLine{00341\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{keywordtype}{void}\ TraceManager::Monitor::run()}
+\DoxyCodeLine{00344\ \{}
+\DoxyCodeLine{00345\ \ \ \ \textcolor{comment}{//\ Set\ thread\ name\ for\ Sniper-\/in-\/Sniper\ simulations}}
+\DoxyCodeLine{00346\ \ \ \ String\ threadName(\textcolor{stringliteral}{"{}trace-\/monitor"{}});}
+\DoxyCodeLine{00347\ \ \ \ SimSetThreadName(threadName.c\_str());}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ UInt64\ n\ =\ 0;}
+\DoxyCodeLine{00350\ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})}
+\DoxyCodeLine{00351\ \ \ \ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_manager-\/>m\_num\_threads\_started\ >\ 0)}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n\ ==\ 10)}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}[SNIPER]\ WARNING:\ No\ SIFT\ connections\ made\ yet.\ Waiting...\(\backslash\)n"{}});}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (n\ ==\ 60)}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}[SNIPER]\ ERROR:\ Could\ not\ establish\ SIFT\ connection,\ aborting!\ Check\ benchmark-\/app*.log\ for\ errors.\(\backslash\)n"{}});}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ exit(1);}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \ \ sleep(1);}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ ++n;}
+\DoxyCodeLine{00367\ \ \ \ \}}
+\DoxyCodeLine{00368\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \textcolor{keywordtype}{void}\ TraceManager::Monitor::spawn()}
+\DoxyCodeLine{00371\ \{}
+\DoxyCodeLine{00372\ \ \ \ m\_thread\ =\ \_Thread::create(\textcolor{keyword}{this});}
+\DoxyCodeLine{00373\ \ \ \ m\_thread-\/>run();}
+\DoxyCodeLine{00374\ \}}
+
+\end{DoxyCode}

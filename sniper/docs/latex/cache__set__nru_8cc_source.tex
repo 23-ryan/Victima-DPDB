@@ -1,0 +1,91 @@
+\doxysection{cache\+\_\+set\+\_\+nru.\+cc}
+\label{cache__set__nru_8cc_source}\index{common/core/memory\_subsystem/cache/cache\_set\_nru.cc@{common/core/memory\_subsystem/cache/cache\_set\_nru.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_nru.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ NRU:\ Not\ Recently\ Used.\ Some\ sort\ of\ Pseudo\ LRU\ policy.}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ CacheSetNRU::CacheSetNRU(}
+\DoxyCodeLine{00007\ \ \ \ \ \ \ CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set)\ :}
+\DoxyCodeLine{00009\ \ \ \ CacheSet(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ m\_lru\_bits\ =\ \textcolor{keyword}{new}\ UInt8[m\_associativity];}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ m\_lru\_bits[i]\ =\ 0;\ \ \textcolor{comment}{//\ initially,\ lru\ bits\ of\ each\ set\ are\ set\ to\ zero,\ they\ are\ not\ touched\ yet}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ m\_num\_bits\_set\ =\ 0;}
+\DoxyCodeLine{00016\ \ \ \ m\_replacement\_pointer\ =\ 0;}
+\DoxyCodeLine{00017\ \}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ CacheSetNRU::\string~CacheSetNRU()}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_lru\_bits;}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ UInt32}
+\DoxyCodeLine{00025\ CacheSetNRU::getReplacementIndex(CacheCntlr\ *cntlr)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{comment}{//\ Invalidations\ may\ mess\ up\ the\ LRU\ bits}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordtype}{bool}\ have\_zero\_bit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cache\_block\_info\_array[i]-\/>isValid())}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ there\ is\ an\ invalid\ line(s)\ in\ the\ set,\ regardless\ of\ the\ LRU\ bits\ of\ other\ lines,\ we\ choose\ the\ first\ invalid\ line\ to\ replace}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ our\ newly-\/inserted\ line\ as\ recently\ used}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ updateReplacementIndex(i);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ i;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_lru\_bits[i]\ ==\ 0\ \&\&\ isValidReplacement(i))}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ there\ are\ any\ valid\ replacement\ candidates\ with\ their\ LRU\ bit\ set\ to\ zero}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ there\ are\ none,\ we'll\ ignore\ the\ LRU\ bit\ below\ and\ select\ the\ first\ entry\ with\ isValidReplacement()\ as\ the\ victim}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ have\_zero\_bit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00049\ \ \ \ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((m\_lru\_bits[m\_replacement\_pointer]\ ==\ 0\ ||\ have\_zero\_bit\ ==\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \&\&\ isValidReplacement(m\_replacement\_pointer))}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ choose\ the\ first\ non-\/touched\ line\ as\ the\ victim\ (note\ that\ we\ start\ searching\ from\ the\ replacement\ pointer\ position)}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ UInt8\ index\ =\ m\_replacement\_pointer;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ m\_replacement\_pointer\ =\ (m\_replacement\_pointer\ +\ 1)\ \%\ m\_associativity;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ our\ newly-\/inserted\ line\ as\ recently\ used}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ updateReplacementIndex(index);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ index;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ m\_replacement\_pointer\ =\ (m\_replacement\_pointer\ +\ 1)\ \%\ m\_associativity;}
+\DoxyCodeLine{00063\ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Error\ Finding\ LRU\ bits"{}});}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00069\ CacheSetNRU::updateReplacementIndex(UInt32\ accessed\_index)}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \ m\_lru\_bits[accessed\_index]\ =\ 1;}
+\DoxyCodeLine{00072\ \ \ \ m\_num\_bits\_set++;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \textcolor{comment}{//\ If\ all\ lru\ bits\ are\ set\ to\ 1\ in\ the\ set,\ we\ make\ all\ of\ them\ 0}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_bits\_set\ ==\ m\_associativity)}
+\DoxyCodeLine{00077\ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ m\_num\_bits\_set\ =\ 0;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ m\_lru\_bits[i]\ =\ 0;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \}}
+\DoxyCodeLine{00085\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,108 @@
+\doxysection{sim\+\_\+thread\+\_\+manager.\+cc}
+\label{sim__thread__manager_8cc_source}\index{common/system/sim\_thread\_manager.cc@{common/system/sim\_thread\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}sim\_thread\_manager.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ SimThreadManager::SimThreadManager()}
+\DoxyCodeLine{00009\ \ \ \ :\ m\_active\_threads(0)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ SimThreadManager::\string~SimThreadManager()}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ LOG\_ASSERT\_WARNING(m\_active\_threads\ ==\ 0,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Threads\ still\ active\ when\ SimThreadManager\ exits."{}});}
+\DoxyCodeLine{00017\ \}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keywordtype}{void}\ SimThreadManager::spawnSimThreads()}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ UInt32\ num\_cores\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00023\ \ \ \ \_\_attribute\_\_((unused))\ UInt32\ num\_sim\_threads\ =\ 2\ *\ num\_cores;}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00025\ \ \ \ \_\_attribute\_\_((unused))\ UInt32\ num\_sim\_threads\ =\ num\_cores;}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Starting\ \%d\ threads."{}},\ num\_sim\_threads);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ m\_sim\_threads\ =\ \textcolor{keyword}{new}\ SimThread\ [num\_cores];}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00032\ \ \ \ m\_core\_threads\ =\ \textcolor{keyword}{new}\ CoreThread\ [num\_cores];}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ num\_cores;\ i++)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Starting\ thread\ \%i"{}},\ i);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ m\_sim\_threads[i].spawn();}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_core\_threads[i].spawn();}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ PIN\_SpawnInternalThread\ doesn't\ schedule\ its\ threads\ until\ after\ PIN\_StartProgram}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ while\ (m\_active\_threads\ <\ num\_sim\_threads)}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ \ \ \ sched\_yield();}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Threads\ started:\ \%d."{}},\ m\_active\_threads);}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{void}\ SimThreadManager::quitSimThreads()}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Sending\ quit\ messages."{}});}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ Transport::Node\ *global\_node\ =\ Transport::getSingleton()-\/>getGlobalNode();}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \textcolor{comment}{//\ This\ is\ something\ of\ a\ hard-\/wired\ emulation\ of\ Network::netSend}}
+\DoxyCodeLine{00058\ \ \ \ \textcolor{comment}{//\ ...\ not\ the\ greatest\ thing\ to\ do,\ but\ whatever.}}
+\DoxyCodeLine{00059\ \ \ \ NetPacket\ pkt1(SubsecondTime::Zero(),\ SIM\_THREAD\_TERMINATE\_THREADS,\ 0,\ 0,\ 0,\ NULL);}
+\DoxyCodeLine{00060\ \ \ \ NetPacket\ pkt2(SubsecondTime::Zero(),\ CORE\_THREAD\_TERMINATE\_THREADS,\ 0,\ 0,\ 0,\ NULL);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Config::getSingleton()-\/>getTotalCores();\ core\_id++)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{comment}{//\ First\ kill\ core\ thread\ (needs\ network\ thread\ to\ be\ alive\ to\ deliver\ the\ message)}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ pkt2.receiver\ =\ core\_id;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ global\_node-\/>send(core\_id,\ \&pkt2,\ pkt2.bufferSize());}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{comment}{//\ Now\ kill\ network\ thread}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ pkt1.receiver\ =\ core\_id;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ global\_node-\/>send(core\_id,\ \&pkt1,\ pkt1.bufferSize());}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Waiting\ for\ local\ sim\ threads\ to\ exit."{}});}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{while}\ (m\_active\_threads\ >\ 0)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ sched\_yield();}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ Transport::getSingleton()-\/>barrier();}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_sim\_threads;}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_core\_threads;}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}All\ threads\ have\ exited."{}});}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}\ SimThreadManager::simThreadStartCallback()}
+\DoxyCodeLine{00091\ \{}
+\DoxyCodeLine{00092\ \ \ \ m\_active\_threads\_lock.acquire();}
+\DoxyCodeLine{00093\ \ \ \ ++m\_active\_threads;}
+\DoxyCodeLine{00094\ \ \ \ m\_active\_threads\_lock.release();}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keywordtype}{void}\ SimThreadManager::simThreadExitCallback()}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ m\_active\_threads\_lock.acquire();}
+\DoxyCodeLine{00100\ \ \ \ -\/-\/m\_active\_threads;}
+\DoxyCodeLine{00101\ \ \ \ m\_active\_threads\_lock.release();}
+\DoxyCodeLine{00102\ \}}
+
+\end{DoxyCode}

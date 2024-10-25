@@ -1,0 +1,61 @@
+\doxysection{routine\+\_\+tracer\+\_\+print.\+cc}
+\label{routine__tracer__print_8cc_source}\index{common/system/routine\_tracer\_print.cc@{common/system/routine\_tracer\_print.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}routine\_tracer\_print.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ RoutineTracerPrint::RtnThread::RtnThread(RoutineTracerPrint::RtnMaster\ *master,\ Thread\ *thread)}
+\DoxyCodeLine{00005\ \ \ \ :\ RoutineTracerThread(thread)}
+\DoxyCodeLine{00006\ \ \ \ ,\ m\_master(master)}
+\DoxyCodeLine{00007\ \ \ \ ,\ m\_depth(0)}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keywordtype}{void}\ RoutineTracerPrint::RtnThread::functionEnter(IntPtr\ eip,\ IntPtr\ callEip)}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ printf(\textcolor{stringliteral}{"{}[\%2d]\ "{}},\ m\_thread-\/>getId());}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_depth;\ ++i)}
+\DoxyCodeLine{00015\ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \ "{}});}
+\DoxyCodeLine{00016\ \ \ \ printf(\textcolor{stringliteral}{"{}(\%8"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{})\ \%s"{}},\ eip,\ m\_master-\/>getRoutine(eip)\ ?\ m\_master-\/>getRoutine(eip)-\/>m\_name\ :\ \textcolor{stringliteral}{"{}(unknown)"{}});}
+\DoxyCodeLine{00017\ \ \ \ RoutineTracer::Routine\ *rtn\ =\ m\_master-\/>getRoutine(callEip);}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{if}\ (callEip\ \&\&\ rtn)}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ [from:\ \%s:\%d]"{}},\ rtn-\/>m\_name,\ rtn-\/>m\_line);}
+\DoxyCodeLine{00020\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00021\ \ \ \ ++m\_depth;}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keywordtype}{void}\ RoutineTracerPrint::RtnThread::functionExit(IntPtr\ eip)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ -\/-\/m\_depth;}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ RoutineTracerThread*\ RoutineTracerPrint::RtnMaster::getThreadHandler(Thread\ *thread)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ RtnThread(\textcolor{keyword}{this},\ thread);}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}\ RoutineTracerPrint::RtnMaster::addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{if}\ (m\_routines.count(eip)\ ==\ 0)}
+\DoxyCodeLine{00039\ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_routines[eip]\ =\ \textcolor{keyword}{new}\ RoutineTracer::Routine(eip,\ name,\ imgname,\ offset,\ column,\ line,\ filename);}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keywordtype}{bool}\ RoutineTracerPrint::RtnMaster::hasRoutine(IntPtr\ eip)}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{return}\ m\_routines.count(eip)\ >\ 0;}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ RoutineTracer::Routine*\ RoutineTracerPrint::RtnMaster::getRoutine(IntPtr\ eip)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{return}\ m\_routines[eip];}
+\DoxyCodeLine{00055\ \}}
+
+\end{DoxyCode}

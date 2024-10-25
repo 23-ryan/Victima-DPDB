@@ -1,0 +1,143 @@
+\doxysection{cache\+\_\+set\+\_\+srrip.\+cc}
+\label{cache__set__srrip_8cc_source}\index{common/core/memory\_subsystem/cache/cache\_set\_srrip.cc@{common/core/memory\_subsystem/cache/cache\_set\_srrip.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_set\_srrip.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ S-\/RRIP:\ Static\ Re-\/reference\ Interval\ Prediction\ policy}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ CacheSetSRRIP::CacheSetSRRIP(}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ String\ cfgname,\ core\_id\_t\ core\_id,}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ CacheBase::cache\_t\ cache\_type,}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ UInt32\ associativity,\ UInt32\ blocksize,\ CacheSetInfoLRU*\ set\_info,\ UInt8\ num\_attempts,\ \textcolor{keywordtype}{bool}\ is\_tlb\_set)}
+\DoxyCodeLine{00012\ \ \ \ :\ CacheSet(cache\_type,\ associativity,\ blocksize,\ is\_tlb\_set)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_rrip\_numbits(Sim()-\/>getCfg()-\/>getIntArray(cfgname\ +\ \textcolor{stringliteral}{"{}/srrip/bits"{}},\ core\_id))}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_rrip\_max((1\ <<\ m\_rrip\_numbits)\ -\/\ 1)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_rrip\_insert(m\_rrip\_max\ -\/\ 1)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_num\_attempts(num\_attempts)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_replacement\_pointer(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_set\_info(set\_info)}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_srrip\_tlb\_enabled(Sim()-\/>getCfg()-\/>getBoolArray(cfgname\ +\ \textcolor{stringliteral}{"{}/srrip/tlb\_enabled"{}},\ core\_id))}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ m\_rrip\_bits\ =\ \textcolor{keyword}{new}\ UInt8[m\_associativity];}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ m\_rrip\_bits[i]\ =\ m\_rrip\_insert;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ CacheSetSRRIP::\string~CacheSetSRRIP()}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_rrip\_bits;}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ UInt32}
+\DoxyCodeLine{00033\ CacheSetSRRIP::getReplacementIndex(CacheCntlr\ *cntlr)}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cache\_block\_info\_array[i]-\/>isValid())}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ there\ is\ an\ invalid\ line(s)\ in\ the\ set,\ regardless\ of\ the\ LRU\ bits\ of\ other\ lines,\ we\ choose\ the\ first\ invalid\ line\ to\ replace}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prepare\ way\ for\ a\ new\ line:\ set\ prediction\ to\ 'long'}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ m\_rrip\_bits[i]\ =\ m\_rrip\_insert;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cache\_block\_info\_array[i]-\/>isTLBBlock()\ \&\&\ m\_srrip\_tlb\_enabled)\{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ m\_rrip\_bits[i]\ =\ 0;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ i;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00048\ \ \ \ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ UInt8\ attempt\ =\ 0;}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{for}(UInt32\ j\ =\ 0;\ j\ <=\ m\_rrip\_max;\ ++j)}
+\DoxyCodeLine{00053\ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_rrip\_bits[m\_replacement\_pointer]\ >=\ m\_rrip\_max)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ choose\ the\ first\ non-\/touched\ line\ as\ the\ victim\ (note\ that\ we\ start\ searching\ from\ the\ replacement\ pointer\ position)}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ UInt8\ index\ =\ m\_replacement\_pointer;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ qbs\_reject\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ attempt\_goforit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (attempt\ <\ m\_num\_attempts\ -\/\ 1)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(cntlr\ !=\ NULL,\ \textcolor{stringliteral}{"{}CacheCntlr\ ==\ NULL,\ QBS\ can\ only\ be\ used\ when\ cntlr\ is\ passed\ in"{}});}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ qbs\_reject\ =\ cntlr-\/>isInLowerLevelCache(m\_cache\_block\_info\_array[index]);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ attempt\_goforit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (qbs\_reject)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Block\ is\ contained\ in\ lower-\/level\ cache,\ and\ we\ have\ more\ tries\ remaining.}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ this\ block\ to\ MRU\ and\ try\ again}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_rrip\_bits[index]\ =\ 0;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cntlr-\/>incrementQBSLookupCost();}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++attempt;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cache\_block\_info\_array[index]-\/>isTLBBlock()\ \&\&\ m\_srrip\_tlb\_enabled\ \&\&\ attempt\_goforit)\{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Updating\ TLB\ Block\ inside\ the\ set\ while\ searching\ for\ replacement"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_rrip\_bits[index]\ =\ 0;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cntlr-\/>incrementQBSLookupCost();}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++attempt;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ m\_replacement\_pointer\ =\ (m\_replacement\_pointer\ +\ 1)\ \%\ m\_associativity;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prepare\ way\ for\ a\ new\ line:\ set\ prediction\ to\ 'long'}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ m\_rrip\_bits[index]\ =\ m\_rrip\_insert;}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ m\_set\_info-\/>incrementAttempt(attempt);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(isValidReplacement(index),\ \textcolor{stringliteral}{"{}SRRIP\ selected\ an\ invalid\ replacement\ candidate"{}}\ );}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if(m\_cache\_block\_info\_array[index]-\/>isTLBBlock()\ \&\&\ m\_srrip\_tlb\_enabled)\{}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ std::cout\ <<\ "{}Evicting\ a\ block\ which\ is\ TLB\ entry\ "{}\ <<\ m\_cache\_block\_info\_array[index]-\/>isTLBBlock()\ <<\ std::endl;}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ index;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ m\_replacement\_pointer\ =\ (m\_replacement\_pointer\ +\ 1)\ \%\ m\_associativity;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{comment}{//\ Increment\ all\ RRIP\ counters\ until\ one\ hits\ RRIP\_MAX}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_associativity;\ i++)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_rrip\_bits[i]\ <\ m\_rrip\_max)}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ m\_rrip\_bits[i]++;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Error\ finding\ replacement\ index"{}});}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00123\ CacheSetSRRIP::updateReplacementIndex(UInt32\ accessed\_index)}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ \ m\_set\_info-\/>increment(m\_rrip\_bits[accessed\_index]);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keywordflow}{if}(m\_cache\_block\_info\_array[accessed\_index]-\/>isTLBBlock()\ \&\&\ m\_srrip\_tlb\_enabled)\{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ m\_rrip\_bits[accessed\_index]\ =\ 0;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Updating\ TLB\ Block\ inside\ the\ set"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00132\ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{if}\ (m\_rrip\_bits[accessed\_index]\ >\ 0)}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ m\_rrip\_bits[accessed\_index]-\/-\/;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ }
+\DoxyCodeLine{00137\ \}}
+
+\end{DoxyCode}

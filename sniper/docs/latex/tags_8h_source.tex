@@ -1,0 +1,88 @@
+\doxysection{tags.\+h}
+\label{tags_8h_source}\index{common/misc/tags.h@{common/misc/tags.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_TAGS\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_TAGS\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{class\ }Config;}
+\DoxyCodeLine{00012\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ Tags}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ An\ object\ (String)\ can\ have\ a\ number\ of\ tags\ (String)\ associated\ with\ it.\ Additionally,\ each\ tag\ can\ be\ assigned}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ a\ value\ (UInt64).\ The\ goal\ of\ this\ tagging\ system\ is\ to\ allow\ for\ informal\ communication\ between\ different\ components.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Initial\ tags\ are\ set\ via\ init()\ from\ the\ configuration\ file.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ [tags]}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ objname/tagname=1,0,1,0}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//}}
+\DoxyCodeLine{00023\ \textcolor{keyword}{struct\ }Tag\ \{}
+\DoxyCodeLine{00024\ \ \ \ String\ tag;}
+\DoxyCodeLine{00025\ \ \ \ UInt64\ value;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ Tag(String\ tag,\ UInt64\ value)\ :\ tag(tag),\ value(value)\ \{\}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordtype}{bool}\ operator<(\textcolor{keyword}{const}\ Tag\ \&\ rhs)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tag\ ==\ rhs.tag)}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ value\ <\ rhs.value;}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tag\ <\ rhs.tag;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ Tag\ \&\ rhs)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00042\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((this-\/>tag\ ==\ rhs.tag)\ \&\&\ (this-\/>value\ ==\ rhs.value));}
+\DoxyCodeLine{00044\ \ \ \ \}}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{class\ }TagsManager}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ TagsManager(config::Config\ *config);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordtype}{void}\ addTag(String\ objname,\ UInt64\ \textcolor{keywordtype}{id},\ String\ tag,\ UInt64\ value\ =\ 1)}
+\DoxyCodeLine{00053\ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ m\_tags[objname][Tag(tag,\textcolor{keywordtype}{id})]\ =\ value;}
+\DoxyCodeLine{00055\ \ \ \ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordtype}{void}\ updateTag(String\ objname,\ UInt64\ \textcolor{keywordtype}{id},\ String\ tag,\ UInt64\ value\ =\ 1)}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ addTag(objname,\textcolor{keywordtype}{id},tag,value);}
+\DoxyCodeLine{00060\ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordtype}{bool}\ hasTag(String\ objname,\ UInt64\ \textcolor{keywordtype}{id},\ String\ tag)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_tags[objname].count(Tag(tag,\textcolor{keywordtype}{id}))\ ==\ 1);}
+\DoxyCodeLine{00065\ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ UInt64\ getTag(String\ objname,\ UInt64\ \textcolor{keywordtype}{id},\ String\ tag)}
+\DoxyCodeLine{00068\ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_tags[objname][Tag(tag,\textcolor{keywordtype}{id})];}
+\DoxyCodeLine{00070\ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordtype}{void}\ deleteTag(String\ objname,\ UInt64\ \textcolor{keywordtype}{id},\ String\ tag)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ m\_tags[objname].erase(Tag(tag,\textcolor{keywordtype}{id}));}
+\DoxyCodeLine{00075\ \ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{comment}{//\ FIXME:\ An\ unordered\_map\ should\ be\ faster\ than\ a\ map}}
+\DoxyCodeLine{00079\ \ \ \ std::map<String,\ std::map<Tag,UInt64>\ >\ m\_tags;}
+\DoxyCodeLine{00080\ \};}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TAGS\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

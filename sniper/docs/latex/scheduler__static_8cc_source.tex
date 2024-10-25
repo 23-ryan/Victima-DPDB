@@ -1,0 +1,46 @@
+\doxysection{scheduler\+\_\+static.\+cc}
+\label{scheduler__static_8cc_source}\index{common/scheduler/scheduler\_static.cc@{common/scheduler/scheduler\_static.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}scheduler\_static.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ SchedulerStatic::SchedulerStatic(ThreadManager\ *thread\_manager)}
+\DoxyCodeLine{00009\ \ \ \ :\ Scheduler(thread\_manager)}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ m\_core\_mask.resize(Sim()-\/>getConfig()-\/>getApplicationCores());}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00014\ \ \ \ \{}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ m\_core\_mask[core\_id]\ =\ Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}scheduler/static/core\_mask"{}},\ core\_id);}
+\DoxyCodeLine{00016\ \ \ \ \}}
+\DoxyCodeLine{00017\ \}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ core\_id\_t\ SchedulerStatic::findFirstFreeMaskedCore()}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ core\_id\ =\ 0;\ core\_id\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_mask[core\_id]\ \&\&\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getState()\ ==\ Core::IDLE)}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_id;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00027\ \ \ \ \}}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ core\_id\_t\ SchedulerStatic::threadCreate(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ core\_id\_t\ core\_id\ =\ findFirstFreeMaskedCore();}
+\DoxyCodeLine{00034\ \ \ \ LOG\_ASSERT\_ERROR(core\_id\ !=\ INVALID\_CORE\_ID,\ \textcolor{stringliteral}{"{}No\ cores\ available\ for\ spawnThread\ request."{}});}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ app\_id\_t\ app\_id\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>getAppId();}
+\DoxyCodeLine{00037\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Scheduler:\ thread\ \%d\ from\ application\ \%d\ now\ scheduled\ to\ core\ \%d"{}},\ thread\_id,\ app\_id,\ core\_id);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{return}\ core\_id;}
+\DoxyCodeLine{00040\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,72 @@
+\doxysection{network\+\_\+model\+\_\+magic.\+cc}
+\label{network__model__magic_8cc_source}\index{common/network/network\_model\_magic.cc@{common/network/network\_model\_magic.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}network\_model\_magic.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ NetworkModelMagic::NetworkModelMagic(Network\ *net,\ EStaticNetwork\ net\_type)\ :}
+\DoxyCodeLine{00009\ \ \ \ NetworkModel(net,\ net\_type),}
+\DoxyCodeLine{00010\ \ \ \ \_enabled(false),}
+\DoxyCodeLine{00011\ \ \ \ \_num\_packets(0),}
+\DoxyCodeLine{00012\ \ \ \ \_num\_bytes(0),}
+\DoxyCodeLine{00013\ \ \ \ \_latency(Sim()-\/>getDvfsManager()-\/>getCoreDomain(getNetwork()-\/>getCore()-\/>getId()),\ 1)}
+\DoxyCodeLine{00014\ \{\ \}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00017\ NetworkModelMagic::routePacket(\textcolor{keyword}{const}\ NetPacket\ \&pkt,\ std::vector<Hop>\ \&nextHops)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ A\ latency\ of\ '1'}}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.receiver\ ==\ NetPacket::BROADCAST)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ UInt32\ total\_cores\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ (SInt32)\ total\_cores;\ i++)}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ Hop\ h;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ h.final\_dest\ =\ i;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ h.next\_dest\ =\ i;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ h.time\ =\ pkt.time\ +\ \_latency.getLatency();}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ Hop\ h;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ h.final\_dest\ =\ pkt.receiver;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ h.next\_dest\ =\ pkt.receiver;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ h.time\ =\ pkt.time\ +\ \_latency.getLatency();}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00042\ \ \ \ \}}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00046\ NetworkModelMagic::processReceivedPacket(NetPacket\ \&pkt)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ ScopedLock\ sl(\_lock);}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.type\ ==\ SHARED\_MEM\_1)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ requester\ =\ getNetwork()-\/>getCore()-\/>getMemoryManager()-\/>getShmemRequester(pkt.data);}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ Other\ Packet\ types}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ requester\ =\ pkt.sender;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ LOG\_ASSERT\_ERROR((requester\ >=\ 0)\ \&\&\ (requester\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores()),}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}requester(\%i)"{}},\ requester);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keywordflow}{if}\ (\ (!\_enabled)\ ||\ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())\ )}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ UInt32\ pkt\_length\ =\ getNetwork()-\/>getModeledLength(pkt);}
+\DoxyCodeLine{00064\ \ \ \ \_num\_packets\ ++;}
+\DoxyCodeLine{00065\ \ \ \ \_num\_bytes\ +=\ pkt\_length;}
+\DoxyCodeLine{00066\ \}}
+
+\end{DoxyCode}

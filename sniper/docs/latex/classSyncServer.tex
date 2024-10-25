@@ -1,0 +1,561 @@
+\doxysection{Sync\+Server Class Reference}
+\label{classSyncServer}\index{SyncServer@{SyncServer}}
+
+
+{\ttfamily \#include $<$sync\+\_\+server.\+h$>$}
+
+
+
+Collaboration diagram for Sync\+Server\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=174pt]{classSyncServer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Sync\+Server} ()
+\item 
+\textbf{ $\sim$\+Sync\+Server} ()
+\item 
+void \textbf{ mutex\+Init} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$mux)
+\item 
+std\+::pair$<$ \textbf{ Subsecond\+Time}, bool $>$ \textbf{ mutex\+Lock} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$mux, bool try\+Lock, \textbf{ Subsecond\+Time} time)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ mutex\+Unlock} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$mux, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ cond\+Init} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+cond\+\_\+t} $\ast$cond)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ cond\+Wait} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+cond\+\_\+t} $\ast$cond, \textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$mux, \textbf{ Subsecond\+Time} time)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ cond\+Signal} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+cond\+\_\+t} $\ast$cond, \textbf{ Subsecond\+Time} time)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ cond\+Broadcast} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+cond\+\_\+t} $\ast$cond, \textbf{ Subsecond\+Time} time)
+\item 
+void \textbf{ barrier\+Init} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+barrier\+\_\+t} $\ast$barrier, \textbf{ UInt32} count)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ barrier\+Wait} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ carbon\+\_\+barrier\+\_\+t} $\ast$barrier, \textbf{ Subsecond\+Time} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\+::unordered\+\_\+map$<$ \textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$, \textbf{ Sim\+Mutex} $>$ \textbf{ Mutex\+Vector}
+\item 
+typedef std\+::unordered\+\_\+map$<$ \textbf{ carbon\+\_\+cond\+\_\+t} $\ast$, \textbf{ Sim\+Cond} $>$ \textbf{ Cond\+Vector}
+\item 
+typedef std\+::vector$<$ \textbf{ Sim\+Barrier} $>$ \textbf{ Barrier\+Vector}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Sim\+Mutex} $\ast$ \textbf{ get\+Mutex} (\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$mux, bool can\+Create=true)
+\item 
+\textbf{ Sim\+Cond} $\ast$ \textbf{ get\+Cond} (\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$cond, bool can\+Create=true)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Mutex\+Vector} \textbf{ m\+\_\+mutexes}
+\item 
+\textbf{ Cond\+Vector} \textbf{ m\+\_\+conds}
+\item 
+\textbf{ Barrier\+Vector} \textbf{ m\+\_\+barriers}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+reschedule\+\_\+cost}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 84} of file \textbf{ sync\+\_\+server.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{SyncServer@{SyncServer}!BarrierVector@{BarrierVector}}
+\index{BarrierVector@{BarrierVector}!SyncServer@{SyncServer}}
+\doxysubsubsection{BarrierVector}
+{\footnotesize\ttfamily \label{classSyncServer_a1fd7bf62f3eb708e4dbbc03e2546c435} 
+std\+::vector$<$\textbf{ Sim\+Barrier}$>$ \textbf{ Sync\+Server\+::\+Barrier\+Vector}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 88} of file \textbf{ sync\+\_\+server.\+h}.
+
+\index{SyncServer@{SyncServer}!CondVector@{CondVector}}
+\index{CondVector@{CondVector}!SyncServer@{SyncServer}}
+\doxysubsubsection{CondVector}
+{\footnotesize\ttfamily \label{classSyncServer_a062e79d3b1ba5d0a9534c732da1398dd} 
+std\+::unordered\+\_\+map$<$\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$, \textbf{ Sim\+Cond}$>$ \textbf{ Sync\+Server\+::\+Cond\+Vector}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 87} of file \textbf{ sync\+\_\+server.\+h}.
+
+\index{SyncServer@{SyncServer}!MutexVector@{MutexVector}}
+\index{MutexVector@{MutexVector}!SyncServer@{SyncServer}}
+\doxysubsubsection{MutexVector}
+{\footnotesize\ttfamily \label{classSyncServer_ad6286c8275e626ebf36deded8d8bcfab} 
+std\+::unordered\+\_\+map$<$\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$, \textbf{ Sim\+Mutex}$>$ \textbf{ Sync\+Server\+::\+Mutex\+Vector}\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 86} of file \textbf{ sync\+\_\+server.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{SyncServer@{SyncServer}!SyncServer@{SyncServer}}
+\index{SyncServer@{SyncServer}!SyncServer@{SyncServer}}
+\doxysubsubsection{SyncServer()}
+{\footnotesize\ttfamily \label{classSyncServer_ada266666bd0582c08c84478cfbcd9f2a} 
+Sync\+Server\+::\+Sync\+Server (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 185} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+reschedule\+\_\+cost}, and \textbf{ Subsecond\+Time\+::\+NS()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_ada266666bd0582c08c84478cfbcd9f2a_cgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!````~SyncServer@{$\sim$SyncServer}}
+\index{````~SyncServer@{$\sim$SyncServer}!SyncServer@{SyncServer}}
+\doxysubsubsection{$\sim$SyncServer()}
+{\footnotesize\ttfamily \label{classSyncServer_ae794638d7585631a0700940c11a71e75} 
+Sync\+Server\+::$\sim$\+Sync\+Server (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 190} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{SyncServer@{SyncServer}!barrierInit@{barrierInit}}
+\index{barrierInit@{barrierInit}!SyncServer@{SyncServer}}
+\doxysubsubsection{barrierInit()}
+{\footnotesize\ttfamily \label{classSyncServer_a69fae989cee7d1a7c10597aaecceedea} 
+void Sync\+Server\+::barrier\+Init (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+barrier\+\_\+t} $\ast$}]{barrier}{, }\item[{\textbf{ UInt32}}]{count}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 299} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+barriers}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::barrier\+Init()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a69fae989cee7d1a7c10597aaecceedea_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!barrierWait@{barrierWait}}
+\index{barrierWait@{barrierWait}!SyncServer@{SyncServer}}
+\doxysubsubsection{barrierWait()}
+{\footnotesize\ttfamily \label{classSyncServer_a53f561a0c815139d942af4725f14d9ca} 
+\textbf{ Subsecond\+Time} Sync\+Server\+::barrier\+Wait (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+barrier\+\_\+t} $\ast$}]{barrier}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 307} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ m\+\_\+barriers}, and \textbf{ Sim\+Barrier\+::wait()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::barrier\+Wait()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=282pt]{classSyncServer_a53f561a0c815139d942af4725f14d9ca_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a53f561a0c815139d942af4725f14d9ca_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!condBroadcast@{condBroadcast}}
+\index{condBroadcast@{condBroadcast}!SyncServer@{SyncServer}}
+\doxysubsubsection{condBroadcast()}
+{\footnotesize\ttfamily \label{classSyncServer_a67488c7ccf253fc586fbbe05f5df6a8e} 
+\textbf{ Subsecond\+Time} Sync\+Server\+::cond\+Broadcast (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$}]{cond}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 289} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ Sim\+Cond\+::broadcast()}, and \textbf{ get\+Cond()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::cond\+Broadcast()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a67488c7ccf253fc586fbbe05f5df6a8e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a67488c7ccf253fc586fbbe05f5df6a8e_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!condInit@{condInit}}
+\index{condInit@{condInit}!SyncServer@{SyncServer}}
+\doxysubsubsection{condInit()}
+{\footnotesize\ttfamily \label{classSyncServer_a4562eb21247c9f48b296ac0a1e8e9b04} 
+void Sync\+Server\+::cond\+Init (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$}]{cond}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 264} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ get\+Cond()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::cond\+Init()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=292pt]{classSyncServer_a4562eb21247c9f48b296ac0a1e8e9b04_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a4562eb21247c9f48b296ac0a1e8e9b04_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!condSignal@{condSignal}}
+\index{condSignal@{condSignal}!SyncServer@{SyncServer}}
+\doxysubsubsection{condSignal()}
+{\footnotesize\ttfamily \label{classSyncServer_a497bc05ec2e0d34a92f629e72595f186} 
+\textbf{ Subsecond\+Time} Sync\+Server\+::cond\+Signal (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$}]{cond}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 279} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ get\+Cond()}, and \textbf{ Sim\+Cond\+::signal()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::cond\+Signal()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a497bc05ec2e0d34a92f629e72595f186_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a497bc05ec2e0d34a92f629e72595f186_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!condWait@{condWait}}
+\index{condWait@{condWait}!SyncServer@{SyncServer}}
+\doxysubsubsection{condWait()}
+{\footnotesize\ttfamily \label{classSyncServer_ac45aac5417e1184375a5d34237564e46} 
+\textbf{ Subsecond\+Time} Sync\+Server\+::cond\+Wait (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$}]{cond}{, }\item[{\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$}]{mux}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 270} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ get\+Cond()}, \textbf{ get\+Mutex()}, and \textbf{ Sim\+Cond\+::wait()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::cond\+Wait()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_ac45aac5417e1184375a5d34237564e46_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_ac45aac5417e1184375a5d34237564e46_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!getCond@{getCond}}
+\index{getCond@{getCond}!SyncServer@{SyncServer}}
+\doxysubsubsection{getCond()}
+{\footnotesize\ttfamily \label{classSyncServer_af2b9c2d33d70850707a3ca071f75ca97} 
+\textbf{ Sim\+Cond} $\ast$ Sync\+Server\+::get\+Cond (\begin{DoxyParamCaption}\item[{\textbf{ carbon\+\_\+cond\+\_\+t} $\ast$}]{cond}{, }\item[{bool}]{can\+Create}{ = {\ttfamily true}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 246} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ m\+\_\+conds}.
+
+
+
+Referenced by \textbf{ cond\+Broadcast()}, \textbf{ cond\+Init()}, \textbf{ cond\+Signal()}, and \textbf{ cond\+Wait()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_af2b9c2d33d70850707a3ca071f75ca97_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!getMutex@{getMutex}}
+\index{getMutex@{getMutex}!SyncServer@{SyncServer}}
+\doxysubsubsection{getMutex()}
+{\footnotesize\ttfamily \label{classSyncServer_a910721580c2277690c100bc141e1c746} 
+\textbf{ Sim\+Mutex} $\ast$ Sync\+Server\+::get\+Mutex (\begin{DoxyParamCaption}\item[{\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$}]{mux}{, }\item[{bool}]{can\+Create}{ = {\ttfamily true}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 193} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ m\+\_\+mutexes}.
+
+
+
+Referenced by \textbf{ cond\+Wait()}, \textbf{ mutex\+Init()}, \textbf{ mutex\+Lock()}, and \textbf{ mutex\+Unlock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a910721580c2277690c100bc141e1c746_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!mutexInit@{mutexInit}}
+\index{mutexInit@{mutexInit}!SyncServer@{SyncServer}}
+\doxysubsubsection{mutexInit()}
+{\footnotesize\ttfamily \label{classSyncServer_a8a4efe712cc7526905aa143de4db5943} 
+void Sync\+Server\+::mutex\+Init (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$}]{mux}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 211} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ get\+Mutex()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::mutex\+Init()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=301pt]{classSyncServer_a8a4efe712cc7526905aa143de4db5943_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_a8a4efe712cc7526905aa143de4db5943_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!mutexLock@{mutexLock}}
+\index{mutexLock@{mutexLock}!SyncServer@{SyncServer}}
+\doxysubsubsection{mutexLock()}
+{\footnotesize\ttfamily \label{classSyncServer_aa143f6b5befacdaa10c03c9f1ca8a069} 
+std\+::pair$<$ \textbf{ Subsecond\+Time}, bool $>$ Sync\+Server\+::mutex\+Lock (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$}]{mux}{, }\item[{bool}]{try\+Lock}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 217} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ get\+Mutex()}, \textbf{ Sim\+Mutex\+::is\+Locked()}, \textbf{ Sim\+Mutex\+::lock()}, and \textbf{ m\+\_\+reschedule\+\_\+cost}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{classSyncServer_aa143f6b5befacdaa10c03c9f1ca8a069_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_aa143f6b5befacdaa10c03c9f1ca8a069_icgraph}
+\end{center}
+\end{figure}
+\index{SyncServer@{SyncServer}!mutexUnlock@{mutexUnlock}}
+\index{mutexUnlock@{mutexUnlock}!SyncServer@{SyncServer}}
+\doxysubsubsection{mutexUnlock()}
+{\footnotesize\ttfamily \label{classSyncServer_ad849bd9b6bf5f0948c90fffb145d4606} 
+\textbf{ Subsecond\+Time} Sync\+Server\+::mutex\+Unlock (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ carbon\+\_\+mutex\+\_\+t} $\ast$}]{mux}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 234} of file \textbf{ sync\+\_\+server.\+cc}.
+
+
+
+References \textbf{ get\+Mutex()}, \textbf{ m\+\_\+reschedule\+\_\+cost}, \textbf{ Sim\+Mutex\+::\+NO\+\_\+\+OWNER}, \textbf{ Sim\+Mutex\+::unlock()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::mutex\+Unlock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_ad849bd9b6bf5f0948c90fffb145d4606_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSyncServer_ad849bd9b6bf5f0948c90fffb145d4606_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{SyncServer@{SyncServer}!m\_barriers@{m\_barriers}}
+\index{m\_barriers@{m\_barriers}!SyncServer@{SyncServer}}
+\doxysubsubsection{m\_barriers}
+{\footnotesize\ttfamily \label{classSyncServer_a086b6eb3fc146fbef6c8c26bb1d390e4} 
+\textbf{ Barrier\+Vector} Sync\+Server\+::m\+\_\+barriers\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 92} of file \textbf{ sync\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ barrier\+Init()}, and \textbf{ barrier\+Wait()}.
+
+\index{SyncServer@{SyncServer}!m\_conds@{m\_conds}}
+\index{m\_conds@{m\_conds}!SyncServer@{SyncServer}}
+\doxysubsubsection{m\_conds}
+{\footnotesize\ttfamily \label{classSyncServer_a3ac0089f2b825434f6f5ff77095b9568} 
+\textbf{ Cond\+Vector} Sync\+Server\+::m\+\_\+conds\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 91} of file \textbf{ sync\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ get\+Cond()}.
+
+\index{SyncServer@{SyncServer}!m\_mutexes@{m\_mutexes}}
+\index{m\_mutexes@{m\_mutexes}!SyncServer@{SyncServer}}
+\doxysubsubsection{m\_mutexes}
+{\footnotesize\ttfamily \label{classSyncServer_a34318109034b76211f0a8db8403461e3} 
+\textbf{ Mutex\+Vector} Sync\+Server\+::m\+\_\+mutexes\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ sync\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ get\+Mutex()}.
+
+\index{SyncServer@{SyncServer}!m\_reschedule\_cost@{m\_reschedule\_cost}}
+\index{m\_reschedule\_cost@{m\_reschedule\_cost}!SyncServer@{SyncServer}}
+\doxysubsubsection{m\_reschedule\_cost}
+{\footnotesize\ttfamily \label{classSyncServer_a7f361b8a96217910355944d6e1af22a5} 
+\textbf{ Subsecond\+Time} Sync\+Server\+::m\+\_\+reschedule\+\_\+cost\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ sync\+\_\+server.\+h}.
+
+
+
+Referenced by \textbf{ mutex\+Lock()}, \textbf{ mutex\+Unlock()}, and \textbf{ Sync\+Server()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ sync\+\_\+server.\+h}\item 
+common/system/\textbf{ sync\+\_\+server.\+cc}\end{DoxyCompactItemize}

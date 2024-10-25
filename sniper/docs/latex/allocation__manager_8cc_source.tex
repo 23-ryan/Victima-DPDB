@@ -1,0 +1,253 @@
+\doxysection{allocation\+\_\+manager.\+cc}
+\label{allocation__manager_8cc_source}\index{common/system/allocation\_manager.cc@{common/system/allocation\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <sched.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <linux/unistd.h>}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <sys/types.h>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <limits.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}allocation\_manager.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}buddy\_allocator.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ AllocationManager::AllocationManager(\textcolor{keywordtype}{bool}\ \_eager,\ \textcolor{keywordtype}{int}\ \_large\_page\_percentage):\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ large\_page\_percentage(\_large\_page\_percentage),}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ eager(\_eager)}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ srand(5436);}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_num;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ core\_num\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =0;\ i\ <\ core\_num;\ i++)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<uint64\_t,uint64\_t>\ core\_virtual\_map;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<uint64\_t,uint64\_t>\ pagemap;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<Range>\ rangetable;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<IntPtr,uint64\_t>\ vpncore;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ range\_table.push\_back(rangetable);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ allocation\_map\_per\_core.push\_back(core\_virtual\_map);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ virtual\_to\_physical\_map.push\_back(pagemap);}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_map\_per\_core.push\_back(vpncore);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ AllocationManager::\string~AllocationManager()}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ }
+\DoxyCodeLine{00045\ \}\ }
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{int}\ AllocationManager::getNumberOfRanges(\textcolor{keywordtype}{int}\ core\_id)\{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ range\_table[core\_id].size();}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{void}\ AllocationManager::printVirtualMap()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_num;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ core\_num\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =0;\ i\ <\ core\_num;\ i++)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::pair<uint64\_t,uint64\_t>\ element\ :\ allocation\_map\_per\_core[i])}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Pointer:\ "{}}\ <<\ \ element.first\ <<\ \textcolor{stringliteral}{"{}\ Size\ :\ "{}}\ <<\ element.second\ <<\ std::endl;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}\ AllocationManager::pageFaultHandler(IntPtr\ vpn,\ uint64\_t\ core\_id)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{if}(!exists\_in\_range\_table(vpn,core\_id))\{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ ppn;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ppn\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate(4*1024);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Allocated\ ppn:\ "{}\ <<\ ppn\ <<\ "{}\ for\ vpn:\ "{}\ <<\ vpn\ <<\ "{}\ core\_id:\ "{}\ <<\ core\_id\ <<\ std::endl;\ \ }}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ virtual\_to\_physical\_map[core\_id].insert(std::make\_pair(vpn,ppn));}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keywordtype}{int}\ AllocationManager::defaultPageFaultHandler()}
+\DoxyCodeLine{00079\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (rand()\%100)\ <\ large\_page\_percentage)\{}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 21;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 12;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00091\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keywordtype}{void}\ AllocationManager::printPageMap()\{}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_num;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ core\_num\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =0;\ i\ <\ core\_num;\ i++)}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::pair<uint64\_t,uint64\_t>\ element\ :\ virtual\_to\_physical\_map[i])}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}VPN:\ "{}}\ <<\ element.first\ <<\ \textcolor{stringliteral}{"{}\ PPN:\ "{}}\ <<\ element.second\ <<\ std::endl;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keywordtype}{void}\ AllocationManager::printRangeTable(std::vector<Range>\ range\_table)\{}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ range:\ range\_table)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ structure\ range:\ PPN\ "{}}\ <<\ range.vpn\ <<\ \textcolor{stringliteral}{"{}\ Bounds:\ "{}}\ <<\ range.bounds\ <<\ std::endl;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keywordtype}{bool}\ AllocationManager::exists\_in\_range\_table(IntPtr\ vpn,\ \textcolor{keywordtype}{int}\ core\_id)}
+\DoxyCodeLine{00118\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}[ALLOC]:\ VPN:\ \%lx\ \(\backslash\)n"{}},vpn);}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ range:\ range\_table[core\_id])}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \{\ \ \ \ \ \ \ }
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}[ALLOC]:\ Check\ range\ table\ \%lx\ ,\ \%lx\ \(\backslash\)n"{}},\ range.vpn,\ range.bounds);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}[ALLOC]:\ Check\ range\ table"{}\ <<\ "{}VPN:\ "{}\ <<\ range.vpn\ <<\ "{}Bounds:\ "{}\ <<\ range.bounds\ <<\ \ std::endl;}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ vpn\ >=\ range.vpn\ \&\&\ vpn\ <=\ range.bounds\ )}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ Range\ AllocationManager::access\_range\_table(IntPtr\ vpn,\ \textcolor{keywordtype}{int}\ core\_id)}
+\DoxyCodeLine{00132\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ range:\ range\_table[core\_id])}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ vpn\ >=\ \ range.vpn\ \&\&\ vpn\ <=\ range.bounds\ )}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ range;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keywordtype}{void}\ AllocationManager::handleMalloc(uint64\_t\ pointer,\ uint64\_t\ size,\ \textcolor{keywordtype}{int}\ core\_id)}
+\DoxyCodeLine{00143\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ allocation\_map\_per\_core[core\_id][pointer]\ =\ size;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ IntPtr\ current\_vpn\ =\ pointer;}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ current\_vpn\ =\ (current\_vpn\ >>\ 12);\ \textcolor{comment}{//4KB\ page}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((size\ <\ (1\ >>\ 12))\ \ \ \&\&\ (vpn\_map\_per\_core[core\_id].find(current\_vpn)\ ==\ vpn\_map\_per\_core[core\_id].end())\ )\{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ ppn;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ppn\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate(4*1024);}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_map\_per\_core[core\_id][current\_vpn\ ]\ =\ ppn;}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[ALLOC\ MANAGER]\ handle\ malloc\ -\/\ VPN:\ \ \ \ \ \ "{}}\ <<\ \ std::hex\ <<\ current\_vpn\ <<\ \textcolor{stringliteral}{"{}\ size:\ "{}}\ <<\ size\ <<\ std::endl;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eager)\{}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ result\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate\_eager\_paging(size);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ range:\ result)}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Range\ vpn\_range;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_range.vpn\ =\ current\_vpn;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_range.bounds\ =\ current\_vpn\ +\ range.bounds;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\_vpn\ =\ vpn\_range.bounds;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ range\_table[core\_id].push\_back(vpn\_range);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Data\ structure\ range:\ PPN\ "{}}\ <<\ range.vpn\ <<\ \textcolor{stringliteral}{"{}\ Bounds:\ "{}}\ <<\ range.bounds\ <<\ std::endl;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printRangeTable(ranges);}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \textcolor{keywordtype}{void}\ AllocationManager::handleCalloc(uint64\_t\ pointer,\ uint64\_t\ size,\ \textcolor{keywordtype}{int}\ core\_id)}
+\DoxyCodeLine{00179\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}[ALLOC\ MANAGER]\ handle\ calloc\ -\/\ pointer:\ \ "{}}\ <<\ pointer\ <<\ \textcolor{stringliteral}{"{}\ size:\ "{}}\ <<\ size\ <<\ std::endl;}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ allocation\_map\_per\_core[core\_id][pointer]\ =\ size;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ IntPtr\ current\_vpn\ =\ pointer;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ current\_vpn\ =\ (current\_vpn\ >>\ 12);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((size\ <\ (1\ >>\ 12))\ \ \ \&\&\ (vpn\_map\_per\_core[core\_id].find(current\_vpn)\ ==\ vpn\_map\_per\_core[core\_id].end())\ )\{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ ppn;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ppn\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate(4*1024);}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_map\_per\_core[core\_id][current\_vpn\ ]\ =\ ppn;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eager)\{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ppn\_ranges\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate\_eager\_paging(size);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ range:\ ppn\_ranges)}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Range\ vpn\_range;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_range.vpn\ =\ current\_vpn;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_range.bounds\ =\ current\_vpn\ +\ vpn\_range.bounds;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ range\_table[core\_id].push\_back(vpn\_range);}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Data\ structure\ range:\ PPN\ "{}\ <<\ range.vpn\ <<\ "{}\ Bounds:\ "{}\ <<\ range.bounds\ <<\ std::endl;}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printRangeTable(ranges);}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00206\ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \textcolor{keywordtype}{void}\ AllocationManager::handleRealloc(uint64\_t\ init\_pointer,\ uint64\_t\ pointer,\ uint64\_t\ size,\ \textcolor{keywordtype}{int}\ core\_id)}
+\DoxyCodeLine{00209\ \{}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ allocation\_map\_per\_core[core\_id].erase(init\_pointer);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ allocation\_map\_per\_core[core\_id][pointer]\ =\ size;}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ IntPtr\ current\_vpn\ =\ pointer;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ current\_vpn\ =\ (current\_vpn\ >>\ 12);}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((size\ <\ (1\ >>\ 12))\ \ \ \&\&\ (vpn\_map\_per\_core[core\_id].find(current\_vpn)\ ==\ vpn\_map\_per\_core[core\_id].end())\ )\{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ ppn;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ppn\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate(4*1024);}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_map\_per\_core[core\_id][current\_vpn\ ]\ =\ ppn;}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eager)\{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ppn\_ranges\ =\ Sim()-\/>getMemoryAllocator()-\/>allocate\_eager\_paging(size);}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ range:\ ppn\_ranges)}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Range\ vpn\_range;}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_range.vpn\ =\ current\_vpn;}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\_range.bounds\ =\ current\_vpn\ +\ vpn\_range.bounds;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ range\_table[core\_id].push\_back(vpn\_range);}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Data\ structure\ range:\ PPN\ "{}\ <<\ range.vpn\ <<\ "{}\ Bounds:\ "{}\ <<\ range.bounds\ <<\ std::endl;}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printRangeTable(ranges);}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{keywordtype}{void}\ AllocationManager::handleFree(uint64\_t\ pointer,\ \textcolor{keywordtype}{int}\ core\_id)}
+\DoxyCodeLine{00241\ \{}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(allocation\_map\_per\_core[core\_id].find(pointer)\ !=\ allocation\_map\_per\_core[core\_id].end())}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ allocation\_map\_per\_core[core\_id].erase(pointer);}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \}}
+
+\end{DoxyCode}

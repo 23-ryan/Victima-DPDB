@@ -1,0 +1,59 @@
+\doxysection{topology\+\_\+info.\+cc}
+\label{topology__info_8cc_source}\index{common/core/topology\_info.cc@{common/core/topology\_info.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}topology\_info.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ VERBOSE\ 0}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ SInt32\ TopologyInfo::s\_package\ =\ -\/1,\ TopologyInfo::s\_cores\_this\_package\ =\ 0,\ TopologyInfo::s\_core\_id\_last\ =\ -\/1;}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keywordtype}{void}\ TopologyInfo::setup(UInt32\ smt\_cores,\ UInt32\ llc\_sharers)}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ UInt32\ \textcolor{keywordtype}{id}\ =\ core\_id;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \textcolor{comment}{//\ SMT\ level}}
+\DoxyCodeLine{00016\ \ \ \ this-\/>smt\_index\ =\ \textcolor{keywordtype}{id}\ \%\ smt\_cores;}
+\DoxyCodeLine{00017\ \ \ \ this-\/>smt\_count\ =\ smt\_cores;}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordtype}{id}\ /=\ smt\_cores;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{comment}{//\ Core\ level}}
+\DoxyCodeLine{00021\ \ \ \ UInt32\ cores\_per\_package;}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}network/memory\_model\_1"{}})\ ==\ \textcolor{stringliteral}{"{}emesh\_hop\_by\_hop"{}})}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{comment}{//\ Mesh\ NoC:\ assume\ single\ chip}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ cores\_per\_package\ =\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{comment}{//\ Other\ network:\ assume\ one\ LLC\ per\ package}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ cores\_per\_package\ =\ llc\_sharers;}
+\DoxyCodeLine{00028\ \ \ \ cores\_per\_package\ /=\ smt\_cores;}
+\DoxyCodeLine{00029\ \ \ \ this-\/>core\_index\ =\ \textcolor{keywordtype}{id}\ \%\ cores\_per\_package;}
+\DoxyCodeLine{00030\ \ \ \ this-\/>core\_count\ =\ cores\_per\_package;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{comment}{//\ Package\ level}}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//\ Due\ to\ heterogeneity,\ we\ cannot\ directly\ compute\ our\ package\ \#}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{comment}{//\ Assume\ cores\ are\ initialized\ in-\/order,\ and\ figure\ out\ where\ the\ previous\ cores\ are}}
+\DoxyCodeLine{00035\ \ \ \ LOG\_ASSERT\_ERROR(s\_core\_id\_last\ ==\ core\_id\ -\/\ 1,\ \textcolor{stringliteral}{"{}Cores\ not\ initialized\ in\ order"{}});}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (s\_cores\_this\_package\ ==\ 0)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{comment}{//\ First\ core\ of\ a\ new\ package}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ ++s\_package;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ s\_cores\_this\_package\ =\ cores\_per\_package\ *\ smt\_count;}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ \ \ \ -\/-\/s\_cores\_this\_package;}
+\DoxyCodeLine{00043\ \ \ \ s\_core\_id\_last\ =\ core\_id;}
+\DoxyCodeLine{00044\ \ \ \ this-\/>\textcolor{keyword}{package\ }=\ s\_package;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ LOG\_ASSERT\_ERROR(smt\_cores\ <=\ (1\ <<\ SMT\_SHIFT\_BITS),\ \textcolor{stringliteral}{"{}Too\ many\ smt\_cores,\ increase\ SMT\_SHIFT\_BITS"{}});}
+\DoxyCodeLine{00047\ \ \ \ LOG\_ASSERT\_ERROR((cores\_per\_package\ <<\ SMT\_SHIFT\_BITS)\ <=\ (1\ <<\ PACKAGE\_SHIFT\_BITS),\ \textcolor{stringliteral}{"{}Too\ many\ cores\_per\_package,\ increase\ PACKAGE\_SHIFT\_BITS"{}});}
+\DoxyCodeLine{00048\ \ \ \ this-\/>apic\_id\ =\ (this-\/>\textcolor{keyword}{package\ }<<\ PACKAGE\_SHIFT\_BITS)\ |\ (this-\/>core\_index\ <<\ SMT\_SHIFT\_BITS)\ |\ this-\/>smt\_index;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \#if\ VERBOSE}}
+\DoxyCodeLine{00051\ \ \ \ printf(\textcolor{stringliteral}{"{}CORE\ \%d:\ SMT\ \%d/\%d\ CORE\ \%d/\%d\ PACKAGE\ \%d\ APICID\ \%d\(\backslash\)n"{}},\ core\_id,\ smt\_index,\ smt\_count,\ core\_index,\ core\_count,\ package,\ apic\_id);}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00053\ \}}
+
+\end{DoxyCode}

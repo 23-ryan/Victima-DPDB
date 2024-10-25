@@ -1,0 +1,606 @@
+\doxysection{tlb.\+cc}
+\label{tlb_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/tlb.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/tlb.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}tlb.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}cache\_base.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}rng.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}fault\_injection.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{comment}{//\#define\ DEBUG\_TLB}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\#define\ TLB\_STATS}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ UInt32\ TLB::SIM\_PAGE\_SHIFT;}
+\DoxyCodeLine{00026\ \ \ IntPtr\ TLB::SIM\_PAGE\_SIZE;}
+\DoxyCodeLine{00027\ \ \ IntPtr\ TLB::SIM\_PAGE\_MASK;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ ParametricDramDirectoryMSI::MemoryManager\ *TLB::m\_manager\ =\ NULL;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ }
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ TLB::TLB(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ ShmemPerfModel*\ \_m\_shmem\_perf\_model,\ UInt32\ num\_entries,UInt32\ pagesize,\ UInt32\ associativity,\ TLB\ *next\_level,\ \textcolor{keywordtype}{bool}\ \_utopia\_enabled,\ \textcolor{keywordtype}{bool}\ \_track\_misses,\ \textcolor{keywordtype}{bool}\ \_track\_accesses,\ \textcolor{keywordtype}{int}*\ page\_size\_list,\ \textcolor{keywordtype}{int}\ page\_sizes,\ PageTableWalker*\ \ \_ptw)}
+\DoxyCodeLine{00035\ \ \ \ \ :\ m\_size(num\_entries)}
+\DoxyCodeLine{00036\ \ \ \ \ ,\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00037\ \ \ \ \ ,\ m\_associativity(associativity)}
+\DoxyCodeLine{00038\ \ \ \ \ ,\ m\_cache(name\ +\ \textcolor{stringliteral}{"{}\_cache"{}},\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ cfgname,\ \ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ core\_id,\ num\_entries\ /\ associativity,\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ associativity,\ (1L\ <<\ pagesize),\ \textcolor{stringliteral}{"{}lru"{}},\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ CacheBase::PR\_L1\_CACHE,\ CacheBase::HASH\_MASK,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ true,\ page\_size\_list,\ page\_sizes)}
+\DoxyCodeLine{00045\ \ \ \ \ ,\ m\_next\_level(next\_level)}
+\DoxyCodeLine{00046\ \ \ \ \ ,\ m\_shmem\_perf\_model(\_m\_shmem\_perf\_model)}
+\DoxyCodeLine{00047\ \ \ \ \ ,\ m\_access(0)}
+\DoxyCodeLine{00048\ \ \ \ \ ,\ m\_miss(0)}
+\DoxyCodeLine{00049\ \ \ \ \ ,\ l1\_tlb\_cache\_hit(0)}
+\DoxyCodeLine{00050\ \ \ \ \ ,\ l2\_tlb\_cache\_hit(0)\ }
+\DoxyCodeLine{00051\ \ \ \ \ ,\ victima\_alloc\_on\_eviction(0)}
+\DoxyCodeLine{00052\ \ \ \ \ ,\ victima\_alloc\_on\_ptw(0)}
+\DoxyCodeLine{00053\ \ \ \ \ ,\ total\_potm\_latency(SubsecondTime::Zero())}
+\DoxyCodeLine{00054\ \ \ \ \ ,\ nuca\_tlb\_cache\_hit(0)}
+\DoxyCodeLine{00055\ \ \ \ \ ,\ m\_tlb\_address\_saved\_cnt(0)}
+\DoxyCodeLine{00056\ \ \ \ \ ,\ utopia\_enabled(\_utopia\_enabled)}
+\DoxyCodeLine{00057\ \ \ \ \ ,\ track\_L2TLBmiss(\_track\_misses)}
+\DoxyCodeLine{00058\ \ \ \ \ ,\ track\_Accesses(\_track\_accesses)}
+\DoxyCodeLine{00059\ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ LOG\_ASSERT\_ERROR((num\_entries\ /\ associativity)\ *\ associativity\ ==\ num\_entries,\ \textcolor{stringliteral}{"{}Invalid\ TLB\ configuration:\ num\_entries(\%d)\ must\ be\ a\ multiple\ of\ the\ associativity(\%d)"{}},\ num\_entries,\ associativity);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}access"{}},\ \&m\_access);}
+\DoxyCodeLine{00063\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}eviction"{}},\ \&m\_eviction);}
+\DoxyCodeLine{00064\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}miss"{}},\ \&m\_miss);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ is\_dtlb\ =\ (name\ ==\ \textcolor{stringliteral}{"{}dtlb"{}});}
+\DoxyCodeLine{00067\ \ \ \ \ is\_nested\ =\ (name\ ==\ \textcolor{stringliteral}{"{}nested\_tlb"{}});}
+\DoxyCodeLine{00068\ \ \ \ \ is\_stlb\ =\ (name\ ==\ \textcolor{stringliteral}{"{}stlb"{}});}
+\DoxyCodeLine{00069\ \ \ \ \ is\_itlb\ =\ (name\ ==\ \textcolor{stringliteral}{"{}itlb"{}});}
+\DoxyCodeLine{00070\ \ \ \ \ is\_potm\ =\ (name\ ==\ \textcolor{stringliteral}{"{}potm\_tlb"{}});}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ m\_num\_entries\ =\ num\_entries;\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00074\ \ \ \ \ ptw\ =\ \_ptw;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//Victima\ Parameters}}
+\DoxyCodeLine{00077\ \ \ \ \ victima\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/tlb/victima"{}})\ ;}
+\DoxyCodeLine{00078\ \ \ \ \ victimize\_on\_ptw\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/victima/victimize\_on\_ptw"{}});}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//Part\ of\ Memory\ TLB\ [ISCA\ 2017]\ }}
+\DoxyCodeLine{00081\ \ \ \ \ potm\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/tlb/potm\_enabled"{}});}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{if}(potm\_enabled\ \&\&\ !(m\_next\_level))\{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}potm\_latency"{}},\ \&total\_potm\_latency);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ }}
+\DoxyCodeLine{00086\ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \ }
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{/*\ @kanellok\ UTOPIA\ related\ parameters\ */}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{if}(utopia\_enabled)\{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ m\_utopia\ =\ \ Sim()-\/>getUtopia();}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ m\_utr\_4KB\ =\ m\_utopia-\/>getUtr(0);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ m\_utr\_2MB\ =\ m\_utopia-\/>getUtr(1);}
+\DoxyCodeLine{00093\ \ \ \ \ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{if}(is\_dtlb\ \&\&\ m\_next\_level)\{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}L2\_TLB\_miss\_per\_page"{}},\ \&tlb\_address\_access,\ \textcolor{keyword}{true});\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ }}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ does\ not\ matter\ here\ as\ we\ process\ the\ metrics\ at\ the\ end}}
+\DoxyCodeLine{00099\ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{if}(!m\_next\_level)\{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}victima\_alloc\_on\_ptw"{}},\ \&victima\_alloc\_on\_ptw);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}victima\_alloc\_on\_eviction"{}},\ \&victima\_alloc\_on\_eviction);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}l1\_tlb\_cache\_hit"{}},\ \&l1\_tlb\_cache\_hit);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ }}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}l2\_tlb\_cache\_hit"{}},\ \&l2\_tlb\_cache\_hit);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ }}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}nuca\_tlb\_cache\_hit"{}},\ \&nuca\_tlb\_cache\_hit);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access\ }}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ }
+\DoxyCodeLine{00110\ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ TLB::where\_t\ TLB::lookup(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ allocate\_on\_miss,\ \textcolor{keywordtype}{int}\ level,\ \textcolor{keywordtype}{bool}\ model\_count,\ Core::lock\_signal\_t\ lock\_signal)}
+\DoxyCodeLine{00113\ \ \ \{}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ @kanellok\ UTOPIA\ related\ code\ segment}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{if}(ptw-\/>isPageFault(address)\ \&\&\ utopia\_enabled\ \&\&\ m\_utopia-\/>getHeurPrimary()\ ==\ \ Utopia::utopia\_heuristic::pf\ )\{}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\ =\ ptw-\/>init\_walk\_functional(address);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\ ==\ 12)}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ m\_utr\_4KB-\/>allocate(address,\ now,\ m\_core\_id);}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(page\_size\ ==\ 21)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ m\_utr\_2MB-\/>allocate(address,\ now,\ m\_core\_id);}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//end\ of\ UTOPIA\ related\ code\ segment}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\ =\ ptw-\/>init\_walk\_functional(address);}
+\DoxyCodeLine{00130\ \ \ \ \ IntPtr\ vpn\ =\ address\ >>\ page\_size;}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{if}(model\_count)\ m\_access++;}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ DEBUG\_TLB}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ Lookup:\ "{}}\ <<\ vpn\ <<\ \textcolor{stringliteral}{"{}at\ level:\ "{}}\ <<\ level\ <<\ \textcolor{stringliteral}{"{}\ Page\ size:\ "{}}\ <<\ page\_size\ <<\ \ std::endl;}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ @kanellok\ UTOPIA\ related\ code\ segment}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordflow}{if}(utopia\_enabled\ \&\&\ is\_dtlb)}
+\DoxyCodeLine{00144\ \ \ \ \ \{}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ skip\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_utr\_4KB-\/>inUTR(address,model\_count,now,m\_core\_id))\ skip\ =\ \textcolor{keyword}{true};\ \textcolor{comment}{//@kanellok\ check\ if\ data\ is\ in\ UTR\ and\ just\ skip\ the\ TLB\ access\ in\ such\ case}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_utr\_2MB-\/>inUTR(address,model\_count,now,m\_core\_id))\ skip\ =\ \textcolor{keyword}{true};\ \textcolor{comment}{//@kanellok\ check\ if\ data\ is\ in\ UTR\ and\ just\ skip\ the\ TLB\ access\ in\ such\ case}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(skip)\ \textcolor{keywordflow}{return}\ where\_t::UTR\_HIT;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{bool}\ hit\ =\ m\_cache.accessSingleLineTLB(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ DEBUG\_TLB}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(hit)\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ Hit\ at\ level:\ "{}}\ <<\ level\ \ <<\ \ std::endl;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!hit)\ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ Miss\ at\ level:\ "{}}\ <<\ level\ \ <<\ \ std::endl;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{if}\ (hit)\{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \ \ \ \ \ (is\_dtlb\ ||\ is\_nested\ ||\ is\_itlb)\ \textcolor{keywordflow}{return}\ where\_t::L1;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (is\_stlb)\ \textcolor{keywordflow}{return}\ where\_t::L2;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (is\_potm)\ \textcolor{keywordflow}{return}\ where\_t::POTM;}
+\DoxyCodeLine{00170\ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{if}(model\_count)\ m\_miss++;\ \textcolor{comment}{//\ We\ reach\ this\ point\ if\ L1\ TLB\ Miss}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ TLB::where\_t\ where\_next\ =\ TLB::MISS;}
+\DoxyCodeLine{00176\ \ \ \ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{bool}\ l2tlb\_miss\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00178\ \ \ \ \ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_next\_level)\ \textcolor{comment}{//\ is\ there\ a\ second\ level\ TLB?}}
+\DoxyCodeLine{00180\ \ \ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ where\_next\ =\ m\_next\_level-\/>lookup(address,\ now,\ \textcolor{keyword}{false}\ ,\ 2\ \textcolor{comment}{/*\ no\ allocation\ */},model\_count,\ lock\_signal);\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ where\_next\ !=\ TLB::MISS)}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ l2tlb\_miss\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(victima\_enabled)\{\ \textcolor{comment}{//\ We\ are\ at\ L2\ TLB\ }}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{comment}{//L2\ TLB\ Miss\ -\/\ >\ check\ the\ cache\ hierarchy\ to\ see\ if\ TLB\ entry\ is\ cached}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ UInt32\ set;\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ address\ >>\ (page\_size\ -\/\ 3);}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ Cache*\ l1dcache\ =\ m\_manager-\/>getCache(MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ Cache*\ l2cache\ =\ m\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE);}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ Cache*\ nuca\ =\ m\_manager-\/>getNucaCache()-\/>getCache();}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_l1d\ =\ l1dcache-\/>peekSingleLine(cache\_address);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_l2\ =\ l2cache-\/>peekSingleLine(cache\_address);}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_nuca\ =\ nuca-\/>peekSingleLine(cache\_address);}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Searching\ in\ L2\ Cache\ with\ vpn:\ "{}\ <<\ cache\_address\ <<\ "{}\ tag:\ "{}\ <<\ tag\ <<\ \ "{}\ in\ set:\ "{}\ <<\ set\ <<\ std::endl;}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_l1d)\ \textcolor{comment}{//\ Cached\ in\ the\ L1\ Data\ Cache}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_l1d-\/>getBlockType()\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY)\{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_tlb\_cache\_hit++;}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TLB::L1\_CACHE;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(cb\_l2)\{\ \textcolor{comment}{//\ Cached\ in\ the\ L2\ Data\ Cache}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_l2-\/>getBlockType()\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY)\{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ l2cache-\/>updateSetReplacement(cache\_address);}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheCntlr*\ l1dcache\ =\ m\_manager-\/>getCacheCntlrAt(m\_core\_id,MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address\ =(cache\_address)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Inserting\ in\ the\ L1\ address:\ "{}\ <<\ address\ <<\ "{}with\ cache\ address\ "{}\ <<\ \ cache\_address\ <<\ "{}\ with\ page\_size\ "{}\ <<\ page\_size\_evicted\ <<\ std::endl;}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1dcache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_manager-\/>tagCachesBlockType(cache\_address,CacheBlockInfo::block\_type\_t::TLB\_ENTRY);}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_tlb\_cache\_hit++;}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TLB::L2\_CACHE;}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(cb\_nuca)\{\ \textcolor{comment}{//\ Cached\ in\ the\ Nuca\ Cache}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_nuca-\/>getBlockType()\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY)\{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheCntlr*\ l1dcache\ =\ m\_manager-\/>getCacheCntlrAt(m\_core\_id,MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address\ =(cache\_address)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Inserting\ in\ the\ L1\ address:\ "{}\ <<\ address\ <<\ "{}with\ cache\ address\ "{}\ <<\ \ cache\_address\ <<\ "{}\ with\ page\_size\ "{}\ <<\ page\_size\_evicted\ <<\ std::endl;}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1dcache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_manager-\/>tagCachesBlockType(cache\_address,CacheBlockInfo::block\_type\_t::TLB\_ENTRY);\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nuca\_tlb\_cache\_hit++;}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TLB::NUCA\_CACHE;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (victimize\_on\_ptw)\{\ \textcolor{comment}{//\ TLB\ entry\ is\ NOT\ cached\ in\ the\ cache\ hierarchy,\ but\ we\ can\ insert\ a\ TLB\ entry\ inside\ the\ L2\ Cache}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheCntlr*\ l1dcache\ =\ m\_manager-\/>getCacheCntlrAt(m\_core\_id,MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address\ =(cache\_address)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY;}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Inserting\ in\ the\ L1\ address:\ "{}\ <<\ address\ <<\ "{}with\ cache\ address\ "{}\ <<\ \ cache\_address\ \ <<\ std::endl;}}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1dcache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_manager-\/>tagCachesBlockType(cache\_address,CacheBlockInfo::block\_type\_t::TLB\_ENTRY);\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ victima\_alloc\_on\_ptw++;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00280\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ HIERARCHICAL\_TAGGING}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ address\ >>\ (page\_size);}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Cache*\ l2cache\ =\ m\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE);}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2cache-\/>splitAddress(cache\_address,\ tag,\ set);}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tag\ =\ (cache\_address\ >>\ 11)\ >>\ (26-\/18);\ \textcolor{comment}{//\ Two-\/level\ tagging\ mechanism\ (First\ tag\ is\ just\ 4\ MSBs)}}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Searching\ in\ L2\ Cache\ with\ vpn:\ "{}}\ <<\ cache\_address\ <<\ \textcolor{stringliteral}{"{}\ tag:\ "{}}\ <<\ tag\ <<\ \ \textcolor{stringliteral}{"{}\ in\ set:\ "{}}\ <<\ set\ <<\ std::endl;}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//iterate\ over\ all\ ways\ of\ set\ }}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=0;\ i\ <\ l2cache-\/>getCacheSet(set)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_l2\ =\ l2cache-\/>peekBlock(set,i);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_l2)\{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_l2-\/>getTag()\ ==\ tag)\{}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j=0;\ j<cb\_l2-\/>getNumSubBlocks();\ j++)\{}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cb\_l2-\/>getTagSublockTLB(j)\ ==\ cache\_address)\{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_tlb\_cache\_hit++;}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TLB::L2\_CACHE;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (potm\_enabled\ \&\&\ !is\_nested\ \&\&\ level==2)\ \textcolor{comment}{//\ We\ have\ an\ L2\ TLB\ Miss\ and\ POTM\ ISCA\ 2017\ is\ enabled}}
+\DoxyCodeLine{00310\ \ \ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ TLB*\ potm\ =\ m\_manager-\/>getPOTM();}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ where\_t\ hit;}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ hit\ =\ potm-\/>lookup(address,\ now,\ \textcolor{keyword}{false}\ ,\ 3,\ model\_count,\ lock\_signal);\ \textcolor{comment}{//\ @kanellok\ @tlb\_address\_access}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ }
+\DoxyCodeLine{00315\ \ \ \ \ \ \ IntPtr\ vpn\_4kb\ =(address\ >>\ 12);}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ IntPtr\ vpn\_2mb\ =(address\ >>\ 21);}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ IntPtr\ tlb\_address\_4KB\ =\ (IntPtr)software\_tlb+((vpn\_4kb\ \%\ m\_size)\ *\ m\_associativity)*16;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ IntPtr\ tlb\_address\_2MB\ =\ (IntPtr)software\_tlb+((vpn\_2mb\ \%\ m\_size)\ *\ m\_associativity)*16;}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ }
+\DoxyCodeLine{00322\ \ \ \ \ \ \ CacheCntlr*\ l1dcache\ =\ m\_manager-\/>getCacheCntlrAt(m\_core\_id,MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ }
+\DoxyCodeLine{00324\ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ \ CacheBlockInfo::block\_type\_t::TLB\_ENTRY;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00326\ \ \ \ \ \ \ IntPtr\ cache\_address\_small\_page\ =(tlb\_address\_4KB)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \textcolor{comment}{//When\ we\ search\ inside\ the\ POTM,\ we\ bring\ the\ software\ structure\ inside\ the\ cache\ hierarchy}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ l1dcache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address\_small\_page,\ 0,}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00338\ \ \ \ \ \ \ SubsecondTime\ t\_end\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ SubsecondTime\ latency\_4KB\ =\ t\_end\ -\/\ t\_start;}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \ \ \ \ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00343\ \ \ \ \ \ \ IntPtr\ cache\_address\_large\_page\ =(tlb\_address\_2MB)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ l1dcache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address\_large\_page,\ 0,}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ t\_end\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ SubsecondTime\ latency\_2MB\ =\ t\_end\ -\/\ t\_start;}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \ \ \ final\_potm\_latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ }
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(hit\ !=\ TLB::MISS)\{}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (page\_size\ ==\ 12)\ \textcolor{comment}{//\ 4KB\ page}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ final\_potm\_latency\ =\ latency\_4KB;}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ total\_potm\_latency\ +=\ latency\_4KB;}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (page\_size\ ==\ 21)\ \textcolor{comment}{//\ 2MB\ page}}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ final\_potm\_latency\ =\ latency\_2MB;}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ total\_potm\_latency\ +=\ latency\_2MB;}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TLB::POTM;}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ final\_potm\_latency\ =\ std::max(latency\_4KB,latency\_2MB);\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ total\_potm\_latency\ +=\ std::max(latency\_4KB,latency\_2MB);}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \ \ \ \ \}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keywordtype}{bool}\ allocated\_in\_utopia\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordflow}{if}(l2tlb\_miss\ \&\&\ utopia\_enabled\ \&\&\ level\ ==\ 1)\{}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((m\_utopia-\/>getHeurSecondary()\ ==\ Utopia::utopia\_heuristic::pte)\ )\{}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pte\_pressure\_cnt.find(vpn)\ !=\ pte\_pressure\_cnt.end()\ )\{\ \textcolor{comment}{//\ @kanellok\ Track\ the\ pressure\ at\ each\ PTE\ entry}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pte\_pressure\_cnt[vpn]\ +=\ 1;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pte\_pressure\_cnt[vpn]\ =\ 1;}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pte\_pressure\_cnt[vpn]\ >\ m\_utopia-\/>getPTEthr())\{\ \textcolor{comment}{//@kanellok\ if\ PTE\ entry\ is\ "{}hot"{},\ allocate\ the\ page\ in\ UTR\ and\ dont\ insert\ in\ the\ TLB}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ allocated\_in\_utopia\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pte\_pressure\_cnt[vpn]\ =\ 0\ ;}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\ ==\ 12)}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_4KB-\/>allocate(address,now,\ m\_core\_id);}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\ ==\ 21)}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_2MB-\/>allocate(address,now,\ m\_core\_id);}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ where\_next\ =\ TLB::L1;}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{if}\ (allocate\_on\_miss\ \&\&\ !allocated\_in\_utopia\ )\ \textcolor{comment}{//@kanellok\ allocate\ in\ L1TLB}}
+\DoxyCodeLine{00415\ \ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ allocate(address,\ now,\ level,\ lock\_signal);}
+\DoxyCodeLine{00417\ \ \ \ \ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ TLB\_STATS}}
+\DoxyCodeLine{00420\ \ \ \ \ }
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(where\_next\ ==\ TLB::MISS\ \&\&\ level\ ==\ 1\ \&\&\ model\_count\ \&\&\ track\_L2TLBmiss)\{\ \textcolor{comment}{//\ Track\ L2\ TLB\ misses\ per\ page}}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(L2TLB\_miss\_per\_page.find(vpn)\ !=\ L2TLB\_miss\_per\_page.end())\ }
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ L2TLB\_miss\_per\_page[vpn]\ +=\ 1;}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ L2TLB\_miss\_per\_page[vpn]\ =\ 1;\ }
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00429\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \ \ \ \ \ \textcolor{keywordflow}{return}\ where\_next;}
+\DoxyCodeLine{00432\ \ \ \}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \textcolor{keywordtype}{void}\ TLB::allocate(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{int}\ level,\ Core::lock\_signal\_t\ lock\_signal)}
+\DoxyCodeLine{00436\ \ \ \{}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \ \ }
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\ =\ ptw-\/>init\_walk\_functional(address);}
+\DoxyCodeLine{00441\ \ \ \ \ IntPtr\ vpn\ =\ address\ >>\ page\_size;}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00444\ \ \ \ \ IntPtr\ evict\_addr;}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \ \ CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00449\ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Miss\ at\ level"{}\ <<\ level\ <<\ "{}\ UTR\ heuristic:\ "{}\ <<\ m\_utr-\/>getHeur()\ <<\ std::endl;}}
+\DoxyCodeLine{00451\ \ \ \ \ }
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ m\_cache.splitAddressTLB(address,\ tag,\ set\_index,\ page\_size);}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ DEBUG\_TLB}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ Allocate\ "{}}\ <<\ address\ <<\ \textcolor{stringliteral}{"{}\ at\ level:\ "{}}\ <<\ level\ <<\ \textcolor{stringliteral}{"{}\ with\ page\_size\ "{}}\ <<\ page\_size\ <<\ \textcolor{stringliteral}{"{}and\ tag\ "{}}\ <<\ tag\ \ <<\ \ std::endl;}
+\DoxyCodeLine{00457\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \ \ m\_cache.insertSingleLineTLB(address,\ NULL,\ \&eviction,\ \&evict\_addr,\ \&evict\_block\_info,\ NULL,\ now,\ NULL,CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE,page\_size);}
+\DoxyCodeLine{00460\ \ \ \ \ \ }
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keywordflow}{if}(eviction)\{\ \textcolor{comment}{//\ Runs\ only\ if\ L1\ translation\ entry\ is\ evicted\ to\ the\ L2\ TLB}}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(utopia\_enabled)\{}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((m\_utopia-\/>getHeurSecondary()\ ==\ Utopia::utopia\_heuristic::tlb)\ \&\&\ level\ ==\ 1)\{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_next\_level-\/>m\_cache.splitAddressTLB(address,\ tag,\ set\_index,\ page\_size);\ \textcolor{comment}{//@kanellok\ check\ pressure\ at\ L2\ TLB\ if\ a\ an\ evicted\ translation\ from\ L1\ will\ evict\ a\ translation\ from\ L2\ }}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(tlb\_pressure\_cnt.find(set\_index)\ !=\ tlb\_pressure\_cnt.end()\ )\{\ \textcolor{comment}{//\ @kanellok\ Track\ the\ pressure\ at\ each\ TLB\ set}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tlb\_pressure\_cnt[set\_index]\ +=\ 1;}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tlb\_pressure\_cnt[set\_index]\ =\ 1;}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(tlb\_pressure\_cnt[set\_index]\ >\ m\_utopia-\/>getTLBthr())\{}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tlb\_pressure\_cnt[set\_index]\ =\ 0;}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\ ==\ 12)}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_4KB-\/>allocate(address,now,\ m\_core\_id);}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_size\ ==\ 21)}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_utr\_2MB-\/>allocate(address,now,m\_core\_id);}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00492\ \ \ \ \ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordflow}{if}(eviction\ \ \&\&\ !(m\_next\_level))\ \textcolor{comment}{//\ Eviction\ from\ L2\ TLB\ or\ Nested\ TLB}}
+\DoxyCodeLine{00495\ \ \ \ \ \ \{}
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\_evicted\ =\ evict\_block\_info.getPageSize();}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ IntPtr\ evict\_addr\_vpn\ =\ evict\_addr\ >>\ (page\_size\_evicted-\/3);\ \textcolor{comment}{//\ 8\ blocks\ in\ the\ cache\ line\ (64B)\ and\ 3\ bits\ for\ the\ offset}}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(victima\_enabled)\ \textcolor{comment}{//\ @kanellok\ if\ TLB\ caching\ is\ enabled,\ insert\ the\ evicted\ translation\ in\ the\ L1/L2\ cache}}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ victima\_miss\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ Cache*\ l1dcache\ =\ m\_manager-\/>getCache(MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ Cache*\ l2cache\ =\ m\_manager-\/>getCache(MemComponent::component\_t::L2\_CACHE);}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ Cache*\ nuca\ =\ m\_manager-\/>getNucaCache()-\/>getCache();}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_l1d\ =\ l1dcache-\/>peekSingleLine(evict\_addr\_vpn);}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_l2\ =\ l2cache-\/>peekSingleLine(evict\_addr\_vpn);}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo*\ cb\_nuca\ =\ nuca-\/>peekSingleLine(evict\_addr\_vpn);}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//If\ TLB\ entry\ is\ not\ present\ in\ the\ cache\ hierarchy\ -\/>\ fetch\ it}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!(cb\_l1d)\ \&\&\ !(cb\_l2)\ \&\&\ !(cb\_nuca))\{}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ victima\_miss=\textcolor{keyword}{true};}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(victima\_miss)\{}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ CacheCntlr*\ l1dcachecntlr\ =\ m\_manager-\/>getCacheCntlrAt(m\_core\_id,MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =(evict\_addr\_vpn)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY;}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ l1dcachecntlr-\/>processMemOpFromCore(}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ m\_manager-\/>tagCachesBlockType(cache\_address,CacheBlockInfo::block\_type\_t::TLB\_ENTRY);}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ victima\_alloc\_on\_eviction++;}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00541\ \ \ \ \ \}}
+\DoxyCodeLine{00542\ \ \ \ \ }
+\DoxyCodeLine{00543\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ DEBUG\_TLB}}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eviction)}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ Evicted\ "{}}\ <<\ evict\_addr\ <<\ \textcolor{stringliteral}{"{}\ from\ level:\ "{}}\ <<\ level\ <<\ \textcolor{stringliteral}{"{}\ with\ page\_size"{}}\ <<\ page\_size\ \ <<\ \ std::endl;}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eviction)\ m\_eviction++;}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (eviction\ \&\&\ m\_next\_level)\{}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ DEBUG\_TLB}}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}We\ need\ to\ evict\ from\ L1\ TLB\ the\ translation\ of\ "{}}\ <<\ evict\_addr\ <<\ \textcolor{stringliteral}{"{}\ to\ L2\ TLB"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00554\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_next\_level-\/>allocate(evict\_addr,\ now,\ level+1,\ lock\_signal);}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \textcolor{comment}{//If\ POTM\ is\ enabled\ and\ we\ have\ an\ L2\ TLB\ eviction,\ allocate\ the\ evicted\ translation\ in\ the\ POTM\ but\ dont\ do\ this\ for\ nested\ TLB}}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(eviction\ \&\&\ !(m\_next\_level)\ \&\&\ potm\_enabled\ \&\&\ !(is\_nested)\ \&\&\ (level\ ==\ 2))\{}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size\_evicted\ =\ evict\_block\_info.getPageSize();}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ IntPtr\ evict\_addr\_vpn\ =\ evict\_addr\ >>\ page\_size\_evicted;}
+\DoxyCodeLine{00564\ }
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ TLB*\ potm\ =\ m\_manager-\/>getPOTM();}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ potm-\/>allocate(evict\_addr,\ now,\ level+1,\ lock\_signal);\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ CacheCntlr*\ l1dcache\ =\ m\_manager-\/>getCacheCntlrAt(m\_core\_id,MemComponent::component\_t::L1\_DCACHE);}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ IntPtr\ tlb\_address\ =\ (IntPtr)software\_tlb+((evict\_addr\_vpn\ \%\ m\_size)\ *\ m\_associativity)*16;}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =(tlb\_address)\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00572\ }
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type\ =\ \ CacheBlockInfo::block\_type\_t::TLB\_ENTRY;}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//When\ we\ allocate\ inside\ the\ POTM,\ we\ bring\ the\ software\ structure\ inside\ the\ cache\ hierarchy}}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ l1dcache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ 64,}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true},\ block\_type,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,t\_start);}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ m\_manager-\/>tagCachesBlockType(tlb\_address,CacheBlockInfo::block\_type\_t::TLB\_ENTRY);}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00592\ }
+\DoxyCodeLine{00593\ \ \ \ \ return\ ;}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \}}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ }
+\DoxyCodeLine{00598\ }
+\DoxyCodeLine{00599\ \}}
+\DoxyCodeLine{00600\ }
+
+\end{DoxyCode}

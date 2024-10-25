@@ -1,0 +1,123 @@
+\doxysection{sync\+\_\+server.\+h}
+\label{sync__server_8h_source}\index{common/system/sync\_server.h@{common/system/sync\_server.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SYNC\_SERVER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SYNC\_SERVER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}sync\_api.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}transport.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}packetize.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}stable\_iterator.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <limits.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }SimMutex}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ thread\_id\_t\ NO\_OWNER\ =\ UINT\_MAX;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ SimMutex();}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \string~SimMutex();}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{comment}{//\ returns\ true\ if\ the\ lock\ is\ owned\ by\ someone\ that\ is\ not\ this\ thread}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isLocked(thread\_id\_t\ thread\_id);}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{comment}{//\ returns\ the\ time\ when\ this\ thread\ owns\ the\ lock}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ SubsecondTime\ lock(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{comment}{//\ try\ to\ take\ the\ lock\ in\ name\ of\ another\ thread,\ either\ waking\ them\ or\ adding\ them\ to\ the\ list}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ lock\_async(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{comment}{//\ signals\ a\ waiter\ to\ continue\ and\ returns\ the\ next\ owner}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ thread\_id\_t\ unlock(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::queue<thread\_id\_t>\ ThreadQueue;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ ThreadQueue\ m\_waiting;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ thread\_id\_t\ m\_owner;}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{class\ }SimCond}
+\DoxyCodeLine{00045\ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ SimCond();}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \string~SimCond();}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ SubsecondTime\ wait(thread\_id\_t\ thread\_id,\ SubsecondTime\ time,\ SimMutex\ *\ mux);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ thread\_id\_t\ signal(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ broadcast(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keyword}{class\ }CondWaiter}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ CondWaiter(thread\_id\_t\ thread\_id,\ SimMutex\ *\ mutex)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_thread\_id(thread\_id),\ m\_mutex(mutex)\ \{\}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ thread\_id\_t\ m\_thread\_id;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ SimMutex\ *\ m\_mutex;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::queue<\ CondWaiter\ >\ ThreadQueue;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ ThreadQueue\ m\_waiting;}
+\DoxyCodeLine{00067\ \};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{class\ }SimBarrier}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ SimBarrier(UInt32\ count);}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \string~SimBarrier();}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ SubsecondTime\ wait(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::queue<thread\_id\_t>\ ThreadQueue;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ ThreadQueue\ m\_waiting;}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ UInt32\ m\_count;}
+\DoxyCodeLine{00082\ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{class\ }SyncServer}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<carbon\_mutex\_t\ *,\ SimMutex>\ MutexVector;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<carbon\_cond\_t\ *,\ SimCond>\ CondVector;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::vector<SimBarrier>\ BarrierVector;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ MutexVector\ m\_mutexes;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ CondVector\ m\_conds;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ BarrierVector\ m\_barriers;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ SyncServer();}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \string~SyncServer();}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ mutexInit(thread\_id\_t\ thread\_id,\ carbon\_mutex\_t\ *mux);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ std::pair<SubsecondTime,\ bool>\ mutexLock(thread\_id\_t\ thread\_id,\ carbon\_mutex\_t\ *mux,\ \textcolor{keywordtype}{bool}\ tryLock,\ SubsecondTime\ time);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ SubsecondTime\ mutexUnlock(thread\_id\_t\ thread\_id,\ carbon\_mutex\_t\ *mux,\ SubsecondTime\ time);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ condInit(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ SubsecondTime\ condWait(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond,\ carbon\_mutex\_t\ *mux,\ SubsecondTime\ time);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ SubsecondTime\ condSignal(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond,\ SubsecondTime\ time);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ SubsecondTime\ condBroadcast(thread\_id\_t\ thread\_id,\ carbon\_cond\_t\ *cond,\ SubsecondTime\ time);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ barrierInit(thread\_id\_t\ thread\_id,\ carbon\_barrier\_t\ *barrier,\ UInt32\ count);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ SubsecondTime\ barrierWait(thread\_id\_t\ thread\_id,\ carbon\_barrier\_t\ *barrier,\ SubsecondTime\ time);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ SubsecondTime\ m\_reschedule\_cost;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ SimMutex\ *\ getMutex(carbon\_mutex\_t\ *\ mux,\ \textcolor{keywordtype}{bool}\ canCreate\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ SimCond\ *\ getCond(carbon\_cond\_t\ *\ cond,\ \textcolor{keywordtype}{bool}\ canCreate\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00115\ \};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ SYNC\_SERVER\_H}}
+
+\end{DoxyCode}

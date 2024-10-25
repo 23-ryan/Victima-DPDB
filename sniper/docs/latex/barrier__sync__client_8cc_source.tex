@@ -1,0 +1,52 @@
+\doxysection{barrier\+\_\+sync\+\_\+client.\+cc}
+\label{barrier__sync__client_8cc_source}\index{common/system/barrier\_sync\_client.cc@{common/system/barrier\_sync\_client.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}barrier\_sync\_client.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ BarrierSyncClient::BarrierSyncClient(Core*\ core):}
+\DoxyCodeLine{00011\ \ \ \ m\_core(core),}
+\DoxyCodeLine{00012\ \ \ \ m\_num\_outstanding(0)}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00015\ \ \ \ \{}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ m\_barrier\_interval\ =\ SubsecondTime::NS()\ *\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}clock\_skew\_minimization/barrier/quantum"{}});}
+\DoxyCodeLine{00017\ \ \ \ \}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{catch}(...)}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Error\ Reading\ 'clock\_skew\_minimization/barrier/quantum'\ from\ the\ config\ file"{}});}
+\DoxyCodeLine{00021\ \ \ \ \}}
+\DoxyCodeLine{00022\ \ \ \ m\_next\_sync\_time\ =\ m\_barrier\_interval;}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ BarrierSyncClient::\string~BarrierSyncClient()}
+\DoxyCodeLine{00026\ \{\}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00029\ BarrierSyncClient::synchronize(SubsecondTime\ time,\ \textcolor{keywordtype}{bool}\ ignore\_time,\ \textcolor{keywordtype}{bool}\ abort\_func(\textcolor{keywordtype}{void}*),\ \textcolor{keywordtype}{void}*\ abort\_arg)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ SubsecondTime\ curr\_elapsed\_time\ =\ time;}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{if}\ (time\ ==\ SubsecondTime::Zero())}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ curr\_elapsed\_time\ =\ m\_core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{if}\ (curr\_elapsed\_time\ >=\ m\_next\_sync\_time\ ||\ ignore\_time)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ implement\ interruptable\ wait}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ Sim()-\/>getClockSkewMinimizationServer()-\/>synchronize(m\_core-\/>getId(),\ curr\_elapsed\_time);}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ barrier\ interval\ in\ case\ it\ was\ changed}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ m\_barrier\_interval\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getBarrierInterval();}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ 'm\_next\_sync\_time'}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ m\_next\_sync\_time\ =\ ((curr\_elapsed\_time\ /\ m\_barrier\_interval)\ *\ m\_barrier\_interval)\ +\ m\_barrier\_interval;}
+\DoxyCodeLine{00045\ \ \ \ \}}
+\DoxyCodeLine{00046\ \}}
+
+\end{DoxyCode}

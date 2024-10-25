@@ -1,0 +1,92 @@
+\doxysection{pagetable\+\_\+walker.\+cc}
+\label{pagetable__walker_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <ctime>}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}nuca\_cache.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}string.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ std::default\_random\_engine\ generator;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ std::uniform\_int\_distribution<long\ long\ int>\ distribution(1,0xA00000000000000);}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \textcolor{comment}{//https://spc.unige.ch/en/teaching/courses/algorithmes-\/probabilistes/random-\/numbers-\/week-\/1/}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableWalker::counter\ =\ 0;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ PageTableWalker::PageTableWalker(\textcolor{keywordtype}{int}\ \_core\_id,\ \textcolor{keywordtype}{int}\ \_page\_size,\ ShmemPerfModel*\ \_m\_shmem\_perf\_model,\ PWC*\ \_pwc,\ \textcolor{keywordtype}{bool}\ \_page\_walk\_cache\_enabled)}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CR3\ =\ 0x1000000;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CR3\ =\ CR3*(core\_id+1);}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_size\ =\ 8;\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_size\ =\ \_page\_size;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}PTW\_"{}};}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ name\ =\ name+std::to\_string(counter).c\_str();}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model\ =\ \_m\_shmem\_perf\_model;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_walk\_cache\_enabled\ =\ \_page\_walk\_cache\_enabled;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\ =\ \_core\_id;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.number\_of\_2MB\_pages=0;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ page\_walk\_cache\_enabled)\{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pwc\ =\ \_pwc;\ \textcolor{comment}{//\ Instantiate\ page\ walk\ caches}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ srand(time(0));}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ptw\_latency\_heatmap\ =\ (\textcolor{keywordtype}{int}*)\ calloc(5,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));\ \textcolor{comment}{//\ Used\ to\ trigger\ Per-\/page\ PTW\ stats\ }}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bzero(\&stats,\ \textcolor{keyword}{sizeof}(stats));}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}page\_walks"{}},\ \&stats.page\_walks);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}number-\/of-\/2MB-\/pages"{}},\ \&stats.number\_of\_2MB\_pages);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}ptw\_latency\_heatmap"{}},\ \&ptw\_latency\_heatmap,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ counter++;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ SubsecondTime\ PageTableWalker::init\_walk(IntPtr\ eip,\ IntPtr\ address,\ UtopiaCache*\ shadow\_cache,CacheCntlr\ *\_cache,\ Core::lock\_signal\_t\ \_lock\_signal,\ Byte*\ \_data\_buf,\ UInt32\ \_data\_length,\ \textcolor{keywordtype}{bool}\ \_modeled,\ \textcolor{keywordtype}{bool}\ \_count)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Setup\ the\ step\ walk\ functions}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.page\_walks++;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bzero(\&current\_lat,\ \textcolor{keyword}{sizeof}(current\_lat));}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\ =\ \_cache;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ modeled\ =\ \_modeled;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ \_count;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf\ =\ \_data\_buf;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vpn\ =\ address\ >>\ page\_size;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_length\ =\ \_data\_length;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal\ =\ \_lock\_signal;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printf("{}Page\ Walk\ latency\ \%ld\ \(\backslash\)n"{},SubsecondTime::divideRounded(current\_lat,period));}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ latency;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ PageTableWalker::track\_per\_page\_ptw\_latency(\textcolor{keywordtype}{int}\ vpn,\ SubsecondTime\ current\_lat)\{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Works!\(\backslash\)n"{};}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ period\ =\ SubsecondTime::SEC()\ /\ (2.6*1000000000);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ cycles\ =\ SubsecondTime::divideRounded(current\_lat,\ period);}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(per\_page\_ptw\_latency.find(vpn)\ !=\ per\_page\_ptw\_latency.end())}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ per\_page\_ptw\_latency[vpn]\ +=\ cycles\ ;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ per\_page\_ptw\_latency[vpn]\ =\ cycles\ ;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \};}
+
+\end{DoxyCode}

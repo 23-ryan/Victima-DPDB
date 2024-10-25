@@ -1,0 +1,566 @@
+\doxysection{common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/cuckoo/blake2b-\/ref.cc File Reference}
+\label{blake2b-ref_8cc}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/blake2b-\/ref.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/blake2b-\/ref.cc}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include "{}blake2-\/impl.\+h"{}}\newline
+{\ttfamily \#include "{}blake2.\+h"{}}\newline
+Include dependency graph for blake2b-\/ref.cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=332pt]{blake2b-ref_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ G}(r,  i,  a,  b,  c,  d)
+\item 
+\#define \textbf{ ROUND}(r)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \textbf{ blake2b\+\_\+set\+\_\+lastnode} (\textbf{ blake2b\+\_\+state} $\ast$S)
+\item 
+static int \textbf{ blake2b\+\_\+is\+\_\+lastblock} (const \textbf{ blake2b\+\_\+state} $\ast$S)
+\item 
+static void \textbf{ blake2b\+\_\+set\+\_\+lastblock} (\textbf{ blake2b\+\_\+state} $\ast$S)
+\item 
+static void \textbf{ blake2b\+\_\+increment\+\_\+counter} (\textbf{ blake2b\+\_\+state} $\ast$S, const \textbf{ uint64\+\_\+t} inc)
+\item 
+static void \textbf{ blake2b\+\_\+init0} (\textbf{ blake2b\+\_\+state} $\ast$S)
+\item 
+int \textbf{ blake2b\+\_\+init\+\_\+param} (\textbf{ blake2b\+\_\+state} $\ast$S, const \textbf{ blake2b\+\_\+param} $\ast$P)
+\item 
+int \textbf{ blake2b\+\_\+init} (\textbf{ blake2b\+\_\+state} $\ast$S, size\+\_\+t outlen)
+\item 
+int \textbf{ blake2b\+\_\+init\+\_\+key} (\textbf{ blake2b\+\_\+state} $\ast$S, size\+\_\+t outlen, const void $\ast$key, size\+\_\+t keylen)
+\item 
+static void \textbf{ blake2b\+\_\+compress} (\textbf{ blake2b\+\_\+state} $\ast$S, const uint8\+\_\+t block[\textbf{ BLAKE2\+B\+\_\+\+BLOCKBYTES}])
+\item 
+int \textbf{ blake2b\+\_\+update} (\textbf{ blake2b\+\_\+state} $\ast$S, const void $\ast$pin, size\+\_\+t inlen)
+\item 
+int \textbf{ blake2b\+\_\+final} (\textbf{ blake2b\+\_\+state} $\ast$S, void $\ast$out, size\+\_\+t outlen)
+\item 
+int \textbf{ blake2b} (void $\ast$out, size\+\_\+t outlen, const void $\ast$in, size\+\_\+t inlen, const void $\ast$key, size\+\_\+t keylen)
+\item 
+int \textbf{ blake2} (void $\ast$out, size\+\_\+t outlen, const void $\ast$in, size\+\_\+t inlen, const void $\ast$key, size\+\_\+t keylen)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static const \textbf{ uint64\+\_\+t} \textbf{ blake2b\+\_\+\+IV} [8]
+\item 
+static const uint8\+\_\+t \textbf{ blake2b\+\_\+sigma} [12][16]
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!G@{G}}
+\index{G@{G}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{G}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a4fbc796e307d9128c5de14d17c3de42a} 
+\#define G(\begin{DoxyParamCaption}\item[{}]{r}{, }\item[{}]{i}{, }\item[{}]{a}{, }\item[{}]{b}{, }\item[{}]{c}{, }\item[{}]{d}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{do}\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ a\ =\ a\ +\ b\ +\ m[blake2b\_sigma[r][2\ *\ i\ +\ 0]];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ d\ =\ rotr64(d\ \string^\ a,\ 32);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ c\ =\ c\ +\ d;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ b\ =\ rotr64(b\ \string^\ c,\ 24);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ a\ =\ a\ +\ b\ +\ m[blake2b\_sigma[r][2\ *\ i\ +\ 1]];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ d\ =\ rotr64(d\ \string^\ a,\ 16);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ c\ =\ c\ +\ d;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ b\ =\ rotr64(b\ \string^\ c,\ 63);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{while}\ (0)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 139} of file \textbf{ blake2b-\/ref.\+cc}.
+
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!ROUND@{ROUND}}
+\index{ROUND@{ROUND}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{ROUND}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_ab35e822e8226ebfbc2122810b5ac5827} 
+\#define ROUND(\begin{DoxyParamCaption}\item[{}]{r}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{do}\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 0,\ v[0],\ v[4],\ v[8],\ v[12]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 1,\ v[1],\ v[5],\ v[9],\ v[13]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 2,\ v[2],\ v[6],\ v[10],\ v[14]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 3,\ v[3],\ v[7],\ v[11],\ v[15]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 4,\ v[0],\ v[5],\ v[10],\ v[15]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 5,\ v[1],\ v[6],\ v[11],\ v[12]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 6,\ v[2],\ v[7],\ v[8],\ v[13]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ G(r,\ 7,\ v[3],\ v[4],\ v[9],\ v[14]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{while}\ (0)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 151} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+compress()}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2@{blake2}}
+\index{blake2@{blake2}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a82f9644c3dd286d6820cafb94d40ea7f} 
+int blake2 (\begin{DoxyParamCaption}\item[{void $\ast$}]{out}{, }\item[{size\+\_\+t}]{outlen}{, }\item[{const void $\ast$}]{in}{, }\item[{size\+\_\+t}]{inlen}{, }\item[{const void $\ast$}]{key}{, }\item[{size\+\_\+t}]{keylen}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 289} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a82f9644c3dd286d6820cafb94d40ea7f_cgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b@{blake2b}}
+\index{blake2b@{blake2b}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a5cf706554b84e6b4d763084ecefd6391} 
+int blake2b (\begin{DoxyParamCaption}\item[{void $\ast$}]{out}{, }\item[{size\+\_\+t}]{outlen}{, }\item[{const void $\ast$}]{in}{, }\item[{size\+\_\+t}]{inlen}{, }\item[{const void $\ast$}]{key}{, }\item[{size\+\_\+t}]{keylen}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 256} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+final()}, \textbf{ blake2b\+\_\+init()}, \textbf{ blake2b\+\_\+init\+\_\+key()}, \textbf{ BLAKE2\+B\+\_\+\+KEYBYTES}, \textbf{ BLAKE2\+B\+\_\+\+OUTBYTES}, and \textbf{ blake2b\+\_\+update()}.
+
+
+
+Referenced by \textbf{ blake2()}, and \textbf{ gen\+\_\+hash()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a5cf706554b84e6b4d763084ecefd6391_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a5cf706554b84e6b4d763084ecefd6391_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_compress@{blake2b\_compress}}
+\index{blake2b\_compress@{blake2b\_compress}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_compress()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a5bf55b4c736aa2e96d7b3266925933a6} 
+static void blake2b\+\_\+compress (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{const uint8\+\_\+t}]{block}{[\+BLAKE2\+B\+\_\+\+BLOCKBYTES]}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 163} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+\+IV}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::f}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::h}, \textbf{ load64()}, \textbf{ ROUND}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::t}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+final()}, and \textbf{ blake2b\+\_\+update()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=222pt]{blake2b-ref_8cc_a5bf55b4c736aa2e96d7b3266925933a6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a5bf55b4c736aa2e96d7b3266925933a6_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_final@{blake2b\_final}}
+\index{blake2b\_final@{blake2b\_final}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_final()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_ae3265f4a4ba468da48c850ad815bed2d} 
+int blake2b\+\_\+final (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{void $\ast$}]{out}{, }\item[{size\+\_\+t}]{outlen}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 232} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ BLAKE2\+B\+\_\+\+BLOCKBYTES}, \textbf{ blake2b\+\_\+compress()}, \textbf{ blake2b\+\_\+increment\+\_\+counter()}, \textbf{ blake2b\+\_\+is\+\_\+lastblock()}, \textbf{ BLAKE2\+B\+\_\+\+OUTBYTES}, \textbf{ blake2b\+\_\+set\+\_\+lastblock()}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::buf}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::buflen}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::h}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::outlen}, \textbf{ secure\+\_\+zero\+\_\+memory()}, and \textbf{ store64()}.
+
+
+
+Referenced by \textbf{ blake2b()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_ae3265f4a4ba468da48c850ad815bed2d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_ae3265f4a4ba468da48c850ad815bed2d_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_increment\_counter@{blake2b\_increment\_counter}}
+\index{blake2b\_increment\_counter@{blake2b\_increment\_counter}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_increment\_counter()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_acdcfbc21ea7dd559b47f3f6faf784c6f} 
+static void blake2b\+\_\+increment\+\_\+counter (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{const \textbf{ uint64\+\_\+t}}]{inc}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 54} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::t}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+final()}, and \textbf{ blake2b\+\_\+update()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_acdcfbc21ea7dd559b47f3f6faf784c6f_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_init@{blake2b\_init}}
+\index{blake2b\_init@{blake2b\_init}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_init()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a7cefd211bfec58d37d8b67741955ce8a} 
+int blake2b\+\_\+init (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{size\+\_\+t}]{outlen}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 82} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+init\+\_\+param()}, \textbf{ BLAKE2\+B\+\_\+\+OUTBYTES}, and \textbf{ store32()}.
+
+
+
+Referenced by \textbf{ blake2b()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a7cefd211bfec58d37d8b67741955ce8a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a7cefd211bfec58d37d8b67741955ce8a_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_init0@{blake2b\_init0}}
+\index{blake2b\_init0@{blake2b\_init0}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_init0()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a48560b8cc5375d320c4ff237c159ea46} 
+static void blake2b\+\_\+init0 (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 59} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+\+IV}, and \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::h}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+init\+\_\+param()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a48560b8cc5375d320c4ff237c159ea46_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_init\_key@{blake2b\_init\_key}}
+\index{blake2b\_init\_key@{blake2b\_init\_key}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_init\_key()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a039b52f87e2ba0ca16ebbc62bfd3f02a} 
+int blake2b\+\_\+init\+\_\+key (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{size\+\_\+t}]{outlen}{, }\item[{const void $\ast$}]{key}{, }\item[{size\+\_\+t}]{keylen}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 103} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ BLAKE2\+B\+\_\+\+BLOCKBYTES}, \textbf{ blake2b\+\_\+init\+\_\+param()}, \textbf{ BLAKE2\+B\+\_\+\+KEYBYTES}, \textbf{ BLAKE2\+B\+\_\+\+OUTBYTES}, \textbf{ blake2b\+\_\+update()}, \textbf{ secure\+\_\+zero\+\_\+memory()}, and \textbf{ store32()}.
+
+
+
+Referenced by \textbf{ blake2b()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a039b52f87e2ba0ca16ebbc62bfd3f02a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a039b52f87e2ba0ca16ebbc62bfd3f02a_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_init\_param@{blake2b\_init\_param}}
+\index{blake2b\_init\_param@{blake2b\_init\_param}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_init\_param()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_ae453d8f2798df27cd1f4ea9b00b3a520} 
+int blake2b\+\_\+init\+\_\+param (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{const \textbf{ blake2b\+\_\+param} $\ast$}]{P}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+init0()}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::h}, \textbf{ load64()}, and \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::outlen}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+init()}, and \textbf{ blake2b\+\_\+init\+\_\+key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{blake2b-ref_8cc_ae453d8f2798df27cd1f4ea9b00b3a520_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_ae453d8f2798df27cd1f4ea9b00b3a520_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_is\_lastblock@{blake2b\_is\_lastblock}}
+\index{blake2b\_is\_lastblock@{blake2b\_is\_lastblock}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_is\_lastblock()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a34d835656d60d360de9bd85e51c7650b} 
+static int blake2b\+\_\+is\+\_\+lastblock (\begin{DoxyParamCaption}\item[{const \textbf{ blake2b\+\_\+state} $\ast$}]{S}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::f}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+final()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a34d835656d60d360de9bd85e51c7650b_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_set\_lastblock@{blake2b\_set\_lastblock}}
+\index{blake2b\_set\_lastblock@{blake2b\_set\_lastblock}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_set\_lastblock()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a3142ca198b3a01ef202947211dfde7ae} 
+static void blake2b\+\_\+set\+\_\+lastblock (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+set\+\_\+lastnode()}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::f}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::last\+\_\+node}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+final()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{blake2b-ref_8cc_a3142ca198b3a01ef202947211dfde7ae_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a3142ca198b3a01ef202947211dfde7ae_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_set\_lastnode@{blake2b\_set\_lastnode}}
+\index{blake2b\_set\_lastnode@{blake2b\_set\_lastnode}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_set\_lastnode()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_aa395944647ffe47ebfd7cf34e5dcd20f} 
+static void blake2b\+\_\+set\+\_\+lastnode (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::f}, and \textbf{ uint64\+\_\+t}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+set\+\_\+lastblock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_aa395944647ffe47ebfd7cf34e5dcd20f_icgraph}
+\end{center}
+\end{figure}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_update@{blake2b\_update}}
+\index{blake2b\_update@{blake2b\_update}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_update()}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a5db4129aac7abf5e6db173b31e48fe60} 
+int blake2b\+\_\+update (\begin{DoxyParamCaption}\item[{\textbf{ blake2b\+\_\+state} $\ast$}]{S}{, }\item[{const void $\ast$}]{pin}{, }\item[{size\+\_\+t}]{inlen}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 207} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+References \textbf{ BLAKE2\+B\+\_\+\+BLOCKBYTES}, \textbf{ blake2b\+\_\+compress()}, \textbf{ blake2b\+\_\+increment\+\_\+counter()}, \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::buf}, and \textbf{ blake2b\+\_\+state\+\_\+\+\_\+\+::buflen}.
+
+
+
+Referenced by \textbf{ blake2b()}, and \textbf{ blake2b\+\_\+init\+\_\+key()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a5db4129aac7abf5e6db173b31e48fe60_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{blake2b-ref_8cc_a5db4129aac7abf5e6db173b31e48fe60_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_IV@{blake2b\_IV}}
+\index{blake2b\_IV@{blake2b\_IV}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_IV}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_a6943aa3c6f07a582e3f9acb68de5afa8} 
+const \textbf{ uint64\+\_\+t} blake2b\+\_\+\+IV[8]\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \ 0x6a09e667f3bcc908ULL,\ 0xbb67ae8584caa73bULL,\ 0x3c6ef372fe94f82bULL,}
+\DoxyCodeLine{\ \ \ \ 0xa54ff53a5f1d36f1ULL,\ 0x510e527fade682d1ULL,\ 0x9b05688c2b3e6c1fULL,}
+\DoxyCodeLine{\ \ \ \ 0x1f83d9abfb41bd6bULL,\ 0x5be0cd19137e2179ULL\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 23} of file \textbf{ blake2b-\/ref.\+cc}.
+
+
+
+Referenced by \textbf{ blake2b\+\_\+compress()}, and \textbf{ blake2b\+\_\+init0()}.
+
+\index{blake2b-\/ref.cc@{blake2b-\/ref.cc}!blake2b\_sigma@{blake2b\_sigma}}
+\index{blake2b\_sigma@{blake2b\_sigma}!blake2b-\/ref.cc@{blake2b-\/ref.cc}}
+\doxysubsubsection{blake2b\_sigma}
+{\footnotesize\ttfamily \label{blake2b-ref_8cc_ac97f6ce73af41a0bd4bce78b3f42f6c8} 
+const uint8\+\_\+t blake2b\+\_\+sigma[12][16]\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \ \{0,\ 1,\ 2,\ 3,\ 4,\ 5,\ 6,\ 7,\ 8,\ 9,\ 10,\ 11,\ 12,\ 13,\ 14,\ 15\},}
+\DoxyCodeLine{\ \ \ \ \{14,\ 10,\ 4,\ 8,\ 9,\ 15,\ 13,\ 6,\ 1,\ 12,\ 0,\ 2,\ 11,\ 7,\ 5,\ 3\},}
+\DoxyCodeLine{\ \ \ \ \{11,\ 8,\ 12,\ 0,\ 5,\ 2,\ 15,\ 13,\ 10,\ 14,\ 3,\ 6,\ 7,\ 1,\ 9,\ 4\},}
+\DoxyCodeLine{\ \ \ \ \{7,\ 9,\ 3,\ 1,\ 13,\ 12,\ 11,\ 14,\ 2,\ 6,\ 5,\ 10,\ 4,\ 0,\ 15,\ 8\},}
+\DoxyCodeLine{\ \ \ \ \{9,\ 0,\ 5,\ 7,\ 2,\ 4,\ 10,\ 15,\ 14,\ 1,\ 11,\ 12,\ 6,\ 8,\ 3,\ 13\},}
+\DoxyCodeLine{\ \ \ \ \{2,\ 12,\ 6,\ 10,\ 0,\ 11,\ 8,\ 3,\ 4,\ 13,\ 7,\ 5,\ 15,\ 14,\ 1,\ 9\},}
+\DoxyCodeLine{\ \ \ \ \{12,\ 5,\ 1,\ 15,\ 14,\ 13,\ 4,\ 10,\ 0,\ 7,\ 6,\ 3,\ 9,\ 2,\ 8,\ 11\},}
+\DoxyCodeLine{\ \ \ \ \{13,\ 11,\ 7,\ 14,\ 12,\ 1,\ 3,\ 9,\ 5,\ 0,\ 15,\ 4,\ 8,\ 6,\ 2,\ 10\},}
+\DoxyCodeLine{\ \ \ \ \{6,\ 15,\ 14,\ 9,\ 11,\ 3,\ 0,\ 8,\ 12,\ 2,\ 13,\ 7,\ 1,\ 4,\ 10,\ 5\},}
+\DoxyCodeLine{\ \ \ \ \{10,\ 2,\ 8,\ 4,\ 7,\ 6,\ 1,\ 5,\ 15,\ 11,\ 9,\ 14,\ 3,\ 12,\ 13,\ 0\},}
+\DoxyCodeLine{\ \ \ \ \{0,\ 1,\ 2,\ 3,\ 4,\ 5,\ 6,\ 7,\ 8,\ 9,\ 10,\ 11,\ 12,\ 13,\ 14,\ 15\},}
+\DoxyCodeLine{\ \ \ \ \{14,\ 10,\ 4,\ 8,\ 9,\ 15,\ 13,\ 6,\ 1,\ 12,\ 0,\ 2,\ 11,\ 7,\ 5,\ 3\}\}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 28} of file \textbf{ blake2b-\/ref.\+cc}.
+

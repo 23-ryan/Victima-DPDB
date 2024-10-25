@@ -1,0 +1,221 @@
+\doxysection{sampling\+\_\+manager.\+cc}
+\label{sampling__manager_8cc_source}\index{common/sampling/sampling\_manager.cc@{common/sampling/sampling\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}sampling\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}fastforward\_performance\_model.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}magic\_client.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}sampling\_provider.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ SamplingManager::SamplingManager(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00015\ \ \ \ :\ m\_sampling\_enabled(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/enabled"{}}))}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_fastforward(false)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_warmup(false)}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_target\_ffend(SubsecondTime::Zero())}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_sampling\_provider(NULL)}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_sampling\_algorithm(NULL)}
+\DoxyCodeLine{00021\ \ \ \ ,\ m\_instructions(Sim()-\/>getConfig()-\/>getApplicationCores(),\ 0)}
+\DoxyCodeLine{00022\ \ \ \ ,\ m\_time\_total(Sim()-\/>getConfig()-\/>getApplicationCores(),\ SubsecondTime::Zero())}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_time\_nonidle(Sim()-\/>getConfig()-\/>getApplicationCores(),\ SubsecondTime::Zero())}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{if}\ (!\ m\_sampling\_enabled)}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ m\_uncoordinated\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}sampling/uncoordinated"{}});}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ LOG\_ASSERT\_ERROR(Sim()-\/>getConfig()-\/>getSimulationMode()\ ==\ Config::PINTOOL,\ \textcolor{stringliteral}{"{}Sampling\ is\ only\ supported\ in\ Pin\ mode"{}});}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_INSTR\_COUNT,\ (HooksManager::HookCallbackFunc)SamplingManager::hook\_instr\_count,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00033\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PERIODIC,\ (HooksManager::HookCallbackFunc)SamplingManager::hook\_periodic,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ m\_sampling\_provider\ =\ SamplingProvider::create();}
+\DoxyCodeLine{00036\ \ \ \ m\_sampling\_algorithm\ =\ SamplingAlgorithm::create(\textcolor{keyword}{this});}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ SamplingManager::\string~SamplingManager(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordflow}{if}\ (m\_sampling\_provider)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_sampling\_provider;}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{if}\ (m\_sampling\_algorithm)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_sampling\_algorithm;}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00048\ SamplingManager::periodic(SubsecondTime\ time)}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ m\_sampling\_algorithm-\/>callbackFastForward(time,\ m\_warmup);}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ m\_sampling\_algorithm-\/>callbackDetailed(time);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \#if\ 0}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward)\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{comment}{//\ Debug:\ print\ out\ a\ skew\ report}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[SKEW]\ \%lu"{}},\ Timer::now());}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ UInt64\ t\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(0)-\/>getPerformanceModel()-\/>getElapsedTime().getNS();}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ c\ =\ 0;\ c\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ ++c)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%ld"{}},\ Sim()-\/>getCoreManager()-\/>getCoreFromID(c)-\/>getPerformanceModel()-\/>getElapsedTime().getNS()\ -\/\ t);}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00063\ \ \ \ \}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00068\ SamplingManager::setInstrumentationMode(InstMode::inst\_mode\_t\ mode)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{comment}{//\ We're\ counting\ on\ the\ barrier\ for\ callbacks\ (time\ is\ still\ running),}}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{comment}{//\ so\ tell\ Simulator\ not\ to\ disable\ it\ even\ when\ going\ out\ of\ DETAILED.}}
+\DoxyCodeLine{00072\ \ \ \ Sim()-\/>setInstrumentationMode(mode,\ \textcolor{keyword}{false}\ \textcolor{comment}{/*\ update\_barrier\ */});}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00076\ SamplingManager::disableFastForward()}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ m\_fastforward\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00079\ \ \ \ m\_warmup\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00080\ \ \ \ SubsecondTime\ barrier\_next\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00081\ \ \ \ SubsecondTime\ core\_last\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ core\_id\ =\ 0;\ core\_id\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00083\ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>setFastForward(\textcolor{keyword}{false},\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ core-\/>disableInstructionsCallback();}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>isThreadRunning(core\_id))\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ barrier\_next\ =\ std::max(barrier\_next,\ core-\/>getPerformanceModel()-\/>getElapsedTime());}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ core\_last\ =\ std::min(core\_last,\ core-\/>getPerformanceModel()-\/>getElapsedTime());}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keywordflow}{if}\ (m\_uncoordinated)\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ core\_id\ =\ 0;\ core\_id\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ uncoordinated\ mode,\ some\ cores\ will\ be\ behind\ because\ they\ didn't\ reach\ their\ target\ instruction\ count.}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ all\ their\ times\ to\ the\ same\ value\ so\ they\ won't\ have\ to\ catch\ up\ in\ detailed\ mode.}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ PerformanceModel\ *perf\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getPerformanceModel();}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ perf-\/>getFastforwardPerformanceModel()-\/>incrementElapsedTime(barrier\_next\ -\/\ perf-\/>getElapsedTime());}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \textcolor{comment}{//\ Tell\ the\ barrier\ to\ go\ to\ detailed\ mode\ again,\ but\ make\ sure\ it\ skips\ over\ the\ fastforwarded\ section\ of\ time.}}
+\DoxyCodeLine{00102\ \ \ \ \textcolor{comment}{//\ FIXME:}}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{comment}{//\ We\ restart\ the\ barrier\ at\ the\ maximum\ time,\ and\ have\ all\ threads\ make\ uncoordinated\ progress}}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{comment}{//\ towards\ the\ fastest\ thread.\ There\ won't\ be\ any\ HOOK\_PERIODIC\ calls\ (which\ may\ not\ make\ much\ sense\ anyway,}}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{comment}{//\ as\ during\ this\ period\ at\ least\ one\ thread\ is\ way\ ahead\ and\ won't\ be\ running).}}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{comment}{//\ Alternatively,\ we\ could\ reset\ the\ barrier\ to\ the\ min\ time\ of\ all\ cores,\ this\ way,\ all\ cores\ that\ are\ behind}}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{comment}{//\ the\ fastest\ one,\ will\ start\ to\ make\ detailed\ progress\ again\ in\ lockstep.\ We'll\ also\ get\ HOOK\_PERIODIC\ calls}}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{comment}{//\ during\ this\ time.}}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getClockSkewMinimizationServer())}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ Sim()-\/>getClockSkewMinimizationServer()-\/>setFastForward(\textcolor{keyword}{false},\ barrier\_next);}
+\DoxyCodeLine{00111\ \ \ \ this-\/>setInstrumentationMode(InstMode::DETAILED);}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00115\ SamplingManager::enableFastForward(SubsecondTime\ until,\ \textcolor{keywordtype}{bool}\ warmup,\ \textcolor{keywordtype}{bool}\ detailed\_sync)}
+\DoxyCodeLine{00116\ \{}
+\DoxyCodeLine{00117\ \ \ \ m\_fastforward\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00118\ \ \ \ m\_warmup\ =\ warmup;}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ Approximate\ time\ we\ want\ to\ leave\ fastforward\ mode}}
+\DoxyCodeLine{00120\ \ \ \ m\_target\_ffend\ =\ until;}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ SubsecondTime\ barrier\_next\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00123\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ core\_id\ =\ 0;\ core\_id\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ ++core\_id)}
+\DoxyCodeLine{00124\ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ PerformanceModel\ *perf\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getPerformanceModel();}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ perf-\/>setFastForward(\textcolor{keyword}{true},\ detailed\_sync);}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ barrier\_next\ =\ std::max(barrier\_next,\ perf-\/>getElapsedTime());}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ recalibrateInstructionsCallback(core\_id);}
+\DoxyCodeLine{00129\ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{comment}{//\ Set\ barrier\ to\ fastforward,\ and\ update\ next\_barrier\_time\ to\ the\ maximum\ of\ all\ core\ times\ so\ we\ definitely\ release\ everyone}}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getClockSkewMinimizationServer())}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ Sim()-\/>getClockSkewMinimizationServer()-\/>setFastForward(\textcolor{keyword}{true},\ barrier\_next);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \textcolor{keywordflow}{if}\ (m\_warmup)}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ this-\/>setInstrumentationMode(InstMode::CACHE\_ONLY);}
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ this-\/>setInstrumentationMode(InstMode::FAST\_FORWARD);}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordflow}{if}\ (m\_sampling\_provider)}
+\DoxyCodeLine{00140\ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ m\_sampling\_provider-\/>startSampling(until);}
+\DoxyCodeLine{00142\ \ \ \ \}}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ SubsecondTime}
+\DoxyCodeLine{00146\ SamplingManager::getCoreHistoricCPI(Core\ *core,\ \textcolor{keywordtype}{bool}\ non\_idle,\ SubsecondTime\ min\_nonidle\_time)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00147\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00148\ \ \ \ UInt64\ d\_instrs\ =\ 0;}
+\DoxyCodeLine{00149\ \ \ \ SubsecondTime\ d\_time\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ d\_instrs\ =\ core-\/>getPerformanceModel()-\/>getInstructionCount()\ -\/\ m\_instructions[core-\/>getId()];}
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keywordflow}{if}\ (non\_idle)}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ d\_time\ =\ core-\/>getPerformanceModel()-\/>getNonIdleElapsedTime()\ -\/\ m\_time\_nonidle[core-\/>getId()];}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ d\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime()\ -\/\ m\_time\_total[core-\/>getId()];}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \textcolor{keywordflow}{if}\ (d\_instrs\ ==\ 0)}
+\DoxyCodeLine{00158\ \ \ \ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00160\ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (d\_time\ <=\ min\_nonidle\_time)}
+\DoxyCodeLine{00162\ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00164\ \ \ \ \}}
+\DoxyCodeLine{00165\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00166\ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ d\_time\ /\ d\_instrs;}
+\DoxyCodeLine{00168\ \ \ \ \}}
+\DoxyCodeLine{00169\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00172\ SamplingManager::resetCoreHistoricCPIs()}
+\DoxyCodeLine{00173\ \{}
+\DoxyCodeLine{00174\ \ \ \ \textcolor{keywordflow}{for}(UInt32\ core\_id\ =\ 0;\ core\_id\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00175\ \ \ \ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ m\_instructions[core-\/>getId()]\ =\ core-\/>getPerformanceModel()-\/>getInstructionCount();}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ m\_time\_total\ \ [core-\/>getId()]\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ m\_time\_nonidle[core-\/>getId()]\ =\ core-\/>getPerformanceModel()-\/>getNonIdleElapsedTime();}
+\DoxyCodeLine{00180\ \ \ \ \}}
+\DoxyCodeLine{00181\ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00184\ SamplingManager::recalibrateInstructionsCallback(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00185\ \{}
+\DoxyCodeLine{00186\ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00187\ \ \ \ SubsecondTime\ now\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keywordflow}{if}\ (now\ >\ m\_target\_ffend)\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \textcolor{comment}{//\ Just\ a\ single\ instruction\ so\ we\ call\ into\ the\ barrier\ immediately}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ core-\/>setInstructionsCallback(1);}
+\DoxyCodeLine{00191\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ SubsecondTime\ cpi\ =\ core-\/>getPerformanceModel()-\/>getFastforwardPerformanceModel()-\/>getCurrentCPI();}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ CPI\ hasn't\ been\ set\ up,\ fall\ back\ to\ 1\ IPC\ to\ avoid\ division\ by\ zero}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cpi\ ==\ SubsecondTime::Zero())}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ cpi\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getDvfsDomain()-\/>getPeriod();}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ UInt64\ ninstrs\ =\ SubsecondTime::divideRounded(m\_target\_ffend\ -\/\ now,\ cpi);}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ core-\/>setInstructionsCallback(ninstrs);}
+\DoxyCodeLine{00198\ \ \ \ \}}
+\DoxyCodeLine{00199\ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00202\ SamplingManager::instr\_count(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00203\ \{}
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fastforward\ \&\&\ Sim()-\/>getMagicServer()-\/>inROI())\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_uncoordinated)\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ core\_id\ =\ 0;\ core\_id\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ core\_id++)}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ uncoordinated\ mode,\ the\ first\ processor\ to\ reach\ his\ target\ instruction\ count}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ends\ fast-\/forward\ mode\ for\ everyone}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>setInstructionsCallback(1);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getClockSkewMinimizationClient()-\/>synchronize(SubsecondTime::Zero(),\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00214\ \ \ \ \}}
+\DoxyCodeLine{00215\ \}}
+
+\end{DoxyCode}

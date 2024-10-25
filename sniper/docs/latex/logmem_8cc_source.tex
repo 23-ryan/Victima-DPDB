@@ -1,0 +1,166 @@
+\doxysection{logmem.\+cc}
+\label{logmem_8cc_source}\index{common/misc/logmem.cc@{common/misc/logmem.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}logmem.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ Memory\ Logger}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ Logs\ allocated\ memory\ size\ per\ allocation\ site}}
+\DoxyCodeLine{00012\ \textcolor{comment}{}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ Usage:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ -\/\ define\ LOGMEM\_ENABLED\ in\ logmem.h}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ \ \ -\/\ recompile\ all\ sources\ with\ DEBUG=1}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ \ -\/\ run\ simulation}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ \ \ \ +\ to\ completion\ (ROI-\/end)}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ \ \ \ +\ send\ USR1\ signal\ for\ intermediate\ statistics}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ \ -\/\ allocations\ will\ be\ in\ allocations.out}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ \ -\/\ ./tools/memtop.py}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifndef\ LOGMEM\_ENABLED}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ logmem\_enable(\textcolor{keywordtype}{bool}\ enabled)\ \{\}}
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ logmem\_write\_allocations()\ \{\}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ NUM\_ITEMS\ =\ 1024*1024;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}callstack.h"{}}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <execinfo.h>}}
+\DoxyCodeLine{00034\ \textcolor{keyword}{class\ }AllocItem}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ BACKTRACE\_SIZE\ =\ 15;}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keywordtype}{void}\ *\ backtrace\_buffer[BACKTRACE\_SIZE];}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ backtrace\_n;}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{static}\ Lock\ lock;}
+\DoxyCodeLine{00040\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordtype}{size\_t}\ size;}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordtype}{size\_t}\ count;}
+\DoxyCodeLine{00043\ \ \ \ AllocItem()\ :\ backtrace\_n(0),\ size(0),\ count(0)\ \{\}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ key()\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *\ buffer[BACKTRACE\_SIZE];}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{comment}{//\ use\ the\ fast\ version\ here}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ n\ =\ get\_call\_stack(buffer,\ 6);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ k\ =\ 0;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 2;\ i\ <\ n;\ ++i)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ k\ +=\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})buffer[i]\ *\ (i\ +\ (1\ <<\ i));}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ k\ \%\ NUM\_ITEMS;}
+\DoxyCodeLine{00052\ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordtype}{void}\ init()\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ ScopedLock\ sl(lock);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ backtrace\_n\ =\ backtrace(backtrace\_buffer,\ BACKTRACE\_SIZE);}
+\DoxyCodeLine{00056\ \ \ \ \}}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordtype}{void}\ record(\textcolor{keywordtype}{size\_t}\ \_size)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (backtrace\_n\ ==\ 0)\ init();}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&size,\ \_size);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&count,\ 1);}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordtype}{void}\ free(\textcolor{keywordtype}{size\_t}\ \_size)\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \_\_sync\_fetch\_and\_sub(\&size,\ \_size);}
+\DoxyCodeLine{00064\ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordtype}{void}\ report(FILE\ *\ fp)\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 3;\ i\ <\ BACKTRACE\_SIZE;\ ++i)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%lu\ "{}},\ i\ <\ backtrace\_n\ ?\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})backtrace\_buffer[i]\ :\ 0);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%lu\ \%lu\(\backslash\)n"{}},\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})size,\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})count);}
+\DoxyCodeLine{00069\ \ \ \ \}}
+\DoxyCodeLine{00070\ \};}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{struct\ }DataItem}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ key;}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordtype}{size\_t}\ size;}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordtype}{char}\ data[];}
+\DoxyCodeLine{00077\ \};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ AllocItem\ allocated[NUM\_ITEMS];}
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{bool}\ logmem\_enabled\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \textcolor{comment}{//\ global\ enable\ (during\ ROI\ for\ instance)}}
+\DoxyCodeLine{00081\ SInt64\ mem\_total\ =\ 0;}
+\DoxyCodeLine{00082\ Lock\ AllocItem::lock;}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{void}\ *\ \_\_new(\textcolor{keywordtype}{size\_t}\ size)}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ \ DataItem\ *p\ =\ (DataItem*)malloc(\textcolor{keyword}{sizeof}(DataItem)\ +\ size);}
+\DoxyCodeLine{00087\ \ \ \ p-\/>key\ =\ -\/1;}
+\DoxyCodeLine{00088\ \ \ \ p-\/>size\ =\ size;}
+\DoxyCodeLine{00089\ \ \ \ \textcolor{keywordflow}{if}\ (logmem\_enabled)\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ k\ =\ AllocItem::key();}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ p-\/>key\ =\ k;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ allocated[k].record(size);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&mem\_total,\ size);}
+\DoxyCodeLine{00094\ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \textcolor{keywordflow}{return}\ p-\/>data;}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keywordtype}{void}\ *\ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}\ (\textcolor{keywordtype}{size\_t}\ size)\ \{\ \textcolor{keywordflow}{return}\ \_\_new(size);\ \}}
+\DoxyCodeLine{00099\ \textcolor{keywordtype}{void}\ *\ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}\ []\ (\textcolor{keywordtype}{size\_t}\ size)\ \{\ \textcolor{keywordflow}{return}\ \_\_new(size);\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keywordtype}{void}\ \_\_delete(\textcolor{keywordtype}{void}*\ p)}
+\DoxyCodeLine{00102\ \{}
+\DoxyCodeLine{00103\ \ \ \ DataItem\ *\_p\ =\ (DataItem*)(((\textcolor{keywordtype}{char}*)p)\ -\/\ \textcolor{keyword}{sizeof}(DataItem));}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keywordflow}{if}\ (logmem\_enabled)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_p-\/>key\ !=\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})-\/1)\ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ allocated[\_p-\/>key].free(\_p-\/>size);}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \_\_sync\_fetch\_and\_sub(\&mem\_total,\ \_p-\/>size);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ free(\_p);}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keywordtype}{void}\ \textcolor{keyword}{operator}\ \textcolor{keyword}{delete}(\textcolor{keywordtype}{void}*\ p)\ \{\ \_\_delete(p);\ \}}
+\DoxyCodeLine{00114\ \textcolor{keywordtype}{void}\ \textcolor{keyword}{operator}\ \textcolor{keyword}{delete}\ []\ (\textcolor{keywordtype}{void}*\ p)\ \{\ \_\_delete(p);\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{comment}{/*\ Output\ format:}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ \ First\ line:\ address\ of\ rdtsc\ (first\ argument\ of\ tools/addr2line.py)}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ \ Subsequent\ lines:\ backtrace\ addresses,\ last\ element\ is\ size}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ Postprocess\ step:\ sort\ allocations.out\ |\ uniq\ -\/c\ |\ sort\ -\/n}}
+\DoxyCodeLine{00121\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00122\ \textcolor{keywordtype}{void}\ logmem\_write\_allocations()}
+\DoxyCodeLine{00123\ \{}
+\DoxyCodeLine{00124\ \ \ \ printf(\textcolor{stringliteral}{"{}[LOGMEM]\ Total\ memory\ consumption\ increase:\ \%.1f\ MiB\(\backslash\)n"{}},\ mem\_total\ /\ (1024.*1024));}
+\DoxyCodeLine{00125\ \ \ \ FILE*\ fp\ =\ fopen(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}allocations.out"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00126\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%lu\(\backslash\)n"{}},\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})rdtsc);}
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_ITEMS;\ ++i)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocated[i].size\ >\ 0)}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ allocated[i].report(fp);}
+\DoxyCodeLine{00130\ \ \ \ fclose(fp);}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ SInt64\ logmem\_trigger(UInt64,\ UInt64)}
+\DoxyCodeLine{00134\ \{}
+\DoxyCodeLine{00135\ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Writing\ logmem\ allocations\(\backslash\)n"{}});}
+\DoxyCodeLine{00136\ \ \ \ logmem\_write\_allocations();}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{void}\ logmem\_enable(\textcolor{keywordtype}{bool}\ enabled)}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keywordflow}{if}\ (!logmem\_enabled)}
+\DoxyCodeLine{00143\ \ \ \ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{comment}{//\ let's\ see\ whether\ get\_call\_stack()\ is\ working}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ -\/fomit-\/frame-\/pointer\ was\ used,\ we\ should\ notice\ this\ here\ rather\ than\ working\ with\ garbage\ keys}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ BACKTRACE\_SIZE\ =\ 5;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *backtrace\_buffer[BACKTRACE\_SIZE],\ *callstack\_buffer[BACKTRACE\_SIZE];}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ backtrace\_n\ =\ backtrace(backtrace\_buffer,\ BACKTRACE\_SIZE),}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ callstack\_n\ =\ get\_call\_stack(callstack\_buffer,\ BACKTRACE\_SIZE);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ backtrace\_n;\ ++i)}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(i\ <\ callstack\_n\ \&\&\ backtrace\_buffer[i]\ ==\ callstack\_buffer[i],\ \textcolor{stringliteral}{"{}Fast\ backtrace()\ not\ working"{}});}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_SIGUSR1,\ logmem\_trigger,\ 0);}
+\DoxyCodeLine{00156\ \ \ \ \}}
+\DoxyCodeLine{00157\ \ \ \ logmem\_enabled\ =\ enabled;}
+\DoxyCodeLine{00158\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ LOGMEM\_ENABLED}}
+
+\end{DoxyCode}

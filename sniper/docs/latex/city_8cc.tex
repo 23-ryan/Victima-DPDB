@@ -1,0 +1,798 @@
+\doxysection{common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/cuckoo/city.cc File Reference}
+\label{city_8cc}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/city.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/city.cc}}
+{\ttfamily \#include "{}city.\+h"{}}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for city.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=257pt]{city_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ uint32\+\_\+in\+\_\+expected\+\_\+order}(x)
+\item 
+\#define \textbf{ uint64\+\_\+in\+\_\+expected\+\_\+order}(x)
+\item 
+\#define \textbf{ LIKELY}(x)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ uint64} \textbf{ UNALIGNED\+\_\+\+LOAD64} (const char $\ast$p)
+\item 
+static \textbf{ uint32} \textbf{ UNALIGNED\+\_\+\+LOAD32} (const char $\ast$p)
+\item 
+static \textbf{ uint64} \textbf{ Fetch64} (const char $\ast$p)
+\item 
+static \textbf{ uint32} \textbf{ Fetch32} (const char $\ast$p)
+\item 
+static \textbf{ uint64} \textbf{ Hash128to64} (const \textbf{ uint128} x)
+\item 
+static \textbf{ uint64} \textbf{ Rotate} (\textbf{ uint64} val, int shift)
+\item 
+static \textbf{ uint64} \textbf{ Rotate\+By\+At\+Least1} (\textbf{ uint64} val, int shift)
+\item 
+static \textbf{ uint64} \textbf{ Shift\+Mix} (\textbf{ uint64} val)
+\item 
+static \textbf{ uint64} \textbf{ Hash\+Len16} (\textbf{ uint64} u, \textbf{ uint64} v)
+\item 
+static \textbf{ uint64} \textbf{ Hash\+Len0to16} (const char $\ast$s, size\+\_\+t len)
+\item 
+static \textbf{ uint64} \textbf{ Hash\+Len17to32} (const char $\ast$s, size\+\_\+t len)
+\item 
+\textbf{ uint128} \textbf{ Weak\+Hash\+Len32\+With\+Seeds6} (\textbf{ uint64} w, \textbf{ uint64} x, \textbf{ uint64} y, \textbf{ uint64} z, \textbf{ uint64} a, \textbf{ uint64} b)
+\item 
+\textbf{ uint128} \textbf{ Weak\+Hash\+Len32\+With\+Seeds} (const char $\ast$s, \textbf{ uint64} a, \textbf{ uint64} b)
+\item 
+static \textbf{ uint64} \textbf{ Hash\+Len33to64} (const char $\ast$s, size\+\_\+t len)
+\item 
+\textbf{ uint64} \textbf{ City\+Hash64} (const char $\ast$s, size\+\_\+t len)
+\item 
+\textbf{ uint64} \textbf{ City\+Hash64\+With\+Seed} (const char $\ast$s, size\+\_\+t len, \textbf{ uint64} seed)
+\item 
+\textbf{ uint64} \textbf{ City\+Hash64\+With\+Seeds} (const char $\ast$s, size\+\_\+t len, \textbf{ uint64} seed0, \textbf{ uint64} seed1)
+\item 
+static \textbf{ uint128} \textbf{ City\+Murmur} (const char $\ast$s, size\+\_\+t len, \textbf{ uint128} seed)
+\item 
+\textbf{ uint128} \textbf{ City\+Hash128\+With\+Seed} (const char $\ast$s, size\+\_\+t len, \textbf{ uint128} seed)
+\item 
+\textbf{ uint128} \textbf{ City\+Hash128} (const char $\ast$s, size\+\_\+t len)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static const \textbf{ uint64} \textbf{ k0} = 0xc3a5c85c97cb3127\+ULL
+\item 
+static const \textbf{ uint64} \textbf{ k1} = 0xb492b66fbe98f273\+ULL
+\item 
+static const \textbf{ uint64} \textbf{ k2} = 0x9ae16a3b2f90404f\+ULL
+\item 
+static const \textbf{ uint64} \textbf{ k3} = 0xc949d7c7509e6557\+ULL
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{city.cc@{city.cc}!LIKELY@{LIKELY}}
+\index{LIKELY@{LIKELY}!city.cc@{city.cc}}
+\doxysubsubsection{LIKELY}
+{\footnotesize\ttfamily \label{city_8cc_affde14445f49f65ff4f5b592e44ee71a} 
+\#define LIKELY(\begin{DoxyParamCaption}\item[{}]{x}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{(x)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 82} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash128\+With\+Seed()}.
+
+\index{city.cc@{city.cc}!uint32\_in\_expected\_order@{uint32\_in\_expected\_order}}
+\index{uint32\_in\_expected\_order@{uint32\_in\_expected\_order}!city.cc@{city.cc}}
+\doxysubsubsection{uint32\_in\_expected\_order}
+{\footnotesize\ttfamily \label{city_8cc_aeaffbeef893240bf17d51c8ccde3c686} 
+\#define uint32\+\_\+in\+\_\+expected\+\_\+order(\begin{DoxyParamCaption}\item[{}]{x}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{(x)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 53} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ Fetch32()}.
+
+\index{city.cc@{city.cc}!uint64\_in\_expected\_order@{uint64\_in\_expected\_order}}
+\index{uint64\_in\_expected\_order@{uint64\_in\_expected\_order}!city.cc@{city.cc}}
+\doxysubsubsection{uint64\_in\_expected\_order}
+{\footnotesize\ttfamily \label{city_8cc_aebeacf3a6a1c4e278fa1b74f18c08d4a} 
+\#define uint64\+\_\+in\+\_\+expected\+\_\+order(\begin{DoxyParamCaption}\item[{}]{x}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{(x)}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 54} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ Fetch64()}.
+
+
+
+\doxysubsection{Function Documentation}
+\index{city.cc@{city.cc}!CityHash128@{CityHash128}}
+\index{CityHash128@{CityHash128}!city.cc@{city.cc}}
+\doxysubsubsection{CityHash128()}
+{\footnotesize\ttfamily \label{city_8cc_ad487ffee003419a5c1394dc4117e6847} 
+\textbf{ uint128} City\+Hash128 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 371} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ City\+Hash128\+With\+Seed()}, \textbf{ Fetch64()}, \textbf{ \+\_\+uint128\+::first}, \textbf{ k0}, \textbf{ k1}, \textbf{ k3}, and \textbf{ \+\_\+uint128\+::second}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ad487ffee003419a5c1394dc4117e6847_cgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!CityHash128WithSeed@{CityHash128WithSeed}}
+\index{CityHash128WithSeed@{CityHash128WithSeed}!city.cc@{city.cc}}
+\doxysubsubsection{CityHash128WithSeed()}
+{\footnotesize\ttfamily \label{city_8cc_abe254b73fecfa7a0b9ceb61f6d713c8d} 
+\textbf{ uint128} City\+Hash128\+With\+Seed (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{, }\item[{\textbf{ uint128}}]{seed}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 303} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ City\+Murmur()}, \textbf{ Fetch64()}, \textbf{ \+\_\+uint128\+::first}, \textbf{ Hash\+Len16()}, \textbf{ k0}, \textbf{ k1}, \textbf{ LIKELY}, \textbf{ Rotate()}, \textbf{ \+\_\+uint128\+::second}, \textbf{ Uint128\+High64}, \textbf{ Uint128\+Low64}, and \textbf{ Weak\+Hash\+Len32\+With\+Seeds()}.
+
+
+
+Referenced by \textbf{ City\+Hash128()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_abe254b73fecfa7a0b9ceb61f6d713c8d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=265pt]{city_8cc_abe254b73fecfa7a0b9ceb61f6d713c8d_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!CityHash64@{CityHash64}}
+\index{CityHash64@{CityHash64}!city.cc@{city.cc}}
+\doxysubsubsection{CityHash64()}
+{\footnotesize\ttfamily \label{city_8cc_ad0ba022ddd9dae3ad8f79eadc9568c76} 
+\textbf{ uint64} City\+Hash64 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 217} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Fetch64()}, \textbf{ \+\_\+uint128\+::first}, \textbf{ Hash\+Len0to16()}, \textbf{ Hash\+Len16()}, \textbf{ Hash\+Len17to32()}, \textbf{ Hash\+Len33to64()}, \textbf{ k1}, \textbf{ Rotate()}, \textbf{ \+\_\+uint128\+::second}, \textbf{ Shift\+Mix()}, and \textbf{ Weak\+Hash\+Len32\+With\+Seeds()}.
+
+
+
+Referenced by \textbf{ City\+Hash64\+With\+Seeds()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Hash\+Table\+PTW\+::hash\+\_\+function()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Hash\+Dont\+Cache\+::hash\+\_\+function()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ad0ba022ddd9dae3ad8f79eadc9568c76_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ad0ba022ddd9dae3ad8f79eadc9568c76_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!CityHash64WithSeed@{CityHash64WithSeed}}
+\index{CityHash64WithSeed@{CityHash64WithSeed}!city.cc@{city.cc}}
+\doxysubsubsection{CityHash64WithSeed()}
+{\footnotesize\ttfamily \label{city_8cc_aed2a4750316c07de6ee99ee932bf28bd} 
+\textbf{ uint64} City\+Hash64\+With\+Seed (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{, }\item[{\textbf{ uint64}}]{seed}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 258} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ City\+Hash64\+With\+Seeds()}, and \textbf{ k2}.
+
+
+
+Referenced by \textbf{ gen\+\_\+hash()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_aed2a4750316c07de6ee99ee932bf28bd_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_aed2a4750316c07de6ee99ee932bf28bd_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!CityHash64WithSeeds@{CityHash64WithSeeds}}
+\index{CityHash64WithSeeds@{CityHash64WithSeeds}!city.cc@{city.cc}}
+\doxysubsubsection{CityHash64WithSeeds()}
+{\footnotesize\ttfamily \label{city_8cc_abd356fce295f927ddb52e38ce76d10c2} 
+\textbf{ uint64} City\+Hash64\+With\+Seeds (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{, }\item[{\textbf{ uint64}}]{seed0}{, }\item[{\textbf{ uint64}}]{seed1}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 262} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ City\+Hash64()}, and \textbf{ Hash\+Len16()}.
+
+
+
+Referenced by \textbf{ City\+Hash64\+With\+Seed()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_abd356fce295f927ddb52e38ce76d10c2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_abd356fce295f927ddb52e38ce76d10c2_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!CityMurmur@{CityMurmur}}
+\index{CityMurmur@{CityMurmur}!city.cc@{city.cc}}
+\doxysubsubsection{CityMurmur()}
+{\footnotesize\ttfamily \label{city_8cc_a3c940d95bd7bfbed8eeddbdf1adab1d2} 
+static \textbf{ uint128} City\+Murmur (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{, }\item[{\textbf{ uint128}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 269} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Fetch64()}, \textbf{ \+\_\+uint128\+::first}, \textbf{ Hash\+Len0to16()}, \textbf{ Hash\+Len16()}, \textbf{ k1}, \textbf{ \+\_\+uint128\+::second}, \textbf{ Shift\+Mix()}, \textbf{ Uint128\+High64}, and \textbf{ Uint128\+Low64}.
+
+
+
+Referenced by \textbf{ City\+Hash128\+With\+Seed()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a3c940d95bd7bfbed8eeddbdf1adab1d2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a3c940d95bd7bfbed8eeddbdf1adab1d2_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!Fetch32@{Fetch32}}
+\index{Fetch32@{Fetch32}!city.cc@{city.cc}}
+\doxysubsubsection{Fetch32()}
+{\footnotesize\ttfamily \label{city_8cc_a83d43dafbc11754766e1727514326b46} 
+static \textbf{ uint32} Fetch32 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{p}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ uint32\+\_\+in\+\_\+expected\+\_\+order}, and \textbf{ UNALIGNED\+\_\+\+LOAD32()}.
+
+
+
+Referenced by \textbf{ Hash\+Len0to16()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=249pt]{city_8cc_a83d43dafbc11754766e1727514326b46_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a83d43dafbc11754766e1727514326b46_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!Fetch64@{Fetch64}}
+\index{Fetch64@{Fetch64}!city.cc@{city.cc}}
+\doxysubsubsection{Fetch64()}
+{\footnotesize\ttfamily \label{city_8cc_ad37da67dfc8ad6f6ad1f0aa8b9962403} 
+static \textbf{ uint64} Fetch64 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{p}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 86} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ uint64\+\_\+in\+\_\+expected\+\_\+order}, and \textbf{ UNALIGNED\+\_\+\+LOAD64()}.
+
+
+
+Referenced by \textbf{ City\+Hash128()}, \textbf{ City\+Hash128\+With\+Seed()}, \textbf{ City\+Hash64()}, \textbf{ City\+Murmur()}, \textbf{ Hash\+Len0to16()}, \textbf{ Hash\+Len17to32()}, \textbf{ Hash\+Len33to64()}, and \textbf{ Weak\+Hash\+Len32\+With\+Seeds()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=249pt]{city_8cc_ad37da67dfc8ad6f6ad1f0aa8b9962403_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ad37da67dfc8ad6f6ad1f0aa8b9962403_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!Hash128to64@{Hash128to64}}
+\index{Hash128to64@{Hash128to64}!city.cc@{city.cc}}
+\doxysubsubsection{Hash128to64()}
+{\footnotesize\ttfamily \label{city_8cc_af884d8e0248c5c2861a67385aa76669c} 
+static \textbf{ uint64} Hash128to64 (\begin{DoxyParamCaption}\item[{const \textbf{ uint128}}]{x}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Uint128\+High64}, and \textbf{ Uint128\+Low64}.
+
+
+
+Referenced by \textbf{ Hash\+Len16()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_af884d8e0248c5c2861a67385aa76669c_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!HashLen0to16@{HashLen0to16}}
+\index{HashLen0to16@{HashLen0to16}!city.cc@{city.cc}}
+\doxysubsubsection{HashLen0to16()}
+{\footnotesize\ttfamily \label{city_8cc_ad97a52e6478913f15f5d4330553f3955} 
+static \textbf{ uint64} Hash\+Len0to16 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 136} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Fetch32()}, \textbf{ Fetch64()}, \textbf{ Hash\+Len16()}, \textbf{ k2}, \textbf{ k3}, \textbf{ Rotate\+By\+At\+Least1()}, and \textbf{ Shift\+Mix()}.
+
+
+
+Referenced by \textbf{ City\+Hash64()}, and \textbf{ City\+Murmur()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ad97a52e6478913f15f5d4330553f3955_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ad97a52e6478913f15f5d4330553f3955_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!HashLen16@{HashLen16}}
+\index{HashLen16@{HashLen16}!city.cc@{city.cc}}
+\doxysubsubsection{HashLen16()}
+{\footnotesize\ttfamily \label{city_8cc_a6b04ce5568f91cae31cd97c5cec1b7f5} 
+static \textbf{ uint64} Hash\+Len16 (\begin{DoxyParamCaption}\item[{\textbf{ uint64}}]{u}{, }\item[{\textbf{ uint64}}]{v}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 129} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ \+\_\+uint128\+::first}, \textbf{ Hash128to64()}, and \textbf{ \+\_\+uint128\+::second}.
+
+
+
+Referenced by \textbf{ City\+Hash128\+With\+Seed()}, \textbf{ City\+Hash64()}, \textbf{ City\+Hash64\+With\+Seeds()}, \textbf{ City\+Murmur()}, \textbf{ Hash\+Len0to16()}, and \textbf{ Hash\+Len17to32()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=220pt]{city_8cc_a6b04ce5568f91cae31cd97c5cec1b7f5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a6b04ce5568f91cae31cd97c5cec1b7f5_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!HashLen17to32@{HashLen17to32}}
+\index{HashLen17to32@{HashLen17to32}!city.cc@{city.cc}}
+\doxysubsubsection{HashLen17to32()}
+{\footnotesize\ttfamily \label{city_8cc_a81339f4a93276e38bf3cfa97b4437509} 
+static \textbf{ uint64} Hash\+Len17to32 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 159} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Fetch64()}, \textbf{ Hash\+Len16()}, \textbf{ k0}, \textbf{ k1}, \textbf{ k2}, \textbf{ k3}, and \textbf{ Rotate()}.
+
+
+
+Referenced by \textbf{ City\+Hash64()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a81339f4a93276e38bf3cfa97b4437509_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a81339f4a93276e38bf3cfa97b4437509_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!HashLen33to64@{HashLen33to64}}
+\index{HashLen33to64@{HashLen33to64}!city.cc@{city.cc}}
+\doxysubsubsection{HashLen33to64()}
+{\footnotesize\ttfamily \label{city_8cc_a4576c118f6462a3e7dee68efeb9c2921} 
+static \textbf{ uint64} Hash\+Len33to64 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{size\+\_\+t}]{len}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 194} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Fetch64()}, \textbf{ k0}, \textbf{ k2}, \textbf{ Rotate()}, and \textbf{ Shift\+Mix()}.
+
+
+
+Referenced by \textbf{ City\+Hash64()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a4576c118f6462a3e7dee68efeb9c2921_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a4576c118f6462a3e7dee68efeb9c2921_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!Rotate@{Rotate}}
+\index{Rotate@{Rotate}!city.cc@{city.cc}}
+\doxysubsubsection{Rotate()}
+{\footnotesize\ttfamily \label{city_8cc_abff583bd4718081f427dd4f46a411b7f} 
+static \textbf{ uint64} Rotate (\begin{DoxyParamCaption}\item[{\textbf{ uint64}}]{val}{, }\item[{int}]{shift}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash128\+With\+Seed()}, \textbf{ City\+Hash64()}, \textbf{ Hash\+Len17to32()}, \textbf{ Hash\+Len33to64()}, and \textbf{ Weak\+Hash\+Len32\+With\+Seeds6()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_abff583bd4718081f427dd4f46a411b7f_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!RotateByAtLeast1@{RotateByAtLeast1}}
+\index{RotateByAtLeast1@{RotateByAtLeast1}!city.cc@{city.cc}}
+\doxysubsubsection{RotateByAtLeast1()}
+{\footnotesize\ttfamily \label{city_8cc_a59e3c2d10d4aaa543de187033b473fb4} 
+static \textbf{ uint64} Rotate\+By\+At\+Least1 (\begin{DoxyParamCaption}\item[{\textbf{ uint64}}]{val}{, }\item[{int}]{shift}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 123} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ Hash\+Len0to16()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a59e3c2d10d4aaa543de187033b473fb4_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!ShiftMix@{ShiftMix}}
+\index{ShiftMix@{ShiftMix}!city.cc@{city.cc}}
+\doxysubsubsection{ShiftMix()}
+{\footnotesize\ttfamily \label{city_8cc_a29ffac454b61445d188c0cdb024674ab} 
+static \textbf{ uint64} Shift\+Mix (\begin{DoxyParamCaption}\item[{\textbf{ uint64}}]{val}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash64()}, \textbf{ City\+Murmur()}, \textbf{ Hash\+Len0to16()}, and \textbf{ Hash\+Len33to64()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a29ffac454b61445d188c0cdb024674ab_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!UNALIGNED\_LOAD32@{UNALIGNED\_LOAD32}}
+\index{UNALIGNED\_LOAD32@{UNALIGNED\_LOAD32}!city.cc@{city.cc}}
+\doxysubsubsection{UNALIGNED\_LOAD32()}
+{\footnotesize\ttfamily \label{city_8cc_ab582efce342fc9bb140dd67d2c5a6c1e} 
+static \textbf{ uint32} UNALIGNED\+\_\+\+LOAD32 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{p}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ Fetch32()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_ab582efce342fc9bb140dd67d2c5a6c1e_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!UNALIGNED\_LOAD64@{UNALIGNED\_LOAD64}}
+\index{UNALIGNED\_LOAD64@{UNALIGNED\_LOAD64}!city.cc@{city.cc}}
+\doxysubsubsection{UNALIGNED\_LOAD64()}
+{\footnotesize\ttfamily \label{city_8cc_aa8f55842838f0f27ad900e4c68a89437} 
+static \textbf{ uint64} UNALIGNED\+\_\+\+LOAD64 (\begin{DoxyParamCaption}\item[{const char $\ast$}]{p}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ Fetch64()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_aa8f55842838f0f27ad900e4c68a89437_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!WeakHashLen32WithSeeds@{WeakHashLen32WithSeeds}}
+\index{WeakHashLen32WithSeeds@{WeakHashLen32WithSeeds}!city.cc@{city.cc}}
+\doxysubsubsection{WeakHashLen32WithSeeds()}
+{\footnotesize\ttfamily \label{city_8cc_a58bbc15d0c1f537c7737b296ca2f6d7c} 
+\textbf{ uint128} Weak\+Hash\+Len32\+With\+Seeds (\begin{DoxyParamCaption}\item[{const char $\ast$}]{s}{, }\item[{\textbf{ uint64}}]{a}{, }\item[{\textbf{ uint64}}]{b}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 188} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ Fetch64()}, and \textbf{ Weak\+Hash\+Len32\+With\+Seeds6()}.
+
+
+
+Referenced by \textbf{ City\+Hash128\+With\+Seed()}, and \textbf{ City\+Hash64()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a58bbc15d0c1f537c7737b296ca2f6d7c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a58bbc15d0c1f537c7737b296ca2f6d7c_icgraph}
+\end{center}
+\end{figure}
+\index{city.cc@{city.cc}!WeakHashLen32WithSeeds6@{WeakHashLen32WithSeeds6}}
+\index{WeakHashLen32WithSeeds6@{WeakHashLen32WithSeeds6}!city.cc@{city.cc}}
+\doxysubsubsection{WeakHashLen32WithSeeds6()}
+{\footnotesize\ttfamily \label{city_8cc_a33c9a1e124172135327c5426f0d8b47b} 
+\textbf{ uint128} Weak\+Hash\+Len32\+With\+Seeds6 (\begin{DoxyParamCaption}\item[{\textbf{ uint64}}]{w}{, }\item[{\textbf{ uint64}}]{x}{, }\item[{\textbf{ uint64}}]{y}{, }\item[{\textbf{ uint64}}]{z}{, }\item[{\textbf{ uint64}}]{a}{, }\item[{\textbf{ uint64}}]{b}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 171} of file \textbf{ city.\+cc}.
+
+
+
+References \textbf{ \+\_\+uint128\+::first}, \textbf{ Rotate()}, and \textbf{ \+\_\+uint128\+::second}.
+
+
+
+Referenced by \textbf{ Weak\+Hash\+Len32\+With\+Seeds()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=268pt]{city_8cc_a33c9a1e124172135327c5426f0d8b47b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{city_8cc_a33c9a1e124172135327c5426f0d8b47b_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Variable Documentation}
+\index{city.cc@{city.cc}!k0@{k0}}
+\index{k0@{k0}!city.cc@{city.cc}}
+\doxysubsubsection{k0}
+{\footnotesize\ttfamily \label{city_8cc_ac7f34277e576244b844cc6b79343cf76} 
+const \textbf{ uint64} k0 = 0xc3a5c85c97cb3127\+ULL\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 95} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash128()}, \textbf{ City\+Hash128\+With\+Seed()}, \textbf{ Hash\+Len17to32()}, and \textbf{ Hash\+Len33to64()}.
+
+\index{city.cc@{city.cc}!k1@{k1}}
+\index{k1@{k1}!city.cc@{city.cc}}
+\doxysubsubsection{k1}
+{\footnotesize\ttfamily \label{city_8cc_a2e78a10677039f82f4f417f40958ce3a} 
+const \textbf{ uint64} k1 = 0xb492b66fbe98f273\+ULL\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 96} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash128()}, \textbf{ City\+Hash128\+With\+Seed()}, \textbf{ City\+Hash64()}, \textbf{ City\+Murmur()}, and \textbf{ Hash\+Len17to32()}.
+
+\index{city.cc@{city.cc}!k2@{k2}}
+\index{k2@{k2}!city.cc@{city.cc}}
+\doxysubsubsection{k2}
+{\footnotesize\ttfamily \label{city_8cc_a770262882e2bbb6e86e4e3573e25497e} 
+const \textbf{ uint64} k2 = 0x9ae16a3b2f90404f\+ULL\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash64\+With\+Seed()}, \textbf{ Hash\+Len0to16()}, \textbf{ Hash\+Len17to32()}, and \textbf{ Hash\+Len33to64()}.
+
+\index{city.cc@{city.cc}!k3@{k3}}
+\index{k3@{k3}!city.cc@{city.cc}}
+\doxysubsubsection{k3}
+{\footnotesize\ttfamily \label{city_8cc_ab1ea20165613e32c33bd38b0cdbc1581} 
+const \textbf{ uint64} k3 = 0xc949d7c7509e6557\+ULL\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 98} of file \textbf{ city.\+cc}.
+
+
+
+Referenced by \textbf{ City\+Hash128()}, \textbf{ Hash\+Len0to16()}, and \textbf{ Hash\+Len17to32()}.
+

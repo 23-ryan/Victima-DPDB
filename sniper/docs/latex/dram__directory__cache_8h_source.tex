@@ -1,0 +1,63 @@
+\doxysection{dram\+\_\+directory\+\_\+cache.\+h}
+\label{dram__directory__cache_8h_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cache.h@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cache.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}directory.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{namespace\ }PrL1PrL2DramDirectoryMSI}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{class\ }DramDirectoryCache}
+\DoxyCodeLine{00012\ \ \ \ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ Directory*\ m\_directory;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ UInt32*\ m\_replacement\_ptrs;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ std::vector<DirectoryEntry*>\ m\_replaced\_directory\_entry\_list;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ UInt32\ m\_total\_entries;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ UInt32\ m\_associativity;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ UInt32\ m\_num\_sets;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ UInt32\ m\_log\_num\_sets;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ UInt32\ m\_log\_cache\_block\_size;}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_dram\_directory\_cache\_access\_time;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ splitAddress(IntPtr\ address,\ IntPtr\&\ tag,\ UInt32\&\ set\_index);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ UInt32\ getCacheBlockSize()\ \{\ \textcolor{keywordflow}{return}\ m\_cache\_block\_size;\ \}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ UInt32\ getLogCacheBlockSize()\ \{\ \textcolor{keywordflow}{return}\ m\_log\_cache\_block\_size;\ \}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ UInt32\ getNumSets()\ \{\ \textcolor{keywordflow}{return}\ m\_num\_sets;\ \}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ UInt32\ getLogNumSets()\ \{\ \textcolor{keywordflow}{return}\ m\_log\_num\_sets;\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ DramDirectoryCache(core\_id\_t\ core\_id,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ directory\_type\_str,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ total\_entries,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ associativity,}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ max\_hw\_sharers,}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ max\_num\_sharers,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ComponentLatency\ dram\_directory\_cache\_access\_time,}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \string~DramDirectoryCache();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ DirectoryEntry*\ getDirectoryEntry(IntPtr\ address,\ \textcolor{keywordtype}{bool}\ modeled\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ DirectoryEntry*\ replaceDirectoryEntry(IntPtr\ replaced\_address,\ IntPtr\ address,\ \textcolor{keywordtype}{bool}\ modeled);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ invalidateDirectoryEntry(IntPtr\ address);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ getReplacementCandidates(IntPtr\ address,\ std::vector<DirectoryEntry*>\&\ replacement\_candidate\_list);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ UInt32\ getMaxHwSharers()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_directory-\/>getMaxHwSharers();\ \}}
+\DoxyCodeLine{00056\ \ \ \ \};}
+\DoxyCodeLine{00057\ \}}
+
+\end{DoxyCode}

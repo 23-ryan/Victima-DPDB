@@ -1,0 +1,135 @@
+\doxysection{fast\+\_\+cache.\+h}
+\label{fast__cache_8h_source}\index{common/core/memory\_subsystem/fast\_nehalem/fast\_cache.h@{common/core/memory\_subsystem/fast\_nehalem/fast\_cache.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_FAST\_CACHE\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_FAST\_CACHE\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_fast.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{namespace\ }FastNehalem}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keyword}{class\ }Dram\ :\ \textcolor{keyword}{public}\ CacheBase}
+\DoxyCodeLine{00009\ \ \ \ \{}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentLatency\ m\_latency;}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ UInt64\ m\_reads,\ m\_writes;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_total\_latency;}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ Dram(Core\ *core,\ String\ name,\ UInt64\ latency)}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_latency(core-\/>getDvfsDomain(),\ latency)}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \ \ m\_reads\ =\ m\_writes\ =\ 0;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}reads"{}},\ \&m\_reads);}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}writes"{}},\ \&m\_writes);}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ m\_total\_latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}total-\/access-\/latency"{}},\ \&m\_total\_latency);}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ SubsecondTime\ access(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ tag)}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_writes;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_reads;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ m\_total\_latency\ +=\ m\_latency.getLatency();}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_latency.getLatency();}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keyword}{template}\ <UInt32\ assoc>}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keyword}{class\ }CacheSet}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ IntPtr\ m\_tags[assoc];}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ UInt64\ m\_lru[assoc];}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ UInt64\ m\_lru\_max;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ find(IntPtr\ tag)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\ =\ 0;\ idx\ <\ assoc;\ ++idx)}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_tags[idx]\ ==\ tag)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_lru[idx]\ =\ ++m\_lru\_max;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Find\ replacement}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ lru\_min\ =\ UINT64\_MAX;\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\_min\ =\ 0;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ idx\ =\ 0;\ idx\ <\ assoc;\ ++idx)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_lru[idx]\ <\ lru\_min)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lru\_min\ =\ m\_lru[idx];}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ idx\_min\ =\ idx;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ m\_tags[idx\_min]\ =\ tag;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ m\_lru[idx\_min]\ =\ ++m\_lru\_max;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \textcolor{keyword}{template}\ <UInt32\ assoc,\ UInt32\ size\_kb>}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keyword}{class\ }Cache\ :\ \textcolor{keyword}{public}\ CacheBase}
+\DoxyCodeLine{00071\ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ MemComponent::component\_t\ m\_mem\_component;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentLatency\ m\_latency;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ CacheBase*\ \textcolor{keyword}{const}\ m\_next\_level;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt64\ m\_num\_sets;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ IntPtr\ m\_sets\_mask;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ std::vector<CacheSet<assoc>\ >\ m\_sets;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ UInt64\ m\_loads,\ m\_stores,\ m\_load\_misses,\ m\_store\_misses;}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ Cache(Core\ *core,\ String\ name,\ MemComponent::component\_t\ mem\_component,\ UInt64\ latency,\ CacheBase*\ next\_level)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_mem\_component(mem\_component)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_latency(core-\/>getDvfsDomain(),\ latency)}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_next\_level(next\_level)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_num\_sets(size\_kb\ *\ 1024\ /\ 64\ /\ assoc)}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_sets\_mask(m\_num\_sets\ -\/\ 1)}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_sets(m\_num\_sets)}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(UInt64(1)\ <<\ floorLog2(m\_num\_sets)\ ==\ m\_num\_sets,\ \textcolor{stringliteral}{"{}Number\ of\ sets\ must\ be\ power\ of\ 2"{}});}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ m\_loads\ =\ m\_stores\ =\ m\_load\_misses\ =\ m\_store\_misses\ =\ 0;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}loads"{}},\ \&m\_loads);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}stores"{}},\ \&m\_stores);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}load-\/misses"{}},\ \&m\_load\_misses);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core-\/>getId(),\ \textcolor{stringliteral}{"{}store-\/misses"{}},\ \&m\_store\_misses);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~Cache()\ \{\}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ SubsecondTime\ access(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ tag)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)\ ++m\_stores;\ \textcolor{keywordflow}{else}\ ++m\_loads;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sets[tag\ \&\ m\_sets\_mask].find(tag))}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_latency.getLatency();}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)\ ++m\_store\_misses;\ \textcolor{keywordflow}{else}\ ++m\_load\_misses;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_next\_level-\/>access(mem\_op\_type,\ tag);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \};}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keyword}{template}\ <UInt32\ assoc,\ UInt32\ size\_kb>}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keyword}{class\ }CacheLocked\ :\ \textcolor{keyword}{public}\ Cache<assoc,\ size\_kb>}
+\DoxyCodeLine{00114\ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ Lock\ lock;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ CacheLocked(Core\ *core,\ String\ name,\ MemComponent::component\_t\ mem\_component,\ UInt64\ latency,\ CacheBase*\ next\_level)}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ :\ Cache<assoc,\ size\_kb>(core,\ name,\ mem\_component,\ latency,\ next\_level)}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ SubsecondTime\ access(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ tag)}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ ScopedLock\ sl(lock);}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Cache<assoc,\ size\_kb>::access(mem\_op\_type,\ tag);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ \ \ \ \};}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_FAST\_CACHE\_H}}
+
+\end{DoxyCode}

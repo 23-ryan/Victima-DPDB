@@ -1,0 +1,1028 @@
+\doxysection{rob\+\_\+timer.\+cc}
+\label{rob__timer_8cc_source}\index{common/performance\_model/performance\_models/rob\_performance\_model/rob\_timer.cc@{common/performance\_model/performance\_models/rob\_performance\_model/rob\_timer.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}rob\_timer.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}tools.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}itostr.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}rob\_contention.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ Define\ to\ get\ per-\/cycle\ printout\ of\ dispatch,\ issue,\ writeback\ stages}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\#define\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ Define\ to\ not\ skip\ any\ cycles,\ but\ assert\ that\ the\ skip\ logic\ is\ working\ fine}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\#define\ ASSERT\_SKIP}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ RobTimer::RobTimer(}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ Core\ *core,\ PerformanceModel\ *\_perf,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ misprediction\_penalty,}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ dispatch\_width,}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ window\_size)}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ :\ dispatchWidth(dispatch\_width)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ ,\ commitWidth(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/commit\_width"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ ,\ windowSize(window\_size)\ \textcolor{comment}{//\ windowSize\ =\ ROB\ length\ =\ 96\ for\ Core2}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ ,\ rsEntries(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/rs\_entries"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ ,\ misprediction\_penalty(misprediction\_penalty)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ ,\ m\_store\_to\_load\_forwarding(Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/store\_to\_load\_forwarding"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ ,\ m\_no\_address\_disambiguation(!Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/address\_disambiguation"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ ,\ inorder(Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/in\_order"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ ,\ m\_core(core)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ ,\ rob(window\_size\ +\ 255)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ ,\ m\_num\_in\_rob(0)}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ ,\ m\_rs\_entries\_used(0)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ ,\ m\_rob\_contention(}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/issue\_contention"{}},\ core-\/>getId())}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ ?\ core\_model-\/>createRobContentionModel(core)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ :\ NULL)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ ,\ now(core-\/>getDvfsDomain())}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ ,\ frontend\_stalled\_until(SubsecondTime::Zero())}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ ,\ in\_icache\_miss(false)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ ,\ last\_store\_done(SubsecondTime::Zero())}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ ,\ load\_queue(\textcolor{stringliteral}{"{}rob\_timer.load\_queue"{}},\ core-\/>getId(),\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/outstanding\_loads"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ ,\ store\_queue(\textcolor{stringliteral}{"{}rob\_timer.store\_queue"{}},\ core-\/>getId(),\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/outstanding\_stores"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ ,\ nextSequenceNumber(0)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ ,\ will\_skip(false)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ ,\ time\_skipped(SubsecondTime::Zero())}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ ,\ registerDependencies(new\ RegisterDependencies())}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ ,\ memoryDependencies(new\ MemoryDependencies())}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ ,\ perf(\_perf)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ ,\ m\_cpiCurrentFrontEndStall(NULL)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ ,\ m\_mlp\_histogram(Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/rob\_timer/mlp\_histogram"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}time\_skipped"{}},\ \&time\_skipped);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MicroOp::UOP\_SUBTYPE\_SIZE;\ ++i)}
+\DoxyCodeLine{00067\ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ m\_uop\_type\_count[i]\ =\ 0;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ String(\textcolor{stringliteral}{"{}uop\_"{}})\ +\ MicroOp::getSubtypeString(MicroOp::uop\_subtype\_t(i)),\ \&m\_uop\_type\_count[i]);}
+\DoxyCodeLine{00070\ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ m\_uops\_total\ =\ 0;}
+\DoxyCodeLine{00072\ \ \ \ m\_uops\_x87\ =\ 0;}
+\DoxyCodeLine{00073\ \ \ \ m\_uops\_pause\ =\ 0;}
+\DoxyCodeLine{00074\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}uops\_total"{}},\ \&m\_uops\_total);}
+\DoxyCodeLine{00075\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}uops\_x87"{}},\ \&m\_uops\_x87);}
+\DoxyCodeLine{00076\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}uops\_pause"{}},\ \&m\_uops\_pause);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ m\_numSerializationInsns\ =\ 0;}
+\DoxyCodeLine{00079\ \ \ \ m\_totalSerializationLatency\ =\ 0;}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numSerializationInsns"{}},\ \&m\_numSerializationInsns);}
+\DoxyCodeLine{00082\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalSerializationLatency"{}},\ \&m\_totalSerializationLatency);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ m\_totalHiddenDCacheLatency\ =\ 0;}
+\DoxyCodeLine{00085\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalHiddenDCacheLatency"{}},\ \&m\_totalHiddenDCacheLatency);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ m\_numMfenceInsns\ =\ 0;}
+\DoxyCodeLine{00088\ \ \ \ m\_totalMfenceLatency\ =\ 0;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numMfenceInsns"{}},\ \&m\_numMfenceInsns);}
+\DoxyCodeLine{00091\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalMfenceLatency"{}},\ \&m\_totalMfenceLatency);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ m\_cpiBase\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00094\ \ \ \ m\_cpiBranchPredictor\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00095\ \ \ \ m\_cpiSerialization\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBase"{}},\ \&m\_cpiBase);}
+\DoxyCodeLine{00098\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBranchPredictor"{}},\ \&m\_cpiBranchPredictor);}
+\DoxyCodeLine{00099\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSerialization"{}},\ \&m\_cpiSerialization);}
+\DoxyCodeLine{00100\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiRSFull"{}},\ \&m\_cpiRSFull);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ m\_cpiInstructionCache.resize(HitWhere::NUM\_HITWHERES,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00104\ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpiInstructionCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiInstructionCache[h]));}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ m\_cpiDataCache.resize(HitWhere::NUM\_HITWHERES,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00113\ \ \ \ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpiDataCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiDataCache[h]));}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ m\_outstandingLongLatencyCycles\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00122\ \ \ \ m\_outstandingLongLatencyInsns\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00123\ \ \ \ m\_lastAccountedMemoryCycle\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}outstandingLongLatencyInsns"{}},\ \&m\_outstandingLongLatencyInsns);}
+\DoxyCodeLine{00126\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}outstandingLongLatencyCycles"{}},\ \&m\_outstandingLongLatencyCycles);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ m\_loads\_count\ =\ 0;}
+\DoxyCodeLine{00129\ \ \ \ m\_loads\_latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00130\ \ \ \ m\_stores\_count\ =\ 0;}
+\DoxyCodeLine{00131\ \ \ \ m\_stores\_latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}loads-\/count"{}},\ \&m\_loads\_count);}
+\DoxyCodeLine{00134\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}loads-\/latency"{}},\ \&m\_loads\_latency);}
+\DoxyCodeLine{00135\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}stores-\/count"{}},\ \&m\_stores\_count);}
+\DoxyCodeLine{00136\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}stores-\/latency"{}},\ \&m\_stores\_latency);}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ m\_totalProducerInsDistance\ =\ 0;}
+\DoxyCodeLine{00139\ \ \ \ m\_totalConsumers\ =\ 0;}
+\DoxyCodeLine{00140\ \ \ \ m\_producerInsDistance.resize(windowSize,\ 0);}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalProducerInsDistance"{}},\ \&m\_totalProducerInsDistance);}
+\DoxyCodeLine{00143\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalConsumers"{}},\ \&m\_totalConsumers);}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_producerInsDistance.size();\ i++)}
+\DoxyCodeLine{00145\ \ \ \ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}producerInsDistance["{}}\ +\ itostr(i)\ +\ \textcolor{stringliteral}{"{}]"{}};}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_producerInsDistance[i]));}
+\DoxyCodeLine{00148\ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keywordflow}{if}\ (m\_mlp\_histogram)}
+\DoxyCodeLine{00151\ \ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ m\_outstandingLoads.resize(HitWhere::NUM\_HITWHERES);}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ m\_outstandingLoads[h].resize(MAX\_OUTSTANDING,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_OUTSTANDING;\ ++i)}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ name\ =\ String(\textcolor{stringliteral}{"{}outstandingLoads."{}})\ +\ HitWhereString((HitWhere::where\_t)h)\ +\ \textcolor{stringliteral}{"{}["{}}\ +\ itostr(i)\ +\ \textcolor{stringliteral}{"{}]"{}};}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_outstandingLoads[h][i]));}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ m\_outstandingLoadsAll.resize(MAX\_OUTSTANDING,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_OUTSTANDING;\ ++i)}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ String\ name\ =\ String(\textcolor{stringliteral}{"{}outstandingLoadsAll"{}})\ +\ \textcolor{stringliteral}{"{}["{}}\ +\ itostr(i)\ +\ \textcolor{stringliteral}{"{}]"{}};}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}rob\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_outstandingLoadsAll[i]));}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ RobTimer::\string~RobTimer()}
+\DoxyCodeLine{00177\ \{}
+\DoxyCodeLine{00178\ \ \ \ \textcolor{keywordflow}{for}(Rob::iterator\ it\ =\ this-\/>rob.begin();\ it\ !=\ this-\/>rob.end();\ ++it)}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ it-\/>free();}
+\DoxyCodeLine{00180\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{keywordtype}{void}\ RobTimer::RobEntry::init(DynamicMicroOp\ *\_uop,\ UInt64\ sequenceNumber)}
+\DoxyCodeLine{00183\ \{}
+\DoxyCodeLine{00184\ \ \ \ ready\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00185\ \ \ \ readyMax\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00186\ \ \ \ addressReady\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00187\ \ \ \ addressReadyMax\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00188\ \ \ \ issued\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00189\ \ \ \ done\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ uop\ =\ \_uop;}
+\DoxyCodeLine{00192\ \ \ \ uop-\/>setSequenceNumber(sequenceNumber);}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ addressProducers.clear();}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ numInlineDependants\ =\ 0;}
+\DoxyCodeLine{00197\ \ \ \ vectorDependants\ =\ NULL;}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{keywordtype}{void}\ RobTimer::RobEntry::free()}
+\DoxyCodeLine{00201\ \{}
+\DoxyCodeLine{00202\ \ \ \ \textcolor{keyword}{delete}\ uop;}
+\DoxyCodeLine{00203\ \ \ \ \textcolor{keywordflow}{if}\ (vectorDependants)}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ vectorDependants;}
+\DoxyCodeLine{00205\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{keywordtype}{void}\ RobTimer::RobEntry::addDependant(RobTimer::RobEntry*\ dep)}
+\DoxyCodeLine{00208\ \{}
+\DoxyCodeLine{00209\ \ \ \ \textcolor{keywordflow}{if}\ (numInlineDependants\ <\ MAX\_INLINE\_DEPENDANTS)}
+\DoxyCodeLine{00210\ \ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ inlineDependants[numInlineDependants++]\ =\ dep;}
+\DoxyCodeLine{00212\ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00214\ \ \ \ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (vectorDependants\ ==\ NULL)}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ vectorDependants\ =\ \textcolor{keyword}{new}\ std::vector<RobEntry*>();}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ vectorDependants-\/>push\_back(dep);}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ uint64\_t\ RobTimer::RobEntry::getNumDependants()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00224\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00225\ \ \ \ \textcolor{keywordflow}{return}\ numInlineDependants\ +\ (vectorDependants\ ?\ vectorDependants-\/>size()\ :\ 0);}
+\DoxyCodeLine{00226\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ RobTimer::RobEntry*\ RobTimer::RobEntry::getDependant(\textcolor{keywordtype}{size\_t}\ idx)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00229\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00230\ \ \ \ \textcolor{keywordflow}{if}\ (idx\ <\ MAX\_INLINE\_DEPENDANTS)}
+\DoxyCodeLine{00231\ \ \ \ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(idx\ <\ numInlineDependants,\ \textcolor{stringliteral}{"{}Invalid\ idx\ \%d"{}},\ idx);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ inlineDependants[idx];}
+\DoxyCodeLine{00234\ \ \ \ \}}
+\DoxyCodeLine{00235\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00236\ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(idx\ -\/\ MAX\_INLINE\_DEPENDANTS\ <\ vectorDependants-\/>size(),\ \textcolor{stringliteral}{"{}Invalid\ idx\ \%d"{}},\ idx);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (*vectorDependants)[idx\ -\/\ MAX\_INLINE\_DEPENDANTS];}
+\DoxyCodeLine{00239\ \ \ \ \}}
+\DoxyCodeLine{00240\ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ RobTimer::RobEntry\ *RobTimer::findEntryBySequenceNumber(UInt64\ sequenceNumber)}
+\DoxyCodeLine{00243\ \{}
+\DoxyCodeLine{00244\ \ \ \ \textcolor{comment}{//\ Assumption:\ MicroOps\ in\ the\ ROB\ are\ numbered\ sequentially,\ none\ of\ them\ are\ removed\ halfway}}
+\DoxyCodeLine{00245\ \ \ \ UInt64\ first\ =\ rob[0].uop-\/>getSequenceNumber();}
+\DoxyCodeLine{00246\ \ \ \ UInt64\ position\ =\ sequenceNumber\ -\/\ first;}
+\DoxyCodeLine{00247\ \ \ \ LOG\_ASSERT\_ERROR(position\ <\ rob.size(),\ \textcolor{stringliteral}{"{}Sequence\ number\ \%ld\ outside\ of\ ROB"{}},\ sequenceNumber);}
+\DoxyCodeLine{00248\ \ \ \ RobEntry\ *entry\ =\ \&rob[position];}
+\DoxyCodeLine{00249\ \ \ \ LOG\_ASSERT\_ERROR(entry-\/>uop-\/>getSequenceNumber()\ ==\ sequenceNumber,\ \textcolor{stringliteral}{"{}Sequence\ number\ \%ld\ unexpectedly\ not\ at\ ROB\ position\ \%ld"{}},\ sequenceNumber,\ position);}
+\DoxyCodeLine{00250\ \ \ \ \textcolor{keywordflow}{return}\ entry;}
+\DoxyCodeLine{00251\ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ boost::tuple<uint64\_t,SubsecondTime>\ RobTimer::simulate(\textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts)}
+\DoxyCodeLine{00254\ \{}
+\DoxyCodeLine{00255\ \ \ \ uint64\_t\ totalInsnExec\ =\ 0;}
+\DoxyCodeLine{00256\ \ \ \ SubsecondTime\ totalLat\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<DynamicMicroOp*>::const\_iterator\ it\ =\ insts.begin();\ it\ !=\ insts.end();\ it++\ )}
+\DoxyCodeLine{00259\ \ \ \ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it)-\/>isSquashed())}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ *it;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ RobEntry\ *entry\ =\ \&this-\/>rob.next();}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ entry-\/>init(*it,\ nextSequenceNumber++);}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ =\ calculate\ dependencies,\ add\ yourself\ to\ list\ of\ depenants}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ no\ dependants\ in\ window:\ set\ ready\ =\ now()}}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ uint64\_t\ lowestValidSequenceNumber\ =\ this-\/>rob.size()\ >\ 0\ ?\ this-\/>rob.front().uop-\/>getSequenceNumber()\ :\ 0;}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>uop-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ entry-\/>uop-\/>getMicroOp()-\/>getAddressRegistersLength();\ ++i)}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ dl::Decoder::decoder\_reg\ reg\ =\ entry-\/>uop-\/>getMicroOp()-\/>getAddressRegister(i);}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ addressProducer\ =\ this-\/>registerDependencies-\/>peekProducer(reg,\ lowestValidSequenceNumber);}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (addressProducer\ !=\ INVALID\_SEQNR)}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RobEntry\ *prodEntry\ =\ this-\/>findEntryBySequenceNumber(addressProducer);}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prodEntry-\/>done\ !=\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>addressReadyMax\ =\ std::max(entry-\/>addressReadyMax,\ prodEntry-\/>done);}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>addAddressProducer(addressProducer);}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>getNumAddressProducers()\ ==\ 0)}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>addressReady\ =\ entry-\/>addressReadyMax;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ this-\/>registerDependencies-\/>setDependencies(*entry-\/>uop,\ lowestValidSequenceNumber);}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ this-\/>memoryDependencies-\/>setDependencies(*entry-\/>uop,\ lowestValidSequenceNumber);}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_store\_to\_load\_forwarding\ \&\&\ entry-\/>uop-\/>getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ entry-\/>uop-\/>getDependenciesLength();\ ++i)}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ RobEntry\ *prodEntry\ =\ this-\/>findEntryBySequenceNumber(entry-\/>uop-\/>getDependency(i));}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ depend\ on\ a\ store}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prodEntry-\/>uop-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ dependency\ on\ the\ store\ (which\ won't\ execute\ until\ it\ reaches\ the\ front\ of\ the\ ROB)}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>uop-\/>removeDependency(entry-\/>uop-\/>getDependency(i));}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ dependencies\ to\ the\ producers\ of\ the\ value\ being\ stored\ instead}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remark:\ one\ of\ these\ may\ be\ producing\ the\ store\ address,\ but\ because\ the\ store\ has\ to\ be}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ disambiguated,\ it's\ correct\ to\ have\ the\ load\ depend\ on\ the\ address\ producers\ as\ well.}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ prodEntry-\/>uop-\/>getDependenciesLength();\ ++j)}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>uop-\/>addDependency(prodEntry-\/>uop-\/>getDependency(j));}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ ourselves\ to\ the\ dependants\ list\ of\ the\ uops\ we\ depend\ on}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ uint64\_t\ minProducerDistance\ =\ UINT64\_MAX;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ m\_totalConsumers\ +=\ 1\ ;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ uint64\_t\ deps\_to\_remove[8],\ num\_dtr\ =\ 0;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ entry-\/>uop-\/>getDependenciesLength();\ ++i)}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ RobEntry\ *prodEntry\ =\ this-\/>findEntryBySequenceNumber(entry-\/>uop-\/>getDependency(i));}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ minProducerDistance\ =\ std::min(\ minProducerDistance,\ \ entry-\/>uop-\/>getSequenceNumber()\ -\/\ prodEntry-\/>uop-\/>getSequenceNumber()\ );}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prodEntry-\/>done\ !=\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ producer\ is\ already\ done\ (but\ hasn't\ reached\ writeback\ stage),\ remove\ it\ from\ our\ dependency\ list}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ deps\_to\_remove[num\_dtr++]\ =\ entry-\/>uop-\/>getDependency(i);}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>readyMax\ =\ std::max(entry-\/>readyMax,\ prodEntry-\/>done);}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ prodEntry-\/>addDependant(entry);}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ we\ are\ in\ the\ dependant\ list\ of\ all\ of\ our\ address\ producers}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ entry-\/>getNumAddressProducers();\ ++i)}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rob.size()\ \&\&\ entry-\/>getAddressProducer(i)\ >=\ rob[0].uop-\/>getSequenceNumber())}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ RobEntry\ *prodEntry\ =\ this-\/>findEntryBySequenceNumber(entry-\/>getAddressProducer(i));}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ found\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ prodEntry-\/>getNumDependants();\ ++j)}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prodEntry-\/>getDependant(j)\ ==\ entry)}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(found\ ==\ \textcolor{keyword}{true},\ \textcolor{stringliteral}{"{}Store\ \%ld\ depends\ on\ \%ld\ for\ address\ production,\ but\ is\ not\ in\ its\ dependants\ list"{}},}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>uop-\/>getSequenceNumber(),\ prodEntry-\/>uop-\/>getSequenceNumber());}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (minProducerDistance\ !=\ UINT64\_MAX)}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ m\_totalProducerInsDistance\ +=\ minProducerDistance;}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ KENZO:\ not\ sure\ why\ the\ distance\ can\ be\ larger\ than\ the\ windowSize,\ but\ it\ happens...}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (minProducerDistance\ >=\ m\_producerInsDistance.size())}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ minProducerDistance\ =\ m\_producerInsDistance.size()-\/1;}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ m\_producerInsDistance[\ minProducerDistance\ ]++\ ;}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Not\ depending\ on\ any\ instruction\ in\ the\ rob}}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ m\_producerInsDistance[\ 0\ ]\ +=\ 1\ ;}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ there\ are\ any\ dependencies\ to\ be\ removed,\ do\ this\ after\ iterating\ over\ them\ (don't\ mess\ with\ the\ list\ we're\ reading)}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(num\_dtr\ <\ \textcolor{keyword}{sizeof}(deps\_to\_remove)/\textcolor{keyword}{sizeof}(8),\ \textcolor{stringliteral}{"{}Have\ to\ remove\ more\ dependencies\ than\ I\ expected"{}});}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint64\_t\ i\ =\ 0;\ i\ <\ num\_dtr;\ ++i)}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ entry-\/>uop-\/>removeDependency(deps\_to\_remove[i]);}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>uop-\/>getDependenciesLength()\ ==\ 0)}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ no\ dependencies\ in\ the\ ROB:\ mark\ ourselves\ as\ ready}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ entry-\/>ready\ =\ entry-\/>readyMax;}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}**\ simulate:\ "{}}<<entry-\/>uop-\/>getMicroOp()-\/>toShortString(\textcolor{keyword}{true})<<std::endl;}
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \ \ m\_uop\_type\_count[(*it)-\/>getMicroOp()-\/>getSubtype()]++;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ m\_uops\_total++;}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it)-\/>getMicroOp()-\/>isX87())\ m\_uops\_x87++;}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it)-\/>getMicroOp()-\/>isPause())\ m\_uops\_pause++;}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_uops\_total\ >\ 10000\ \&\&\ m\_uops\_x87\ >\ m\_uops\_total\ /\ 20)}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}Significant\ fraction\ of\ x87\ instructions\ encountered,\ accuracy\ will\ be\ low.\ Compile\ without\ -\/mno-\/sse2\ -\/mno-\/sse3\ to\ avoid."{}});}
+\DoxyCodeLine{00390\ \ \ \ \}}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})}
+\DoxyCodeLine{00393\ \ \ \ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ uint64\_t\ instructionsExecuted;}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ SubsecondTime\ latency;}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ execute(instructionsExecuted,\ latency);}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ totalInsnExec\ +=\ instructionsExecuted;}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ totalLat\ +=\ latency;}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (latency\ ==\ SubsecondTime::Zero())}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00401\ \ \ \ \}}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<uint64\_t,SubsecondTime>(totalInsnExec,\ totalLat);}
+\DoxyCodeLine{00404\ \}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \textcolor{keywordtype}{void}\ RobTimer::synchronize(SubsecondTime\ time)}
+\DoxyCodeLine{00407\ \{}
+\DoxyCodeLine{00408\ \ \ \ \textcolor{comment}{//\ NOTE:\ depending\ on\ how\ far\ we\ jumped\ ahead\ (usually\ a\ considerable\ amount),}}
+\DoxyCodeLine{00409\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ we\ may\ want\ to\ flush\ the\ ROB\ and\ reset\ other\ queues}}
+\DoxyCodeLine{00410\ \ \ \ \textcolor{comment}{//printf("{}RobTimer::synchronize(\%lu)\ \%+ld\(\backslash\)n"{},\ time,\ (int64\_t)time-\/now);}}
+\DoxyCodeLine{00411\ \ \ \ now.setElapsedTime(time);}
+\DoxyCodeLine{00412\ \}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ SubsecondTime*\ RobTimer::findCpiComponent()}
+\DoxyCodeLine{00415\ \{}
+\DoxyCodeLine{00416\ \ \ \ \textcolor{comment}{//\ Determine\ the\ CPI\ component\ corresponding\ to\ the\ first\ non-\/committed\ instruction}}
+\DoxyCodeLine{00417\ \ \ \ \textcolor{keywordflow}{for}(uint64\_t\ i\ =\ 0;\ i\ <\ m\_num\_in\_rob;\ ++i)}
+\DoxyCodeLine{00418\ \ \ \ \{}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ RobEntry\ *entry\ =\ \&rob.at(i);}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ DynamicMicroOp\ *uop\ =\ entry-\/>uop;}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \textcolor{comment}{//\ Skip\ over\ completed\ instructions}}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>done\ <\ now)}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ the\ first\ instruction\ in\ the\ ROB\ which\ is\ still\ executing}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \textcolor{comment}{//\ Assume\ everyone\ is\ blocked\ on\ this\ one}}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \textcolor{comment}{//\ Assign\ 100\%\ of\ this\ cycle\ to\ this\ guy's\ CPI\ component}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isSerializing()\ ||\ uop-\/>getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_cpiSerialization;}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isLoad()\ ||\ uop-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_cpiDataCache[uop-\/>getDCacheHitWhere()];}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00433\ \ \ \ \}}
+\DoxyCodeLine{00434\ \ \ \ \textcolor{comment}{//\ No\ instruction\ is\ currently\ executing}}
+\DoxyCodeLine{00435\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00436\ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ SubsecondTime\ RobTimer::doDispatch(SubsecondTime\ **cpiComponent)}
+\DoxyCodeLine{00439\ \{}
+\DoxyCodeLine{00440\ \ \ \ SubsecondTime\ next\_event\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00441\ \ \ \ SubsecondTime\ *cpiFrontEnd\ =\ NULL;}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \textcolor{keywordflow}{if}\ (frontend\_stalled\_until\ <=\ now)}
+\DoxyCodeLine{00444\ \ \ \ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ uint32\_t\ instrs\_dispatched\ =\ 0,\ uops\_dispatched\ =\ 0;}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(m\_num\_in\_rob\ <\ windowSize)}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_num\_in\_rob\ <\ rob.size(),\ \textcolor{stringliteral}{"{}Expected\ sufficient\ uops\ for\ dispatching\ in\ pre-\/ROB\ buffer,\ but\ didn't\ find\ them"{}});}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ RobEntry\ *entry\ =\ \&rob.at(m\_num\_in\_rob);}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ DynamicMicroOp\ \&uop\ =\ *entry-\/>uop;}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Dispatch\ up\ to\ 4\ instructions}}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uops\_dispatched\ ==\ dispatchWidth)}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ actually\ in\ the\ decode\ stage,\ there's\ a\ buffer\ between\ decode\ and\ dispatch}}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ we\ shouldn't\ do\ this\ here.}}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//if\ (instrs\_dispatched\ >\ 0\ \&\&\ !uop.isLast())}}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ break;}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ iCacheMiss\ =\ (uop.getICacheHitWhere()\ !=\ HitWhere::L1I);}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iCacheMiss)}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (in\_icache\_miss)}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ just\ took\ the\ latency\ for\ this\ instruction,\ now\ dispatch\ it}}
+\DoxyCodeLine{00470\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}-\/-\/\ icache\ return"{}}<<std::endl;}
+\DoxyCodeLine{00472\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ in\_icache\_miss\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00477\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}-\/-\/\ icache\ miss("{}}<<uop.getICacheLatency()<<\textcolor{stringliteral}{"{})"{}}<<std::endl;}
+\DoxyCodeLine{00479\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ frontend\_stalled\_until\ =\ now\ +\ uop.getICacheLatency();}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ in\_icache\_miss\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Don't\ dispatch\ this\ instruction\ yet}}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpiFrontEnd\ =\ \&m\_cpiInstructionCache[uop.getICacheHitWhere()];}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_rs\_entries\_used\ ==\ rsEntries)}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ cpiFrontEnd\ =\ \&m\_cpiRSFull;}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ entry-\/>dispatched\ =\ now;}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ ++m\_num\_in\_rob;}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ ++m\_rs\_entries\_used;}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ uops\_dispatched++;}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop.isLast())}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ instrs\_dispatched++;}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ uop\ is\ already\ ready,\ we\ may\ need\ to\ issue\ it\ in\ the\ following\ cycle}}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ entry-\/>ready\ =\ std::max(entry-\/>ready,\ (now\ +\ 1ul).getElapsedTime());}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ next\_event\ =\ std::min(next\_event,\ entry-\/>ready);}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}DISPATCH\ "{}}<<entry-\/>uop-\/>getMicroOp()-\/>toShortString()<<std::endl;}
+\DoxyCodeLine{00508\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(will\_skip\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Cycle\ would\ have\ been\ skipped\ but\ stuff\ happened"{}});}
+\DoxyCodeLine{00512\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mispredicted\ branch}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isBranch()\ \&\&\ uop.isBranchMispredicted())}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ frontend\_stalled\_until\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00518\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}-\/-\/\ branch\ mispredict"{}}<<std::endl;}
+\DoxyCodeLine{00520\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ cpiFrontEnd\ =\ \&m\_cpiBranchPredictor;}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \ \ \ \ \ \ m\_cpiCurrentFrontEndStall\ =\ cpiFrontEnd;}
+\DoxyCodeLine{00527\ \ \ \ \}}
+\DoxyCodeLine{00528\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00529\ \ \ \ \{}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \textcolor{comment}{//\ Front-\/end\ is\ still\ stalled:\ re-\/use\ last\ CPI\ component}}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ cpiFrontEnd\ =\ m\_cpiCurrentFrontEndStall;}
+\DoxyCodeLine{00532\ \ \ \ \}}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \ \ \ \textcolor{comment}{//\ Find\ CPI\ component\ corresponding\ to\ the\ first\ executing\ instruction}}
+\DoxyCodeLine{00536\ \ \ \ SubsecondTime\ *cpiRobHead\ =\ findCpiComponent();}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \ \textcolor{keywordflow}{if}\ (cpiFrontEnd)}
+\DoxyCodeLine{00539\ \ \ \ \{}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \textcolor{comment}{//\ Front-\/end\ is\ stalled}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cpiRobHead)}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Have\ memory/serialization\ components\ take\ precendence\ over\ front-\/end\ stalls}}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ *cpiComponent\ =\ cpiRobHead;}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ *cpiComponent\ =\ cpiFrontEnd;}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00550\ \ \ \ \}}
+\DoxyCodeLine{00551\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_num\_in\_rob\ ==\ windowSize)}
+\DoxyCodeLine{00552\ \ \ \ \{}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ *cpiComponent\ =\ cpiRobHead\ ?\ cpiRobHead\ :\ \&m\_cpiBase;}
+\DoxyCodeLine{00554\ \ \ \ \}}
+\DoxyCodeLine{00555\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00556\ \ \ \ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ *cpiComponent\ =\ \&m\_cpiBase;}
+\DoxyCodeLine{00558\ \ \ \ \}}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_in\_rob\ ==\ windowSize)}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ next\_event;\ \textcolor{comment}{//\ front-\/end\ is\ effectively\ stalled\ so\ wait\ for\ another\ event}}
+\DoxyCodeLine{00563\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::min(frontend\_stalled\_until,\ next\_event);}
+\DoxyCodeLine{00565\ \}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \textcolor{keywordtype}{void}\ RobTimer::issueInstruction(uint64\_t\ idx,\ SubsecondTime\ \&next\_event)}
+\DoxyCodeLine{00568\ \{}
+\DoxyCodeLine{00569\ \ \ \ RobEntry\ *entry\ =\ \&rob[idx];}
+\DoxyCodeLine{00570\ \ \ \ DynamicMicroOp\ \&uop\ =\ *entry-\/>uop;}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \ \textcolor{keywordflow}{if}\ ((uop.getMicroOp()-\/>isLoad()\ ||\ uop.getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \&\&\ uop.getDCacheHitWhere()\ ==\ HitWhere::UNKNOWN)}
+\DoxyCodeLine{00574\ \ \ \ \{}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ MemoryResult\ res\ =\ m\_core-\/>accessMemory(}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ Core::NONE,}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ uop.getMicroOp()-\/>isLoad()\ ?\ Core::READ\ :\ Core::WRITE,}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ uop.getAddress().address,}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ uop.getMicroOp()-\/>getMemoryAccessSize(),}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ Core::MEM\_MODELED\_RETURN,}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ uop.getMicroOp()-\/>getInstruction()\ ?\ uop.getMicroOp()-\/>getInstruction()-\/>getAddress()\ :\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(NULL),}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ now.getElapsedTime()}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ uint64\_t\ latency\ =\ SubsecondTime::divideRounded(res.latency,\ now.getPeriod());}
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00587\ \ \ \ \ \ \ uop.setExecLatency(uop.getExecLatency()\ +\ latency);\ \textcolor{comment}{//\ execlatency\ already\ contains\ bypass\ latency}}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ uop.setDCacheHitWhere(res.hit\_where);}
+\DoxyCodeLine{00589\ \ \ \ \}}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \ \ \ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00592\ \ \ \ \{}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ load\_queue.getCompletionTime(now,\ uop.getExecLatency()\ *\ now.getPeriod(),\ uop.getAddress().address);}
+\DoxyCodeLine{00594\ \ \ \ \}}
+\DoxyCodeLine{00595\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00596\ \ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ store\_queue.getCompletionTime(now,\ uop.getExecLatency()\ *\ now.getPeriod(),\ uop.getAddress().address);}
+\DoxyCodeLine{00598\ \ \ \ \}}
+\DoxyCodeLine{00599\ }
+\DoxyCodeLine{00600\ \ \ \ ComponentTime\ cycle\_depend\ =\ now\ +\ uop.getExecLatency();\ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ result\ is\ available\ for\ dependent\ instructions}}
+\DoxyCodeLine{00601\ \ \ \ SubsecondTime\ cycle\_done\ =\ cycle\_depend\ +\ 1ul;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ the\ instruction\ can\ be\ committed}}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00604\ \ \ \ \{}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ m\_loads\_count++;}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ m\_loads\_latency\ +=\ uop.getExecLatency()\ *\ now.getPeriod();}
+\DoxyCodeLine{00607\ \ \ \ \}}
+\DoxyCodeLine{00608\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00609\ \ \ \ \{}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ m\_stores\_count++;}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ m\_stores\_latency\ +=\ uop.getExecLatency()\ *\ now.getPeriod();}
+\DoxyCodeLine{00612\ \ \ \ \}}
+\DoxyCodeLine{00613\ }
+\DoxyCodeLine{00614\ \ \ \ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00615\ \ \ \ \{}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ last\_store\_done\ =\ std::max(last\_store\_done,\ cycle\_done);}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ cycle\_depend\ =\ now\ +\ 1ul;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ stores,\ forward\ the\ result\ immediately}}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \textcolor{comment}{//\ Stores\ can\ be\ removed\ from\ the\ ROB\ once\ they're\ issued\ to\ the\ memory\ hierarchy}}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \textcolor{comment}{//\ Dependent\ operations\ such\ as\ SFENCE\ and\ synchronization\ instructions\ need\ to\ wait\ until\ last\_store\_done}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ cycle\_done\ =\ now\ +\ 1ul;}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(entry-\/>addressReady\ <=\ entry-\/>ready,\ \textcolor{stringliteral}{"{}\%ld:\ Store\ address\ cannot\ be\ ready\ (\%ld)\ later\ than\ the\ whole\ uop\ is\ (\%ld)"{}},}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entry-\/>uop-\/>getSequenceNumber(),\ entry-\/>addressReady.getPS(),\ entry-\/>ready.getPS());}
+\DoxyCodeLine{00624\ \ \ \ \}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \ \textcolor{keywordflow}{if}\ (m\_rob\_contention)}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ m\_rob\_contention-\/>doIssue(uop);}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ \ entry-\/>issued\ =\ now;}
+\DoxyCodeLine{00630\ \ \ \ entry-\/>done\ =\ cycle\_done;}
+\DoxyCodeLine{00631\ \ \ \ next\_event\ =\ std::min(next\_event,\ entry-\/>done);}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00633\ \ \ \ -\/-\/m\_rs\_entries\_used;}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \textcolor{preprocessor}{\ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}ISSUE\ \ \ \ "{}}<<entry-\/>uop-\/>getMicroOp()-\/>toShortString()<<\textcolor{stringliteral}{"{}\ \ \ latency="{}}<<uop.getExecLatency()<<std::endl;}
+\DoxyCodeLine{00637\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00638\ }
+\DoxyCodeLine{00639\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ idx\ =\ 0;\ idx\ <\ entry-\/>getNumDependants();\ ++idx)}
+\DoxyCodeLine{00640\ \ \ \ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ RobEntry\ *depEntry\ =\ entry-\/>getDependant(idx);}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(depEntry-\/>uop-\/>getDependenciesLength()>\ 0,\ \textcolor{stringliteral}{"{}??"{}});}
+\DoxyCodeLine{00643\ }
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ uop\ from\ dependency\ list\ and\ update\ readyMax}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ depEntry-\/>readyMax\ =\ std::max(depEntry-\/>readyMax,\ cycle\_depend.getElapsedTime());}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ depEntry-\/>uop-\/>removeDependency(uop.getSequenceNumber());}
+\DoxyCodeLine{00647\ }
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ all\ dependencies\ are\ resolved,\ mark\ the\ uop\ ready}}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (depEntry-\/>uop-\/>getDependenciesLength()\ ==\ 0)}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \ depEntry-\/>ready\ =\ depEntry-\/>readyMax;}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}\ \ \ \ ready\ @\ "{}<<depEntry-\/>ready<<std::endl;}}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \textcolor{comment}{//\ For\ stores,\ check\ if\ their\ address\ has\ been\ produced}}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (depEntry-\/>uop-\/>getMicroOp()-\/>isStore()\ \&\&\ depEntry-\/>addressReady\ ==\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ ready\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ depEntry-\/>getNumAddressProducers();\ ++i)}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ addressProducer\ =\ depEntry-\/>getAddressProducer(i);}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ RobEntry\ *prodEntry\ =\ addressProducer\ >=\ this-\/>rob.front().uop-\/>getSequenceNumber()}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ this-\/>findEntryBySequenceNumber(addressProducer)\ :\ NULL;}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prodEntry\ ==\ entry)}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ instruction\ we\ just\ executed\ is\ producing\ an\ address.\ Update\ the\ store's\ addressReadyMax}}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ depEntry-\/>addressReadyMax\ =\ std::max(depEntry-\/>addressReadyMax,\ cycle\_depend.getElapsedTime());}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prodEntry\ \&\&\ prodEntry-\/>done\ ==\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ An\ address\ producer\ has\ not\ yet\ been\ issued:\ address\ remains\ not\ ready}}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ready\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ready)}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ did\ not\ find\ any\ address\ producing\ instructions\ that\ have\ not\ yet\ been\ issued.}}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Store\ address\ will\ be\ ready\ at\ addressReadyMax}}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ depEntry-\/>addressReady\ =\ depEntry-\/>addressReadyMax;}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00685\ \ \ \ \}}
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ \ \ \ \textcolor{comment}{//\ After\ issuing\ a\ mispredicted\ branch:\ allow\ the\ ROB\ to\ refill\ after\ flushing\ the\ pipeline}}
+\DoxyCodeLine{00688\ \ \ \ \textcolor{keywordflow}{if}\ (uop.getMicroOp()-\/>isBranch()\ \&\&\ uop.isBranchMispredicted())}
+\DoxyCodeLine{00689\ \ \ \ \{}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ frontend\_stalled\_until\ =\ now\ +\ (misprediction\_penalty\ -\/\ 2);\ \textcolor{comment}{//\ The\ frontend\ needs\ to\ start\ 2\ cycles\ earlier\ to\ get\ a\ total\ penalty\ of\ <misprediction\_penalty>}}
+\DoxyCodeLine{00691\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}-\/-\/\ branch\ resolve"{}}<<std::endl;}
+\DoxyCodeLine{00693\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00694\ \ \ \ \}}
+\DoxyCodeLine{00695\ \}}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ SubsecondTime\ RobTimer::doIssue()}
+\DoxyCodeLine{00698\ \{}
+\DoxyCodeLine{00699\ \ \ \ uint64\_t\ num\_issued\ =\ 0;}
+\DoxyCodeLine{00700\ \ \ \ SubsecondTime\ next\_event\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00701\ \ \ \ \textcolor{keywordtype}{bool}\ head\_of\_queue\ =\ \textcolor{keyword}{true},\ no\_more\_load\ =\ \textcolor{keyword}{false},\ no\_more\_store\ =\ \textcolor{keyword}{false},\ have\_unresolved\_store\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00702\ }
+\DoxyCodeLine{00703\ \ \ \ \textcolor{keywordflow}{if}\ (m\_rob\_contention)}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ m\_rob\_contention-\/>initCycle(now);}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \ \ \ \textcolor{keywordflow}{for}(uint64\_t\ i\ =\ 0;\ i\ <\ m\_num\_in\_rob;\ ++i)}
+\DoxyCodeLine{00707\ \ \ \ \{}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ RobEntry\ *entry\ =\ \&rob.at(i);}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ DynamicMicroOp\ *uop\ =\ entry-\/>uop;}
+\DoxyCodeLine{00710\ }
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>done\ !=\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \ next\_event\ =\ std::min(next\_event,\ entry-\/>done);}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ already\ done}}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \ \ \ \ \ \ next\_event\ =\ std::min(next\_event,\ entry-\/>ready);}
+\DoxyCodeLine{00719\ }
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \textcolor{comment}{//\ See\ if\ we\ can\ issue\ this\ instruction}}
+\DoxyCodeLine{00722\ }
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ canIssue\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00724\ }
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>ready\ >\ now)}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ blocked\ by\ dependency}}
+\DoxyCodeLine{00727\ }
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ ((no\_more\_load\ \&\&\ uop-\/>getMicroOp()-\/>isLoad())\ ||\ (no\_more\_store\ \&\&\ uop-\/>getMicroOp()-\/>isStore()))}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ blocked\ by\ mfence}}
+\DoxyCodeLine{00730\ }
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isSerializing())}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (head\_of\_queue\ \&\&\ last\_store\_done\ <=\ now)}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00738\ }
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (head\_of\_queue\ \&\&\ last\_store\_done\ <=\ now)}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Don't\ issue\ any\ memory\ operations\ following\ a\ memory\ barrier}}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ \ \ \ \ no\_more\_load\ =\ no\_more\_store\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ L/SFENCE}}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!m\_rob\_contention\ \&\&\ num\_issued\ ==\ dispatchWidth)}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ no\ issue\ contention:\ issue\ width\ ==\ dispatch\ width}}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isLoad()\ \&\&\ !load\_queue.hasFreeSlot(now))}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ load\ queue\ full}}
+\DoxyCodeLine{00754\ }
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isLoad()\ \&\&\ m\_no\_address\_disambiguation\ \&\&\ have\_unresolved\_store)}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ preceding\ store\ with\ unknown\ address}}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isStore()\ \&\&\ (!head\_of\_queue\ ||\ !store\_queue.hasFreeSlot(now)))}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ store\ queue\ full}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{true};\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ issue!}}
+\DoxyCodeLine{00763\ }
+\DoxyCodeLine{00764\ }
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \textcolor{comment}{//\ canIssue\ already\ marks\ issue\ ports\ as\ in\ use,\ so\ do\ this\ one\ last}}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (canIssue\ \&\&\ m\_rob\_contention\ \&\&\ !\ m\_rob\_contention-\/>tryIssue(*uop))}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \ canIssue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ blocked\ by\ structural\ hazard}}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ }
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (canIssue)}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ num\_issued++;}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \ issueInstruction(i,\ next\_event);}
+\DoxyCodeLine{00774\ }
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Calculate\ memory-\/level\ parallelism\ (MLP)\ for\ long-\/latency\ loads\ (but\ ignore\ overlapped\ misses)}}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isLoad()\ \&\&\ uop-\/>isLongLatencyLoad()\ \&\&\ uop-\/>getDCacheHitWhere()\ !=\ HitWhere::L1\_OWN)}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_lastAccountedMemoryCycle\ <\ now)\ m\_lastAccountedMemoryCycle\ =\ now;}
+\DoxyCodeLine{00779\ }
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ done\ =\ std::max(\ now.getElapsedTime(),\ entry-\/>done\ );}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ins\ will\ be\ outstanding\ for\ until\ it\ is\ done.\ By\ account\ beforehand\ I\ don't\ need\ to}}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ worry\ about\ fast-\/forwarding\ simulations}}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ \ \ \ \ m\_outstandingLongLatencyInsns\ +=\ (done\ -\/\ now);}
+\DoxyCodeLine{00784\ }
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ account\ for\ the\ cycles\ that\ have\ not\ yet\ been\ accounted\ for\ by\ other\ long}}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ latency\ misses\ (don't\ account\ cycles\ twice).}}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ done\ >\ m\_lastAccountedMemoryCycle\ )}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outstandingLongLatencyCycles\ +=\ done\ -\/\ m\_lastAccountedMemoryCycle;}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_lastAccountedMemoryCycle\ =\ done;}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\ m\_outstandingLongLatencyInsns\ >=\ m\_outstandingLongLatencyCycles,\ \textcolor{stringliteral}{"{}MLP\ calculation\ is\ wrong:\ MLP\ cannot\ be\ <\ 1!"{}}\ \ );}
+\DoxyCodeLine{00795\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ }
+\DoxyCodeLine{00799\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(will\_skip\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Cycle\ would\ have\ been\ skipped\ but\ stuff\ happened"{}});}
+\DoxyCodeLine{00801\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \ head\_of\_queue\ =\ \textcolor{keyword}{false};\ \ \ \ \ \textcolor{comment}{//\ Subsequent\ instructions\ are\ not\ at\ the\ head\ of\ the\ ROB}}
+\DoxyCodeLine{00806\ }
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isStore()\ \&\&\ entry-\/>addressReady\ >\ now)}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ have\_unresolved\_store\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00809\ }
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (inorder)}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In-\/order:\ only\ issue\ from\ head\ of\ the\ ROB}}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00814\ }
+\DoxyCodeLine{00815\ }
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_rob\_contention)}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_rob\_contention-\/>noMore())}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_issued\ ==\ dispatchWidth)}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00826\ \ \ \ \}}
+\DoxyCodeLine{00827\ }
+\DoxyCodeLine{00828\ \ \ \ \textcolor{keywordflow}{return}\ next\_event;}
+\DoxyCodeLine{00829\ \}}
+\DoxyCodeLine{00830\ }
+\DoxyCodeLine{00831\ SubsecondTime\ RobTimer::doCommit(uint64\_t\&\ instructionsExecuted)}
+\DoxyCodeLine{00832\ \{}
+\DoxyCodeLine{00833\ \ \ \ uint64\_t\ num\_committed\ =\ 0;}
+\DoxyCodeLine{00834\ }
+\DoxyCodeLine{00835\ \ \ \ \textcolor{keywordflow}{while}(rob.size()\ \&\&\ (rob.front().done\ <=\ now))}
+\DoxyCodeLine{00836\ \ \ \ \{}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ RobEntry\ *entry\ =\ \&rob.front();}
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}COMMIT\ \ \ "{}}<<entry-\/>uop-\/>getMicroOp()-\/>toShortString()<<std::endl;}
+\DoxyCodeLine{00841\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00842\ }
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ instructions\ to\ loop\ tracer,\ in-\/order,\ once\ we\ know\ their\ issue\ time}}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ InstructionTracer::uop\_times\_t\ times\ =\ \{}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ entry-\/>dispatched,}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \ entry-\/>issued,}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ entry-\/>done,}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ now}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ m\_core-\/>getPerformanceModel()-\/>traceInstruction(entry-\/>uop,\ \&times);}
+\DoxyCodeLine{00851\ }
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>uop-\/>isLast())}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \ instructionsExecuted++;}
+\DoxyCodeLine{00854\ }
+\DoxyCodeLine{00855\ \ \ \ \ \ \ entry-\/>free();}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ rob.pop();}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ m\_num\_in\_rob-\/-\/;}
+\DoxyCodeLine{00858\ }
+\DoxyCodeLine{00859\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(will\_skip\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Cycle\ would\ have\ been\ skipped\ but\ stuff\ happened"{}});}
+\DoxyCodeLine{00861\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00862\ }
+\DoxyCodeLine{00863\ \ \ \ \ \ \ ++num\_committed;}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_committed\ ==\ commitWidth)}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00866\ \ \ \ \}}
+\DoxyCodeLine{00867\ }
+\DoxyCodeLine{00868\ \ \ \ \textcolor{keywordflow}{if}\ (rob.size())}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ rob.front().done;}
+\DoxyCodeLine{00870\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00872\ \}}
+\DoxyCodeLine{00873\ }
+\DoxyCodeLine{00874\ \textcolor{keywordtype}{void}\ RobTimer::execute(uint64\_t\&\ instructionsExecuted,\ SubsecondTime\&\ latency)}
+\DoxyCodeLine{00875\ \{}
+\DoxyCodeLine{00876\ \ \ \ latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00877\ \ \ \ instructionsExecuted\ =\ 0;}
+\DoxyCodeLine{00878\ \ \ \ SubsecondTime\ *cpiComponent\ =\ NULL;}
+\DoxyCodeLine{00879\ }
+\DoxyCodeLine{00880\ \textcolor{preprocessor}{\ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ std::cout<<std::endl;}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}Running\ cycle\ "{}}<<now<<std::endl;}
+\DoxyCodeLine{00883\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00885\ }
+\DoxyCodeLine{00886\ \ \ \ \textcolor{comment}{//\ If\ frontend\ not\ stalled}}
+\DoxyCodeLine{00887\ \ \ \ \textcolor{keywordflow}{if}\ (frontend\_stalled\_until\ <=\ now)}
+\DoxyCodeLine{00888\ \ \ \ \{}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rob.size()\ <\ m\_num\_in\_rob\ +\ 2*dispatchWidth)}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ don't\ have\ enough\ instructions\ to\ dispatch\ <dispatchWidth>\ new\ ones.\ Ask\ for\ more\ before\ doing\ anything\ this\ cycle.}}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00894\ \ \ \ \}}
+\DoxyCodeLine{00895\ }
+\DoxyCodeLine{00896\ }
+\DoxyCodeLine{00897\ \ \ \ \textcolor{comment}{//\ Model\ dispatch,\ issue\ and\ commit\ stages}}
+\DoxyCodeLine{00898\ \ \ \ \textcolor{comment}{//\ Decode\ stage\ is\ not\ modeled,\ assumes\ the\ decoders\ can\ keep\ up\ with\ (up\ to)\ dispatchWidth\ uops\ per\ cycle}}
+\DoxyCodeLine{00899\ }
+\DoxyCodeLine{00900\ \ \ \ SubsecondTime\ next\_dispatch\ =\ doDispatch(\&cpiComponent);}
+\DoxyCodeLine{00901\ \ \ \ SubsecondTime\ next\_issue\ \ \ \ =\ doIssue();}
+\DoxyCodeLine{00902\ \ \ \ SubsecondTime\ next\_commit\ \ \ =\ doCommit(instructionsExecuted);}
+\DoxyCodeLine{00903\ }
+\DoxyCodeLine{00904\ }
+\DoxyCodeLine{00905\ \textcolor{preprocessor}{\ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00906\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\ will\_skip)}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00909\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \ printRob();}
+\DoxyCodeLine{00911\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00913\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00914\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00916\ }
+\DoxyCodeLine{00917\ \textcolor{preprocessor}{\ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}Next\ event:\ D("{}}<<next\_dispatch<<\textcolor{stringliteral}{"{})\ I("{}}<<next\_issue<<\textcolor{stringliteral}{"{})\ C("{}}<<next\_commit<<\textcolor{stringliteral}{"{})"{}}<<std::endl;}
+\DoxyCodeLine{00919\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00920\ \ \ \ SubsecondTime\ next\_event\ =\ std::min(next\_dispatch,\ std::min(next\_issue,\ next\_commit));}
+\DoxyCodeLine{00921\ \ \ \ SubsecondTime\ skip;}
+\DoxyCodeLine{00922\ \ \ \ \textcolor{keywordflow}{if}\ (next\_event\ !=\ SubsecondTime::MaxTime()\ \&\&\ next\_event\ >\ now\ +\ 1ul)}
+\DoxyCodeLine{00923\ \ \ \ \{}
+\DoxyCodeLine{00924\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DEBUG\_PERCYCLE}}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}++\ Skip\ "{}}<<(next\_event\ -\/\ now)<<std::endl;}
+\DoxyCodeLine{00926\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ will\_skip\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ skip\ =\ next\_event\ -\/\ now;}
+\DoxyCodeLine{00929\ \ \ \ \}}
+\DoxyCodeLine{00930\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00931\ \ \ \ \{}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ will\_skip\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ skip\ =\ now.getPeriod();}
+\DoxyCodeLine{00934\ \ \ \ \}}
+\DoxyCodeLine{00935\ }
+\DoxyCodeLine{00936\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ASSERT\_SKIP}}
+\DoxyCodeLine{00937\ \ \ \ \ \ \ now\ +=\ now.getPeriod();}
+\DoxyCodeLine{00938\ \ \ \ \ \ \ latency\ +=\ now.getPeriod();}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (will\_skip)}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \ \ \ time\_skipped\ +=\ now.getPeriod();}
+\DoxyCodeLine{00941\ \textcolor{preprocessor}{\ \ \ \#else}}
+\DoxyCodeLine{00942\ \ \ \ \ \ \ now\ +=\ skip;}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ latency\ +=\ skip;}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (skip\ >\ now.getPeriod())}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \ time\_skipped\ +=\ skip\ -\/\ now.getPeriod();}
+\DoxyCodeLine{00946\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00947\ }
+\DoxyCodeLine{00948\ \ \ \ \textcolor{keywordflow}{if}\ (m\_mlp\_histogram)}
+\DoxyCodeLine{00949\ \ \ \ \ \ \ countOutstandingMemop(skip);}
+\DoxyCodeLine{00950\ }
+\DoxyCodeLine{00951\ \ \ \ LOG\_ASSERT\_ERROR(cpiComponent\ !=\ NULL,\ \textcolor{stringliteral}{"{}We\ expected\ cpiComponent\ to\ be\ set\ by\ doDispatch,\ but\ it\ wasn't"{}});}
+\DoxyCodeLine{00952\ \ \ \ *cpiComponent\ +=\ latency;}
+\DoxyCodeLine{00953\ \}}
+\DoxyCodeLine{00954\ }
+\DoxyCodeLine{00955\ \textcolor{keywordtype}{void}\ RobTimer::countOutstandingMemop(SubsecondTime\ time)}
+\DoxyCodeLine{00956\ \{}
+\DoxyCodeLine{00957\ \ \ \ UInt64\ counts[HitWhere::NUM\_HITWHERES]\ =\ \{0\},\ total\ =\ 0;}
+\DoxyCodeLine{00958\ }
+\DoxyCodeLine{00959\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_num\_in\_rob;\ ++i)}
+\DoxyCodeLine{00960\ \ \ \ \{}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ RobEntry\ *e\ =\ \&rob.at(i);}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (e-\/>done\ !=\ SubsecondTime::MaxTime()\ \&\&\ e-\/>done\ >\ now\ \&\&\ e-\/>uop-\/>getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ \ ++counts[e-\/>uop-\/>getDCacheHitWhere()];}
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \ \ \ ++total;}
+\DoxyCodeLine{00966\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00967\ \ \ \ \}}
+\DoxyCodeLine{00968\ }
+\DoxyCodeLine{00969\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ h\ =\ 0;\ h\ <\ HitWhere::NUM\_HITWHERES;\ ++h)}
+\DoxyCodeLine{00970\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (counts[h]\ >\ 0)}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ \ m\_outstandingLoads[h][counts[h]\ >=\ MAX\_OUTSTANDING\ ?\ MAX\_OUTSTANDING-\/1\ :\ counts[h]]\ +=\ time;}
+\DoxyCodeLine{00972\ \ \ \ \textcolor{keywordflow}{if}\ (total\ >\ 0)}
+\DoxyCodeLine{00973\ \ \ \ \ \ \ m\_outstandingLoadsAll[total\ >=\ MAX\_OUTSTANDING\ ?\ MAX\_OUTSTANDING-\/1\ :\ total]\ +=\ time;}
+\DoxyCodeLine{00974\ \}}
+\DoxyCodeLine{00975\ }
+\DoxyCodeLine{00976\ \textcolor{keywordtype}{void}\ RobTimer::printRob()}
+\DoxyCodeLine{00977\ \{}
+\DoxyCodeLine{00978\ \ \ \ std::cout<<\textcolor{stringliteral}{"{}**\ ROB\ state\ @\ "{}}<<now<<\textcolor{stringliteral}{"{}\ \ size("{}}<<m\_num\_in\_rob<<\textcolor{stringliteral}{"{})\ total("{}}<<rob.size()<<\textcolor{stringliteral}{"{})"{}}<<std::endl;}
+\DoxyCodeLine{00979\ \ \ \ \textcolor{keywordflow}{if}\ (frontend\_stalled\_until\ >\ now)}
+\DoxyCodeLine{00980\ \ \ \ \{}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}\ \ \ Front-\/end\ stalled"{}};}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (frontend\_stalled\_until\ !=\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00983\ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ until\ "{}}\ <<\ frontend\_stalled\_until;}
+\DoxyCodeLine{00984\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (in\_icache\_miss)}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{},\ in\ I-\/cache\ miss"{}};}
+\DoxyCodeLine{00986\ \ \ \ \ \ \ std::cout<<std::endl;}
+\DoxyCodeLine{00987\ \ \ \ \}}
+\DoxyCodeLine{00988\ \ \ \ std::cout<<\textcolor{stringliteral}{"{}\ \ \ RS\ entries:\ "{}}<<m\_rs\_entries\_used<<std::endl;}
+\DoxyCodeLine{00989\ \ \ \ std::cout<<\textcolor{stringliteral}{"{}\ \ \ Outstanding\ loads:\ "{}}<<load\_queue.getNumUsed(now)<<\textcolor{stringliteral}{"{}\ \ stores:\ "{}}<<store\_queue.getNumUsed(now)<<std::endl;}
+\DoxyCodeLine{00990\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ rob.size();\ ++i)}
+\DoxyCodeLine{00991\ \ \ \ \{}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}\ \ \ ["{}}<<std::setw(3)<<i<<\textcolor{stringliteral}{"{}]\ \ "{}};}
+\DoxyCodeLine{00993\ \ \ \ \ \ \ RobEntry\ *e\ =\ \&rob.at(i);}
+\DoxyCodeLine{00994\ }
+\DoxyCodeLine{00995\ \ \ \ \ \ \ std::ostringstream\ state;}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ >=\ m\_num\_in\_rob)\ state<<\textcolor{stringliteral}{"{}PREROB\ "{}};}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (e-\/>done\ !=\ SubsecondTime::MaxTime())\ state<<\textcolor{stringliteral}{"{}DONE@+"{}}<<(e-\/>done-\/now)<<\textcolor{stringliteral}{"{}\ \ "{}};}
+\DoxyCodeLine{00998\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (e-\/>ready\ !=\ SubsecondTime::MaxTime())\ state<<\textcolor{stringliteral}{"{}READY@+"{}}<<(e-\/>ready-\/now)<<\textcolor{stringliteral}{"{}\ \ "{}};}
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ \ \ \ state<<\textcolor{stringliteral}{"{}DEPS\ "{}};}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ j\ =\ 0;\ j\ <\ e-\/>uop-\/>getDependenciesLength();\ j++)}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \ \ \ \ state\ <<\ std::dec\ <<\ e-\/>uop-\/>getDependency(j)\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01005\ \ \ \ \ \ \ std::cout<<std::left<<std::setw(20)<<state.str()<<\textcolor{stringliteral}{"{}\ \ \ "{}};}
+\DoxyCodeLine{01006\ \ \ \ \ \ \ std::cout<<std::right<<std::setw(10)<<e-\/>uop-\/>getSequenceNumber()<<\textcolor{stringliteral}{"{}\ \ "{}};}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (e-\/>uop-\/>getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}LOAD\ \ \ \ \ \ "{}};}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (e-\/>uop-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}STORE\ \ \ \ \ "{}};}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}EXEC\ ("{}}<<std::right<<std::setw(2)<<e-\/>uop-\/>getExecLatency()<<\textcolor{stringliteral}{"{})\ "{}};}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (e-\/>uop-\/>getMicroOp()-\/>getInstruction())}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01015\ \ \ \ \ \ \ \ \ \ std::cout<<std::hex<<e-\/>uop-\/>getMicroOp()-\/>getInstruction()-\/>getAddress()<<std::dec<<\textcolor{stringliteral}{"{}:\ "{}}}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<e-\/>uop-\/>getMicroOp()-\/>getInstruction()-\/>getDisassembly();}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (e-\/>uop-\/>getMicroOp()-\/>isLoad()\ ||\ e-\/>uop-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{01018\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}\ \ \{0x"{}}<<std::hex<<e-\/>uop-\/>getAddress().address<<std::dec<<\textcolor{stringliteral}{"{}\}"{}};}
+\DoxyCodeLine{01019\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01020\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}(dynamic)"{}};}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ std::cout<<std::endl;}
+\DoxyCodeLine{01023\ \ \ \ \}}
+\DoxyCodeLine{01024\ \}}
+
+\end{DoxyCode}

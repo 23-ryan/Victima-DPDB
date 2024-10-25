@@ -1,0 +1,259 @@
+\doxysection{config.\+cc}
+\label{config_8cc_source}\index{common/misc/config.cc@{common/misc/config.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}network\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}packet\_type.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ DEBUG}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ String\ Config::m\_knob\_output\_directory;}
+\DoxyCodeLine{00015\ UInt32\ Config::m\_knob\_total\_cores;}
+\DoxyCodeLine{00016\ UInt32\ Config::m\_knob\_num\_host\_cores;}
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_smc\_support;}
+\DoxyCodeLine{00018\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_issue\_memops\_at\_functional;}
+\DoxyCodeLine{00019\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_icache\_modeling;}
+\DoxyCodeLine{00020\ Config::SimulationROI\ Config::m\_knob\_roi;}
+\DoxyCodeLine{00021\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_progress\_trace;}
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_sync;}
+\DoxyCodeLine{00023\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_sync\_report;}
+\DoxyCodeLine{00024\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_osemu\_pthread\_replace;}
+\DoxyCodeLine{00025\ UInt32\ Config::m\_knob\_osemu\_nprocs;}
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_osemu\_clock\_replace;}
+\DoxyCodeLine{00027\ time\_t\ Config::m\_knob\_osemu\_time\_start;}
+\DoxyCodeLine{00028\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_bbvs;}
+\DoxyCodeLine{00029\ ClockSkewMinimizationObject::Scheme\ Config::m\_knob\_clock\_skew\_minimization\_scheme;}
+\DoxyCodeLine{00030\ UInt64\ Config::m\_knob\_hpi\_percore;}
+\DoxyCodeLine{00031\ UInt64\ Config::m\_knob\_hpi\_global;}
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_spinloopdetection;}
+\DoxyCodeLine{00033\ CacheEfficiencyTracker::Callbacks\ Config::m\_cache\_efficiency\_callbacks;}
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{bool}\ Config::m\_suppress\_stdout;}
+\DoxyCodeLine{00035\ \textcolor{keywordtype}{bool}\ Config::m\_suppress\_stderr;}
+\DoxyCodeLine{00036\ \textcolor{keywordtype}{bool}\ Config::m\_circular\_log\_enabled;}
+\DoxyCodeLine{00037\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_pinplay;}
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{bool}\ Config::m\_knob\_enable\_syscall\_emulation;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ Config\ *Config::m\_singleton;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ Config\ *Config::getSingleton()}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ assert(m\_singleton\ !=\ NULL);}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{return}\ m\_singleton;}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ Don't\ call\ LOG\_*\ inside\ Config::Config,\ as\ the\ logging\ infrastructure\ isn't\ set\ up\ yet\ at\ this\ point}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#undef\ LOG\_PRINT\_ERROR}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#undef\ LOG\_ASSERT\_ERROR}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ Config::Config(SimulationMode\ mode)}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{comment}{//\ NOTE:\ We\ can\ NOT\ use\ logging\ in\ the\ config\ constructor!\ The\ log}}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{comment}{//\ has\ not\ been\ instantiated\ at\ this\ point!}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ m\_knob\_output\_directory\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}general/output\_dir"{}});}
+\DoxyCodeLine{00058\ \ \ \ m\_knob\_total\_cores\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}general/total\_cores"{}});}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ m\_knob\_num\_host\_cores\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}general/num\_host\_cores"{}});}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{if}\ (m\_knob\_num\_host\_cores\ ==\ 0)}
+\DoxyCodeLine{00062\ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//\ Count\ how\ many\ cores\ we\ are\ allowed\ to\ run\ on}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ cpu\_set\_t\ mask;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ res\ =\ sched\_getaffinity(0,\ \textcolor{keyword}{sizeof}(mask),\ \&mask);}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (res\ ==\ 0)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ cpu\ =\ 0;\ cpu\ <\ \_SC\_NPROCESSORS\_ONLN;\ ++cpu)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (CPU\_ISSET(cpu,\ \&mask))}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_knob\_num\_host\_cores;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ m\_knob\_num\_host\_cores\ =\ sysconf(\_SC\_NPROCESSORS\_ONLN);}
+\DoxyCodeLine{00074\ \ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ m\_knob\_enable\_smc\_support\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/enable\_smc\_support"{}});}
+\DoxyCodeLine{00077\ \ \ \ m\_knob\_enable\_icache\_modeling\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/enable\_icache\_modeling"{}});}
+\DoxyCodeLine{00078\ \ \ \ m\_knob\_issue\_memops\_at\_functional\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/issue\_memops\_at\_functional"{}});}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/roi\_script"{}}))}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ m\_knob\_roi\ =\ ROI\_SCRIPT;}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/magic"{}}))}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ m\_knob\_roi\ =\ ROI\_MAGIC;}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ m\_knob\_roi\ =\ ROI\_FULL;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ m\_knob\_enable\_progress\_trace\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}progress\_trace/enabled"{}});}
+\DoxyCodeLine{00088\ \ \ \ m\_knob\_enable\_sync\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}clock\_skew\_minimization/scheme"{}})\ !=\ \textcolor{stringliteral}{"{}none"{}};}
+\DoxyCodeLine{00089\ \ \ \ m\_knob\_enable\_sync\_report\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}clock\_skew\_minimization/report"{}});}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ m\_simulation\_mode\ =\ mode;}
+\DoxyCodeLine{00092\ \ \ \ m\_knob\_bbvs\ =\ \textcolor{keyword}{false};\ \textcolor{comment}{//\ No\ config\ setting\ here,\ but\ enabled\ by\ code\ (BBVSamplingProvider,\ [py|lua]\_bbv)\ that\ needs\ it}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \textcolor{comment}{//\ OS\ Emulation\ flags}}
+\DoxyCodeLine{00095\ \ \ \ m\_knob\_osemu\_pthread\_replace\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}osemu/pthread\_replace"{}});}
+\DoxyCodeLine{00096\ \ \ \ m\_knob\_osemu\_nprocs\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}osemu/nprocs"{}});}
+\DoxyCodeLine{00097\ \ \ \ m\_knob\_osemu\_clock\_replace\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}osemu/clock\_replace"{}});}
+\DoxyCodeLine{00098\ \ \ \ m\_knob\_osemu\_time\_start\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}osemu/time\_start"{}});}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \textcolor{comment}{//\ HOOK\_PERIODIC\_INS}}
+\DoxyCodeLine{00101\ \ \ \ m\_knob\_hpi\_percore\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}core/hook\_periodic\_ins/ins\_per\_core"{}});}
+\DoxyCodeLine{00102\ \ \ \ m\_knob\_hpi\_global\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}core/hook\_periodic\_ins/ins\_global"{}});}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ m\_knob\_enable\_spinloopdetection\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}core/spin\_loop\_detection"{}});}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ m\_suppress\_stdout\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/suppress\_stdout"{}});}
+\DoxyCodeLine{00107\ \ \ \ m\_suppress\_stderr\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/suppress\_stderr"{}});}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ m\_circular\_log\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}log/circular\_log"{}});}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ m\_knob\_enable\_pinplay\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/enable\_pinplay"{}});}
+\DoxyCodeLine{00112\ \ \ \ m\_knob\_enable\_syscall\_emulation\ =\ !m\_knob\_enable\_pinplay\ \&\&\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}general/enable\_syscall\_emulation"{}});}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ m\_knob\_clock\_skew\_minimization\_scheme\ =\ ClockSkewMinimizationObject::parseScheme(Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}clock\_skew\_minimization/scheme"{}}));}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ m\_total\_cores\ =\ m\_knob\_total\_cores;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ m\_singleton\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ assert(m\_total\_cores\ >\ 0);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \textcolor{comment}{//No,\ be\ sure\ to\ configure\ a\ valid\ NumApplicationCores\ count}}
+\DoxyCodeLine{00126\ \ \ \ \textcolor{comment}{//m\_total\_cores\ =\ getNearestAcceptableCoreCount(m\_total\_cores);}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ m\_core\_id\_length\ =\ computeCoreIDLength(m\_total\_cores);}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ Config::\string~Config()}
+\DoxyCodeLine{00132\ \{}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ UInt32\ Config::getTotalCores()}
+\DoxyCodeLine{00136\ \{}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keywordflow}{return}\ m\_total\_cores;}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ UInt32\ Config::getApplicationCores()}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keywordflow}{return}\ getTotalCores();}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ UInt32\ Config::computeCoreIDLength(UInt32\ core\_count)}
+\DoxyCodeLine{00146\ \{}
+\DoxyCodeLine{00147\ \ \ \ UInt32\ num\_bits\ =\ ceilLog2(core\_count);}
+\DoxyCodeLine{00148\ \ \ \ \textcolor{keywordflow}{if}\ ((num\_bits\ \%\ 8)\ ==\ 0)}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (num\_bits\ /\ 8);}
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (num\_bits\ /\ 8)\ +\ 1;}
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ Parse\ XML\ config\ file\ and\ use\ it\ to\ fill\ in\ config\ state.\ \ Only\ modifies}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ fields\ specified\ in\ the\ config\ file.\ \ Therefore,\ this\ method\ can\ be\ used}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ to\ override\ only\ the\ specific\ options\ given\ in\ the\ file.}}
+\DoxyCodeLine{00157\ \textcolor{keywordtype}{void}\ Config::loadFromFile(\textcolor{keywordtype}{char}*\ filename)}
+\DoxyCodeLine{00158\ \{}
+\DoxyCodeLine{00159\ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00160\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{comment}{//\ Fill\ in\ config\ state\ from\ command-\/line\ arguments.\ \ Only\ modifies\ fields}}
+\DoxyCodeLine{00163\ \textcolor{comment}{//\ specified\ on\ the\ command\ line.\ \ Therefore,\ this\ method\ can\ be\ used\ to}}
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ override\ only\ the\ specific\ options\ given.}}
+\DoxyCodeLine{00165\ \textcolor{keywordtype}{void}\ Config::loadFromCmdLine()}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ String\ Config::getOutputDirectory()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00171\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00172\ \ \ \ \textcolor{keywordflow}{return}\ m\_knob\_output\_directory;}
+\DoxyCodeLine{00173\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ String\ Config::formatOutputFileName(String\ filename)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00176\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00177\ \ \ \ \textcolor{keywordflow}{return}\ m\_knob\_output\_directory\ +\ \textcolor{stringliteral}{"{}/"{}}\ +\ filename;}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{keywordtype}{void}\ Config::updateCommToCoreMap(UInt32\ comm\_id,\ core\_id\_t\ core\_id)}
+\DoxyCodeLine{00181\ \{}
+\DoxyCodeLine{00182\ \ \ \ m\_comm\_to\_core\_map[comm\_id]\ =\ core\_id;}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ UInt32\ Config::getCoreFromCommId(UInt32\ comm\_id)}
+\DoxyCodeLine{00186\ \{}
+\DoxyCodeLine{00187\ \ \ \ CommToCoreMap::iterator\ it\ =\ m\_comm\_to\_core\_map.find(comm\_id);}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keywordflow}{return}\ it\ ==\ m\_comm\_to\_core\_map.end()\ ?\ INVALID\_CORE\_ID\ :\ it-\/>second;}
+\DoxyCodeLine{00189\ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{keywordtype}{void}\ Config::getNetworkModels(UInt32\ *models)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00192\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00194\ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ config::Config\ *cfg\ =\ Sim()-\/>getCfg();}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ models[STATIC\_NETWORK\_MEMORY\_1]\ =\ NetworkModel::parseNetworkType(cfg-\/>getString(\textcolor{stringliteral}{"{}network/memory\_model\_1"{}}));}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ models[STATIC\_NETWORK\_SYSTEM]\ =\ NetworkModel::parseNetworkType(cfg-\/>getString(\textcolor{stringliteral}{"{}network/system\_model"{}}));}
+\DoxyCodeLine{00198\ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00200\ \ \ \ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Exception\ while\ reading\ network\ model\ types."{}});}
+\DoxyCodeLine{00202\ \ \ \ \}}
+\DoxyCodeLine{00203\ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ UInt32\ Config::getNearestAcceptableCoreCount(UInt32\ core\_count)}
+\DoxyCodeLine{00206\ \{}
+\DoxyCodeLine{00207\ \ \ \ UInt32\ nearest\_acceptable\_core\_count\ =\ 0;}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ UInt32\ l\_models[NUM\_STATIC\_NETWORKS];}
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00211\ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ config::Config\ *cfg\ =\ Sim()-\/>getCfg();}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ l\_models[STATIC\_NETWORK\_MEMORY\_1]\ =\ NetworkModel::parseNetworkType(cfg-\/>getString(\textcolor{stringliteral}{"{}network/memory\_model\_1"{}}));}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ l\_models[STATIC\_NETWORK\_SYSTEM]\ =\ NetworkModel::parseNetworkType(cfg-\/>getString(\textcolor{stringliteral}{"{}network/system\_model"{}}));}
+\DoxyCodeLine{00215\ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00217\ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Exception\ while\ reading\ network\ model\ types."{}});}
+\DoxyCodeLine{00219\ \ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ NUM\_STATIC\_NETWORKS;\ i++)}
+\DoxyCodeLine{00222\ \ \ \ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ std::pair<bool,SInt32>\ core\_count\_constraints\ =\ NetworkModel::computeCoreCountConstraints(l\_models[i],\ (SInt32)\ core\_count);}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (core\_count\_constraints.first)}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Network\ Model\ has\ core\ count\ constraints}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((nearest\_acceptable\_core\_count\ !=\ 0)\ \&\&}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ (core\_count\_constraints.second\ !=\ (SInt32)\ nearest\_acceptable\_core\_count))}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Problem\ using\ the\ network\ models\ specified\ in\ the\ configuration\ file."{}});}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ nearest\_acceptable\_core\_count\ =\ core\_count\_constraints.second;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \textcolor{keywordflow}{if}\ (nearest\_acceptable\_core\_count\ ==\ 0)}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ nearest\_acceptable\_core\_count\ =\ core\_count;}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \textcolor{keywordflow}{return}\ nearest\_acceptable\_core\_count;}
+\DoxyCodeLine{00243\ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{keywordtype}{void}\ Config::setCacheEfficiencyCallbacks(CacheEfficiencyTracker::CallbackGetOwner\ get\_owner\_func,\ CacheEfficiencyTracker::CallbackNotifyAccess\ notify\_access\_func,\ CacheEfficiencyTracker::CallbackNotifyEvict\ notify\_evict\_func,\ UInt64\ user\_arg)}
+\DoxyCodeLine{00246\ \{}
+\DoxyCodeLine{00247\ \ \ \ \textcolor{keywordflow}{if}\ (m\_cache\_efficiency\_callbacks.notify\_evict\_func\ !=\ NULL)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Cannot\ register\ more\ than\ one\ CacheEfficiencyTracker\ user"{}});}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ m\_cache\_efficiency\_callbacks.get\_owner\_func\ =\ get\_owner\_func;}
+\DoxyCodeLine{00251\ \ \ \ m\_cache\_efficiency\_callbacks.notify\_access\_func\ =\ notify\_access\_func;}
+\DoxyCodeLine{00252\ \ \ \ m\_cache\_efficiency\_callbacks.notify\_evict\_func\ =\ notify\_evict\_func;}
+\DoxyCodeLine{00253\ \ \ \ m\_cache\_efficiency\_callbacks.user\_arg\ =\ user\_arg;}
+\DoxyCodeLine{00254\ \}}
+
+\end{DoxyCode}

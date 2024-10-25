@@ -1,0 +1,42 @@
+\doxysection{pthread\+\_\+lock.\+cc}
+\label{pthread__lock_8cc_source}\index{common/misc/pthread\_lock.cc@{common/misc/pthread\_lock.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pthread\_lock.h"{}}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ PthreadLock::PthreadLock()}
+\DoxyCodeLine{00004\ \{}
+\DoxyCodeLine{00005\ \ \ \ pthread\_mutex\_init(\&\_mutx,\ NULL);}
+\DoxyCodeLine{00006\ \}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ PthreadLock::\string~PthreadLock()}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ pthread\_mutex\_destroy(\&\_mutx);}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keywordtype}{void}\ PthreadLock::acquire()}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ pthread\_mutex\_lock(\&\_mutx);}
+\DoxyCodeLine{00016\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keywordtype}{void}\ PthreadLock::release()}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ pthread\_mutex\_unlock(\&\_mutx);}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \_\_attribute\_\_((weak))\ LockImplementation*\ LockCreator\_Default::create()}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ PthreadLock();}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \_\_attribute\_\_((weak))\ LockImplementation*\ LockCreator\_RwLock::create()}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ PthreadLock();}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \_\_attribute\_\_((weak))\ LockImplementation*\ LockCreator\_Spinlock::create()}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ PthreadLock();}
+\DoxyCodeLine{00036\ \}}
+
+\end{DoxyCode}

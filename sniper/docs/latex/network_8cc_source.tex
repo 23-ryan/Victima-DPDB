@@ -1,0 +1,548 @@
+\doxysection{network.\+cc}
+\label{network_8cc_source}\index{common/network/network.cc@{common/network/network.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}transport.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ FIXME:\ Rework\ netCreateBuf\ and\ netExPacket.\ We\ don't\ need\ to}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ duplicate\ the\ sender/receiver\ info\ the\ packet.\ This\ should\ be\ known}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ by\ the\ transport\ layer\ and\ given\ to\ us.\ We\ also\ should\ be\ more}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ intelligent\ about\ the\ time\ stamps,\ right\ now\ the\ method\ is\ very}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ ugly.}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ Network::Network(Core\ *core)}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ :\ \_core(core)}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{sizeof}(g\_type\_to\_static\_network\_map)\ /\ \textcolor{keyword}{sizeof}(EStaticNetwork)\ ==\ NUM\_PACKET\_TYPES,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Static\ network\ type\ map\ has\ incorrect\ number\ of\ entries."{}});}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \_numMod\ =\ Config::getSingleton()-\/>getTotalCores();}
+\DoxyCodeLine{00027\ \ \ \ \_tid\ =\ \_core-\/>getId();}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \_transport\ =\ Transport::getSingleton()-\/>createNode(\_core-\/>getId());}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \_callbacks\ =\ \textcolor{keyword}{new}\ NetworkCallback\ [NUM\_PACKET\_TYPES];}
+\DoxyCodeLine{00032\ \ \ \ \_callbackObjs\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{void}*\ [NUM\_PACKET\_TYPES];}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ NUM\_PACKET\_TYPES;\ i++)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \_callbacks[i]\ =\ NULL;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ UInt32\ modelTypes[NUM\_STATIC\_NETWORKS];}
+\DoxyCodeLine{00037\ \ \ \ Config::getSingleton()-\/>getNetworkModels(modelTypes);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ NUM\_STATIC\_NETWORKS;\ i++)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \_models[i]\ =\ NetworkModel::createModel(\textcolor{keyword}{this},\ modelTypes[i],\ (EStaticNetwork)i);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Initialized."{}});}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ Network::\string~Network()}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ NUM\_STATIC\_NETWORKS;\ i++)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ \_models[i];}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keyword}{delete}\ []\ \_callbackObjs;}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keyword}{delete}\ []\ \_callbacks;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keyword}{delete}\ \_transport;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Destroyed."{}});}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{void}\ Network::registerCallback(PacketType\ type,\ NetworkCallback\ callback,\ \textcolor{keywordtype}{void}\ *obj)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ assert((UInt32)type\ <\ NUM\_PACKET\_TYPES);}
+\DoxyCodeLine{00061\ \ \ \ \_callbacks[type]\ =\ callback;}
+\DoxyCodeLine{00062\ \ \ \ \_callbackObjs[type]\ =\ obj;}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}\ Network::unregisterCallback(PacketType\ type)}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \ \ \ assert((UInt32)type\ <\ NUM\_PACKET\_TYPES);}
+\DoxyCodeLine{00068\ \ \ \ \_callbacks[type]\ =\ NULL;}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ Polling\ function\ that\ performs\ background\ activities,\ such\ as}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ pulling\ from\ the\ physical\ transport\ layer\ and\ routing\ packets\ to}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ the\ appropriate\ queues.}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keywordtype}{void}\ Network::netPullFromTransport()}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{do}}
+\DoxyCodeLine{00078\ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Entering\ netPullFromTransport"{}});}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ NetPacket\ packet(\_transport-\/>recv());}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Pull\ packet\ :\ type\ \%i,\ from\ \%i,\ time\ \%s"{}},\ (SInt32)packet.type,\ packet.sender,\ itostr(packet.time).c\_str());}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ assert(0\ <=\ packet.sender\ \&\&\ packet.sender\ <\ \_numMod);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(0\ <=\ packet.type\ \&\&\ packet.type\ <\ NUM\_PACKET\_TYPES,\ \textcolor{stringliteral}{"{}Packet\ type:\ \%d\ not\ between\ 0\ and\ \%d"{}},\ packet.type,\ NUM\_PACKET\_TYPES);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{comment}{//\ was\ this\ packet\ sent\ to\ us,\ or\ should\ it\ just\ be\ forwarded?}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (packet.receiver\ !=\ \_core-\/>getId())}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Disable\ this\ feature\ now.\ None\ of\ the\ network\ models\ use\ it}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Forwarding\ packet\ :\ type\ \%i,\ from\ \%i,\ to\ \%i,\ core\_id\ \%i,\ time\ \%s."{}},}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (SInt32)packet.type,\ packet.sender,\ packet.receiver,\ \_core-\/>getId(),\ itostr(packet.time).c\_str());}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ forwardPacket(packet);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ this\ isn't\ a\ broadcast\ message,\ then\ we\ shouldn't\ process\ it\ further}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (packet.receiver\ !=\ NetPacket::BROADCAST)}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (packet.length\ >\ 0)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ (Byte*)\ packet.data;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{comment}{//\ I\ have\ received\ the\ packet}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ NetworkModel\ *model\ =\ \_models[g\_type\_to\_static\_network\_map[packet.type]];}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ model-\/>processReceivedPacket(packet);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{comment}{//\ asynchronous\ I/O\ support}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ NetworkCallback\ callback\ =\ \_callbacks[packet.type];}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (callback\ !=\ NULL)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Executing\ callback\ on\ packet\ :\ type\ \%i,\ from\ \%i,\ to\ \%i,\ core\_id\ \%i,\ time\ \%s"{}},}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (SInt32)packet.type,\ packet.sender,\ packet.receiver,\ \_core-\/>getId(),\ itostr(packet.time).c\_str());}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ assert(0\ <=\ packet.sender\ \&\&\ packet.sender\ <\ \_numMod);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ assert(0\ <=\ packet.type\ \&\&\ packet.type\ <\ NUM\_PACKET\_TYPES);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ callback(\_callbackObjs[packet.type],\ packet);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (packet.length\ >\ 0)}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ (Byte*)\ packet.data;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{comment}{//\ synchronous\ I/O\ support}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Enqueuing\ packet\ :\ type\ \%i,\ from\ \%i,\ to\ \%i,\ core\_id\ \%i,\ time\ \%s."{}},}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (SInt32)packet.type,\ packet.sender,\ packet.receiver,\ \_core-\/>getId(),\ itostr(packet.time).c\_str());}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \_netQueueLock.acquire();}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \_netQueue.push\_back(packet);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \_netQueueLock.release();}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \_netQueueCond.broadcast();}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{while}\ (\_transport-\/>query());}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ FIXME:\ Can\ forwardPacket\ be\ subsumed\ by\ netSend?}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{void}\ Network::forwardPacket(NetPacket\&\ packet)}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \ netSend(packet);}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ NetworkModel*\ Network::getNetworkModelFromPacketType(PacketType\ packet\_type)}
+\DoxyCodeLine{00146\ \{}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keywordflow}{return}\ \_models[g\_type\_to\_static\_network\_map[packet\_type]];}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ SInt32\ Network::netSend(NetPacket\&\ packet)}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ \ assert(packet.type\ >=\ 0\ \&\&\ packet.type\ <\ NUM\_PACKET\_TYPES);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ NetworkModel\ *model\ =\ \_models[g\_type\_to\_static\_network\_map[packet.type]];}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ model-\/>countPacket(packet);}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ std::vector<NetworkModel::Hop>\ hopVec;}
+\DoxyCodeLine{00159\ \ \ \ model-\/>routePacket(packet,\ hopVec);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ Byte\ *buffer\ =\ packet.makeBuffer();}
+\DoxyCodeLine{00162\ \ \ \ SubsecondTime\ start\_time\ =\ packet.time;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ hopVec.size();\ i++)}
+\DoxyCodeLine{00165\ \ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Send\ packet\ :\ type\ \%i,\ from\ \%i,\ to\ \%i,\ next\_hop\ \%i,\ core\_id\ \%i,\ time\ \%s"{}},}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ (SInt32)\ packet.type,\ packet.sender,\ hopVec[i].final\_dest,\ hopVec[i].next\_dest,\ \_core-\/>getId(),\ itostr(hopVec[i].time).c\_str());}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \textcolor{comment}{//\ LOG\_ASSERT\_ERROR(hopVec[i].time\ >=\ packet.time,\ "{}hopVec[\%d].time(\%llu)\ <\ packet.time(\%llu)"{},\ i,\ hopVec[i].time,\ packet.time);}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ a\ shortcut\ here}}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hopVec[i].final\_dest\ !=\ NetPacket::BROADCAST)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1)\ Process\ Count\ =\ 1}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 2)\ The\ broadcast\ tree\ network\ model\ is\ not\ used}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (hopVec[i].next\_dest\ !=\ hopVec[i].final\_dest)}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ packet.time\ =\ hopVec[i].time;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ packet.receiver\ =\ hopVec[i].final\_dest;}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ Core*\ remote\_core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(hopVec[i].next\_dest);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ NetworkModel*\ remote\_network\_model\ =\ remote\_core-\/>getNetwork()-\/>getNetworkModelFromPacketType(packet.type);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<NetworkModel::Hop>\ localHopVec;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ remote\_network\_model-\/>routePacket(packet,\ localHopVec);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ assert(localHopVec.size()\ ==\ 1);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ hopVec[i]\ =\ localHopVec[0];}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ NetPacket*\ buff\_pkt\ =\ (NetPacket*)\ buffer;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_core-\/>getId()\ ==\ buff\_pkt-\/>sender)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ buff\_pkt-\/>start\_time\ =\ start\_time;}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ buff\_pkt-\/>time\ =\ hopVec[i].time;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ buff\_pkt-\/>receiver\ =\ hopVec[i].final\_dest;}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \_transport-\/>send(hopVec[i].next\_dest,\ buffer,\ packet.bufferSize());}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Sent\ packet"{}});}
+\DoxyCodeLine{00202\ \ \ \ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keyword}{delete}\ []\ buffer;}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \textcolor{keywordflow}{return}\ packet.length;}
+\DoxyCodeLine{00207\ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{comment}{//\ Stupid\ helper\ class\ to\ eliminate\ special\ cases\ for\ empty}}
+\DoxyCodeLine{00210\ \textcolor{comment}{//\ sender/type\ vectors\ in\ a\ NetMatch}}
+\DoxyCodeLine{00211\ \textcolor{keyword}{class\ }NetRecvIterator}
+\DoxyCodeLine{00212\ \{}
+\DoxyCodeLine{00213\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ NetRecvIterator(UInt32\ i)}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \_mode(INT)}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \_max(i)}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \_i(0)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ NetRecvIterator(\textcolor{keyword}{const}\ std::vector<SInt32>\ \&v)}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \_mode(SENDER\_VECTOR)}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \_senders(\&v)}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \_i(0)}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ NetRecvIterator(\textcolor{keyword}{const}\ std::vector<PacketType>\ \&v)}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \_mode(TYPE\_VECTOR)}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \_types(\&v)}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \_i(0)}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{keyword}{inline}\ UInt32\ get()}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\_mode)}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ INT:}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \_i;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SENDER\_VECTOR:}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt32)\_senders-\/>at(\_i);}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ TYPE\_VECTOR:}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt32)\_types-\/>at(\_i);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt32)-\/1;}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \textcolor{keyword}{inline}\ Boolean\ done()}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\_mode)}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ INT:}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \_i\ >=\ \_max;}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SENDER\_VECTOR:}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \_i\ >=\ \_senders-\/>size();}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ TYPE\_VECTOR:}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \_i\ >=\ \_types-\/>size();}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ next()}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ ++\_i;}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ reset()}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \_i\ =\ 0;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ INT,\ SENDER\_VECTOR,\ TYPE\_VECTOR}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \}\ \_mode;}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ UInt32\ \_max;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<SInt32>\ *\_senders;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<PacketType>\ *\_types;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \ \ UInt32\ \_i;}
+\DoxyCodeLine{00289\ \};}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ NetPacket\ Network::netRecv(\textcolor{keyword}{const}\ NetMatch\ \&match,\ UInt64\ timeout\_ns)}
+\DoxyCodeLine{00292\ \{}
+\DoxyCodeLine{00293\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Entering\ netRecv."{}});}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \textcolor{comment}{//\ Track\ via\ iterator\ to\ minimize\ copying}}
+\DoxyCodeLine{00296\ \ \ \ NetQueue::iterator\ itr;}
+\DoxyCodeLine{00297\ \ \ \ Boolean\ found\ =\ \textcolor{keyword}{false},\ retry\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ NetRecvIterator\ sender\ =\ match.senders.empty()}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ NetRecvIterator(\_numMod)}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ NetRecvIterator(match.senders);}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ NetRecvIterator\ type\ =\ match.types.empty()}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ NetRecvIterator((UInt32)NUM\_PACKET\_TYPES)}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ NetRecvIterator(match.types);}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ LOG\_ASSERT\_ERROR(\_core\ \&\&\ \_core-\/>getPerformanceModel(),}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Core\ and/or\ performance\ model\ not\ initialized."{}});}
+\DoxyCodeLine{00309\ \ \ \ SubsecondTime\ start\_time\ =\ \_core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \_netQueueLock.acquire();}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \textcolor{keywordflow}{while}\ (!found)}
+\DoxyCodeLine{00314\ \ \ \ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ itr\ =\ \_netQueue.end();}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \textcolor{comment}{//\ check\ every\ entry\ in\ the\ queue}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (NetQueue::iterator\ i\ =\ \_netQueue.begin();}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ i\ !=\ \_netQueue.end();}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ i++)}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ find\ packets\ that\ match}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (sender.reset();\ !sender.done();\ sender.next())}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i-\/>sender\ !=\ (SInt32)sender.get())}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (type.reset();\ !type.done();\ type.next())}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i-\/>type\ !=\ (PacketType)type.get())}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ found\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ find\ the\ earliest\ packet}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (itr\ ==\ \_netQueue.end()\ ||}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ itr-\/>time\ >\ i-\/>time)}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ itr\ =\ i;}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!found)}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (retry)}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ go\ to\ sleep\ until\ a\ packet\ arrives\ if\ none\ have\ been\ found}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \_netQueueCond.wait(\_netQueueLock,\ timeout\_ns);}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ After\ waking\ from\ either\ timeout\ or\ cond.signal,\ retry\ once\ but\ then\ no\ more}}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (timeout\_ns)}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ retry\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ non-\/blocking:\ return\ a\ special\ packet\ with\ length\ ==\ -\/1\ to\ denote\ no\ match}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \_netQueueLock.release();}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ NetPacket\ packet;}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ packet.length\ =\ UINT32\_MAX;}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ packet;}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00363\ \ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ assert(found\ ==\ \textcolor{keyword}{true}\ \&\&\ itr\ !=\ \_netQueue.end());}
+\DoxyCodeLine{00366\ \ \ \ assert(0\ <=\ itr-\/>sender\ \&\&\ itr-\/>sender\ <\ \_numMod);}
+\DoxyCodeLine{00367\ \ \ \ assert(0\ <=\ itr-\/>type\ \&\&\ itr-\/>type\ <\ NUM\_PACKET\_TYPES);}
+\DoxyCodeLine{00368\ \ \ \ assert((itr-\/>receiver\ ==\ \_core-\/>getId())\ ||\ (itr-\/>receiver\ ==\ NetPacket::BROADCAST));}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \textcolor{comment}{//\ Copy\ result}}
+\DoxyCodeLine{00371\ \ \ \ NetPacket\ packet\ =\ *itr;}
+\DoxyCodeLine{00372\ \ \ \ \_netQueue.erase(itr);}
+\DoxyCodeLine{00373\ \ \ \ \_netQueueLock.release();}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}packet.time(\%s),\ start\_time(\%s)"{}},\ itostr(packet.time).c\_str(),\ itostr(start\_time).c\_str());}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \textcolor{keywordflow}{if}\ (packet.time\ >\ start\_time)}
+\DoxyCodeLine{00378\ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_core-\/>getId()\ <\ (core\_id\_t)Sim()-\/>getConfig()-\/>getApplicationCores())\ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (packet.time\ -\/\ start\_time\ <\ 100\ *\ SubsecondTime::NS())\ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ ;\ \textcolor{comment}{//\ Allow\ small\ timing\ differences,\ usually\ before\ performance\ models\ are\ enabled}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ really\ should't\ do\ it\ this\ way.\ You're\ supposed\ to\ include\ the\ time\ as\ a\ data\ item\ in\ the\ packet,}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ have\ the\ application\ layer\ increment\ time\ (queueing\ a\ valid\ *Instruction\ which\ will\ attribute}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ time\ increment\ to\ the\ correct\ CPI\ component)}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}RecvInstruction(\%s)\ being\ queued"{}},\ itostr(packet.time\ -\/\ start\_time).c\_str());}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Not\ that\ non-\/application\ models\ even\ care\ about\ this\ (their\ core\ performance\ models\ are\ never\ enabled).}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Why\ even\ bother?}}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Queueing\ RecvInstruction(\%s)"{}},\ itostr(packet.time\ -\/\ start\_time).c\_str());}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ PseudoInstruction\ *i\ =\ \textcolor{keyword}{new}\ RecvInstruction(packet.time\ -\/\ start\_time);}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \_core-\/>getPerformanceModel()-\/>queuePseudoInstruction(i);}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00395\ \ \ \ \}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Exiting\ netRecv\ :\ type\ \%i,\ from\ \%i"{}},\ (SInt32)packet.type,\ packet.sender);}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \textcolor{keywordflow}{return}\ packet;}
+\DoxyCodeLine{00400\ \}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \textcolor{comment}{//\ -\/-\/\ Wrappers}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ SInt32\ Network::netSend(SInt32\ dest,\ PacketType\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buf,\ UInt32\ len)}
+\DoxyCodeLine{00405\ \{}
+\DoxyCodeLine{00406\ \ \ \ NetPacket\ packet;}
+\DoxyCodeLine{00407\ \ \ \ assert(\_core\ \&\&\ \_core-\/>getPerformanceModel());}
+\DoxyCodeLine{00408\ \ \ \ packet.time\ =\ \_core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00409\ \ \ \ packet.sender\ =\ \_core-\/>getId();}
+\DoxyCodeLine{00410\ \ \ \ packet.receiver\ =\ dest;}
+\DoxyCodeLine{00411\ \ \ \ packet.length\ =\ len;}
+\DoxyCodeLine{00412\ \ \ \ packet.type\ =\ type;}
+\DoxyCodeLine{00413\ \ \ \ packet.data\ =\ buf;}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \textcolor{keywordflow}{return}\ netSend(packet);}
+\DoxyCodeLine{00416\ \}}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ SInt32\ Network::netBroadcast(PacketType\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buf,\ UInt32\ len)}
+\DoxyCodeLine{00419\ \{}
+\DoxyCodeLine{00420\ \ \ \ \textcolor{keywordflow}{return}\ netSend(NetPacket::BROADCAST,\ type,\ buf,\ len);}
+\DoxyCodeLine{00421\ \}}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ NetPacket\ Network::netRecv(SInt32\ src,\ PacketType\ type,\ UInt64\ timeout\_ns)}
+\DoxyCodeLine{00424\ \{}
+\DoxyCodeLine{00425\ \ \ \ NetMatch\ match;}
+\DoxyCodeLine{00426\ \ \ \ match.senders.push\_back(src);}
+\DoxyCodeLine{00427\ \ \ \ match.types.push\_back(type);}
+\DoxyCodeLine{00428\ \ \ \ \textcolor{keywordflow}{return}\ netRecv(match,\ timeout\_ns);}
+\DoxyCodeLine{00429\ \}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ NetPacket\ Network::netRecvFrom(SInt32\ src,\ UInt64\ timeout\_ns)}
+\DoxyCodeLine{00432\ \{}
+\DoxyCodeLine{00433\ \ \ \ NetMatch\ match;}
+\DoxyCodeLine{00434\ \ \ \ match.senders.push\_back(src);}
+\DoxyCodeLine{00435\ \ \ \ \textcolor{keywordflow}{return}\ netRecv(match,\ timeout\_ns);}
+\DoxyCodeLine{00436\ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ NetPacket\ Network::netRecvType(PacketType\ type,\ UInt64\ timeout\_ns)}
+\DoxyCodeLine{00439\ \{}
+\DoxyCodeLine{00440\ \ \ \ NetMatch\ match;}
+\DoxyCodeLine{00441\ \ \ \ match.types.push\_back(type);}
+\DoxyCodeLine{00442\ \ \ \ \textcolor{keywordflow}{return}\ netRecv(match,\ timeout\_ns);}
+\DoxyCodeLine{00443\ \}}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \textcolor{keywordtype}{void}\ Network::enableModels()}
+\DoxyCodeLine{00446\ \{}
+\DoxyCodeLine{00447\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_STATIC\_NETWORKS;\ i++)}
+\DoxyCodeLine{00448\ \ \ \ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \_models[i]-\/>enable();}
+\DoxyCodeLine{00450\ \ \ \ \}}
+\DoxyCodeLine{00451\ \}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \textcolor{keywordtype}{void}\ Network::disableModels()}
+\DoxyCodeLine{00454\ \{}
+\DoxyCodeLine{00455\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ NUM\_STATIC\_NETWORKS;\ i++)}
+\DoxyCodeLine{00456\ \ \ \ \{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \_models[i]-\/>disable();}
+\DoxyCodeLine{00458\ \ \ \ \}}
+\DoxyCodeLine{00459\ \}}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \textcolor{comment}{//\ Modeling}}
+\DoxyCodeLine{00462\ UInt32\ Network::getModeledLength(\textcolor{keyword}{const}\ NetPacket\&\ pkt)}
+\DoxyCodeLine{00463\ \{}
+\DoxyCodeLine{00464\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.type\ ==\ SHARED\_MEM\_1)}
+\DoxyCodeLine{00465\ \ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \textcolor{comment}{//\ packet\_type\ +\ sender\ +\ receiver\ +\ length\ +\ shmem\_msg.size()}}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \textcolor{comment}{//\ 1\ byte\ for\ packet\_type}}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \textcolor{comment}{//\ log2(core\_id)\ for\ sender\ and\ receiver}}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \textcolor{comment}{//\ 2\ bytes\ for\ packet\ length}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ UInt32\ metadata\_size\ =\ 1\ +\ 2\ *\ Config::getSingleton()-\/>getCoreIDLength()\ +\ 2;}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ UInt32\ data\_size\ =\ getCore()-\/>getMemoryManager()-\/>getModeledLength(pkt.data);}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ metadata\_size\ +\ data\_size;}
+\DoxyCodeLine{00473\ \ \ \ \}}
+\DoxyCodeLine{00474\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00475\ \ \ \ \{}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ pkt.bufferSize();}
+\DoxyCodeLine{00477\ \ \ \ \}}
+\DoxyCodeLine{00478\ \}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \textcolor{comment}{//\ -\/-\/\ NetPacket}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ NetPacket::NetPacket()}
+\DoxyCodeLine{00483\ \ \ \ :\ start\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00484\ \ \ \ ,\ time(SubsecondTime::Zero())}
+\DoxyCodeLine{00485\ \ \ \ ,\ queue\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00486\ \ \ \ ,\ type(INVALID\_PACKET\_TYPE)}
+\DoxyCodeLine{00487\ \ \ \ ,\ sender(INVALID\_CORE\_ID)}
+\DoxyCodeLine{00488\ \ \ \ ,\ receiver(INVALID\_CORE\_ID)}
+\DoxyCodeLine{00489\ \ \ \ ,\ length(0)}
+\DoxyCodeLine{00490\ \ \ \ ,\ data(0)}
+\DoxyCodeLine{00491\ \{}
+\DoxyCodeLine{00492\ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ NetPacket::NetPacket(SubsecondTime\ t,\ PacketType\ ty,\ SInt32\ s,}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SInt32\ r,\ UInt32\ l,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *d)}
+\DoxyCodeLine{00496\ \ \ \ :\ start\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00497\ \ \ \ ,\ time(t)}
+\DoxyCodeLine{00498\ \ \ \ ,\ queue\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00499\ \ \ \ ,\ type(ty)}
+\DoxyCodeLine{00500\ \ \ \ ,\ sender(s)}
+\DoxyCodeLine{00501\ \ \ \ ,\ receiver(r)}
+\DoxyCodeLine{00502\ \ \ \ ,\ length(l)}
+\DoxyCodeLine{00503\ \ \ \ ,\ data(d)}
+\DoxyCodeLine{00504\ \{}
+\DoxyCodeLine{00505\ \}}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ NetPacket::NetPacket(Byte\ *buffer)}
+\DoxyCodeLine{00509\ \{}
+\DoxyCodeLine{00510\ \ \ \ memcpy(\textcolor{keyword}{this},\ buffer,\ \textcolor{keyword}{sizeof}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \ \ \ \textcolor{comment}{//\ LOG\_ASSERT\_ERROR(length\ >\ 0,\ "{}type(\%u),\ sender(\%i),\ receiver(\%i),\ length(\%u)"{},\ type,\ sender,\ receiver,\ length);}}
+\DoxyCodeLine{00513\ \ \ \ \textcolor{keywordflow}{if}\ (length\ >\ 0)}
+\DoxyCodeLine{00514\ \ \ \ \{}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ Byte*\ data\_buffer\ =\ \textcolor{keyword}{new}\ Byte[length];}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ memcpy(data\_buffer,\ buffer\ +\ \textcolor{keyword}{sizeof}(*\textcolor{keyword}{this}),\ length);}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ data\ =\ data\_buffer;}
+\DoxyCodeLine{00518\ \ \ \ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \ \ \ \textcolor{keyword}{delete}\ []\ buffer;}
+\DoxyCodeLine{00521\ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \textcolor{comment}{//\ This\ implementation\ is\ slightly\ wasteful\ because\ there\ is\ no\ need}}
+\DoxyCodeLine{00524\ \textcolor{comment}{//\ to\ copy\ the\ const\ void*\ value\ in\ the\ NetPacket\ when\ length\ ==\ 0,}}
+\DoxyCodeLine{00525\ \textcolor{comment}{//\ but\ I\ don't\ see\ this\ as\ a\ major\ issue.}}
+\DoxyCodeLine{00526\ UInt32\ NetPacket::bufferSize()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00527\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00528\ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{sizeof}(*\textcolor{keyword}{this})\ +\ length);}
+\DoxyCodeLine{00529\ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ Byte*\ NetPacket::makeBuffer()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00532\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00533\ \ \ \ UInt32\ size\ =\ bufferSize();}
+\DoxyCodeLine{00534\ \ \ \ assert(size\ >=\ \textcolor{keyword}{sizeof}(NetPacket));}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ Byte\ *buffer\ =\ \textcolor{keyword}{new}\ Byte[size];}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \ memcpy(buffer,\ \textcolor{keyword}{this},\ \textcolor{keyword}{sizeof}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00539\ \ \ \ memcpy(buffer\ +\ \textcolor{keyword}{sizeof}(*\textcolor{keyword}{this}),\ data,\ length);}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \textcolor{keywordflow}{return}\ buffer;}
+\DoxyCodeLine{00542\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,727 @@
+\doxysection{Log Class Reference}
+\label{classLog}\index{Log@{Log}}
+
+
+{\ttfamily \#include $<$log.\+h$>$}
+
+
+
+Collaboration diagram for Log\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{classLog__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ Error\+State} \{ \textbf{ None}
+, \textbf{ Warning}
+, \textbf{ Error}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Log} (\textbf{ Config} \&config)
+\item 
+\textbf{ $\sim$\+Log} ()
+\item 
+void \textbf{ log} (\textbf{ Error\+State} err, const char $\ast$source\+\_\+file, \textbf{ SInt32} source\+\_\+line, const char $\ast$format,...)
+\item 
+bool \textbf{ is\+Enabled} (const char $\ast$module)
+\item 
+bool \textbf{ is\+Logging\+Enabled} () const
+\item 
+String \textbf{ get\+Module} (const char $\ast$filename)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Log} $\ast$ \textbf{ get\+Singleton} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt64} \textbf{ get\+Timestamp} ()
+\item 
+void \textbf{ init\+File\+Descriptors} ()
+\item 
+void \textbf{ get\+Disabled\+Modules} ()
+\item 
+void \textbf{ get\+Enabled\+Modules} ()
+\item 
+bool \textbf{ init\+Is\+Logging\+Enabled} ()
+\item 
+void \textbf{ discover\+Core} (\textbf{ core\+\_\+id\+\_\+t} $\ast$core\+\_\+id, bool $\ast$sim\+\_\+thread)
+\item 
+void \textbf{ get\+File} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, bool sim\+\_\+thread, FILE $\ast$$\ast$f, \textbf{ Lock} $\ast$$\ast$l)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \textbf{ parse\+Modules} (std\+::set$<$ String $>$ \&mods, String list)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Error\+State} \textbf{ \+\_\+state}
+\item 
+FILE $\ast$$\ast$ \textbf{ \+\_\+core\+Files}
+\item 
+FILE $\ast$$\ast$ \textbf{ \+\_\+sim\+Files}
+\item 
+\textbf{ Lock} $\ast$ \textbf{ \+\_\+core\+Locks}
+\item 
+\textbf{ Lock} $\ast$ \textbf{ \+\_\+sim\+Locks}
+\item 
+FILE $\ast$ \textbf{ \+\_\+system\+File}
+\item 
+\textbf{ Lock} \textbf{ \+\_\+system\+Lock}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ \+\_\+core\+Count}
+\item 
+\textbf{ UInt64} \textbf{ \+\_\+start\+Time}
+\item 
+std\+::set$<$ String $>$ \textbf{ \+\_\+disabled\+Modules}
+\item 
+std\+::set$<$ String $>$ \textbf{ \+\_\+enabled\+Modules}
+\item 
+bool \textbf{ \+\_\+logging\+Enabled}
+\item 
+bool \textbf{ \+\_\+any\+Logging\+Enabled}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const size\+\_\+t \textbf{ MODULE\+\_\+\+LENGTH} = 20
+\item 
+static \textbf{ Log} $\ast$ \textbf{ \+\_\+singleton}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 14} of file \textbf{ log.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{Log@{Log}!ErrorState@{ErrorState}}
+\index{ErrorState@{ErrorState}!Log@{Log}}
+\doxysubsubsection{ErrorState}
+{\footnotesize\ttfamily \label{classLog_a6b1e8a616dada1e1d86d1c953cbc4097} 
+enum \textbf{ Log\+::\+Error\+State}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{None@{None}!Log@{Log}}\index{Log@{Log}!None@{None}}}\label{classLog_a6b1e8a616dada1e1d86d1c953cbc4097} 
+None&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Warning@{Warning}!Log@{Log}}\index{Log@{Log}!Warning@{Warning}}}\label{classLog_a6b1e8a616dada1e1d86d1c953cbc4097} 
+Warning&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Error@{Error}!Log@{Log}}\index{Log@{Log}!Error@{Error}}}\label{classLog_a6b1e8a616dada1e1d86d1c953cbc4097} 
+Error&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 22} of file \textbf{ log.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{Log@{Log}!Log@{Log}}
+\index{Log@{Log}!Log@{Log}}
+\doxysubsubsection{Log()}
+{\footnotesize\ttfamily \label{classLog_aa5070bc88bf33df4b6259ceae829e6d8} 
+Log\+::\+Log (\begin{DoxyParamCaption}\item[{\textbf{ Config} \&}]{config}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+any\+Logging\+Enabled}, \textbf{ \+\_\+enabled\+Modules}, \textbf{ \+\_\+logging\+Enabled}, \textbf{ \+\_\+singleton}, \textbf{ format\+File\+Name()}, \textbf{ get\+Disabled\+Modules()}, \textbf{ get\+Enabled\+Modules()}, \textbf{ Circular\+Log\+::init()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ init\+Is\+Logging\+Enabled()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classLog_aa5070bc88bf33df4b6259ceae829e6d8_cgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!````~Log@{$\sim$Log}}
+\index{````~Log@{$\sim$Log}!Log@{Log}}
+\doxysubsubsection{$\sim$Log()}
+{\footnotesize\ttfamily \label{classLog_a0fbfda88fbee5027c89f6eb121059360} 
+Log\+::$\sim$\+Log (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 46} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+core\+Count}, \textbf{ \+\_\+core\+Files}, \textbf{ \+\_\+core\+Locks}, \textbf{ \+\_\+sim\+Files}, \textbf{ \+\_\+sim\+Locks}, \textbf{ \+\_\+singleton}, \textbf{ \+\_\+system\+File}, and \textbf{ Circular\+Log\+::fini()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=221pt]{classLog_a0fbfda88fbee5027c89f6eb121059360_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Function Documentation}
+\index{Log@{Log}!discoverCore@{discoverCore}}
+\index{discoverCore@{discoverCore}!Log@{Log}}
+\doxysubsubsection{discoverCore()}
+{\footnotesize\ttfamily \label{classLog_a115c77f96a14e00b95cde5b8805c6f9b} 
+void Log\+::discover\+Core (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t} $\ast$}]{core\+\_\+id}{, }\item[{bool $\ast$}]{sim\+\_\+thread}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 189} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ Core\+Manager\+::ami\+Sim\+Thread()}, \textbf{ Core\+Manager\+::get\+Current\+Core\+ID()}, and \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}.
+
+
+
+Referenced by \textbf{ log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classLog_a115c77f96a14e00b95cde5b8805c6f9b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=224pt]{classLog_a115c77f96a14e00b95cde5b8805c6f9b_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!getDisabledModules@{getDisabledModules}}
+\index{getDisabledModules@{getDisabledModules}!Log@{Log}}
+\doxysubsubsection{getDisabledModules()}
+{\footnotesize\ttfamily \label{classLog_a0cd6a11bf7eefe2f810a3d01931ecfdb} 
+void Log\+::get\+Disabled\+Modules (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 139} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+disabled\+Modules}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, and \textbf{ parse\+Modules()}.
+
+
+
+Referenced by \textbf{ Log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=303pt]{classLog_a0cd6a11bf7eefe2f810a3d01931ecfdb_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=258pt]{classLog_a0cd6a11bf7eefe2f810a3d01931ecfdb_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!getEnabledModules@{getEnabledModules}}
+\index{getEnabledModules@{getEnabledModules}!Log@{Log}}
+\doxysubsubsection{getEnabledModules()}
+{\footnotesize\ttfamily \label{classLog_a7e707f06be7b8be25e4fe1faaa86327f} 
+void Log\+::get\+Enabled\+Modules (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 153} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+enabled\+Modules}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, and \textbf{ parse\+Modules()}.
+
+
+
+Referenced by \textbf{ Log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=300pt]{classLog_a7e707f06be7b8be25e4fe1faaa86327f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=255pt]{classLog_a7e707f06be7b8be25e4fe1faaa86327f_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!getFile@{getFile}}
+\index{getFile@{getFile}!Log@{Log}}
+\doxysubsubsection{getFile()}
+{\footnotesize\ttfamily \label{classLog_a88fce8ef4769e473abedd6ef86243eea} 
+void Log\+::get\+File (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{bool}]{sim\+\_\+thread}{, }\item[{FILE $\ast$$\ast$}]{f}{, }\item[{\textbf{ Lock} $\ast$$\ast$}]{l}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 207} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+core\+Count}, \textbf{ \+\_\+core\+Files}, \textbf{ \+\_\+core\+Locks}, \textbf{ \+\_\+sim\+Files}, \textbf{ \+\_\+sim\+Locks}, \textbf{ \+\_\+system\+File}, \textbf{ \+\_\+system\+Lock}, \textbf{ format\+File\+Name()}, and \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}.
+
+
+
+Referenced by \textbf{ log()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=232pt]{classLog_a88fce8ef4769e473abedd6ef86243eea_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=196pt]{classLog_a88fce8ef4769e473abedd6ef86243eea_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!getModule@{getModule}}
+\index{getModule@{getModule}!Log@{Log}}
+\doxysubsubsection{getModule()}
+{\footnotesize\ttfamily \label{classLog_a10ddfe5546a004ab9a80d72b97c8ed54} 
+String Log\+::get\+Module (\begin{DoxyParamCaption}\item[{const char $\ast$}]{filename}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 261} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ MODULE\+\_\+\+LENGTH}.
+
+\index{Log@{Log}!getSingleton@{getSingleton}}
+\index{getSingleton@{getSingleton}!Log@{Log}}
+\doxysubsubsection{getSingleton()}
+{\footnotesize\ttfamily \label{classLog_aadae4a3048e1adf637c28de56ac7c5c4} 
+\textbf{ Log} $\ast$ Log\+::get\+Singleton (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 69} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+singleton}.
+
+
+
+Referenced by \textbf{ instruction\+Callback()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=270pt]{classLog_aadae4a3048e1adf637c28de56ac7c5c4_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!getTimestamp@{getTimestamp}}
+\index{getTimestamp@{getTimestamp}!Log@{Log}}
+\doxysubsubsection{getTimestamp()}
+{\footnotesize\ttfamily \label{classLog_a93ef0c4605a1295b84f929b463cf173e} 
+\textbf{ UInt64} Log\+::get\+Timestamp (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 180} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+start\+Time}.
+
+
+
+Referenced by \textbf{ log()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=229pt]{classLog_a93ef0c4605a1295b84f929b463cf173e_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!initFileDescriptors@{initFileDescriptors}}
+\index{initFileDescriptors@{initFileDescriptors}!Log@{Log}}
+\doxysubsubsection{initFileDescriptors()}
+{\footnotesize\ttfamily \label{classLog_a2e5e7cbe5f80ba389696a1fdbcf9a93b} 
+void Log\+::init\+File\+Descriptors (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 85} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+core\+Count}, \textbf{ \+\_\+core\+Files}, \textbf{ \+\_\+core\+Locks}, \textbf{ \+\_\+sim\+Files}, \textbf{ \+\_\+sim\+Locks}, and \textbf{ \+\_\+system\+File}.
+
+
+
+Referenced by \textbf{ Log()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=249pt]{classLog_a2e5e7cbe5f80ba389696a1fdbcf9a93b_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!initIsLoggingEnabled@{initIsLoggingEnabled}}
+\index{initIsLoggingEnabled@{initIsLoggingEnabled}!Log@{Log}}
+\doxysubsubsection{initIsLoggingEnabled()}
+{\footnotesize\ttfamily \label{classLog_a8f0948fed84007995415423bb584f016} 
+bool Log\+::init\+Is\+Logging\+Enabled (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 167} of file \textbf{ log.\+cc}.
+
+
+
+Referenced by \textbf{ Log()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=261pt]{classLog_a8f0948fed84007995415423bb584f016_icgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!isEnabled@{isEnabled}}
+\index{isEnabled@{isEnabled}!Log@{Log}}
+\doxysubsubsection{isEnabled()}
+{\footnotesize\ttfamily \label{classLog_a9961debdc78a2d86e3d9778ec3982a46} 
+bool Log\+::is\+Enabled (\begin{DoxyParamCaption}\item[{const char $\ast$}]{module}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ \+\_\+any\+Logging\+Enabled}, \textbf{ \+\_\+disabled\+Modules}, \textbf{ \+\_\+enabled\+Modules}, and \textbf{ \+\_\+logging\+Enabled}.
+
+\index{Log@{Log}!isLoggingEnabled@{isLoggingEnabled}}
+\index{isLoggingEnabled@{isLoggingEnabled}!Log@{Log}}
+\doxysubsubsection{isLoggingEnabled()}
+{\footnotesize\ttfamily \label{classLog_a2875f51f38489fb919e7aaf8cbb70272} 
+bool Log\+::is\+Logging\+Enabled (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ log.\+h}.
+
+
+
+References \textbf{ \+\_\+any\+Logging\+Enabled}.
+
+\index{Log@{Log}!log@{log}}
+\index{log@{log}!Log@{Log}}
+\doxysubsubsection{log()}
+{\footnotesize\ttfamily \label{classLog_a47eeab6141c81a2d356137eb25bbcb90} 
+void Log\+::log (\begin{DoxyParamCaption}\item[{\textbf{ Error\+State}}]{err}{, }\item[{const char $\ast$}]{source\+\_\+file}{, }\item[{\textbf{ SInt32}}]{source\+\_\+line}{, }\item[{const char $\ast$}]{format}{, }\item[{}]{...}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 295} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::acquire()}, \textbf{ discover\+Core()}, \textbf{ Error}, \textbf{ Circular\+Log\+::fini()}, \textbf{ get\+File()}, \textbf{ get\+Timestamp()}, \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ None}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::release()}, and \textbf{ Warning}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classLog_a47eeab6141c81a2d356137eb25bbcb90_cgraph}
+\end{center}
+\end{figure}
+\index{Log@{Log}!parseModules@{parseModules}}
+\index{parseModules@{parseModules}!Log@{Log}}
+\doxysubsubsection{parseModules()}
+{\footnotesize\ttfamily \label{classLog_aa8856b15fd9d3e00e00121167a25b02d} 
+void Log\+::parse\+Modules (\begin{DoxyParamCaption}\item[{std\+::set$<$ String $>$ \&}]{mods}{, }\item[{String}]{list}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ log.\+cc}.
+
+
+
+References \textbf{ MODULE\+\_\+\+LENGTH}.
+
+
+
+Referenced by \textbf{ get\+Disabled\+Modules()}, and \textbf{ get\+Enabled\+Modules()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classLog_aa8856b15fd9d3e00e00121167a25b02d_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{Log@{Log}!\_anyLoggingEnabled@{\_anyLoggingEnabled}}
+\index{\_anyLoggingEnabled@{\_anyLoggingEnabled}!Log@{Log}}
+\doxysubsubsection{\_anyLoggingEnabled}
+{\footnotesize\ttfamily \label{classLog_aee32282c59870022c716743a6106f9ee} 
+bool Log\+::\+\_\+any\+Logging\+Enabled\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ is\+Enabled()}, \textbf{ is\+Logging\+Enabled()}, and \textbf{ Log()}.
+
+\index{Log@{Log}!\_coreCount@{\_coreCount}}
+\index{\_coreCount@{\_coreCount}!Log@{Log}}
+\doxysubsubsection{\_coreCount}
+{\footnotesize\ttfamily \label{classLog_a588c47eef434346465d2f3b237915f23} 
+\textbf{ core\+\_\+id\+\_\+t} Log\+::\+\_\+core\+Count\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_coreFiles@{\_coreFiles}}
+\index{\_coreFiles@{\_coreFiles}!Log@{Log}}
+\doxysubsubsection{\_coreFiles}
+{\footnotesize\ttfamily \label{classLog_a1b9729f216b5541166051a3aa33b5c14} 
+FILE$\ast$$\ast$ Log\+::\+\_\+core\+Files\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 51} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_coreLocks@{\_coreLocks}}
+\index{\_coreLocks@{\_coreLocks}!Log@{Log}}
+\doxysubsubsection{\_coreLocks}
+{\footnotesize\ttfamily \label{classLog_a3a570f550bf1276e11706a374bc945a9} 
+\textbf{ Lock}$\ast$ Log\+::\+\_\+core\+Locks\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_disabledModules@{\_disabledModules}}
+\index{\_disabledModules@{\_disabledModules}!Log@{Log}}
+\doxysubsubsection{\_disabledModules}
+{\footnotesize\ttfamily \label{classLog_a8fb593c65dcd46a022fb6d2f2d59ad99} 
+std\+::set$<$String$>$ Log\+::\+\_\+disabled\+Modules\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+Disabled\+Modules()}, and \textbf{ is\+Enabled()}.
+
+\index{Log@{Log}!\_enabledModules@{\_enabledModules}}
+\index{\_enabledModules@{\_enabledModules}!Log@{Log}}
+\doxysubsubsection{\_enabledModules}
+{\footnotesize\ttfamily \label{classLog_a397ac55138bc74c45a5c644858890216} 
+std\+::set$<$String$>$ Log\+::\+\_\+enabled\+Modules\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 63} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+Enabled\+Modules()}, \textbf{ is\+Enabled()}, and \textbf{ Log()}.
+
+\index{Log@{Log}!\_loggingEnabled@{\_loggingEnabled}}
+\index{\_loggingEnabled@{\_loggingEnabled}!Log@{Log}}
+\doxysubsubsection{\_loggingEnabled}
+{\footnotesize\ttfamily \label{classLog_af2898074481d828d9cbd6835298516fb} 
+bool Log\+::\+\_\+logging\+Enabled\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 64} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ is\+Enabled()}, and \textbf{ Log()}.
+
+\index{Log@{Log}!\_simFiles@{\_simFiles}}
+\index{\_simFiles@{\_simFiles}!Log@{Log}}
+\doxysubsubsection{\_simFiles}
+{\footnotesize\ttfamily \label{classLog_a5aa869ced41074360b90ac9d7e59b95f} 
+FILE$\ast$$\ast$ Log\+::\+\_\+sim\+Files\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_simLocks@{\_simLocks}}
+\index{\_simLocks@{\_simLocks}!Log@{Log}}
+\doxysubsubsection{\_simLocks}
+{\footnotesize\ttfamily \label{classLog_acad5a72552428bee5efebfc50eb017a7} 
+\textbf{ Lock}$\ast$ Log\+::\+\_\+sim\+Locks\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 54} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_singleton@{\_singleton}}
+\index{\_singleton@{\_singleton}!Log@{Log}}
+\doxysubsubsection{\_singleton}
+{\footnotesize\ttfamily \label{classLog_a55bc08c19c7f6997fd576c81ddb0044c} 
+\textbf{ Log} $\ast$ Log\+::\+\_\+singleton\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 72} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+Singleton()}, \textbf{ Log()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_startTime@{\_startTime}}
+\index{\_startTime@{\_startTime}!Log@{Log}}
+\doxysubsubsection{\_startTime}
+{\footnotesize\ttfamily \label{classLog_a3aa095e028ea18158c4be6b7d4a7859f} 
+\textbf{ UInt64} Log\+::\+\_\+start\+Time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 61} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+Timestamp()}.
+
+\index{Log@{Log}!\_state@{\_state}}
+\index{\_state@{\_state}!Log@{Log}}
+\doxysubsubsection{\_state}
+{\footnotesize\ttfamily \label{classLog_a82b9dcb0644c7da7f667e39f6224fdeb} 
+\textbf{ Error\+State} Log\+::\+\_\+state\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ log.\+h}.
+
+\index{Log@{Log}!\_systemFile@{\_systemFile}}
+\index{\_systemFile@{\_systemFile}!Log@{Log}}
+\doxysubsubsection{\_systemFile}
+{\footnotesize\ttfamily \label{classLog_a0a8bc05654bcb590527ecde1a0663f31} 
+FILE$\ast$ Log\+::\+\_\+system\+File\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 57} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}, \textbf{ init\+File\+Descriptors()}, and \textbf{ $\sim$\+Log()}.
+
+\index{Log@{Log}!\_systemLock@{\_systemLock}}
+\index{\_systemLock@{\_systemLock}!Log@{Log}}
+\doxysubsubsection{\_systemLock}
+{\footnotesize\ttfamily \label{classLog_a3f886b8776d98170b5b96e25d03c5d90} 
+\textbf{ Lock} Log\+::\+\_\+system\+Lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 58} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+File()}.
+
+\index{Log@{Log}!MODULE\_LENGTH@{MODULE\_LENGTH}}
+\index{MODULE\_LENGTH@{MODULE\_LENGTH}!Log@{Log}}
+\doxysubsubsection{MODULE\_LENGTH}
+{\footnotesize\ttfamily \label{classLog_ae8aedc83237899037a934eca721831e5} 
+const size\+\_\+t Log\+::\+MODULE\+\_\+\+LENGTH = 20\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ log.\+h}.
+
+
+
+Referenced by \textbf{ get\+Module()}, and \textbf{ parse\+Modules()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/misc/\textbf{ log.\+h}\item 
+common/misc/\textbf{ log.\+cc}\end{DoxyCompactItemize}

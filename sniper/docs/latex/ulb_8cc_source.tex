@@ -1,0 +1,97 @@
+\doxysection{ulb.\+cc}
+\label{ulb_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ulb.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ulb.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}ulb.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ }
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ UInt32\ ULB::SIM\_PAGE\_SHIFT;}
+\DoxyCodeLine{00015\ \ \ IntPtr\ ULB::SIM\_PAGE\_SIZE;}
+\DoxyCodeLine{00016\ \ \ IntPtr\ ULB::SIM\_PAGE\_MASK;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00019\ \ \ ULB::ULB(String\ name,\ String\ cfgname,\ core\_id\_t\ core\_id,\ UInt32\ page\_size,\ \ UInt32\ num\_entries,\ UInt32\ associativity,\ ComponentLatency\ \_access\_latency,\ ComponentLatency\ \_miss\_latency,\ \textcolor{keywordtype}{int}*\ page\_size\_list,\ \textcolor{keywordtype}{int}\ page\_sizes)}
+\DoxyCodeLine{00020\ \ \ \ \ :\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00021\ \ \ \ \ ,\ access\_latency(\_access\_latency)}
+\DoxyCodeLine{00022\ \ \ \ \ ,\ miss\_latency(\_miss\_latency)}
+\DoxyCodeLine{00023\ \ \ \ \ ,\ m\_cache(name\ ,\ cfgname,\ core\_id,\ num\_entries\ /\ associativity,\ associativity,(1L\ <<\ page\_size),\ \textcolor{stringliteral}{"{}lru"{}},\ CacheBase::PR\_L1\_CACHE,CacheBase::HASH\_MASK,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ NULL,\ true,\ page\_size\_list,\ page\_sizes)\ \textcolor{comment}{//\ Assuming\ 8B\ granularity}}
+\DoxyCodeLine{00026\ \ }
+\DoxyCodeLine{00027\ \ \ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}access"{}},\ \&m\_access);}
+\DoxyCodeLine{00030\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}miss"{}},\ \&m\_miss);}
+\DoxyCodeLine{00031\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}miss\_inUTR"{}},\ \&m\_miss\_inUTR);}
+\DoxyCodeLine{00032\ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}allocations"{}},\ \&m\_allocations);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ }
+\DoxyCodeLine{00035\ \ \ \ \ m\_utopia\ =\ \ Sim()-\/>getUtopia();}
+\DoxyCodeLine{00036\ \ \ \ \ m\_utr\_4KB\ =\ m\_utopia-\/>getUtr(0);}
+\DoxyCodeLine{00037\ \ \ \ \ m\_utr\_2MB\ =\ m\_utopia-\/>getUtr(1);}
+\DoxyCodeLine{00038\ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ ULB::where\_t\ ULB::lookup(IntPtr\ address,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ allocate\_on\_miss,\ \textcolor{keywordtype}{bool}\ count)}
+\DoxyCodeLine{00041\ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hit;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ hit\ =\ m\_cache.accessSingleLineTLB(address,\ Cache::LOAD,\ NULL,\ 0,\ now,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\ m\_access++;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inUTR\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inUTR\_4KB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inUTR\_2MB\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_utr\_4KB-\/>inUTRnostats(address,\ count,\ now,\ m\_core\_id))\{\ inUTR\ =\ \textcolor{keyword}{true};\ inUTR\_4KB\ =\ \textcolor{keyword}{true};\}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(m\_utr\_2MB-\/>inUTRnostats(address,\ count,\ now,\ m\_core\_id))\{\ inUTR\ =\ \textcolor{keyword}{true};\ inUTR\_2MB\ =\ \textcolor{keyword}{true};\}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ inUTR\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit)\ \textcolor{keywordflow}{return}\ ULB::HIT;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}\ Miss\ in\ ULB\ but\ data\ is\ in\ UTR\ of\ 4KB:\ "{}\ <<\ \ inUTR\_4KB\ <<\ "{}\ Miss\ in\ ULB\ but\ data\ is\ in\ UTR\ of\ 2MB:\ "{}\ <<\ inUTR\_2MB\ <<\ std::endl;}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(count)\{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(inUTR)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_miss\_inUTR++;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_miss++;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allocate\_on\_miss\ \&\&\ inUTR)\{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(inUTR\_4KB)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ allocate(address,\ now,\ \&m\_cache,\ 12);\ \textcolor{comment}{//\ if\ inUtr\ \ ==\ false,\ virtual-\/to-\/physical\ mapping\ will\ probably\ be\ stored\ in\ L1\ TLB,\ so\ we\ dont\ need\ to\ allocate}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(inUTR\_2MB)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ allocate(address,\ now,\ \&m\_cache,\ 21);\ \textcolor{comment}{//\ if\ inUtr\ \ ==\ false,\ virtual-\/to-\/physical\ mapping\ will\ probably\ be\ stored\ in\ L1\ TLB,\ so\ we\ dont\ need\ to\ allocate}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_allocations++;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ULB::MISS;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordtype}{void}\ ULB::allocate(IntPtr\ address,\ SubsecondTime\ now,\ Cache\ *ulb\_cache,\ \textcolor{keywordtype}{int}\ page\_size)}
+\DoxyCodeLine{00080\ \ \ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction;}
+\DoxyCodeLine{00082\ \ \ \ \ IntPtr\ evict\_addr;}
+\DoxyCodeLine{00083\ \ \ \ \ CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00086\ \ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00087\ \ \ \ \ ulb\_cache-\/>splitAddressTLB(address,\ tag,\ set\_index,\ page\_size);}
+\DoxyCodeLine{00088\ \ \ \ \ ulb\_cache-\/>insertSingleLine(address,\ NULL,\ \&eviction,\ \&evict\_addr,\ \&evict\_block\_info,\ NULL,\ now);}
+\DoxyCodeLine{00089\ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \}}
+
+\end{DoxyCode}

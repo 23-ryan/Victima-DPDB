@@ -1,0 +1,41 @@
+\doxysection{instruction\+\_\+tracer.\+cc}
+\label{instruction__tracer_8cc_source}\index{common/performance\_model/instruction\_tracers/instruction\_tracer.cc@{common/performance\_model/instruction\_tracers/instruction\_tracer.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer\_fpstats.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer\_print.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}loop\_tracer.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}loop\_profiler.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00010\ InstructionTracer::init()}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ String\ type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}instruction\_tracer/type"{}});}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}fpstats"{}})}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ InstructionTracerFPStats::init();}
+\DoxyCodeLine{00016\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ InstructionTracer*}
+\DoxyCodeLine{00019\ InstructionTracer::create(\textcolor{keyword}{const}\ Core\ *core)}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ String\ type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}instruction\_tracer/type"{}});}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}none"{}})}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}print"{}})}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ InstructionTracerPrint(core);}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}fpstats"{}})}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ InstructionTracerFPStats(core);}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}loop\_tracer"{}})}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ LoopTracer(core);}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ \textcolor{stringliteral}{"{}loop\_profiler"{}})}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ LoopProfiler(core);}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ instruction\ tracer\ type\ \%s"{}},\ type.c\_str());}
+\DoxyCodeLine{00035\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,134 @@
+\doxysection{spinlock.\+h}
+\label{spinlock_8h_source}\index{common/misc/spinlock.h@{common/misc/spinlock.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SPIN\_LOCK\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SPIN\_LOCK\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00005\ \ \ \ \ \ \ \ \ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ slock;}
+\DoxyCodeLine{00006\ \}\ raw\_spinlock\_t;}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ \_\_RAW\_SPIN\_LOCK\_UNLOCKED\ \ \ \ \ \ \ \ \{\ 1\ \}}\textcolor{comment}{/*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Your\ basic\ SMP\ spinlocks,\ allowing\ only\ a\ single\ CPU\ anywhere}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ Simple\ spin\ lock\ operations.\ \ There\ are\ two\ variants,\ one\ clears\ IRQ's}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ on\ the\ local\ processor,\ one\ does\ not.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ We\ make\ no\ fairness\ assumptions.\ They\ have\ a\ cost.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ (the\ type\ definitions\ are\ in\ asm/spinlock\_types.h)}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#define\ \_\_raw\_spin\_is\_locked(x)\ \(\backslash\)}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (*(volatile\ signed\ char\ *)(\&(x)-\/>slock)\ <=\ 0)}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ \_\_raw\_spin\_lock\_string\ \(\backslash\)}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}\(\backslash\)n1:\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}lock\ ;\ decb\ \%0\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jns\ 3f\(\backslash\)n"{}\ \(\backslash\)}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}2:\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}rep;nop\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}cmpb\ \$0,\%0\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jle\ 2b\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jmp\ 1b\(\backslash\)n"{}\ \(\backslash\)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}3:\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ NOTE:\ there's\ an\ irqs-\/on\ section\ here,\ which\ normally\ would\ have\ to\ be}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *\ irq-\/traced,\ but\ on\ CONFIG\_TRACE\_IRQFLAGS\ we\ never\ use}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *\ \_\_raw\_spin\_lock\_string\_flags().}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#define\ \_\_raw\_spin\_lock\_string\_flags\ \(\backslash\)}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}\(\backslash\)n1:\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}lock\ ;\ decb\ \%0\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jns\ 5f\(\backslash\)n"{}\ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}2:\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}testl\ \$0x200,\ \%1\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jz\ 4f\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}sti\(\backslash\)n"{}\ \(\backslash\)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}3:\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}rep;nop\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}cmpb\ \$0,\ \%0\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jle\ 3b\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}cli\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jmp\ 1b\(\backslash\)n"{}\ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}4:\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}rep;nop\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}cmpb\ \$0,\ \%0\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jg\ 1b\(\backslash\)n\(\backslash\)t"{}\ \(\backslash\)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}jmp\ 4b\(\backslash\)n"{}\ \(\backslash\)}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}5:\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \_\_raw\_spin\_lock(raw\_spinlock\_t\ *lock)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keyword}{asm}(\_\_raw\_spin\_lock\_string\ :\ \textcolor{stringliteral}{"{}+m"{}}\ (lock-\/>slock)\ :\ :\ \textcolor{stringliteral}{"{}memory"{}});}
+\DoxyCodeLine{00062\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ *\ It\ is\ easier\ for\ the\ lock\ validator\ if\ interrupts\ are\ not\ re-\/enabled}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ *\ in\ the\ middle\ of\ a\ lock-\/acquire.\ This\ is\ a\ performance\ feature\ anyway}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ *\ so\ we\ turn\ it\ off:}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#ifndef\ CONFIG\_PROVE\_LOCKING}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \_\_raw\_spin\_lock\_flags(raw\_spinlock\_t\ *lock,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ flags)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keyword}{asm}(\_\_raw\_spin\_lock\_string\_flags\ :\ \textcolor{stringliteral}{"{}+m"{}}\ (lock-\/>slock)\ :\ \textcolor{stringliteral}{"{}r"{}}\ (flags)\ :\ \textcolor{stringliteral}{"{}memory"{}});}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \_\_raw\_spin\_trylock(raw\_spinlock\_t\ *lock)}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ oldval;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_(}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}xchgb\ \%b0,\%1"{}}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\textcolor{stringliteral}{"{}=q"{}}\ (oldval),\ \textcolor{stringliteral}{"{}+m"{}}\ (lock-\/>slock)}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\textcolor{stringliteral}{"{}0"{}}\ (0)\ :\ \textcolor{stringliteral}{"{}memory"{}});}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ oldval\ >\ 0;}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ *\ \_\_raw\_spin\_unlock\ based\ on\ writing\ \$1\ to\ the\ low\ byte.}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ *\ This\ method\ works.\ Despite\ all\ the\ confusion.}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ *\ (except\ on\ PPro\ SMP\ or\ if\ we\ are\ using\ OOSTORE,\ so\ we\ use\ xchgb\ there)}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ *\ (PPro\ errata\ 66,\ 92)}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#if\ !defined(CONFIG\_X86\_OOSTORE)\ \&\&\ !defined(CONFIG\_X86\_PPRO\_FENCE)}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#define\ \_\_raw\_spin\_unlock\_string\ \(\backslash\)}}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}movb\ \$1,\%0"{}\ \(\backslash\)}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :"{}+m"{}\ (lock-\/>slock)\ :\ :\ "{}memory"{}}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \_\_raw\_spin\_unlock(raw\_spinlock\_t\ *lock)}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_(}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_raw\_spin\_unlock\_string}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#define\ \_\_raw\_spin\_unlock\_string\ \(\backslash\)}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ "{}xchgb\ \%b0,\ \%1"{}\ \(\backslash\)}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :"{}=q"{}\ (oldval),\ "{}+m"{}\ (lock-\/>slock)\ \(\backslash\)}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :"{}0"{}\ (oldval)\ :\ "{}memory"{}}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \_\_raw\_spin\_unlock(raw\_spinlock\_t\ *lock)}
+\DoxyCodeLine{00115\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ oldval\ =\ 1;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_(}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_raw\_spin\_unlock\_string}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#define\ \_\_raw\_spin\_unlock\_wait(lock)\ \(\backslash\)}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ do\ \{\ while\ (\_\_raw\_spin\_is\_locked(lock))\ cpu\_relax();\ \}\ while\ (0)}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_SPIN\_LOCK\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

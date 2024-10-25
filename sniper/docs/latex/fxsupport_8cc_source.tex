@@ -1,0 +1,96 @@
+\doxysection{fxsupport.\+cc}
+\label{fxsupport_8cc_source}\index{common/misc/fxsupport.cc@{common/misc/fxsupport.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}fxsupport.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ Fxsupport\ *Fxsupport::m\_singleton;}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ Fxsupport::Fxsupport(core\_id\_t\ core\_count)}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ m\_core\_count\ =\ core\_count;}
+\DoxyCodeLine{00011\ \ \ \ m\_fx\_buf\ =\ (\textcolor{keywordtype}{char}**)\ malloc\ (m\_core\_count\ *\ \textcolor{keyword}{sizeof}\ (\textcolor{keywordtype}{char}*));}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_core\_count;\ i++)}
+\DoxyCodeLine{00013\ \ \ \ \{}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \_\_attribute\_\_((unused))\ \textcolor{keywordtype}{int}\ status\ =\ posix\_memalign\ ((\textcolor{keywordtype}{void}**)\ \&m\_fx\_buf[i],\ 16,\ 512);}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ assert\ (status\ ==\ 0);}
+\DoxyCodeLine{00016\ \ \ \ \}}
+\DoxyCodeLine{00017\ \ \ \ m\_ref\_count\ =\ (uint64\_t**)\ malloc\ (m\_core\_count\ *\ \textcolor{keyword}{sizeof}(uint64\_t*));}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_core\_count;\ i++)}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ m\_ref\_count[i]\ =\ 0;}
+\DoxyCodeLine{00021\ \ \ \ \}}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ Fxsupport::\string~Fxsupport()}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_core\_count;\ i++)}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ free\ ((\textcolor{keywordtype}{void}*)\ m\_fx\_buf[i]);}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ free\ (m\_fx\_buf);}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ free\ (m\_ref\_count);}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}\ Fxsupport::init()}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ assert\ (m\_singleton\ ==\ NULL);}
+\DoxyCodeLine{00037\ \ \ \ core\_id\_t\ core\_count\ =\ Sim()-\/>getConfig()-\/>getTotalCores();}
+\DoxyCodeLine{00038\ \ \ \ m\_singleton\ =\ \textcolor{keyword}{new}\ Fxsupport\ (core\_count);}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keywordtype}{void}\ Fxsupport::fini()}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ assert\ (m\_singleton);}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{delete}\ m\_singleton;}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ Fxsupport\ *Fxsupport::getSingleton()}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \ assert\ (m\_singleton);}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordflow}{return}\ m\_singleton;}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{void}\ Fxsupport::fxsave()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCoreManager()-\/>amiUserThread())\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}fxsave()\ start"{}});}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ core\_id\_t\ core\_index\ =\ Sim()-\/>getCoreManager()-\/>getCurrentCoreID();}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ref\_count[core\_index]\ ==\ 0)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *buf\ =\ m\_fx\_buf[core\_index];}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{asm}\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}fxsave\ \%0\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}emms"{}}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\textcolor{stringliteral}{"{}=m"{}}(*buf));}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ m\_ref\_count[core\_index]++;}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}fxsave()\ end"{}});}
+\DoxyCodeLine{00070\ \ \ \ \}}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keywordtype}{void}\ Fxsupport::fxrstor()}
+\DoxyCodeLine{00074\ \{}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCoreManager()-\/>amiUserThread())\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}fxrstor()\ start"{}});}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ core\_id\_t\ core\_index\ =\ Sim()-\/>getCoreManager()-\/>getCurrentCoreID();}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ m\_ref\_count[core\_index]-\/-\/;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ref\_count[core\_index]\ ==\ 0)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *buf\ =\ m\_fx\_buf[core\_index];}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{asm}\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}fxrstor\ \%0"{}}::\textcolor{stringliteral}{"{}m"{}}(*buf));}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}fxrstor()\ end"{}});}
+\DoxyCodeLine{00089\ \ \ \ \}}
+\DoxyCodeLine{00090\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,117 @@
+\doxysection{directory\+\_\+entry\+\_\+limited\+\_\+no\+\_\+broadcast.\+h}
+\label{directory__entry__limited__no__broadcast_8h_source}\index{common/core/memory\_subsystem/directory\_schemes/directory\_entry\_limited\_no\_broadcast.h@{common/core/memory\_subsystem/directory\_schemes/directory\_entry\_limited\_no\_broadcast.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_DIRECTORY\_ENTRY\_LIMITED\_NO\_BROADCAST\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_DIRECTORY\_ENTRY\_LIMITED\_NO\_BROADCAST\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}directory\_entry.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}random.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }DirectoryEntryLimitedNoBroadcast\ :\ \textcolor{keyword}{public}\ DirectoryEntrySized<DirectorySharers>}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ DirectoryEntryLimitedNoBroadcast(UInt32\ max\_hw\_sharers,\ UInt32\ max\_num\_sharers);}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \string~DirectoryEntryLimitedNoBroadcast();}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hasSharer(core\_id\_t\ sharer\_id);}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ addSharer(core\_id\_t\ sharer\_id,\ UInt32\ max\_hw\_sharers);}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ removeSharer(core\_id\_t\ sharer\_id,\ \textcolor{keywordtype}{bool}\ reply\_expected);}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \ \ \ core\_id\_t\ getOwner();}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setOwner(core\_id\_t\ owner\_id);}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ core\_id\_t\ getOneSharer();}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ SubsecondTime\ getLatency();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ Random\ m\_rand\_num;}
+\DoxyCodeLine{00028\ \};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00031\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::DirectoryEntryLimitedNoBroadcast(}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ UInt32\ max\_hw\_sharers,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ UInt32\ max\_num\_sharers):}
+\DoxyCodeLine{00034\ \ \ \ DirectoryEntrySized<DirectorySharers>(max\_hw\_sharers,\ max\_num\_sharers)}
+\DoxyCodeLine{00035\ \{\}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00038\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::\string~DirectoryEntryLimitedNoBroadcast()}
+\DoxyCodeLine{00039\ \{\}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00043\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::hasSharer(core\_id\_t\ sharer\_id)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>m\_sharers[sharer\_id];}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ Return\ value\ says\ whether\ the\ sharer\ was\ successfully\ added}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ 'True'\ if\ it\ was\ successfully\ added}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ 'False'\ if\ there\ will\ be\ an\ eviction\ before\ adding}}
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00053\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::addSharer(core\_id\_t\ sharer\_id,\ UInt32\ max\_hw\_sharers)}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ assert(!\ this-\/>m\_sharers[sharer\_id]);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>getNumSharers()\ >=\ max\_hw\_sharers)}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00060\ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ this-\/>m\_sharers[sharer\_id]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00067\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00068\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::removeSharer(core\_id\_t\ sharer\_id,\ \textcolor{keywordtype}{bool}\ reply\_expected)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ assert(!reply\_expected);}
+\DoxyCodeLine{00071\ \ \ \ assert(this-\/>m\_sharers[sharer\_id]);}
+\DoxyCodeLine{00072\ \ \ \ this-\/>m\_sharers[sharer\_id]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00076\ core\_id\_t}
+\DoxyCodeLine{00077\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::getOwner()}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>m\_owner\_id;}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00083\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00084\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::setOwner(core\_id\_t\ owner\_id)}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{if}\ (owner\_id\ !=\ INVALID\_CORE\_ID)}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ assert(this-\/>m\_sharers[owner\_id]);}
+\DoxyCodeLine{00088\ \ \ \ this-\/>m\_owner\_id\ =\ owner\_id;}
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00092\ core\_id\_t}
+\DoxyCodeLine{00093\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::getOneSharer()}
+\DoxyCodeLine{00094\ \{}
+\DoxyCodeLine{00095\ \ \ \ std::pair<bool,\ std::vector<core\_id\_t>\ >\ sharers\_list\ =\ this-\/>getSharersList();}
+\DoxyCodeLine{00096\ \ \ \ assert(!sharers\_list.first);}
+\DoxyCodeLine{00097\ \ \ \ assert(sharers\_list.second.size()\ >\ 0);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ SInt32\ index\ =\ m\_rand\_num.next(sharers\_list.second.size());}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{return}\ sharers\_list.second[index];}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00104\ SubsecondTime}
+\DoxyCodeLine{00105\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>::getLatency()}
+\DoxyCodeLine{00106\ \{}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_DIRECTORY\_ENTRY\_LIMITED\_NO\_BROADCAST\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

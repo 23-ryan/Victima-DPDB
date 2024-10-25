@@ -1,0 +1,51 @@
+\doxysection{entry\+\_\+types.\+cc}
+\label{entry__types_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/entry\_types.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/entry\_types.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}entry\_types.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <math.h>}\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <time.h>}\ }
+\DoxyCodeLine{00005\ table\_entry*\ CreateNewEntryAtLevel(\textcolor{keywordtype}{int}\ level,\textcolor{keywordtype}{int}\ number\_of\_levels,\textcolor{keywordtype}{int}\ *level\_percentages,\textcolor{keywordtype}{int}\ *level\_bit\_indices)\{}
+\DoxyCodeLine{00006\ \ \ \ \ table\_entry*\ e=(table\_entry*)malloc(\textcolor{keyword}{sizeof}(table\_entry));}
+\DoxyCodeLine{00007\ \ \ \ \ \textcolor{keywordflow}{if}(level!=number\_of\_levels)\{}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ numb=rand()\%100;}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(numb<level\_percentages[level-\/1])\{}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>rle=(\textcolor{keywordtype}{char}*)malloc(8);}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>entry\_type=table\_entry\_type::RLE;}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>entry\_type=table\_entry\_type::TABLE\_POINTER;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>next\_level\_table=InitiateTable((\textcolor{keywordtype}{int})pow(2.0,(\textcolor{keywordtype}{float})level\_bit\_indices[level]));}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00019\ \ \ \ \ \}}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ numb=rand()\%100;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(numb>20)\{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>rle=(\textcolor{keywordtype}{char}*)malloc(8);}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>entry\_type=table\_entry\_type::RLE;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>entry\_type=table\_entry\_type::BITVECTOR;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ e-\/>bitvector=(\textcolor{keywordtype}{char}*)malloc((\textcolor{keywordtype}{int})pow(2.0,(\textcolor{keywordtype}{float})(level\_bit\_indices[level]-\/1)));}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00030\ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordflow}{return}\ e;}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ table*\ InitiateTable(\textcolor{keywordtype}{int}\ size)\{}
+\DoxyCodeLine{00034\ \ \ \ \ }
+\DoxyCodeLine{00035\ \ \ \ \ table*\ t=(table*)malloc(\textcolor{keyword}{sizeof}(table));}
+\DoxyCodeLine{00036\ \ \ \ \ t-\/>table\_size=size;}
+\DoxyCodeLine{00037\ \ \ \ \ }
+\DoxyCodeLine{00038\ \ \ \ \ t-\/>entries=(table\_entry*)malloc(size*\textcolor{keyword}{sizeof}(table\_entry));}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ size;\ i++)}
+\DoxyCodeLine{00040\ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ t-\/>entries[i].entry\_type=table\_entry\_type::NONE;}
+\DoxyCodeLine{00042\ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordflow}{return}\ t;}
+\DoxyCodeLine{00045\ \}}
+
+\end{DoxyCode}

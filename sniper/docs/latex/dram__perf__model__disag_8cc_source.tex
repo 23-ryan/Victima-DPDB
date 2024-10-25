@@ -1,0 +1,703 @@
+\doxysection{dram\+\_\+perf\+\_\+model\+\_\+disag.\+cc}
+\label{dram__perf__model__disag_8cc_source}\index{common/performance\_model/dram\_perf\_model\_disag.cc@{common/performance\_model/dram\_perf\_model\_disag.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}dram\_perf\_model\_disagg.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//DramPerfModelDisagg::DramPerfModelDisagg(String\ name,\ core\_id\_t\ core\_id,\ AddressHomeLookup*\ address\_home\_lookup,\ UInt32\ cache\_block\_size,\ ParametricDramDirectoryMSI::MemoryManager*\ memory\_manager)}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Removing\ memory\_manager\ since\ its\ kinda\ hard\ to\ implement\ and\ hence\ commenting\ out\ the\ TLB\ effects\ as\ well...\ didn't}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ see\ any\ effect\ after\ all}}
+\DoxyCodeLine{00013\ DramPerfModelDisagg::DramPerfModelDisagg(core\_id\_t\ core\_id,\ UInt32\ cache\_block\_size,\ AddressHomeLookup*\ address\_home\_lookup)}
+\DoxyCodeLine{00014\ \ \ \ :\ DramPerfModel(core\_id,\ cache\_block\_size)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_address\_home\_lookup(address\_home\_lookup)}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ ,\ m\_memory\_manager(memory\_manager)}}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_num\_banks\ \ \ \ \ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/num\_banks"{}}))}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_num\_banks\_log2\ \ \ \ \ \ (floorLog2(m\_num\_banks))}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_num\_bank\_groups\ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/num\_bank\_groups"{}}))}
+\DoxyCodeLine{00021\ \ \ \ ,\ m\_num\_ranks\ \ \ \ \ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/num\_ranks"{}}))}
+\DoxyCodeLine{00022\ \ \ \ ,\ m\_rank\_offset\ \ \ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/rank\_offset"{}}))}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_num\_channels\ \ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/num\_channels"{}}))}
+\DoxyCodeLine{00024\ \ \ \ ,\ m\_channel\_offset\ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/channel\_offset"{}}))}
+\DoxyCodeLine{00025\ \ \ \ ,\ m\_home\_lookup\_bit\ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram\_directory/home\_lookup\_param"{}}))}
+\DoxyCodeLine{00026\ \ \ \ ,\ m\_total\_ranks\ \ \ \ \ \ \ \ \ (m\_num\_ranks\ *\ m\_num\_channels)}
+\DoxyCodeLine{00027\ \ \ \ ,\ m\_banks\_per\_channel\ \ \ (m\_num\_banks\ *\ m\_num\_ranks)}
+\DoxyCodeLine{00028\ \ \ \ ,\ m\_banks\_per\_bank\_group\ (m\_num\_banks\ /\ m\_num\_bank\_groups)}
+\DoxyCodeLine{00029\ \ \ \ ,\ m\_total\_banks\ \ \ \ \ \ \ \ \ (m\_banks\_per\_channel\ *\ m\_num\_channels)}
+\DoxyCodeLine{00030\ \ \ \ ,\ m\_total\_bank\_groups\ \ \ (m\_num\_bank\_groups\ *\ m\_num\_ranks\ *\ m\_num\_channels)}
+\DoxyCodeLine{00031\ \ \ \ ,\ m\_data\_bus\_width\ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/data\_bus\_width"{}}))\ \ \ \textcolor{comment}{//\ In\ bits}}
+\DoxyCodeLine{00032\ \ \ \ ,\ m\_dram\_speed\ \ \ \ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/dram\_speed"{}}))\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ MHz}}
+\DoxyCodeLine{00033\ \ \ \ ,\ m\_dram\_page\_size\ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/dram\_page\_size"{}}))}
+\DoxyCodeLine{00034\ \ \ \ ,\ m\_dram\_page\_size\_log2\ (floorLog2(m\_dram\_page\_size))}
+\DoxyCodeLine{00035\ \ \ \ ,\ m\_open\_page\_mapping\ \ \ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/open\_page\_mapping"{}}))}
+\DoxyCodeLine{00036\ \ \ \ ,\ m\_column\_offset\ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/column\_offset"{}}))}
+\DoxyCodeLine{00037\ \ \ \ ,\ m\_column\_hi\_offset\ \ \ \ (m\_dram\_page\_size\_log2\ -\/\ m\_column\_offset\ +\ m\_num\_banks\_log2)\ \textcolor{comment}{//\ Offset\ for\ higher\ order\ column\ bits}}
+\DoxyCodeLine{00038\ \ \ \ ,\ m\_bank\_offset\ \ \ \ \ \ \ \ \ (m\_dram\_page\_size\_log2\ -\/\ m\_column\_offset)\ \textcolor{comment}{//\ Offset\ for\ bank\ bits}}
+\DoxyCodeLine{00039\ \ \ \ ,\ m\_randomize\_address\ \ \ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/randomize\_address"{}}))}
+\DoxyCodeLine{00040\ \ \ \ ,\ m\_randomize\_offset\ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/randomize\_offset"{}}))}
+\DoxyCodeLine{00041\ \ \ \ ,\ m\_column\_bits\_shift\ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/column\_bits\_shift"{}}))}
+\DoxyCodeLine{00042\ \ \ \ ,\ m\_bus\_bandwidth\ \ \ \ \ \ \ (m\_dram\_speed\ *\ m\_data\_bus\_width\ /\ 1000)\ \textcolor{comment}{//\ In\ bits/ns:\ MT/s=transfers/us\ *\ bits/transfer}}
+\DoxyCodeLine{00043\ \ \ \ ,\ m\_bank\_keep\_open\ \ \ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/bank\_keep\_open"{}})))}
+\DoxyCodeLine{00044\ \ \ \ ,\ m\_bank\_open\_delay\ \ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/bank\_open\_delay"{}})))}
+\DoxyCodeLine{00045\ \ \ \ ,\ m\_bank\_close\_delay\ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/bank\_close\_delay"{}})))}
+\DoxyCodeLine{00046\ \ \ \ ,\ m\_dram\_access\_cost\ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/access\_cost"{}})))}
+\DoxyCodeLine{00047\ \ \ \ ,\ m\_intercommand\_delay\ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/intercommand\_delay"{}})))}
+\DoxyCodeLine{00048\ \ \ \ ,\ m\_intercommand\_delay\_short\ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/intercommand\_delay\_short"{}})))}
+\DoxyCodeLine{00049\ \ \ \ ,\ m\_intercommand\_delay\_long\ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/intercommand\_delay\_long"{}})))}
+\DoxyCodeLine{00050\ \ \ \ ,\ m\_controller\_delay\ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/controller\_delay"{}})))}
+\DoxyCodeLine{00051\ \ \ \ ,\ m\_refresh\_interval\ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/refresh\_interval"{}})))}
+\DoxyCodeLine{00052\ \ \ \ ,\ m\_refresh\_length\ \ \ \ \ \ (SubsecondTime::NS()\ *\ static\_cast<uint64\_t>\ (Sim()-\/>getCfg()-\/>getFloat(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/refresh\_length"{}})))}
+\DoxyCodeLine{00053\ \ \ \ ,\ m\_localdram\_size\ \ \ \ \ \ \ (Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/localdram\_size"{}}))\textcolor{comment}{//\ Move\ data\ if\ greater\ than}}
+\DoxyCodeLine{00054\ \ \ \ ,\ m\_banks\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (m\_total\_banks)}
+\DoxyCodeLine{00055\ \ \ \ ,\ m\_page\_hits\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00056\ \ \ \ ,\ m\_page\_empty\ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00057\ \ \ \ ,\ m\_page\_closing\ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00058\ \ \ \ ,\ m\_page\_miss\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00059\ \ \ \ ,\ m\_data\_moves\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00060\ \ \ \ ,\ m\_page\_prefetches\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00061\ \ \ \ ,\ m\_inflight\_hits\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00062\ \ \ \ ,\ m\_writeback\_pages\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00063\ \ \ \ ,\ m\_local\_evictions\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00064\ \ \ \ ,\ m\_extra\_pages\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00065\ \ \ \ ,\ m\_redundant\_moves\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00066\ \ \ \ ,\ m\_max\_bufferspace\ \ \ \ \ \ \ \ \ \ \ (0)}
+\DoxyCodeLine{00067\ \ \ \ ,\ m\_page\_conflict\_data\_to\_metadata(0)}
+\DoxyCodeLine{00068\ \ \ \ ,\ m\_page\_conflict\_metadata\_to\_data(0)}
+\DoxyCodeLine{00069\ \ \ \ ,\ m\_page\_conflict\_metadata\_to\_metadata(0)}
+\DoxyCodeLine{00070\ \ \ \ ,\ m\_page\_conflict\_data\_to\_data(0)}
+\DoxyCodeLine{00071\ \ \ \ ,\ constant\_time\_policy(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/constant\_time\_policy"{}}))}
+\DoxyCodeLine{00072\ \ \ \ ,\ selective\_constant\_time\_policy(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/selective\_constant\_time\_policy"{}}))}
+\DoxyCodeLine{00073\ \ \ \ ,\ open\_row\_policy(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/ddr/open\_row\_policy"{}}))}
+\DoxyCodeLine{00074\ \ \ \ ,\ m\_total\_queueing\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00075\ \ \ \ ,\ m\_total\_access\_latency(SubsecondTime::Zero())}
+\DoxyCodeLine{00076\ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ }
+\DoxyCodeLine{00078\ \ \ \ \ \ String\ name(\textcolor{stringliteral}{"{}dram"{}});\ }
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/enabled"{}}))}
+\DoxyCodeLine{00080\ \ \ \ \{}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ channel\ =\ 0;\ channel\ <\ m\_num\_channels;\ ++channel)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ m\_queue\_model.push\_back(QueueModel::create(}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ name\ +\ \textcolor{stringliteral}{"{}-\/queue-\/"{}}\ +\ itostr(channel),\ core\_id,\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/dram/queue\_model/type"{}}),}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ m\_bus\_bandwidth.getRoundedLatency(8)));\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ m\_r\_queue\_model.push\_back(QueueModel::create(}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ name\ +\ "{}-\/remote-\/queue-\/"{}\ +\ itostr(channel),\ core\_id,\ Sim()-\/>getCfg()-\/>getString("{}perf\_model/dram/queue\_model/type"{}),}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ m\_bus\_bandwidth.getRoundedLatency(8)));\ //\ bytes\ to\ bits}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ }
+\DoxyCodeLine{00092\ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{comment}{//\ if(Sim()-\/>getCfg()-\/>getInt("{}perf\_model/dram/remote\_partitioned\_queues"{})\ ==\ 1)\ \{}}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{comment}{//\ \ \ m\_data\_movement\ =\ QueueModel::create(}}
+\DoxyCodeLine{00095\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ name\ +\ "{}-\/datamovement-\/queue"{},\ core\_id,\ Sim()-\/>getCfg()-\/>getString("{}perf\_model/dram/queue\_model/type"{}),}}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ m\_r\_part\_bandwidth.getRoundedLatency(8));\ //\ bytes\ to\ bits}}
+\DoxyCodeLine{00097\ \ \ \ \textcolor{comment}{//\ \ \ m\_data\_movement\_2\ =\ QueueModel::create(}}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ name\ +\ "{}-\/datamovement-\/queue-\/2"{},\ core\_id,\ Sim()-\/>getCfg()-\/>getString("{}perf\_model/dram/queue\_model/type"{}),}}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ m\_r\_part2\_bandwidth.getRoundedLatency(8));\ //\ bytes\ to\ bits}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ else\ \{}}
+\DoxyCodeLine{00102\ \ \ \ \textcolor{comment}{//\ \ \ m\_data\_movement\ =\ QueueModel::create(}}
+\DoxyCodeLine{00103\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ name\ +\ "{}-\/datamovement-\/queue"{},\ core\_id,\ Sim()-\/>getCfg()-\/>getString("{}perf\_model/dram/queue\_model/type"{}),}}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ m\_r\_bus\_bandwidth.getRoundedLatency(8));\ //\ bytes\ to\ bits}}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{comment}{//\ \ \ m\_data\_movement\_2\ =\ QueueModel::create(}}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ name\ +\ "{}-\/datamovement-\/queue-\/2"{},\ core\_id,\ Sim()-\/>getCfg()-\/>getString("{}perf\_model/dram/queue\_model/type"{}),}}
+\DoxyCodeLine{00107\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ m\_r\_bus\_bandwidth.getRoundedLatency(8));\ //\ bytes\ to\ bits\ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ }
+\DoxyCodeLine{00111\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}total-\/access-\/latency"{}},\ \&m\_total\_access\_latency);\ \textcolor{comment}{//\ cgiannoula}}
+\DoxyCodeLine{00112\ \ \ \ \textcolor{keywordflow}{for}(UInt32\ rank\ =\ 0;\ rank\ <\ m\_total\_ranks;\ ++rank)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ m\_rank\_avail.push\_back(QueueModel::create(}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ name\ +\ \textcolor{stringliteral}{"{}-\/rank-\/"{}}\ +\ itostr(rank),\ core\_id,\ \textcolor{stringliteral}{"{}history\_list"{}},}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ (m\_num\_bank\_groups\ >\ 1)\ ?\ m\_intercommand\_delay\_short\ :\ m\_intercommand\_delay));}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{comment}{//\ m\_r\_rank\_avail.push\_back(QueueModel::create(}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ name\ +\ "{}-\/remote-\/rank-\/"{}\ +\ itostr(rank),\ core\_id,\ "{}history\_list"{},}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ (m\_num\_bank\_groups\ >\ 1)\ ?\ m\_intercommand\_delay\_short\ :\ m\_intercommand\_delay));}}
+\DoxyCodeLine{00119\ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordflow}{for}(UInt32\ group\ =\ 0;\ group\ <\ m\_total\_bank\_groups;\ ++group)\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ m\_bank\_group\_avail.push\_back(QueueModel::create(}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ name\ +\ \textcolor{stringliteral}{"{}-\/bank-\/group-\/"{}}\ +\ itostr(group),\ core\_id,\ \textcolor{stringliteral}{"{}history\_list"{}},}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ m\_intercommand\_delay\_long));}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{comment}{//\ m\_r\_bank\_group\_avail.push\_back(QueueModel::create(}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ name\ +\ "{}-\/remote-\/bank-\/group-\/"{}\ +\ itostr(group),\ core\_id,\ "{}history\_list"{},}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ m\_intercommand\_delay\_long));}}
+\DoxyCodeLine{00128\ \ \ \ \}}
+\DoxyCodeLine{00129\ \ \ \ }
+\DoxyCodeLine{00130\ \ \ \ LOG\_ASSERT\_ERROR(cache\_block\_size\ ==\ 64,\ \textcolor{stringliteral}{"{}Hardcoded\ for\ 64-\/byte\ cache\ lines"{}});}
+\DoxyCodeLine{00131\ \ \ \ LOG\_ASSERT\_ERROR(m\_column\_offset\ <=\ m\_dram\_page\_size\_log2,\ \textcolor{stringliteral}{"{}Column\ offset\ exceeds\ bounds!"{}});}
+\DoxyCodeLine{00132\ \ \ \ \textcolor{keywordflow}{if}(m\_randomize\_address)}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_num\_bank\_groups\ ==\ 4\ ||\ m\_num\_bank\_groups\ ==\ 8,\ \textcolor{stringliteral}{"{}Number\ of\ bank\ groups\ incorrect\ for\ address\ randomization!"{}});}
+\DoxyCodeLine{00134\ \ \ \ }
+\DoxyCodeLine{00135\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/hits"{}},\ \&m\_page\_hits);}
+\DoxyCodeLine{00136\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/empty"{}},\ \&m\_page\_empty);}
+\DoxyCodeLine{00137\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/closing"{}},\ \&m\_page\_closing);}
+\DoxyCodeLine{00138\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/miss"{}},\ \&m\_page\_miss);}
+\DoxyCodeLine{00139\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/conflict-\/data-\/to-\/metadata"{}},\ \&m\_page\_conflict\_data\_to\_metadata);}
+\DoxyCodeLine{00140\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/conflict-\/metadata-\/to-\/data"{}},\ \&m\_page\_conflict\_metadata\_to\_data);}
+\DoxyCodeLine{00141\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/conflict-\/metadata-\/to-\/metadata"{}},\ \&m\_page\_conflict\_metadata\_to\_metadata);}
+\DoxyCodeLine{00142\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ddr"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/conflict-\/data-\/to-\/data"{}},\ \&m\_page\_conflict\_data\_to\_data);}
+\DoxyCodeLine{00143\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}data-\/moves"{}},\ \&m\_data\_moves);}
+\DoxyCodeLine{00144\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}page-\/prefetches"{}},\ \&m\_page\_prefetches);}
+\DoxyCodeLine{00145\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}inflight-\/hits"{}},\ \&m\_inflight\_hits);}
+\DoxyCodeLine{00146\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}writeback-\/pages"{}},\ \&m\_writeback\_pages);}
+\DoxyCodeLine{00147\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}local-\/evictions"{}},\ \&m\_local\_evictions);}
+\DoxyCodeLine{00148\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}extra-\/traffic"{}},\ \&m\_extra\_pages);}
+\DoxyCodeLine{00149\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}redundant-\/moves"{}},\ \&m\_redundant\_moves);}
+\DoxyCodeLine{00150\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}dram"{}},\ core\_id,\ \textcolor{stringliteral}{"{}max-\/bufferspace"{}},\ \&m\_max\_bufferspace);}
+\DoxyCodeLine{00151\ \ \ \ }
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ DramPerfModelDisagg::\string~DramPerfModelDisagg()}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model.size())}
+\DoxyCodeLine{00158\ \ \ \ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ channel\ =\ 0;\ channel\ <\ m\_num\_channels;\ ++channel)}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_queue\_model[channel];}
+\DoxyCodeLine{00161\ \ \ \ \}}
+\DoxyCodeLine{00162\ \ \ \ \textcolor{keywordflow}{if}\ (m\_rank\_avail.size())}
+\DoxyCodeLine{00163\ \ \ \ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ rank\ =\ 0;\ rank\ <\ m\_total\_ranks;\ ++rank)}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_rank\_avail[rank];}
+\DoxyCodeLine{00166\ \ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordflow}{if}\ (m\_bank\_group\_avail.size())}
+\DoxyCodeLine{00169\ \ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ group\ =\ 0;\ group\ <\ m\_total\_bank\_groups;\ ++group)}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_bank\_group\_avail[group];}
+\DoxyCodeLine{00172\ \ \ \ \}}
+\DoxyCodeLine{00173\ \ \ \ }
+\DoxyCodeLine{00174\ \ \ \ \textcolor{comment}{//\ if\ (m\_r\_queue\_model.size())}}
+\DoxyCodeLine{00175\ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{comment}{//\ \ \ \ for(UInt32\ channel\ =\ 0;\ channel\ <\ m\_num\_channels;\ ++channel)}}
+\DoxyCodeLine{00177\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ delete\ m\_r\_queue\_model[channel];}}
+\DoxyCodeLine{00178\ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \textcolor{comment}{//\ if\ (m\_r\_rank\_avail.size())}}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{comment}{//\ \ \ \ for(UInt32\ rank\ =\ 0;\ rank\ <\ m\_total\_ranks;\ ++rank)}}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ delete\ m\_r\_rank\_avail[rank];}}
+\DoxyCodeLine{00184\ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \textcolor{comment}{//\ if\ (m\_r\_bank\_group\_avail.size())}}
+\DoxyCodeLine{00187\ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{comment}{//\ \ \ \ for(UInt32\ group\ =\ 0;\ group\ <\ m\_total\_bank\_groups;\ ++group)}}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ delete\ m\_r\_bank\_group\_avail[group];}}
+\DoxyCodeLine{00190\ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ UInt64}
+\DoxyCodeLine{00194\ DramPerfModelDisagg::parseAddressBits(UInt64\ address,\ UInt32\ \&data,\ UInt32\ offset,\ UInt32\ size,\ UInt64\ base\_address\ =\ 0)}
+\DoxyCodeLine{00195\ \{}
+\DoxyCodeLine{00196\ \ \ \ \textcolor{comment}{//parse\ data\ from\ the\ address\ based\ on\ the\ offset\ and\ size,\ return\ the\ address\ without\ the\ bits\ used\ to\ parse\ the\ data.}}
+\DoxyCodeLine{00197\ \ \ \ UInt32\ log2\_size\ =\ floorLog2(size);}
+\DoxyCodeLine{00198\ \ \ \ \textcolor{keywordflow}{if}\ (base\_address\ !=\ 0)\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ data\ =\ (base\_address\ >>\ offset)\ \%\ size;}
+\DoxyCodeLine{00200\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ data\ =\ (address\ >>\ offset)\ \%\ size;}
+\DoxyCodeLine{00202\ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \textcolor{keywordflow}{return}\ ((address\ >>\ (offset\ +\ log2\_size))\ <<\ offset)\ |\ (address\ \&\ ((1\ <<\ offset)\ -\/\ 1));}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00207\ DramPerfModelDisagg::parseDeviceAddress(IntPtr\ address,\ UInt32\ \&channel,\ UInt32\ \&rank,\ UInt32\ \&bank\_group,\ UInt32\ \&bank,\ UInt32\ \&column,\ UInt64\ \&page)}
+\DoxyCodeLine{00208\ \{}
+\DoxyCodeLine{00209\ \ \ \ \textcolor{comment}{//\ Construct\ DDR\ address\ which\ has\ bits\ used\ for\ interleaving\ removed}}
+\DoxyCodeLine{00210\ \ \ \ UInt64\ linearAddress\ =\ m\_address\_home\_lookup-\/>getLinearAddress(address);}
+\DoxyCodeLine{00211\ \ \ \ UInt64\ address\_bits\ =\ linearAddress\ >>\ 6;}
+\DoxyCodeLine{00212\ \ \ \ \textcolor{comment}{/*address\_bits\ =\ */}parseAddressBits(address\_bits,\ channel,\ m\_channel\_offset,\ m\_num\_channels,\ m\_channel\_offset\ <\ m\_home\_lookup\_bit\ ?\ address\ :\ linearAddress);}
+\DoxyCodeLine{00213\ \ \ \ address\_bits\ =\ parseAddressBits(address\_bits,\ rank,\ \ \ \ m\_rank\_offset,\ \ \ \ m\_num\_ranks,\ \ \ \ m\_rank\_offset\ <\ m\_home\_lookup\_bit\ ?\ address\ :\ linearAddress);}
+\DoxyCodeLine{00214\ \ \ \ }
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \textcolor{keywordflow}{if}\ (m\_open\_page\_mapping)}
+\DoxyCodeLine{00217\ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \textcolor{comment}{//\ Open-\/page\ mapping:\ column\ address\ is\ bottom\ bits,\ then\ bank,\ then\ page}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_column\_offset)}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Column\ address\ is\ split\ into\ 2\ halves\ ColHi\ and\ ColLo\ and}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ address\ looks\ like:\ |\ Page\ |\ ColHi\ |\ Bank\ |\ ColLo\ |}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ m\_column\_offset\ specifies\ the\ number\ of\ ColHi\ bits}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ column\ =\ (((address\_bits\ >>\ m\_column\_hi\_offset)\ <<\ m\_bank\_offset)}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ (address\_bits\ \&\ ((1\ <<\ m\_bank\_offset)\ -\/\ 1)))\ \%\ m\_dram\_page\_size;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ address\_bits\ =\ address\_bits\ >>\ m\_bank\_offset;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ bank\_group\ =\ address\_bits\ \%\ m\_num\_bank\_groups;}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ bank\ =\ address\_bits\ \%\ m\_num\_banks;}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ address\_bits\ =\ address\_bits\ >>\ (m\_num\_banks\_log2\ +\ m\_column\_offset);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ column\ =\ address\_bits\ \%\ m\_dram\_page\_size;\ address\_bits\ /=\ m\_dram\_page\_size;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ bank\_group\ =\ address\_bits\ \%\ m\_num\_bank\_groups;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ bank\ =\ address\_bits\ \%\ m\_num\_banks;\ address\_bits\ /=\ m\_num\_banks;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ page\ =\ address\_bits;}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \textcolor{comment}{//\ Test\ address\ parsing\ done\ in\ this\ function\ for\ open\ page\ mapping}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ std::bitset<10>\ bs\_col\ (column);}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ std::string\ str\_col\ =\ bs\_col.to\_string<char,std::string::traits\_type,std::string::allocator\_type>();}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ std::stringstream\ ss\_original,\ ss\_recomputed;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ ss\_original\ <<\ std::bitset<64>(linearAddress\ >>\ m\_block\_size\_log2)\ <<\ std::endl;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ ss\_recomputed\ <<\ std::bitset<50>(page)\ <<\ str\_col.substr(0,m\_column\_offset)\ <<\ std::bitset<4>(bank)}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ <<\ str\_col.substr(m\_column\_offset,\ str\_col.length()-\/m\_column\_offset)\ <<\ std::endl;}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(ss\_original.str()\ ==\ ss\_recomputed.str(),\ \textcolor{stringliteral}{"{}Error\ in\ device\ address\ parsing!"{}});}
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00249\ \ \ \ \}}
+\DoxyCodeLine{00250\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00251\ \ \ \ \{}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ bank\_group\ =\ address\_bits\ \%\ m\_num\_bank\_groups;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ bank\ =\ address\_bits\ \%\ m\_num\_banks;}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ address\_bits\ /=\ m\_num\_banks;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \textcolor{comment}{//\ Closed-\/page\ mapping:\ column\ address\ is\ bits\ X+banksize:X,\ row\ address\ is\ everything\ else}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \textcolor{comment}{//\ (from\ whatever\ is\ left\ after\ cutting\ channel/rank/bank\ from\ the\ bottom)}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ column\ =\ (address\_bits\ >>\ m\_column\_bits\_shift)\ \%\ m\_dram\_page\_size;}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ page\ =\ (((address\_bits\ >>\ m\_column\_bits\_shift)\ /\ m\_dram\_page\_size)\ <<\ m\_column\_bits\_shift)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ |\ (address\_bits\ \&\ ((1\ <<\ m\_column\_bits\_shift)\ -\/\ 1));}
+\DoxyCodeLine{00261\ \ \ \ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \textcolor{keywordflow}{if}(m\_randomize\_address)}
+\DoxyCodeLine{00264\ \ \ \ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ std::bitset<3>\ row\_bits(page\ >>\ m\_randomize\_offset);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Row[offset+2:offset]}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ UInt32\ row\_bits3\ =\ row\_bits.to\_ulong();}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ row\_bits[2]\ =\ 0;}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ UInt32\ row\_bits2\ =\ row\_bits.to\_ulong();}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ bank\_group\ \string^=\ ((m\_num\_bank\_groups\ ==\ 8)\ ?\ row\_bits3\ :\ row\_bits2);\ \ \ \ \textcolor{comment}{//\ BankGroup\ XOR\ Row}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ bank\ /=\ m\_num\_bank\_groups;}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ bank\ \string^=\ row\_bits2;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Bank\ XOR\ Row}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ bank\ =\ m\_banks\_per\_bank\_group\ *\ bank\_group\ +\ bank;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ rank\ =\ (m\_num\_ranks\ >\ 1)\ ?\ rank\ \string^\ row\_bits[0]\ :\ rank;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Rank\ XOR\ Row}}
+\DoxyCodeLine{00274\ \ \ \ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \textcolor{comment}{//printf("{}[\%2d]\ address\ \%12lx\ linearAddress\ \%12lx\ channel\ \%2x\ rank\ \%2x\ bank\_group\ \%2x\ bank\ \%2x\ page\ \%8lx\ crb\ \%4u\(\backslash\)n"{},\ m\_core\_id,\ address,\ linearAddress,\ channel,\ rank,\ bank\_group,\ bank,\ page,\ (((channel\ *\ m\_num\_ranks)\ +\ rank)\ *\ m\_num\_banks)\ +\ bank);}}
+\DoxyCodeLine{00277\ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{comment}{//SubsecondTime}}
+\DoxyCodeLine{00280\ \textcolor{comment}{//DramPerfModelDisagg::getAccessLatencyRemote(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\ SubsecondTime\ \&queue\_delay)}}
+\DoxyCodeLine{00281\ \textcolor{comment}{//Nandita:\ not\ sure\ if\ queue\_delay\ is\ actually\ used\ anywhere\ so\ removing\ for\ now.\ May\ have\ to\ still\ update\ stats\ so\ the}}
+\DoxyCodeLine{00282\ \textcolor{comment}{//right\ ones\ are\ collected.\ }}
+\DoxyCodeLine{00283\ \textcolor{comment}{//\ SubsecondTime}}
+\DoxyCodeLine{00284\ \textcolor{comment}{//\ DramPerfModelDisagg::getAccessLatencyRemote(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf)}}
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00286\ \textcolor{comment}{//\ \ \ \ //\ pkt\_size\ is\ in\ 'Bytes'}}
+\DoxyCodeLine{00287\ \textcolor{comment}{//\ \ \ \ //\ m\_dram\_bandwidth\ is\ in\ 'Bits\ per\ clock\ cycle'}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \textcolor{comment}{//\ \ \ \ //std::cout\ <<\ "{}Remote\ Access"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \textcolor{comment}{//\ \ \ \ UInt32\ channel,\ rank,\ bank\_group,\ bank,\ column;}}
+\DoxyCodeLine{00292\ \textcolor{comment}{//\ \ \ \ UInt64\ page;}}
+\DoxyCodeLine{00293\ \textcolor{comment}{//\ \ \ \ parseDeviceAddress(address,\ channel,\ rank,\ bank\_group,\ bank,\ column,\ page);}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ t\_now\ =\ pkt\_time;}}
+\DoxyCodeLine{00296\ \textcolor{comment}{//\ \ \ \ perf-\/>updateTime(t\_now);}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \textcolor{comment}{//\ \ \ \ //\ DDR\ controller\ pipeline\ delay}}
+\DoxyCodeLine{00299\ \textcolor{comment}{//\ \ \ \ t\_now\ +=\ m\_controller\_delay;}}
+\DoxyCodeLine{00300\ \textcolor{comment}{//\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_CNTLR);}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \textcolor{comment}{//\ \ \ \ //\ DDR\ refresh}}
+\DoxyCodeLine{00303\ \textcolor{comment}{//\ \ \ \ if\ (m\_refresh\_interval\ !=\ SubsecondTime::Zero())}}
+\DoxyCodeLine{00304\ \textcolor{comment}{//\ \ \ \ \{}}
+\DoxyCodeLine{00305\ \textcolor{comment}{//\ \ \ \ \ \ \ SubsecondTime\ refresh\_base\ =\ (t\_now.getPS()\ /\ m\_refresh\_interval.getPS())\ *\ m\_refresh\_interval;}}
+\DoxyCodeLine{00306\ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (t\_now\ -\/\ refresh\_base\ <\ m\_refresh\_length)}}
+\DoxyCodeLine{00307\ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00308\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ t\_now\ =\ refresh\_base\ +\ m\_refresh\_length;}}
+\DoxyCodeLine{00309\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_REFRESH);}}
+\DoxyCodeLine{00310\ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00311\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \textcolor{comment}{//\ \ \ \ //\ Page\ hit/miss}}
+\DoxyCodeLine{00314\ \textcolor{comment}{//\ \ \ \ UInt64\ crb\ =\ (channel\ *\ m\_num\_ranks\ *\ m\_num\_banks)\ +\ (rank\ *\ m\_num\_banks)\ +\ bank;\ //\ Combine\ channel,\ rank,\ bank\ to\ index\ m\_banks}}
+\DoxyCodeLine{00315\ \textcolor{comment}{//\ \ \ \ LOG\_ASSERT\_ERROR(crb\ <\ m\_total\_banks,\ "{}Bank\ index\ out\ of\ bounds"{});}}
+\DoxyCodeLine{00316\ \textcolor{comment}{//\ \ \ \ BankInfo\ \&bank\_info\ =\ m\_r\_banks[crb];}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{comment}{//\ \ \ \ //printf("{}[\%2d]\ \%s\ (\%12lx,\ \%4lu,\ \%4lu),\ t\_open\ =\ \%lu,\ t\_now\ =\ \%lu,\ bank\_info.t\_avail\ =\ \%lu\(\backslash\)n"{},\ m\_core\_id,\ bank\_info.open\_page\ ==\ page\ \&\&\ bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ >=\ t\_now\ ?\ "{}Page\ Hit:\ "{}\ :\ "{}Page\ Miss:"{},\ address,\ crb,\ page\ \%\ 10000,\ t\_now.getNS()\ -\/\ bank\_info.t\_avail.getNS(),\ t\_now.getNS(),\ bank\_info.t\_avail.getNS());}}
+\DoxyCodeLine{00319\ \textcolor{comment}{//\ \ \ \ //\ Page\ hit/miss}}
+\DoxyCodeLine{00320\ \textcolor{comment}{//\ \ \ \ if\ (bank\_info.open\_page\ ==\ page\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ Last\ access\ was\ to\ this\ row}}
+\DoxyCodeLine{00321\ \textcolor{comment}{//\ \ \ \ \ \ \ \&\&\ bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ >=\ t\_now\ \ \ //\ Bank\ hasn't\ been\ closed\ in\ the\ meantime}}
+\DoxyCodeLine{00322\ \textcolor{comment}{//\ \ \ \ )}}
+\DoxyCodeLine{00323\ \textcolor{comment}{//\ \ \ \ \{}}
+\DoxyCodeLine{00324\ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (bank\_info.t\_avail\ >\ t\_now)}}
+\DoxyCodeLine{00325\ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00326\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ t\_now\ =\ bank\_info.t\_avail;}}
+\DoxyCodeLine{00327\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BANK\_PENDING);}}
+\DoxyCodeLine{00328\ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00329\ \textcolor{comment}{//\ \ \ \ \ \ \ ++m\_page\_hits;}}
+\DoxyCodeLine{00330\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00331\ \textcolor{comment}{//\ \ \ \ else}}
+\DoxyCodeLine{00332\ \textcolor{comment}{//\ \ \ \ \{}}
+\DoxyCodeLine{00333\ \textcolor{comment}{//\ \ \ \ \ \ \ //\ Wait\ for\ bank\ to\ become\ available}}
+\DoxyCodeLine{00334\ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (bank\_info.t\_avail\ >\ t\_now)}}
+\DoxyCodeLine{00335\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ t\_now\ =\ bank\_info.t\_avail;}}
+\DoxyCodeLine{00336\ \textcolor{comment}{//\ \ \ \ \ \ \ //\ Close\ page}}
+\DoxyCodeLine{00337\ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ >=\ t\_now)}}
+\DoxyCodeLine{00338\ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00339\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ //\ We\ found\ the\ page\ open\ and\ have\ to\ close\ it\ ourselves}}
+\DoxyCodeLine{00340\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_close\_delay;}}
+\DoxyCodeLine{00341\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ ++m\_page\_miss;}}
+\DoxyCodeLine{00342\ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00343\ \textcolor{comment}{//\ \ \ \ \ \ \ else\ if\ (bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ +\ m\_bank\_close\_delay\ >\ t\_now)}}
+\DoxyCodeLine{00344\ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00345\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ //\ Bank\ was\ being\ closed,\ we\ have\ to\ wait\ for\ that\ to\ complete}}
+\DoxyCodeLine{00346\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ t\_now\ =\ bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ +\ m\_bank\_close\_delay;}}
+\DoxyCodeLine{00347\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ ++m\_page\_closing;}}
+\DoxyCodeLine{00348\ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00349\ \textcolor{comment}{//\ \ \ \ \ \ \ else}}
+\DoxyCodeLine{00350\ \textcolor{comment}{//\ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00351\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ //\ Bank\ was\ already\ closed,\ no\ delay.}}
+\DoxyCodeLine{00352\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ ++m\_page\_empty;}}
+\DoxyCodeLine{00353\ \textcolor{comment}{//\ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{comment}{//\ \ \ \ \ \ \ //\ Open\ page}}
+\DoxyCodeLine{00356\ \textcolor{comment}{//\ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_open\_delay;}}
+\DoxyCodeLine{00357\ \textcolor{comment}{//\ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BANK\_CONFLICT);}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \textcolor{comment}{//\ \ \ \ \ \ \ bank\_info.open\_page\ =\ page;}}
+\DoxyCodeLine{00360\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{comment}{//\ \ \ \ //\ Rank\ access\ time\ and\ availability}}
+\DoxyCodeLine{00363\ \textcolor{comment}{//\ \ \ \ UInt64\ cr\ =\ (channel\ *\ m\_num\_ranks)\ +\ rank;}}
+\DoxyCodeLine{00364\ \textcolor{comment}{//\ \ \ \ LOG\_ASSERT\_ERROR(cr\ <\ m\_total\_ranks,\ "{}Rank\ index\ out\ of\ bounds"{});}}
+\DoxyCodeLine{00365\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ rank\_avail\_request\ =\ (m\_num\_bank\_groups\ >\ 1)\ ?\ m\_intercommand\_delay\_short\ :\ m\_intercommand\_delay;}}
+\DoxyCodeLine{00366\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ rank\_avail\_delay\ =\ m\_r\_rank\_avail.size()\ ?\ m\_r\_rank\_avail[cr]-\/>computeQueueDelay(t\_now,\ rank\_avail\_request,\ requester)\ :\ SubsecondTime::Zero();}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{comment}{//\ \ \ \ //\ Bank\ group\ access\ time\ and\ availability}}
+\DoxyCodeLine{00369\ \textcolor{comment}{//\ \ \ \ UInt64\ crbg\ =\ (channel\ *\ m\_num\_ranks\ *\ m\_num\_bank\_groups)\ +\ (rank\ *\ m\_num\_bank\_groups)\ +\ bank\_group;}}
+\DoxyCodeLine{00370\ \textcolor{comment}{//\ \ \ \ LOG\_ASSERT\_ERROR(crbg\ <\ m\_total\_bank\_groups,\ "{}Bank-\/group\ index\ out\ of\ bounds"{});}}
+\DoxyCodeLine{00371\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ group\_avail\_delay\ =\ m\_r\_bank\_group\_avail.size()\ ?\ m\_r\_bank\_group\_avail[crbg]-\/>computeQueueDelay(t\_now,\ m\_intercommand\_delay\_long,\ requester)\ :\ SubsecondTime::Zero();}}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \textcolor{comment}{//\ \ \ \ //\ Device\ access\ time\ (tCAS)}}
+\DoxyCodeLine{00374\ \textcolor{comment}{//\ \ \ \ t\_now\ +=\ m\_dram\_access\_cost;}}
+\DoxyCodeLine{00375\ \textcolor{comment}{//\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_DEVICE);}}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \textcolor{comment}{//\ \ \ \ //\ Mark\ bank\ as\ busy\ until\ it\ can\ receive\ its\ next\ command}}
+\DoxyCodeLine{00378\ \textcolor{comment}{//\ \ \ \ //\ Done\ before\ waiting\ for\ the\ bus\ to\ be\ free:\ sort\ of\ assumes\ best-\/case\ bus\ scheduling}}
+\DoxyCodeLine{00379\ \textcolor{comment}{//\ \ \ \ bank\_info.t\_avail\ =\ t\_now;}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \textcolor{comment}{//\ \ \ \ //\ Add\ the\ wait\ time\ for\ the\ larger\ of\ bank\ group\ and\ rank\ availability\ delay}}
+\DoxyCodeLine{00382\ \textcolor{comment}{//\ \ \ \ t\_now\ +=\ (rank\_avail\_delay\ >\ group\_avail\_delay)\ ?\ rank\_avail\_delay\ :\ group\_avail\_delay;}}
+\DoxyCodeLine{00383\ \textcolor{comment}{//\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_DEVICE);}}
+\DoxyCodeLine{00384\ \textcolor{comment}{//\ \ \ \ //std::cout\ <<\ "{}DDR\ Processing\ time:\ "{}\ <<\ m\_bus\_bandwidth.getRoundedLatency(8*pkt\_size)\ <<\ std::endl;\ }}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{comment}{//\ \ \ \ //\ DDR\ bus\ latency\ and\ queuing\ delay}}
+\DoxyCodeLine{00387\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ ddr\_processing\_time\ =\ m\_bus\_bandwidth.getRoundedLatency(8\ *\ pkt\_size);\ //\ bytes\ to\ bits}}
+\DoxyCodeLine{00388\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ ddr\_queue\_delay\ =\ m\_r\_queue\_model.size()\ ?\ m\_r\_queue\_model[channel]-\/>computeQueueDelay(t\_now,\ ddr\_processing\_time,\ requester)\ :\ SubsecondTime::Zero();}}
+\DoxyCodeLine{00389\ \textcolor{comment}{//\ \ \ \ t\_now\ +=\ ddr\_queue\_delay;}}
+\DoxyCodeLine{00390\ \textcolor{comment}{//\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_QUEUE);}}
+\DoxyCodeLine{00391\ \textcolor{comment}{//\ \ \ \ //std::cout\ <<\ "{}Local\ Queue\ Processing\ time:\ "{}\ <<\ m\_bus\_bandwidth.getRoundedLatency(8*pkt\_size)\ <<\ "{}\ Local\ queue\ delay\ "{}\ <<\ ddr\_queue\_delay\ <<\ std::endl;\ }}
+\DoxyCodeLine{00392\ \textcolor{comment}{//\ \ \ \ SubsecondTime\ datamovement\_queue\_delay;}}
+\DoxyCodeLine{00393\ \textcolor{comment}{//\ \ \ \ if(m\_r\_partition\_queues\ ==\ 1)\ \{\ }}
+\DoxyCodeLine{00394\ \textcolor{comment}{//\ \ \ \ \ \ datamovement\_queue\_delay\ =\ m\_data\_movement\_2-\/>computeQueueDelay(t\_now,\ m\_r\_part2\_bandwidth.getRoundedLatency(8*pkt\_size),\ requester);}}
+\DoxyCodeLine{00395\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ m\_redundant\_moves++;\ }}
+\DoxyCodeLine{00396\ \textcolor{comment}{//\ \ \ \ \}\ }}
+\DoxyCodeLine{00397\ \textcolor{comment}{//\ \ \ \ else}}
+\DoxyCodeLine{00398\ \textcolor{comment}{//\ \ \ \ \ \ datamovement\_queue\_delay\ =\ m\_data\_movement-\/>computeQueueDelay(t\_now,\ m\_r\_bus\_bandwidth.getRoundedLatency(8*pkt\_size),\ requester);}}
+\DoxyCodeLine{00399\ \textcolor{comment}{//\ \ \ \ //std::cout\ <<\ "{}Packet\ size:\ "{}\ <<\ pkt\_size\ <<\ "{}\ \ Cacheline\ Processing\ time:\ "{}\ <<\ m\_r\_bus\_bandwidth.getRoundedLatency(8*pkt\_size)\ <<\ "{}\ Remote\ queue\ delay\ "{}\ <<\ datamovement\_queue\_delay\ <<\ std::endl;\ }}
+\DoxyCodeLine{00400\ \textcolor{comment}{//\ \ \ \ t\_now\ +=\ ddr\_processing\_time;}}
+\DoxyCodeLine{00401\ \textcolor{comment}{//\ \ \ \ t\_now\ +=\ m\_r\_added\_latency;}}
+\DoxyCodeLine{00402\ \textcolor{comment}{//\ \ \ \ if(m\_r\_mode\ !=\ 4\ \&\&\ !m\_r\_enable\_selective\_moves)\ \{}}
+\DoxyCodeLine{00403\ \textcolor{comment}{//\ \ \ \ \ \ t\_now\ +=\ datamovement\_queue\_delay;}}
+\DoxyCodeLine{00404\ \textcolor{comment}{//\ \ \ \ \}\ }}
+\DoxyCodeLine{00405\ \ \ \ }
+\DoxyCodeLine{00406\ \textcolor{comment}{//\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BUS);}}
+\DoxyCodeLine{00407\ \ \ \ }
+\DoxyCodeLine{00408\ \textcolor{comment}{//\ \ //track\ access\ to\ page}}
+\DoxyCodeLine{00409\ \textcolor{comment}{//\ \ \ \ UInt64\ phys\_page\ =\ \ address\ \&\ \string~((UInt64(1)\ <<\ 12)\ -\/\ 1);\ //Assuming\ 4K\ page}}
+\DoxyCodeLine{00410\ \textcolor{comment}{//\ \ \ \ if(m\_r\_cacheline\_gran)\ }}
+\DoxyCodeLine{00411\ \textcolor{comment}{//\ \ \ \ \ \ phys\_page\ =\ \ address\ \&\ \string~((UInt64(1)\ <<\ 6)\ -\/\ 1);\ //Assuming\ 4K\ page\ }}
+\DoxyCodeLine{00412\ \textcolor{comment}{//\ \ \ \ bool\ move\_page\ =\ false;\ }}
+\DoxyCodeLine{00413\ \textcolor{comment}{//\ \ \ \ if(m\_r\_mode\ ==\ 2)\ \{\ //Only\ move\ pages\ when\ the\ page\ has\ been\ accessed\ remotely\ m\_r\_datamov\_threshold\ times}}
+\DoxyCodeLine{00414\ \textcolor{comment}{//\ \ \ \ auto\ it\ =\ m\_remote\_access\_tracker.find(phys\_page);}}
+\DoxyCodeLine{00415\ \textcolor{comment}{//\ \ \ \ if\ (it\ !=\ m\_remote\_access\_tracker.end())}}
+\DoxyCodeLine{00416\ \textcolor{comment}{//\ \ \ \ \ \ m\_remote\_access\_tracker[phys\_page]++;\ }}
+\DoxyCodeLine{00417\ \textcolor{comment}{//\ \ \ \ else}}
+\DoxyCodeLine{00418\ \textcolor{comment}{//\ \ \ \ \ \ m\_remote\_access\_tracker[phys\_page]\ =\ 1;}}
+\DoxyCodeLine{00419\ \textcolor{comment}{//\ \ \ \ if\ (m\_remote\_access\_tracker[phys\_page]\ >\ m\_r\_datamov\_threshold)}}
+\DoxyCodeLine{00420\ \textcolor{comment}{//\ \ \ \ \ \ move\_page\ =\ true;}}
+\DoxyCodeLine{00421\ \textcolor{comment}{//\ \ \ \ \}\ }}
+\DoxyCodeLine{00422\ \textcolor{comment}{//\ \ \ \ if(m\_r\_mode\ ==\ 1\ ||\ m\_r\_mode==3)\ \{}}
+\DoxyCodeLine{00423\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ move\_page\ =\ true;\ }}
+\DoxyCodeLine{00424\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00425\ \textcolor{comment}{//\ \ \ \ if((m\_r\_reserved\_bufferspace\ >\ 0)\ \&\&\ ((m\_inflight\_pages.size()\ +\ m\_inflightevicted\_pages.size())\ \ >=\ (m\_r\_reserved\_bufferspace/100)*m\_localdram\_size/4096))}}
+\DoxyCodeLine{00426\ \textcolor{comment}{//\ \ \ \ \ \ move\_page\ =\ false;}}
+\DoxyCodeLine{00427\ \textcolor{comment}{//\ \ \ \ \ //if\ (m\_r\_enable\_selective\_moves)\ \{}}
+\DoxyCodeLine{00428\ \textcolor{comment}{//\ //\ \ \ if(m\_data\_movement-\/>isQueueFull())}}
+\DoxyCodeLine{00429\ \textcolor{comment}{//\ //\ \ \ \ \ \ \ \ \ \ \ move\_page\ =\ false;}}
+\DoxyCodeLine{00430\ \textcolor{comment}{//\ \ \ //\ \}\ }}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ }
+\DoxyCodeLine{00432\ \textcolor{comment}{//\ \ \ \ //Adding\ data\ movement\ cost\ of\ the\ entire\ page\ for\ now\ (this\ just\ adds\ contention\ in\ the\ queue):}}
+\DoxyCodeLine{00433\ \textcolor{comment}{//\ \ \ \ if\ (move\_page)\ \{}}
+\DoxyCodeLine{00434\ \textcolor{comment}{//\ \ \ \ \ \ ++m\_data\_moves;}}
+\DoxyCodeLine{00435\ \textcolor{comment}{//\ \ \ \ \ \ SubsecondTime\ page\_datamovement\_queue\_delay\ =\ SubsecondTime::Zero();}}
+\DoxyCodeLine{00436\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ if(m\_r\_simulate\_datamov\_overhead\ \&\&\ !m\_r\_cacheline\_gran)\ \{\ }}
+\DoxyCodeLine{00437\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ //check\ if\ queue\ is\ full}}
+\DoxyCodeLine{00438\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ //if\ it\ is...\ wait.}}
+\DoxyCodeLine{00439\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ //to\ wait:\ t\_now\ +\ window\_size}}
+\DoxyCodeLine{00440\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ //try\ again}}
+\DoxyCodeLine{00441\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ if(m\_r\_partition\_queues)\ \{}}
+\DoxyCodeLine{00442\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_datamovement\_queue\_delay\ =\ m\_data\_movement-\/>computeQueueDelay(t\_now,\ m\_r\_part\_bandwidth.getRoundedLatency(8*4096),\ requester);}}
+\DoxyCodeLine{00443\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //for(int\ i=0;\ i<64;\ i++)}}
+\DoxyCodeLine{00444\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ \ \ \ \ \ page\_datamovement\_queue\_delay\ +=\ m\_data\_movement-\/>computeQueueDelay(t\_now,\ m\_r\_part\_bandwidth.getRoundedLatency(8*pkt\_size),\ requester);}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00446\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ else\ \{}}
+\DoxyCodeLine{00447\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_datamovement\_queue\_delay\ =\ m\_data\_movement-\/>computeQueueDelay(t\_now,\ m\_r\_bus\_bandwidth.getRoundedLatency(8*4096),\ requester);}}
+\DoxyCodeLine{00448\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //for(int\ i=0;\ i<64;\ i++)}}
+\DoxyCodeLine{00449\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ \ \ \ \ \ page\_datamovement\_queue\_delay\ +=\ m\_data\_movement-\/>computeQueueDelay(t\_now,\ m\_r\_bus\_bandwidth.getRoundedLatency(8*pkt\_size),\ requester);}}
+\DoxyCodeLine{00450\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //std::cout\ <<\ "{}Page\ processing\ time:\ "{}\ <<\ m\_r\_bus\_bandwidth.getRoundedLatency(8*4096)\ <<\ std::endl;\ \ }}
+\DoxyCodeLine{00451\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //std::cout\ <<\ "{}Moving\ page:\ "{}\ <<\ page\_datamovement\_queue\_delay\ <<\ "{}\ Moving\ cacheline:\ "{}\ <<\ datamovement\_queue\_delay\ <<\ std::endl;\ }}
+\DoxyCodeLine{00452\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t\_now\ +=\ page\_datamovement\_queue\_delay;}}
+\DoxyCodeLine{00453\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t\_now\ -\/=\ datamovement\_queue\_delay;\ \ }}
+\DoxyCodeLine{00454\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00455\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ //std::cout\ <<\ m\_r\_bus\_bandwidth.getRoundedLatency(8*4096)\ <<\ std::endl;\ \ }}
+\DoxyCodeLine{00456\ \textcolor{comment}{//\ \ \ \ \ \ \}}}
+\DoxyCodeLine{00457\ \textcolor{comment}{//\ \ \ \ \ \ else}}
+\DoxyCodeLine{00458\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_datamovement\_queue\_delay\ =\ SubsecondTime::Zero();\ }}
+\DoxyCodeLine{00459\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ /*\ //Removing\ the\ TLB\ overhead\ part\ for\ now}}
+\DoxyCodeLine{00460\ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (m\_r\_simulate\_tlb\_overhead\ \&\&\ std::find(m\_memory\_manager-\/>m\_invalid\_PTE.begin(),\ m\_memory\_manager-\/>m\_invalid\_PTE.end(),\ phys\_page)\ ==\ m\_memory\_manager-\/>m\_invalid\_PTE.end())}}
+\DoxyCodeLine{00461\ \textcolor{comment}{//\ \ \ \ \ \ m\_memory\_manager-\/>m\_invalid\_PTE.push\_back(phys\_page);}}
+\DoxyCodeLine{00462\ \textcolor{comment}{//\ \ \ \ \ */\ }}
+\DoxyCodeLine{00463\ \textcolor{comment}{//\ \ \ \ \ \ //printf("{}Moving\ page:\ \%lx\(\backslash\)n"{},\ phys\_page);\ }}
+\DoxyCodeLine{00464\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ assert(std::find(m\_local\_pages.begin(),\ m\_local\_pages.end(),\ phys\_page)\ ==\ m\_local\_pages.end());\ }}
+\DoxyCodeLine{00465\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ assert(std::find(m\_remote\_pages.begin(),\ m\_remote\_pages.end(),\ phys\_page)\ !=\ m\_remote\_pages.end());\ }}
+\DoxyCodeLine{00466\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ m\_local\_pages.push\_back(phys\_page);}}
+\DoxyCodeLine{00467\ \textcolor{comment}{//\ \ \ \ \ \ if(m\_r\_exclusive\_cache)}}
+\DoxyCodeLine{00468\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_remote\_pages.remove(phys\_page);}}
+\DoxyCodeLine{00469\ \textcolor{comment}{//\ \ \ \ \ \ m\_inflight\_pages.erase(phys\_page);}}
+\DoxyCodeLine{00470\ \textcolor{comment}{//\ \ \ \ \ \ //m\_inflight\_pages[phys\_page]\ =\ std::max(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime()\ +\ page\_datamovement\_queue\_delay\ ,t\_now\ +\ page\_datamovement\_queue\_delay);}}
+\DoxyCodeLine{00471\ \textcolor{comment}{//\ \ \ \ \ \ m\_inflight\_pages[phys\_page]\ =\ SubsecondTime::max(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime()\ +\ page\_datamovement\_queue\_delay\ ,t\_now\ +\ page\_datamovement\_queue\_delay);}}
+\DoxyCodeLine{00472\ \textcolor{comment}{//\ \ \ \ \ \ m\_inflight\_redundant[phys\_page]\ =\ 0;\ }}
+\DoxyCodeLine{00473\ \textcolor{comment}{//\ \ \ \ \ \ if(m\_inflight\_pages.size()\ >\ m\_max\_bufferspace)}}
+\DoxyCodeLine{00474\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_bufferspace++;\ }}
+\DoxyCodeLine{00475\ \textcolor{comment}{//\ \ \ \ \}\ }}
+\DoxyCodeLine{00476\ \textcolor{comment}{//\ \ \ \ /*\ //Removing\ prefetches\ for\ now...\ Didn't\ really\ work\ anyway}}
+\DoxyCodeLine{00477\ \textcolor{comment}{//\ \ \ \ if\ (m\_r\_mode==3)\ \{}}
+\DoxyCodeLine{00478\ \textcolor{comment}{//\ \ \ \ \ \ while(!m\_memory\_manager-\/>getMMU()-\/>m\_pages\_to\_prefetch.empty())\ \{}}
+\DoxyCodeLine{00479\ \textcolor{comment}{//\ \ \ \ \ \ phys\_page\ =\ m\_memory\_manager-\/>getMMU()-\/>m\_pages\_to\_prefetch.front();}}
+\DoxyCodeLine{00480\ \textcolor{comment}{//\ \ \ \ \ \ m\_memory\_manager-\/>getMMU()-\/>m\_pages\_to\_prefetch.pop\_front();}}
+\DoxyCodeLine{00481\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ if(std::find(m\_local\_pages.begin(),\ m\_local\_pages.end(),\ phys\_page)\ !=\ m\_local\_pages.end())}}
+\DoxyCodeLine{00482\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ break;\ }}
+\DoxyCodeLine{00483\ \textcolor{comment}{//\ \ \ \ \ \ ++m\_data\_moves;}}
+\DoxyCodeLine{00484\ \textcolor{comment}{//\ \ \ \ \ \ ++m\_page\_prefetches;}}
+\DoxyCodeLine{00485\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ if(m\_r\_simulate\_datamov\_overhead)\ }}
+\DoxyCodeLine{00486\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ page\_datamovement\_queue\_delay\ =\ m\_data\_movement-\/>computeQueueDelay(t\_now,\ m\_r\_bus\_bandwidth.getRoundedLatency(8*4096),\ requester);}}
+\DoxyCodeLine{00487\ \textcolor{comment}{//\ \ \ \ \ \ \ if\ (m\_r\_simulate\_tlb\_overhead\ \&\&\ std::find(m\_memory\_manager-\/>m\_invalid\_PTE.begin(),\ m\_memory\_manager-\/>m\_invalid\_PTE.end(),\ phys\_page)\ ==\ m\_memory\_manager-\/>m\_invalid\_PTE.end())}}
+\DoxyCodeLine{00488\ \textcolor{comment}{//\ \ \ \ \ \ m\_memory\_manager-\/>m\_invalid\_PTE.push\_back(phys\_page);}}
+\DoxyCodeLine{00489\ \textcolor{comment}{//\ \ \ \ \ \ //printf("{}Moving\ page:\ \%lx\(\backslash\)n"{},\ phys\_page);\ }}
+\DoxyCodeLine{00490\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ assert(std::find(m\_local\_pages.begin(),\ m\_local\_pages.end(),\ phys\_page)\ ==\ m\_local\_pages.end());\ }}
+\DoxyCodeLine{00491\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ //assert(std::find(m\_remote\_pages.begin(),\ m\_remote\_pages.end(),\ phys\_page)\ !=\ m\_remote\_pages.end());\ }}
+\DoxyCodeLine{00492\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ m\_local\_pages.push\_back(phys\_page);}}
+\DoxyCodeLine{00493\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ m\_remote\_pages.remove(phys\_page);\ }}
+\DoxyCodeLine{00494\ \textcolor{comment}{//\ \ \ \ \ \ \}}}
+\DoxyCodeLine{00495\ \textcolor{comment}{//\ \ \ \ \}\ */\ }}
+\DoxyCodeLine{00496\ \textcolor{comment}{//\ \ \ \ if(move\_page)\ \{\ //Check\ if\ there's\ place\ in\ local\ DRAM\ and\ if\ not\ evict\ an\ older\ page\ to\ make\ space}}
+\DoxyCodeLine{00497\ \textcolor{comment}{//\ \ \ \ \ \ t\_now\ +=\ possiblyEvict(phys\_page,\ pkt\_time,\ requester);}}
+\DoxyCodeLine{00498\ \textcolor{comment}{//\ \ \ \ \}}}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ \textcolor{comment}{//\ \ \ \ //\ Update\ Memory\ Counters\ -\/-\/\ Nandita:\ Removing\ for\ now\ as\ I'm\ not\ sure\ that\ it's\ really\ used\ anywhere}}
+\DoxyCodeLine{00501\ \textcolor{comment}{//\ \ \ \ //queue\_delay\ =\ ddr\_queue\_delay;}}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \textcolor{comment}{//\ \ \ \ //CLear\ prefetcher}}
+\DoxyCodeLine{00504\ \textcolor{comment}{//\ \ \ \ /*\ //PUt\ back\ when\ you\ want\ prefetcher\ enabled}}
+\DoxyCodeLine{00505\ \textcolor{comment}{//\ \ \ \ m\_memory\_manager-\/>getMMU()-\/>m\_pages\_to\_prefetch.clear();\ }}
+\DoxyCodeLine{00506\ \textcolor{comment}{//\ \ \ \ */\ }}
+\DoxyCodeLine{00507\ \textcolor{comment}{//\ \ \ \ //std::cout\ <<\ "{}Remote\ Latency:\ "{}\ <<\ t\_now\ -\/\ pkt\_time\ <<\ std::endl;}}
+\DoxyCodeLine{00508\ \textcolor{comment}{//\ \ \ \ possiblyPrefetch(phys\_page,\ t\_now,\ requester);}}
+\DoxyCodeLine{00509\ \textcolor{comment}{//\ \ \ \ return\ t\_now\ -\/\ pkt\_time;}}
+\DoxyCodeLine{00510\ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \textcolor{comment}{//Nandita:\ not\ sure\ if\ queue\_delay\ is\ actually\ used\ anywhere\ so\ removing\ for\ now.\ May\ have\ to\ still\ update\ stats\ so\ the}}
+\DoxyCodeLine{00514\ \textcolor{comment}{//right\ ones\ are\ collected.\ }}
+\DoxyCodeLine{00515\ \textcolor{comment}{//SubsecondTime}}
+\DoxyCodeLine{00516\ \textcolor{comment}{//DramPerfModelDisagg::getAccessLatency(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\ SubsecondTime\ \&queue\_delay)}}
+\DoxyCodeLine{00517\ SubsecondTime}
+\DoxyCodeLine{00518\ DramPerfModelDisagg::getAccessLatency(SubsecondTime\ pkt\_time,\ UInt64\ pkt\_size,\ core\_id\_t\ requester,\ IntPtr\ address,\ DramCntlrInterface::access\_t\ access\_type,\ ShmemPerf\ *perf,\textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00519\ \{}
+\DoxyCodeLine{00520\ \ \ \ UInt64\ phys\_page\ =\ \ address\ \&\ \string~((UInt64(1)\ <<\ 12)\ -\/\ 1);\ \textcolor{comment}{//Assuming\ 4K\ page\ }}
+\DoxyCodeLine{00521\ \ \ \ \textcolor{comment}{//\ if(m\_r\_cacheline\_gran)\ }}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ phys\_page\ =\ \ address\ \&\ \string~((UInt64(1)\ <<\ 6)\ -\/\ 1);\ //Assuming\ 4K\ page\ }}
+\DoxyCodeLine{00523\ \ \ \ UInt64\ cacheline\ =\ \ address\ \&\ \string~((UInt64(1)\ <<\ 6)\ -\/\ 1);\ \textcolor{comment}{//Assuming\ 4K\ page\ }}
+\DoxyCodeLine{00524\ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}................................................................................"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00525\ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Global:\ "{}\ <<\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime()\ <<\ "{}\ Now:\ "{}\ <<\ pkt\_time\ <<\ "{}\ Page:\ "{}\ <<\ std::hex\ <<\ phys\_page\ <<\ "{}\ Cacheline:\ "{}\ <<\ std::hex\ <<\ cacheline\ <<\ std::endl;}}
+\DoxyCodeLine{00526\ \ }
+\DoxyCodeLine{00527\ \ \ \ \ std::map<UInt64,\ SubsecondTime>::iterator\ i;}
+\DoxyCodeLine{00528\ \ \ \ \ SubsecondTime\ max=SubsecondTime::Zero();}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime()>pkt\_time)\{}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ max=Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime();}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ max=pkt\_time;}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \ \ \ UInt32\ channel,\ rank,\ bank\_group,\ bank,\ column;}
+\DoxyCodeLine{00540\ \ \ \ UInt64\ page;}
+\DoxyCodeLine{00541\ \ \ \ parseDeviceAddress(address,\ channel,\ rank,\ bank\_group,\ bank,\ column,\ page);}
+\DoxyCodeLine{00542\ }
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \ \ \ SubsecondTime\ t\_now\ =\ pkt\_time;}
+\DoxyCodeLine{00546\ \ \ \ perf-\/>updateTime(t\_now);}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \ \ \ \textcolor{comment}{//\ DDR\ controller\ pipeline\ delay}}
+\DoxyCodeLine{00549\ \ \ \ t\_now\ +=\ m\_controller\_delay;}
+\DoxyCodeLine{00550\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_CNTLR);}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \ \textcolor{comment}{//\ DDR\ refresh}}
+\DoxyCodeLine{00553\ \ \ \ \textcolor{keywordflow}{if}\ (m\_refresh\_interval\ !=\ SubsecondTime::Zero())}
+\DoxyCodeLine{00554\ \ \ \ \{}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ SubsecondTime\ refresh\_base\ =\ (t\_now.getPS()\ /\ m\_refresh\_interval.getPS())\ *\ m\_refresh\_interval;}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_now\ -\/\ refresh\_base\ <\ m\_refresh\_length)}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ t\_now\ =\ refresh\_base\ +\ m\_refresh\_length;}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_REFRESH);}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00561\ \ \ \ \}}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \ \ \ \textcolor{comment}{//\ Page\ hit/miss}}
+\DoxyCodeLine{00564\ \ \ \ UInt64\ crb\ =\ (channel\ *\ m\_num\_ranks\ *\ m\_num\_banks)\ +\ (rank\ *\ m\_num\_banks)\ +\ bank;\ \textcolor{comment}{//\ Combine\ channel,\ rank,\ bank\ to\ index\ m\_banks}}
+\DoxyCodeLine{00565\ \ \ \ LOG\_ASSERT\_ERROR(crb\ <\ m\_total\_banks,\ \textcolor{stringliteral}{"{}Bank\ index\ out\ of\ bounds"{}});}
+\DoxyCodeLine{00566\ \ \ \ BankInfo\ \&bank\_info\ =\ m\_banks[crb];}
+\DoxyCodeLine{00567\ \ \ \ }
+\DoxyCodeLine{00568\ \ \ \ \textcolor{comment}{//printf("{}[\%2d]\ \%s\ (\%12lx,\ \%4lu,\ \%4lu),\ t\_open\ =\ \%lu,\ t\_now\ =\ \%lu,\ bank\_info.t\_avail\ =\ \%lu\(\backslash\)n"{},\ m\_core\_id,\ bank\_info.open\_page\ ==\ page\ \&\&\ bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ >=\ t\_now\ ?\ "{}Page\ Hit:\ "{}\ :\ "{}Page\ Miss:"{},\ address,\ crb,\ page\ \%\ 10000,\ t\_now.getNS()\ -\/\ bank\_info.t\_avail.getNS(),\ t\_now.getNS(),\ bank\_info.t\_avail.getNS());}}
+\DoxyCodeLine{00569\ \ \ \ \textcolor{comment}{//\ Page\ hit/miss}}
+\DoxyCodeLine{00570\ \ \ \ \textcolor{keywordflow}{if}\ ((bank\_info.open\_page\ ==\ page)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Last\ access\ was\ to\ this\ row}}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \&\&\ bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ >=\ t\_now\ \ \ \textcolor{comment}{//\ Bank\ hasn't\ been\ closed\ in\ the\ meantime}}
+\DoxyCodeLine{00572\ \ \ \ )}
+\DoxyCodeLine{00573\ \ \ \ \{}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bank\_info.t\_avail\ >\ t\_now)}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ t\_now\ =\ bank\_info.t\_avail;}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BANK\_PENDING);}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \textcolor{keywordflow}{if}((bank\_info.core\_id\ !=\ requester)\ \&\&\ selective\_constant\_time\_policy)\{}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_close\_delay;\ \ }
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_open\_delay;\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BANK\_CONFLICT);}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(constant\_time\_policy)\{}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_close\_delay;}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_open\_delay;}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BANK\_CONFLICT);}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00592\ }
+\DoxyCodeLine{00593\ \ \ \ \ \ \ ++m\_page\_hits;}
+\DoxyCodeLine{00594\ \ \ \ \}}
+\DoxyCodeLine{00595\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00596\ \ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ bank\ to\ become\ available}}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bank\_info.t\_avail\ >\ t\_now)}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ t\_now\ =\ bank\_info.t\_avail;}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \textcolor{comment}{//\ Close\ page}}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ >=\ t\_now)}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(bank\_info.open\_page\_type\ ==\ page\_type::METADATA\ \&\&\ !is\_metadata)\{}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_page\_conflict\_metadata\_to\_data;}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Page\ conflict\ md\(\backslash\)n"{};}}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(bank\_info.open\_page\_type\ ==\ page\_type::NOT\_METADATA\ \&\&\ is\_metadata)\{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_page\_conflict\_data\_to\_metadata;}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Page\ conflict\ dm\(\backslash\)n"{};}}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(bank\_info.open\_page\_type\ ==\ page\_type::METADATA\ \&\&\ is\_metadata)\{}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_page\_conflict\_metadata\_to\_metadata;}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Page\ conflict\ md\(\backslash\)n"{};}}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(bank\_info.open\_page\_type\ ==\ page\_type::NOT\_METADATA\ \&\&\ !is\_metadata)\{}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ ++m\_page\_conflict\_data\_to\_data;}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}Page\ conflict\ dm\(\backslash\)n"{};}}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_close\_delay;}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ ++m\_page\_miss;}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ +\ m\_bank\_close\_delay\ >\ t\_now)}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Bank\ was\ being\ closed,\ we\ have\ to\ wait\ for\ that\ to\ complete}}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ t\_now\ =\ bank\_info.t\_avail\ +\ m\_bank\_keep\_open\ +m\_bank\_close\_delay;}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ ++m\_page\_closing;}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Bank\ was\ already\ closed,\ no\ delay.}}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ ++m\_page\_empty;}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(constant\_time\_policy)}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_close\_delay;}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \textcolor{comment}{//\ Open\ page}}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ t\_now\ +=\ m\_bank\_open\_delay;}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BANK\_CONFLICT);}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ }
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(is\_metadata)\{}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ bank\_info.open\_page\_type=page\_type::METADATA;}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ bank\_info.open\_page\_type=page\_type::NOT\_METADATA;}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(open\_row\_policy)}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ bank\_info.open\_page\ =\ page;}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ bank\_info.open\_page\ =\ 0;}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \ \ \ \}}
+\DoxyCodeLine{00653\ \ \ \ bank\_info.core\_id\ =\ requester;}
+\DoxyCodeLine{00654\ \ \ \ \textcolor{comment}{//\ Rank\ access\ time\ and\ availability}}
+\DoxyCodeLine{00655\ \ \ \ UInt64\ cr\ =\ (channel\ *\ m\_num\_ranks)\ +\ rank;}
+\DoxyCodeLine{00656\ \ \ \ LOG\_ASSERT\_ERROR(cr\ <\ m\_total\_ranks,\ \textcolor{stringliteral}{"{}Rank\ index\ out\ of\ bounds"{}});}
+\DoxyCodeLine{00657\ \ \ \ SubsecondTime\ rank\_avail\_request\ =\ (m\_num\_bank\_groups\ >\ 1)\ ?\ m\_intercommand\_delay\_short\ :\ m\_intercommand\_delay;}
+\DoxyCodeLine{00658\ \ \ \ SubsecondTime\ rank\_avail\_delay\ =\ m\_rank\_avail.size()\ ?\ m\_rank\_avail[cr]-\/>computeQueueDelay(t\_now,\ rank\_avail\_request,\ requester)\ :\ SubsecondTime::Zero();}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \ \ \ \textcolor{comment}{//\ Bank\ group\ access\ time\ and\ availability}}
+\DoxyCodeLine{00661\ \ \ \ UInt64\ crbg\ =\ (channel\ *\ m\_num\_ranks\ *\ m\_num\_bank\_groups)\ +\ (rank\ *\ m\_num\_bank\_groups)\ +\ bank\_group;}
+\DoxyCodeLine{00662\ \ \ \ LOG\_ASSERT\_ERROR(crbg\ <\ m\_total\_bank\_groups,\ \textcolor{stringliteral}{"{}Bank-\/group\ index\ out\ of\ bounds"{}});}
+\DoxyCodeLine{00663\ \ \ \ SubsecondTime\ group\_avail\_delay\ =\ m\_bank\_group\_avail.size()\ ?\ m\_bank\_group\_avail[crbg]-\/>computeQueueDelay(t\_now,\ m\_intercommand\_delay\_long,\ requester)\ :\ SubsecondTime::Zero();}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \ \ \ \textcolor{comment}{//\ Device\ access\ time\ (tCAS)}}
+\DoxyCodeLine{00666\ \ \ \ t\_now\ +=\ m\_dram\_access\_cost;}
+\DoxyCodeLine{00667\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_DEVICE);}
+\DoxyCodeLine{00668\ }
+\DoxyCodeLine{00669\ \ \ \ \textcolor{comment}{//\ Mark\ bank\ as\ busy\ until\ it\ can\ receive\ its\ next\ command}}
+\DoxyCodeLine{00670\ \ \ \ \textcolor{comment}{//\ Done\ before\ waiting\ for\ the\ bus\ to\ be\ free:\ sort\ of\ assumes\ best-\/case\ bus\ scheduling}}
+\DoxyCodeLine{00671\ \ \ \ bank\_info.t\_avail\ =\ t\_now;}
+\DoxyCodeLine{00672\ }
+\DoxyCodeLine{00673\ \ \ \ \textcolor{comment}{//\ Add\ the\ wait\ time\ for\ the\ larger\ of\ bank\ group\ and\ rank\ availability\ delay}}
+\DoxyCodeLine{00674\ \ \ \ t\_now\ +=\ (rank\_avail\_delay\ >\ group\_avail\_delay)\ ?\ rank\_avail\_delay\ :\ group\_avail\_delay;}
+\DoxyCodeLine{00675\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_DEVICE);}
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ \ \ \ \textcolor{comment}{//\ DDR\ bus\ latency\ and\ queuing\ delay}}
+\DoxyCodeLine{00678\ \ \ \ SubsecondTime\ ddr\_processing\_time\ =\ m\_bus\_bandwidth.getRoundedLatency(8\ *\ pkt\_size);\ \textcolor{comment}{//\ bytes\ to\ bits}}
+\DoxyCodeLine{00679\ \ \ \ \textcolor{comment}{//std::cout\ <<\ m\_bus\_bandwidth.getRoundedLatency(8*pkt\_size)\ <<\ std::endl;\ \ }}
+\DoxyCodeLine{00680\ \ \ \ SubsecondTime\ ddr\_queue\_delay\ =\ m\_queue\_model.size()\ ?\ m\_queue\_model[channel]-\/>computeQueueDelay(t\_now,\ ddr\_processing\_time,\ requester)\ :\ SubsecondTime::Zero();}
+\DoxyCodeLine{00681\ \ \ \ t\_now\ +=\ ddr\_queue\_delay;}
+\DoxyCodeLine{00682\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_QUEUE);}
+\DoxyCodeLine{00683\ \ \ \ t\_now\ +=\ ddr\_processing\_time;}
+\DoxyCodeLine{00684\ \ \ \ perf-\/>updateTime(t\_now,\ ShmemPerf::DRAM\_BUS);}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ \ \ \ \textcolor{comment}{//\ Update\ Memory\ Counters\ -\/-\/\ Nandita:Removing\ this\ for\ now...\ not\ sure\ it's\ used\ anywhere}}
+\DoxyCodeLine{00687\ \ \ \ \textcolor{comment}{//queue\_delay\ =\ ddr\_queue\_delay;}}
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Local\ Latency:\ "{}\ <<\ t\_now\ -\/\ pkt\_time\ <<\ std::endl;\ }}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Result:\ Local"{}\ <<\ std::endl;\ \ }}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_now\ -\/\ pkt\_time;}
+\DoxyCodeLine{00693\ \ \ \ }
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \ }
+\DoxyCodeLine{00696\ \ \ \ }
+\DoxyCodeLine{00697\ \}}
+
+\end{DoxyCode}

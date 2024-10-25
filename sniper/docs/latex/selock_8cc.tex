@@ -1,0 +1,44 @@
+\doxysection{common/misc/selock.cc File Reference}
+\label{selock_8cc}\index{common/misc/selock.cc@{common/misc/selock.cc}}
+{\ttfamily \#include "{}selock.\+h"{}}\newline
+{\ttfamily \#include $<$assert.\+h$>$}\newline
+Include dependency graph for selock.\+cc\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=237pt]{selock_8cc__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ WAIT\+\_\+\+WHILE}(condition)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\index{selock.cc@{selock.cc}!WAIT\_WHILE@{WAIT\_WHILE}}
+\index{WAIT\_WHILE@{WAIT\_WHILE}!selock.cc@{selock.cc}}
+\doxysubsubsection{WAIT\_WHILE}
+{\footnotesize\ttfamily \label{selock_8cc_a36cfcb8362961743870a168ed9868f09} 
+\#define WAIT\+\_\+\+WHILE(\begin{DoxyParamCaption}\item[{}]{condition}{}\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \textcolor{comment}{/*\ First\ busy\ wait\ a\ little\ */}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ for(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 10000\ \&\&\ (condition);\ ++i)\ ;\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ while(condition)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{/*\ Then\ reschedule\ */}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ sched\_yield();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \}}
+
+\end{DoxyCode}
+
+
+Definition at line \textbf{ 14} of file \textbf{ selock.\+cc}.
+
+
+
+Referenced by \textbf{ SELock\+::acquire\+\_\+exclusive()}, \textbf{ SELock\+::acquire\+\_\+shared()}, and \textbf{ SELock\+::upgrade()}.
+

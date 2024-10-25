@@ -1,0 +1,601 @@
+\doxysection{core.\+cc}
+\label{core_8cc_source}\index{common/core/core.cc@{common/core/core.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}syscall\_model.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}clock\_skew\_minimization\_object.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}trace\_manager.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}topology\_info.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}cheetah\_manager.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keyword}{extern}\ Lock\ iolock;}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#\ \ define\ MYLOG(...)\ \{\ ScopedLock\ l(iolock);\ fflush(stderr);\ fprintf(stderr,\ "{}[\%8lu]\ \%dcor\ \%-\/25s@\%03u:\ "{},\ getPerformanceModel()-\/>getCycleCount(ShmemPerfModel::\_USER\_THREAD),\ m\_core\_id,\ \_\_FUNCTION\_\_,\ \_\_LINE\_\_);\ fprintf(stderr,\ \_\_VA\_ARGS\_\_);\ fprintf(stderr,\ "{}\(\backslash\)n"{});\ fflush(stderr);\ \}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#\ \ define\ MYLOG(...)\ \{\}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ VERBOSE\ 0}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ ModeledString(Core::MemModeled\ modeled)\ \{}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{switch}(modeled)}
+\DoxyCodeLine{00033\ \ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::MEM\_MODELED\_NONE:\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}none"{}};}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::MEM\_MODELED\_COUNT:\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}count"{}};}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::MEM\_MODELED\_COUNT\_TLBTIME:\ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}count/tlb"{}};}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::MEM\_MODELED\_TIME:\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}time"{}};}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::MEM\_MODELED\_FENCED:\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}fenced"{}};}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Core::MEM\_MODELED\_RETURN:\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}return"{}};}
+\DoxyCodeLine{00040\ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}?"{}};}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ core\_state\_names[]\ =\ \{}
+\DoxyCodeLine{00046\ \ \ \ \textcolor{stringliteral}{"{}running"{}},}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{stringliteral}{"{}initializing"{}},}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{stringliteral}{"{}stalled"{}},}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{stringliteral}{"{}sleeping"{}},}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{stringliteral}{"{}waking\_up"{}},}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{stringliteral}{"{}idle"{}},}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{stringliteral}{"{}broken"{}},}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ \textcolor{keyword}{static\_assert}(Core::NUM\_STATES\ ==\ \textcolor{keyword}{sizeof}(core\_state\_names)\ /\ \textcolor{keyword}{sizeof}(core\_state\_names[0]),}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ enough\ values\ in\ core\_state\_names"{}});}
+\DoxyCodeLine{00056\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ Core::CoreStateString(Core::State\ state)}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \ LOG\_ASSERT\_ERROR(state\ <\ Core::NUM\_STATES,\ \textcolor{stringliteral}{"{}Invalid\ core\ state\ \%d"{}},\ state);}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{return}\ core\_state\_names[state];}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ Lock\ Core::m\_global\_core\_lock;}
+\DoxyCodeLine{00064\ UInt64\ Core::g\_instructions\_hpi\_global\ =\ 0;}
+\DoxyCodeLine{00065\ UInt64\ Core::g\_instructions\_hpi\_global\_callback\ =\ 0;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ Core::Core(SInt32\ \textcolor{keywordtype}{id})}
+\DoxyCodeLine{00068\ \ \ \ :\ m\_core\_id(id)}
+\DoxyCodeLine{00069\ \ \ \ ,\ m\_dvfs\_domain(Sim()-\/>getDvfsManager()-\/>getCoreDomain(id))}
+\DoxyCodeLine{00070\ \ \ \ ,\ m\_thread(NULL)}
+\DoxyCodeLine{00071\ \ \ \ ,\ m\_bbv(id)}
+\DoxyCodeLine{00072\ \ \ \ ,\ m\_topology\_info(new\ TopologyInfo(id))}
+\DoxyCodeLine{00073\ \ \ \ ,\ m\_cheetah\_manager(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}core/cheetah/enabled"{}})\ ?\ new\ CheetahManager(id)\ :\ NULL)}
+\DoxyCodeLine{00074\ \ \ \ ,\ m\_core\_state(Core::IDLE)}
+\DoxyCodeLine{00075\ \ \ \ ,\ m\_icache\_last\_block(-\/1)}
+\DoxyCodeLine{00076\ \ \ \ ,\ m\_spin\_loops(0)}
+\DoxyCodeLine{00077\ \ \ \ ,\ m\_spin\_instructions(0)}
+\DoxyCodeLine{00078\ \ \ \ ,\ m\_spin\_elapsed\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00079\ \ \ \ ,\ m\_instructions(0)}
+\DoxyCodeLine{00080\ \ \ \ ,\ m\_instructions\_callback(UINT64\_MAX)}
+\DoxyCodeLine{00081\ \ \ \ ,\ m\_instructions\_hpi\_callback(0)}
+\DoxyCodeLine{00082\ \ \ \ ,\ m\_instructions\_hpi\_last(0)}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Core\ ctor\ for:\ \%d"{}},\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}core"{}},\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}instructions"{}},\ \&m\_instructions);}
+\DoxyCodeLine{00087\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}core"{}},\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}spin\_loops"{}},\ \&m\_spin\_loops);}
+\DoxyCodeLine{00088\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}core"{}},\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}spin\_instructions"{}},\ \&m\_spin\_instructions);}
+\DoxyCodeLine{00089\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}core"{}},\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}spin\_elapsed\_time"{}},\ \&m\_spin\_elapsed\_time);}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ Sim()-\/>getStatsManager()-\/>logTopology(\textcolor{stringliteral}{"{}hwcontext"{}},\ \textcolor{keywordtype}{id},\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ m\_network\ =\ \textcolor{keyword}{new}\ Network(\textcolor{keyword}{this});}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ m\_clock\_skew\_minimization\_client\ =\ ClockSkewMinimizationClient::create(\textcolor{keyword}{this});}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ m\_shmem\_perf\_model\ =\ \textcolor{keyword}{new}\ ShmemPerfModel();}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}instantiated\ memory\ manager\ model"{}});}
+\DoxyCodeLine{00100\ \ \ \ m\_memory\_manager\ =\ MemoryManagerBase::createMMU(}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}caching\_protocol/type"{}}),}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{this},\ m\_network,\ m\_shmem\_perf\_model);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ m\_performance\_model\ =\ PerformanceModel::create(\textcolor{keyword}{this});}
+\DoxyCodeLine{00107\ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ Core::\string~Core()}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{if}\ (m\_cheetah\_manager)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_cheetah\_manager;}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keyword}{delete}\ m\_topology\_info;}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{keyword}{delete}\ m\_memory\_manager;}
+\DoxyCodeLine{00115\ \ \ \ \textcolor{keyword}{delete}\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00116\ \ \ \ \textcolor{keyword}{delete}\ m\_performance\_model;}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordflow}{if}\ (m\_clock\_skew\_minimization\_client)}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_clock\_skew\_minimization\_client;}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keyword}{delete}\ m\_network;}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keywordtype}{void}\ Core::enablePerformanceModels()}
+\DoxyCodeLine{00123\ \{}
+\DoxyCodeLine{00124\ \ \ \ getShmemPerfModel()-\/>enable();}
+\DoxyCodeLine{00125\ \ \ \ getMemoryManager()-\/>enableModels();}
+\DoxyCodeLine{00126\ \ \ \ getNetwork()-\/>enableModels();}
+\DoxyCodeLine{00127\ \ \ \ getPerformanceModel()-\/>enable();}
+\DoxyCodeLine{00128\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keywordtype}{void}\ Core::disablePerformanceModels()}
+\DoxyCodeLine{00131\ \{}
+\DoxyCodeLine{00132\ \ \ \ getShmemPerfModel()-\/>disable();}
+\DoxyCodeLine{00133\ \ \ \ getMemoryManager()-\/>disableModels();}
+\DoxyCodeLine{00134\ \ \ \ getNetwork()-\/>disableModels();}
+\DoxyCodeLine{00135\ \ \ \ getPerformanceModel()-\/>disable();}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ UInt64*\ Core::getUtrBitmap()}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \ \textcolor{keywordflow}{return}\ this-\/>utr\_bitmap;}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00144\ Core::countInstructions(IntPtr\ address,\ UInt32\ count)}
+\DoxyCodeLine{00145\ \{}
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keywordtype}{bool}\ check\_rescheduled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ m\_instructions\ +=\ count;}
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keywordflow}{if}\ (m\_bbv.sample())}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ m\_bbv.count(address,\ count);}
+\DoxyCodeLine{00151\ \ \ \ m\_performance\_model-\/>countInstructions(address,\ count);}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \textcolor{keywordflow}{if}\ (isEnabledInstructionsCallback())}
+\DoxyCodeLine{00154\ \ \ \ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_instructions\ >=\ m\_instructions\_callback)}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ disableInstructionsCallback();}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_INSTR\_COUNT,\ m\_core\_id);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ using\ the\ fast-\/forward\ performance\ model,\ HOOK\_INSTR\_COUNT\ may\ cause\ a\ rescheduling}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ of\ the\ current\ thread\ so\ let\ it\ know\ that\ it\ should\ make\ the\ appropriate\ checks}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ check\_rescheduled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ hookPeriodicInsCheck();}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \textcolor{keywordflow}{return}\ check\_rescheduled;}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00171\ Core::hookPeriodicInsCheck()}
+\DoxyCodeLine{00172\ \{}
+\DoxyCodeLine{00173\ \ \ \ \textcolor{keywordflow}{if}\ (m\_instructions\ >\ m\_instructions\_hpi\_callback)}
+\DoxyCodeLine{00174\ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \_\_sync\_fetch\_and\_add(\&g\_instructions\_hpi\_global,\ m\_instructions\ -\/\ m\_instructions\_hpi\_last);}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ m\_instructions\_hpi\_callback\ +=\ Sim()-\/>getConfig()-\/>getHPIInstructionsPerCore();}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ m\_instructions\_hpi\_last\ =\ m\_instructions;}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{comment}{//\ Quick,\ unlocked\ check\ if\ we\ should\ do\ the\ HOOK\_PERIODIC\_INS\ callback}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (g\_instructions\_hpi\_global\ >\ g\_instructions\_hpi\_global\_callback)}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ hookPeriodicInsCall();}
+\DoxyCodeLine{00182\ \ \ \ \}}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00186\ Core::hookPeriodicInsCall()}
+\DoxyCodeLine{00187\ \{}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{comment}{//\ Take\ the\ Thread\ lock,\ to\ make\ sure\ no\ other\ core\ calls\ us\ at\ the\ same\ time}}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{comment}{//\ and\ that\ the\ hook\ callback\ is\ also\ serialized\ w.r.t.\ other\ global\ events}}
+\DoxyCodeLine{00190\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \textcolor{comment}{//\ Definitive,\ locked\ checked\ if\ we\ should\ do\ the\ HOOK\_PERIODIC\_INS\ callback}}
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keywordflow}{if}\ (g\_instructions\_hpi\_global\ >\ g\_instructions\_hpi\_global\_callback)}
+\DoxyCodeLine{00194\ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_PERIODIC\_INS,\ g\_instructions\_hpi\_global);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ g\_instructions\_hpi\_global\_callback\ +=\ Sim()-\/>getConfig()-\/>getHPIInstructionsGlobal();}
+\DoxyCodeLine{00197\ \ \ \ \}}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00201\ Core::accessBranchPredictor(IntPtr\ eip,\ \textcolor{keywordtype}{bool}\ taken,\ IntPtr\ target)}
+\DoxyCodeLine{00202\ \{}
+\DoxyCodeLine{00203\ \ \ \ PerformanceModel\ *prfmdl\ =\ getPerformanceModel();}
+\DoxyCodeLine{00204\ \ \ \ BranchPredictor\ *bp\ =\ prfmdl-\/>getBranchPredictor();}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \textcolor{keywordflow}{if}\ (bp)}
+\DoxyCodeLine{00207\ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ prediction\ =\ bp-\/>predict(eip,\ target);}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ bp-\/>update(prediction,\ taken,\ eip,\ target);}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (prediction\ !=\ taken);}
+\DoxyCodeLine{00211\ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00213\ \ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00215\ \ \ \ \}}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ MemoryResult}
+\DoxyCodeLine{00219\ makeMemoryResult(HitWhere::where\_t\ \_hit\_where,\ SubsecondTime\ \_latency)}
+\DoxyCodeLine{00220\ \{}
+\DoxyCodeLine{00221\ \ \ \ LOG\_ASSERT\_ERROR(\_hit\_where\ <\ HitWhere::NUM\_HITWHERES,\ \textcolor{stringliteral}{"{}Invalid\ HitWhere\ \%u"{}},\ (\textcolor{keywordtype}{long})\_hit\_where);}
+\DoxyCodeLine{00222\ \ \ \ MemoryResult\ res;}
+\DoxyCodeLine{00223\ \ \ \ res.hit\_where\ =\ \_hit\_where;}
+\DoxyCodeLine{00224\ \ \ \ res.latency\ =\ \_latency;}
+\DoxyCodeLine{00225\ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00226\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00229\ Core::logMemoryHit(\textcolor{keywordtype}{bool}\ icache,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ MemModeled\ modeled,\ IntPtr\ eip)}
+\DoxyCodeLine{00230\ \{}
+\DoxyCodeLine{00231\ \ \ \ getMemoryManager()-\/>addL1Hits(icache,\ mem\_op\_type,\ 1);}
+\DoxyCodeLine{00232\ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ MemoryResult}
+\DoxyCodeLine{00235\ Core::readInstructionMemory(IntPtr\ address,\ UInt32\ instruction\_size)}
+\DoxyCodeLine{00236\ \{}
+\DoxyCodeLine{00237\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Instruction:\ Address(0x\%x),\ Size(\%u),\ Start\ READ"{}},}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ address,\ instruction\_size);}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ UInt64\ blockmask\ =\ \string~(getMemoryManager()-\/>getCacheBlockSize()\ -\/\ 1);}
+\DoxyCodeLine{00241\ \ \ \ \textcolor{keywordtype}{bool}\ single\_cache\_line\ =\ ((address\ \&\ blockmask)\ ==\ ((address\ +\ instruction\_size\ -\/\ 1)\ \&\ blockmask));}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \textcolor{comment}{//\ Assume\ the\ core\ reads\ full\ instruction\ cache\ lines\ and\ caches\ them\ internally\ for\ subsequent\ instructions.}}
+\DoxyCodeLine{00244\ \ \ \ \textcolor{comment}{//\ This\ reduces\ L1-\/I\ accesses\ and\ power\ to\ more\ realistic\ levels.}}
+\DoxyCodeLine{00245\ \ \ \ \textcolor{comment}{//\ For\ Nehalem,\ it's\ in\ fact\ only\ 16\ bytes,\ other\ architectures\ (Sandy\ Bridge)\ have\ a\ micro-\/op\ cache,}}
+\DoxyCodeLine{00246\ \ \ \ \textcolor{comment}{//\ so\ this\ is\ just\ an\ approximation.}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \textcolor{comment}{//\ When\ accessing\ the\ same\ cache\ line\ as\ last\ time,\ don't\ access\ the\ L1-\/I}}
+\DoxyCodeLine{00249\ \ \ \ \textcolor{keywordflow}{if}\ ((address\ \&\ blockmask)\ ==\ m\_icache\_last\_block)}
+\DoxyCodeLine{00250\ \ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (single\_cache\_line)}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ makeMemoryResult(HitWhere::L1I,\ getMemoryManager()-\/>getL1HitLatency());}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Instruction\ spanning\ cache\ lines:\ drop\ the\ first\ line,\ do\ access\ the\ second\ one}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ address\ =\ (address\ \&\ blockmask)\ +\ getMemoryManager()-\/>getCacheBlockSize();}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \textcolor{comment}{//\ Update\ the\ most\ recent\ cache\ line\ accessed}}
+\DoxyCodeLine{00263\ \ \ \ m\_icache\_last\_block\ =\ address\ \&\ blockmask;}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \textcolor{comment}{//\ Cases\ with\ multiple\ cache\ lines\ or\ when\ we\ are\ not\ sure\ that\ it\ will\ be\ a\ hit\ call\ into\ the\ caches}}
+\DoxyCodeLine{00266\ \ \ \ \textcolor{keywordflow}{return}\ initiateMemoryAccess(MemComponent::L1\_ICACHE,}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::NONE,\ Core::READ,\ address\ \&\ blockmask,\ NULL,\ getMemoryManager()-\/>getCacheBlockSize(),\ MEM\_MODELED\_COUNT\_TLBTIME,\ 0,\ SubsecondTime::MaxTime());}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{keywordtype}{void}\ Core::accessMemoryFast(\textcolor{keywordtype}{bool}\ icache,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ address)}
+\DoxyCodeLine{00271\ \{}
+\DoxyCodeLine{00272\ \ \ \ \textcolor{keywordflow}{if}\ (m\_cheetah\_manager\ \&\&\ icache\ ==\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ m\_cheetah\_manager-\/>access(mem\_op\_type,\ address);}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ SubsecondTime\ latency\ =\ getMemoryManager()-\/>coreInitiateMemoryAccessFast(icache,\ mem\_op\_type,\ address);}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \textcolor{keywordflow}{if}\ (latency\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ m\_performance\_model-\/>handleMemoryLatency(latency,\ HitWhere::MISS);}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ MemoryResult}
+\DoxyCodeLine{00282\ Core::initiateMemoryAccess(MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ IntPtr\ address,}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_size,}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ MemModeled\ modeled,}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ SubsecondTime\ now)}
+\DoxyCodeLine{00290\ \{}
+\DoxyCodeLine{00291\ \ \ \ MYLOG(\textcolor{stringliteral}{"{}access\ \%lx+\%u\ \%c\%c\ modeled(\%s)"{}},\ address,\ data\_size,\ mem\_op\_type\ ==\ Core::WRITE\ ?\ \textcolor{charliteral}{'W'}\ :\ \textcolor{charliteral}{'R'},\ mem\_op\_type\ ==\ Core::READ\_EX\ ?\ \textcolor{charliteral}{'X'}\ :\ \textcolor{charliteral}{'\ '},\ ModeledString(modeled));}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \textcolor{keywordflow}{if}\ (data\_size\ <=\ 0)}
+\DoxyCodeLine{00294\ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ makeMemoryResult((HitWhere::where\_t)mem\_component,SubsecondTime::Zero());}
+\DoxyCodeLine{00296\ \ \ \ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \textcolor{comment}{//\ Setting\ the\ initial\ time}}
+\DoxyCodeLine{00299\ \ \ \ SubsecondTime\ initial\_time\ =\ (now\ ==\ SubsecondTime::MaxTime())\ ?\ getPerformanceModel()-\/>getElapsedTime()\ :\ now;}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \textcolor{comment}{//\ Protect\ from\ concurrent\ access\ by\ user\ thread\ (doing\ rewritten\ memops)\ and\ core\ thread\ (doing\ icache\ lookups)}}
+\DoxyCodeLine{00302\ \ \ \ \textcolor{keywordflow}{if}\ (lock\_signal\ !=\ Core::UNLOCK)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ m\_mem\_lock.acquire();}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00306\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ i\ =\ 0;}
+\DoxyCodeLine{00307\ \ \ \ \textcolor{keyword}{static}\ Lock\ iolock;}
+\DoxyCodeLine{00308\ \ \ \ \textcolor{keywordflow}{if}\ ((i++)\ \%\ 1000\ ==\ 0)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ ScopedLock\ slio(iolock);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[TIME],\%lu,"{}},\ (Timer::now()\ /\ 100000)\ \%\ 10000000);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ ++i)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ m\_core\_id)}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%lu,\%lu,\%lu,"{}},\ initial\_time,\ getShmemPerfModel()-\/>getCycleCount(ShmemPerfModel::\_USER\_THREAD),\ getShmemPerfModel()-\/>getCycleCount(ShmemPerfModel::\_SIM\_THREAD));}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{},,,"{}});}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00317\ \ \ \ \}}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ getShmemPerfModel()-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,\ initial\_time);}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Time(\%s),\ \%s\ -\/\ ADDR(0x\%x),\ data\_size(\%u),\ START"{}},}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ itostr(initial\_time).c\_str(),}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ ((mem\_op\_type\ ==\ READ)\ ?\ \textcolor{stringliteral}{"{}READ"{}}\ :\ \textcolor{stringliteral}{"{}WRITE"{}}),}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ address,\ data\_size);}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ UInt32\ num\_misses\ =\ 0;}
+\DoxyCodeLine{00328\ \ \ \ HitWhere::where\_t\ hit\_where\ =\ HitWhere::UNKNOWN;}
+\DoxyCodeLine{00329\ \ \ \ UInt32\ cache\_block\_size\ =\ getMemoryManager()-\/>getCacheBlockSize();}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ IntPtr\ begin\_addr\ =\ address;}
+\DoxyCodeLine{00332\ \ \ \ IntPtr\ end\_addr\ =\ address\ +\ data\_size;}
+\DoxyCodeLine{00333\ \ \ \ IntPtr\ begin\_addr\_aligned\ =\ begin\_addr\ -\/\ (begin\_addr\ \%\ cache\_block\_size);}
+\DoxyCodeLine{00334\ \ \ \ IntPtr\ end\_addr\_aligned\ =\ end\_addr\ -\/\ (end\_addr\ \%\ cache\_block\_size);}
+\DoxyCodeLine{00335\ \ \ \ Byte\ *curr\_data\_buffer\_head\ =\ (Byte*)\ data\_buf;}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \textcolor{keywordflow}{for}\ (IntPtr\ curr\_addr\_aligned\ =\ begin\_addr\_aligned;\ curr\_addr\_aligned\ <=\ end\_addr\_aligned;\ curr\_addr\_aligned\ +=\ cache\_block\_size)}
+\DoxyCodeLine{00338\ \ \ \ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \textcolor{comment}{//\ Access\ the\ cache\ one\ line\ at\ a\ time}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ UInt32\ curr\_offset;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ UInt32\ curr\_size;}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{comment}{//\ Determine\ the\ offset}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (curr\_addr\_aligned\ ==\ begin\_addr\_aligned)}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ curr\_offset\ =\ begin\_addr\ \%\ cache\_block\_size;}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ curr\_offset\ =\ 0;}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \textcolor{comment}{//\ Determine\ the\ size}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (curr\_addr\_aligned\ ==\ end\_addr\_aligned)}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ curr\_size\ =\ (end\_addr\ \%\ cache\_block\_size)\ -\/\ (curr\_offset);}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (curr\_size\ ==\ 0)}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ curr\_size\ =\ cache\_block\_size\ -\/\ (curr\_offset);}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Start\ InitiateSharedMemReq:\ ADDR(0x\%x),\ offset(\%u),\ curr\_size(\%u)"{}},\ curr\_addr\_aligned,\ curr\_offset,\ curr\_size);}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cheetah\_manager)}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ m\_cheetah\_manager-\/>access(mem\_op\_type,\ curr\_addr\_aligned);}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \ \ \ \ \ \ HitWhere::where\_t\ this\_hit\_where\ =\ getMemoryManager()-\/>coreInitiateMemoryAccess(}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eip,\ }
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_component,}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_op\_type,}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ curr\_addr\_aligned,\ curr\_offset,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf\ ?\ curr\_data\_buffer\_head\ :\ NULL,\ curr\_size,}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ modeled);}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit\_where\ !=\ (HitWhere::where\_t)mem\_component)}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ it\ is\ a\ READ\ or\ READ\_EX\ operation,}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'initiateSharedMemReq'\ causes\ curr\_data\_buffer\_head}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ be\ automatically\ filled\ in}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ it\ is\ a\ WRITE\ operation,}}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'initiateSharedMemReq'\ reads\ the\ data}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ from\ curr\_data\_buffer\_head}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ num\_misses\ ++;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit\_where\ ==\ HitWhere::UNKNOWN\ ||\ (this\_hit\_where\ !=\ HitWhere::UNKNOWN\ \&\&\ this\_hit\_where\ >\ hit\_where))}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ hit\_where\ =\ this\_hit\_where;}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}End\ InitiateSharedMemReq:\ ADDR(0x\%x),\ offset(\%u),\ curr\_size(\%u)"{}},\ curr\_addr\_aligned,\ curr\_offset,\ curr\_size);}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{comment}{//\ Increment\ the\ buffer\ head}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ curr\_data\_buffer\_head\ +=\ curr\_size;}
+\DoxyCodeLine{00398\ \ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \textcolor{comment}{//\ Get\ the\ final\ cycle\ time}}
+\DoxyCodeLine{00401\ \ \ \ SubsecondTime\ final\_time\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00402\ \ \ \ LOG\_ASSERT\_ERROR(final\_time\ >=\ initial\_time,}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}final\_time(\%s)\ <\ initial\_time(\%s)"{}},}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ itostr(final\_time).c\_str(),}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ itostr(initial\_time).c\_str());}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Time(\%s),\ \%s\ -\/\ ADDR(0x\%x),\ data\_size(\%u),\ END\(\backslash\)n"{}},}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ itostr(final\_time).c\_str(),}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ ((mem\_op\_type\ ==\ READ)\ ?\ \textcolor{stringliteral}{"{}READ"{}}\ :\ \textcolor{stringliteral}{"{}WRITE"{}}),}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ address,\ data\_size);}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \textcolor{keywordflow}{if}\ (lock\_signal\ !=\ Core::LOCK)}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ m\_mem\_lock.release();}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \textcolor{comment}{//\ Calculate\ the\ round-\/trip\ time}}
+\DoxyCodeLine{00416\ \ \ \ SubsecondTime\ shmem\_time\ =\ final\_time\ -\/\ initial\_time;}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \textcolor{keywordflow}{switch}(modeled)}
+\DoxyCodeLine{00419\ \ \ \ \{}
+\DoxyCodeLine{00420\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_DYNINFO:}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ DynamicInstructionInfo\ info\ =\ DynamicInstructionInfo::createMemoryInfo(eip,\ \textcolor{keyword}{true},\ shmem\_time,\ address,\ data\_size,\ (mem\_op\_type\ ==\ WRITE)\ ?\ Operand::WRITE\ :\ Operand::READ,\ num\_misses,\ hit\_where);}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ m\_performance\_model-\/>pushDynamicInstructionInfo(info);}
+\DoxyCodeLine{00425\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_TIME:}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_FENCED:}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_performance\_model-\/>isEnabled())}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ queue\ a\ fake\ instruction\ that\ will\ account\ for\ the\ access\ latency\ */}}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ PseudoInstruction\ *i\ =\ \textcolor{keyword}{new}\ MemAccessInstruction(shmem\_time,\ address,\ data\_size,\ modeled\ ==\ MEM\_MODELED\_FENCED);}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ m\_performance\_model-\/>queuePseudoInstruction(i);}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_COUNT:}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_COUNT\_TLBTIME:}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shmem\_time\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ m\_performance\_model-\/>handleMemoryLatency(shmem\_time,\ hit\_where);}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_NONE:}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MEM\_MODELED\_RETURN:}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00444\ \ \ \ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \ \textcolor{keywordflow}{if}\ (modeled\ !=\ MEM\_MODELED\_NONE)}
+\DoxyCodeLine{00447\ \ \ \ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ getShmemPerfModel()-\/>incrTotalMemoryAccessLatency(shmem\_time);}
+\DoxyCodeLine{00449\ \ \ \ \}}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ \ \ \ LOG\_ASSERT\_ERROR(hit\_where\ !=\ HitWhere::UNKNOWN,\ \textcolor{stringliteral}{"{}HitWhere\ ==\ UNKNOWN"{}});}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \textcolor{keywordflow}{return}\ makeMemoryResult(hit\_where,\ shmem\_time);}
+\DoxyCodeLine{00454\ \}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \textcolor{comment}{//\ FIXME:\ This\ should\ actually\ be\ 'accessDataMemory()'}}
+\DoxyCodeLine{00457\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00458\ \textcolor{comment}{\ *\ accessMemory\ (lock\_signal\_t\ lock\_signal,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ char*\ data\_buffer,\ UInt32\ data\_size)}}
+\DoxyCodeLine{00459\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00460\ \textcolor{comment}{\ *\ Arguments:}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ *\ \ \ lock\_signal\ ::\ NONE,\ LOCK,\ or\ UNLOCK}}
+\DoxyCodeLine{00462\ \textcolor{comment}{\ *\ \ \ mem\_op\_type\ ::\ READ,\ READ\_EX,\ or\ WRITE}}
+\DoxyCodeLine{00463\ \textcolor{comment}{\ *\ \ \ d\_addr\ ::\ address\ of\ location\ we\ want\ to\ access\ (read\ or\ write)}}
+\DoxyCodeLine{00464\ \textcolor{comment}{\ *\ \ \ data\_buffer\ ::\ buffer\ holding\ data\ for\ WRITE\ or\ buffer\ which\ must\ be\ written\ on\ a\ READ}}
+\DoxyCodeLine{00465\ \textcolor{comment}{\ *\ \ \ data\_size\ ::\ size\ of\ data\ we\ must\ read/write}}
+\DoxyCodeLine{00466\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00467\ \textcolor{comment}{\ *\ Return\ Value:}}
+\DoxyCodeLine{00468\ \textcolor{comment}{\ *\ \ \ number\ of\ misses\ ::\ State\ the\ number\ of\ cache\ misses}}
+\DoxyCodeLine{00469\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00470\ MemoryResult}
+\DoxyCodeLine{00471\ Core::accessMemory(lock\_signal\_t\ lock\_signal,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size,\ MemModeled\ modeled,\ IntPtr\ eip,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ is\_fault\_mask)}
+\DoxyCodeLine{00472\ \{}
+\DoxyCodeLine{00473\ \ \ \ \textcolor{comment}{//\ In\ PINTOOL\ mode,\ if\ the\ data\ is\ requested,\ copy\ it\ to/from\ real\ memory}}
+\DoxyCodeLine{00474\ \ \ \ \textcolor{keywordflow}{if}\ (data\_buffer\ \&\&\ !is\_fault\_mask)}
+\DoxyCodeLine{00475\ \ \ \ \{}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getSimulationMode()\ ==\ Config::PINTOOL)}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ nativeMemOp\ (NONE,\ mem\_op\_type,\ d\_addr,\ data\_buffer,\ data\_size);}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getSimulationMode()\ ==\ Config::STANDALONE)}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ Sim()-\/>getTraceManager()-\/>accessMemory(m\_core\_id,\ lock\_signal,\ mem\_op\_type,\ d\_addr,\ data\_buffer,\ data\_size);}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ data\_buffer\ =\ NULL;\ \textcolor{comment}{//\ initiateMemoryAccess's\ data\ is\ not\ used}}
+\DoxyCodeLine{00485\ \ \ \ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \textcolor{keywordflow}{if}\ (modeled\ ==\ MEM\_MODELED\_NONE)}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ makeMemoryResult(HitWhere::UNKNOWN,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00489\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ initiateMemoryAccess(MemComponent::L1\_DCACHE,\ lock\_signal,\ mem\_op\_type,\ d\_addr,\ (Byte*)\ data\_buffer,\ data\_size,\ modeled,\ eip,\ now);}
+\DoxyCodeLine{00491\ \}}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ MemoryResult}
+\DoxyCodeLine{00495\ Core::nativeMemOp(lock\_signal\_t\ lock\_signal,\ mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size)}
+\DoxyCodeLine{00496\ \{}
+\DoxyCodeLine{00497\ \ \ \ \textcolor{keywordflow}{if}\ (data\_size\ <=\ 0)}
+\DoxyCodeLine{00498\ \ \ \ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ makeMemoryResult(HitWhere::UNKNOWN,SubsecondTime::Zero());}
+\DoxyCodeLine{00500\ \ \ \ \}}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \ \textcolor{keywordflow}{if}\ (lock\_signal\ ==\ LOCK)}
+\DoxyCodeLine{00503\ \ \ \ \{}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ assert(mem\_op\_type\ ==\ READ\_EX);}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ m\_global\_core\_lock.acquire();}
+\DoxyCodeLine{00506\ \ \ \ \}}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \textcolor{keywordflow}{if}\ (\ (mem\_op\_type\ ==\ READ)\ ||\ (mem\_op\_type\ ==\ READ\_EX)\ )}
+\DoxyCodeLine{00509\ \ \ \ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ applicationMemCopy\ ((\textcolor{keywordtype}{void}*)\ data\_buffer,\ (\textcolor{keywordtype}{void}*)\ d\_addr,\ (\textcolor{keywordtype}{size\_t})\ data\_size);}
+\DoxyCodeLine{00511\ \ \ \ \}}
+\DoxyCodeLine{00512\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ WRITE)}
+\DoxyCodeLine{00513\ \ \ \ \{}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ applicationMemCopy\ ((\textcolor{keywordtype}{void}*)\ d\_addr,\ (\textcolor{keywordtype}{void}*)\ data\_buffer,\ (\textcolor{keywordtype}{size\_t})\ data\_size);}
+\DoxyCodeLine{00515\ \ \ \ \}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \ \ \ \textcolor{keywordflow}{if}\ (lock\_signal\ ==\ UNLOCK)}
+\DoxyCodeLine{00518\ \ \ \ \{}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ assert(mem\_op\_type\ ==\ WRITE);}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ m\_global\_core\_lock.release();}
+\DoxyCodeLine{00521\ \ \ \ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ \ \textcolor{keywordflow}{return}\ makeMemoryResult(HitWhere::UNKNOWN,SubsecondTime::Zero());}
+\DoxyCodeLine{00524\ \}}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \_\_attribute\_\_((weak))\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00527\ applicationMemCopy(\textcolor{keywordtype}{void}\ *dest,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *src,\ \textcolor{keywordtype}{size\_t}\ n)}
+\DoxyCodeLine{00528\ \{}
+\DoxyCodeLine{00529\ \ \ \ memcpy(dest,\ src,\ n);}
+\DoxyCodeLine{00530\ \}}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00533\ Core::emulateCpuid(UInt32\ eax,\ UInt32\ ecx,\ cpuid\_result\_t\ \&res)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00534\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00535\ \ \ \ \textcolor{keywordflow}{switch}(eax)}
+\DoxyCodeLine{00536\ \ \ \ \{}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x0:}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ cpuid(0,\ 0,\ res);}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ res.eax\ =\ std::max(UInt32(0xb),\ res.eax);\ \textcolor{comment}{//\ Maximum\ input\ eax:\ make\ sure\ 0xb\ is\ included}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x1:}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Return\ native\ results,\ except\ for\ CPU\ id}}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ cpuid(eax,\ ecx,\ res);}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ res.ebx\ =\ (m\_core\_id\ <<\ 24)\ |\ (Sim()-\/>getConfig()-\/>getApplicationCores()\ <<\ 16)\ |\ (res.ebx\ \&0xffff);}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0xb:}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extended\ Topology\ Enumeration\ Leaf}}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(ecx)}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0:}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Level\ 0:\ SMT}}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.eax\ =\ TopologyInfo::SMT\_SHIFT\_BITS;}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.ebx\ =\ m\_topology\_info-\/>smt\_count;\ \textcolor{comment}{//\ SMT\ threads\ /\ core}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.ecx\ =\ ecx\ |\ (1\ <<\ 8);\ \textcolor{comment}{//\ Level\ type\ =\ SMT}}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Level\ 1:\ cores}}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.eax\ =\ TopologyInfo::PACKAGE\_SHIFT\_BITS;}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.ebx\ =\ m\_topology\_info-\/>smt\_count\ *\ m\_topology\_info-\/>core\_count;\ \textcolor{comment}{//\ HW\ contexts\ /\ package}}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.ecx\ =\ ecx\ |\ (2\ <<\ 8);\ \textcolor{comment}{//\ Level\ type\ =\ Core}}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Invalid\ level}}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.eax\ =\ 0;}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.ebx\ =\ 0;}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res.ecx\ =\ ecx;}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ res.edx\ =\ m\_topology\_info-\/>apic\_id;}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Return\ native\ results\ (original\ cpuid\ instruction\ is\ deleted)}}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ cpuid(eax,\ ecx,\ res);}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00583\ \ \ \ \}}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \textcolor{preprocessor}{\ \ \ \#if\ VERBOSE}}
+\DoxyCodeLine{00586\ \ \ \ printf(\textcolor{stringliteral}{"{}CPUID[\%d]:\ \%08x\ \%08x\ =>\ "{}},\ m\_core\_id,\ eax,\ ecx);}
+\DoxyCodeLine{00587\ \ \ \ printf(\textcolor{stringliteral}{"{}\%08x\ \%08x\ \%08x\ \%08x\(\backslash\)n"{}},\ res.eax,\ res.ebx,\ res.ecx,\ res.edx);}
+\DoxyCodeLine{00588\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00589\ \}}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00592\ Core::measureCacheStats()}
+\DoxyCodeLine{00593\ \{}
+\DoxyCodeLine{00594\ \ \ \ getMemoryManager()-\/>measureNucaStats();}
+\DoxyCodeLine{00595\ \}}
+
+\end{DoxyCode}

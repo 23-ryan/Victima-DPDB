@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['va_5fpage_5fmask_0',['va_page_mask',['../classTraceThread.html#a49a6a014a6e25e8be22388aae99b338d',1,'TraceThread']]],
+  ['va_5fpage_5fshift_1',['va_page_shift',['../classTraceThread.html#a779621b5a45c3b20579d90f7a74dab89',1,'TraceThread']]],
+  ['val_2',['val',['../structSyscallServer_1_1futex__args__t.html#a0e9f0270da09ddb2c956a8c4d35934dd',1,'SyscallServer::futex_args_t']]],
+  ['val2_3',['val2',['../structSyscallServer_1_1futex__args__t.html#a708a58d7a6c06d89363467aaa2e5d160',1,'SyscallServer::futex_args_t']]],
+  ['val3_4',['val3',['../structSyscallServer_1_1futex__args__t.html#aa54d9f10b0791048202872081e3c62dd',1,'SyscallServer::futex_args_t']]],
+  ['valid_5',['valid',['../structelem__t.html#a573c7729c4f6b1c55e45b71334c79f31',1,'elem_t::valid'],['../classRPTEntry.html#a36019377763c5595b4c04a7429437943',1,'RPTEntry::valid'],['../classStreamEntry.html#adb3c574ab32e0fcb88b8c0346f8670e7',1,'StreamEntry::valid']]],
+  ['value_6',['value',['../structelem__t.html#a0869939eb26b44af7b10447257d79027',1,'elem_t::value'],['../classConstantTimeDistribution.html#a4e5df8e96f3ddc84e3e50996801bd3e0',1,'ConstantTimeDistribution::value'],['../structTag.html#a765de604414984577955612f65cde52f',1,'Tag::value']]],
+  ['vector_5fsize_7',['VECTOR_SIZE',['../classBitVector.html#a1da13cdf28301e7ffe15202c722e7728',1,'BitVector']]],
+  ['vectordependants_8',['vectorDependants',['../classRobSmtTimer_1_1RobEntry.html#aee694e7efb9f3a48d629d86e465d2138',1,'RobSmtTimer::RobEntry::vectorDependants'],['../classRobTimer_1_1RobEntry.html#a6140dd2ff28cd05b3876135aceef4058',1,'RobTimer::RobEntry::vectorDependants']]],
+  ['verbose_9',['verbose',['../classSchedulerSequential.html#a6066e96fc3db2af7414a479720c6f0a8',1,'SchedulerSequential']]],
+  ['victima_5falloc_5fon_5feviction_10',['victima_alloc_on_eviction',['../classParametricDramDirectoryMSI_1_1TLB.html#a1b02f4179aed3806a90cf1d061c8488d',1,'ParametricDramDirectoryMSI::TLB']]],
+  ['victima_5falloc_5fon_5fptw_11',['victima_alloc_on_ptw',['../classParametricDramDirectoryMSI_1_1TLB.html#a100f6c039bb345e21bd2ee47cb2abf42',1,'ParametricDramDirectoryMSI::TLB']]],
+  ['victima_5fenabled_12',['victima_enabled',['../classParametricDramDirectoryMSI_1_1TLB.html#ae6993a76c5dada0755f4aa7276b7b68d',1,'ParametricDramDirectoryMSI::TLB']]],
+  ['victima_5flatency_13',['victima_latency',['../classParametricDramDirectoryMSI_1_1MemoryManager.html#a749771271909c5ed49ffbee5b3253a1c',1,'ParametricDramDirectoryMSI::MemoryManager']]],
+  ['victimize_5fon_5fptw_14',['victimize_on_ptw',['../classParametricDramDirectoryMSI_1_1TLB.html#a1a8c71db137c1ff6df8b017d1da994e3',1,'ParametricDramDirectoryMSI::TLB']]],
+  ['virt_15',['virt',['../structMemory_1_1Access.html#a710c3f481e99e5eb4096580fd82ed57a',1,'Memory::Access']]],
+  ['virtual_5fto_5fphysical_5fmap_16',['virtual_to_physical_map',['../classAllocationManager.html#af595560e8309d8f96058c490136db305',1,'AllocationManager']]],
+  ['vpn_17',['vpn',['../structParametricDramDirectoryMSI_1_1HashTablePTW_1_1entry.html#aa1fe1877f511226e1b2e7cf5142e529a',1,'ParametricDramDirectoryMSI::HashTablePTW::entry::vpn'],['../classParametricDramDirectoryMSI_1_1PageTableWalker.html#aac34b794c04308c54b4f102820ab050c',1,'ParametricDramDirectoryMSI::PageTableWalker::vpn'],['../structParametricDramDirectoryMSI_1_1PageTableHashDontCache_1_1entry.html#ae9307ca01c7f1955617516c33218bb69',1,'ParametricDramDirectoryMSI::PageTableHashDontCache::entry::vpn'],['../structRange.html#a5c662776ba651c206e79e1721003f9df',1,'Range::vpn']]],
+  ['vpn_5fcontainer_18',['vpn_container',['../classParametricDramDirectoryMSI_1_1UTR.html#aa76bc4a0df426b4d6f9250d804812274',1,'ParametricDramDirectoryMSI::UTR']]],
+  ['vpn_5fmap_5fper_5fcore_19',['vpn_map_per_core',['../classAllocationManager.html#a0d44b1ff10064113ffc822f80ece0e86',1,'AllocationManager']]]
+];

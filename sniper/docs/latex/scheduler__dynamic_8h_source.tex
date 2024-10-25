@@ -1,0 +1,73 @@
+\doxysection{scheduler\+\_\+dynamic.\+h}
+\label{scheduler__dynamic_8h_source}\index{common/scheduler/scheduler\_dynamic.h@{common/scheduler/scheduler\_dynamic.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SCHEDULER\_DYNAMIC\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SCHEDULER\_DYNAMIC\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}scheduler.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }SchedulerDynamic\ :\ \textcolor{keyword}{public}\ Scheduler}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ SchedulerDynamic(ThreadManager\ *thread\_manager);}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~SchedulerDynamic();}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ core\_id\_t\ threadCreate(thread\_id\_t)\ =\ 0;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ periodic(SubsecondTime\ time)\ \{\}}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)\ \{\}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time)\ \{\}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadResume(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time)\ \{\}}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time)\ \{\}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ std::vector<bool>\ m\_threads\_runnable;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ moveThread(thread\_id\_t\ thread\_id,\ core\_id\_t\ core\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_in\_periodic;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_periodic(SubsecondTime\ time);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_roi\_begin();}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_roi\_end();}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_threadStart(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_threadStall(thread\_id\_t\ thread\_id,\ ThreadManager::stall\_type\_t\ reason,\ SubsecondTime\ time);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_threadResume(thread\_id\_t\ thread\_id,\ thread\_id\_t\ thread\_by,\ SubsecondTime\ time);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \_\_threadExit(thread\_id\_t\ thread\_id,\ SubsecondTime\ time);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{comment}{//\ Hook\ stubs}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hook\_periodic(UInt64\ ptr,\ UInt64\ time)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \{\ ((SchedulerDynamic*)ptr)-\/>\_\_periodic(*(subsecond\_time\_t*)\&time);\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hook\_thread\_start(UInt64\ ptr,\ UInt64\ \_args)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ HooksManager::ThreadTime\ *args\ =\ (HooksManager::ThreadTime\ *)\_args;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ ((SchedulerDynamic*)ptr)-\/>\_\_threadStart(args-\/>thread\_id,\ args-\/>time);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hook\_thread\_stall(UInt64\ ptr,\ UInt64\ \_args)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ HooksManager::ThreadStall\ *args\ =\ (HooksManager::ThreadStall\ *)\_args;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ ((SchedulerDynamic*)ptr)-\/>\_\_threadStall(args-\/>thread\_id,\ args-\/>reason,\ args-\/>time);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hook\_thread\_resume(UInt64\ ptr,\ UInt64\ \_args)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ HooksManager::ThreadResume\ *args\ =\ (HooksManager::ThreadResume\ *)\_args;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ ((SchedulerDynamic*)ptr)-\/>\_\_threadResume(args-\/>thread\_id,\ args-\/>thread\_by,\ args-\/>time);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hook\_thread\_exit(UInt64\ ptr,\ UInt64\ \_args)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ HooksManager::ThreadTime\ *args\ =\ (HooksManager::ThreadTime\ *)\_args;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ ((SchedulerDynamic*)ptr)-\/>\_\_threadExit(args-\/>thread\_id,\ args-\/>time);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_SCHEDULER\_DYNAMIC\_H}}
+
+\end{DoxyCode}

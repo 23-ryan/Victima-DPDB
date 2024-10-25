@@ -1,0 +1,130 @@
+\doxysection{directory.\+cc}
+\label{directory_8cc_source}\index{common/core/memory\_subsystem/directory\_schemes/directory.cc@{common/core/memory\_subsystem/directory\_schemes/directory.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}directory.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}directory\_entry.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}directory\_entry\_limited\_no\_broadcast.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}directory\_entry\_limitless.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ Directory::Directory(core\_id\_t\ core\_id,\ String\ directory\_type\_str,\ UInt32\ num\_entries,\ UInt32\ max\_hw\_sharers,\ UInt32\ max\_num\_sharers):}
+\DoxyCodeLine{00011\ \ \ \ m\_num\_entries(num\_entries),}
+\DoxyCodeLine{00012\ \ \ \ m\_num\_entries\_allocated(0),}
+\DoxyCodeLine{00013\ \ \ \ m\_max\_hw\_sharers(max\_hw\_sharers),}
+\DoxyCodeLine{00014\ \ \ \ m\_use\_max\_hw\_sharers(max\_hw\_sharers),\ \textcolor{comment}{//\ Value\ to\ pass\ through\ to\ DirectoryEntry::addSharer}}
+\DoxyCodeLine{00015\ \ \ \ m\_max\_num\_sharers(max\_num\_sharers),}
+\DoxyCodeLine{00016\ \ \ \ m\_limitless\_software\_trap\_penalty(SubsecondTime::Zero())}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{//\ Look\ at\ the\ type\ of\ directory\ and\ create}}
+\DoxyCodeLine{00019\ \ \ \ m\_directory\_entry\_list\ =\ \textcolor{keyword}{new}\ DirectoryEntry*[m\_num\_entries];}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ m\_directory\_type\ =\ parseDirectoryType(directory\_type\_str);}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_entries;\ i++)}
+\DoxyCodeLine{00023\ \ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ m\_directory\_entry\_list[i]\ =\ NULL;}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordflow}{if}\ (m\_directory\_type\ ==\ LIMITLESS)}
+\DoxyCodeLine{00028\ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ m\_limitless\_software\_trap\_penalty\ =\ SubsecondTime::NS()\ *\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram\_directory/limitless/software\_trap\_penalty"{}});}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{catch}(...)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Could\ not\ read\ 'cache\_coherence/limitless/software\_trap\_penalty'\ from\ the\ config\ file"{}});}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00037\ \ \ \ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}directory"{}},\ core\_id,\ \textcolor{stringliteral}{"{}entries-\/allocated"{}},\ \&m\_num\_entries\_allocated);}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ Directory::\string~Directory()}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_entries;\ i++)}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_directory\_entry\_list[i])}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_directory\_entry\_list[i];}
+\DoxyCodeLine{00048\ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_directory\_entry\_list;}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ DirectoryEntry*}
+\DoxyCodeLine{00053\ Directory::getDirectoryEntry(UInt32\ entry\_num)}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \ LOG\_ASSERT\_ERROR(entry\_num\ <\ m\_num\_entries,\ \textcolor{stringliteral}{"{}Invalid\ entry\_num(\%d)\ >=\ num\_entries(\%d)"{}},\ entry\_num,\ m\_num\_entries);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{if}\ (m\_directory\_entry\_list[entry\_num]\ ==\ NULL)}
+\DoxyCodeLine{00058\ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ m\_directory\_entry\_list[entry\_num]\ =\ createDirectoryEntry();}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ ++m\_num\_entries\_allocated;}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{return}\ m\_directory\_entry\_list[entry\_num];}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00066\ Directory::setDirectoryEntry(UInt32\ entry\_num,\ DirectoryEntry*\ directory\_entry)}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \ m\_directory\_entry\_list[entry\_num]\ =\ directory\_entry;}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ Directory::DirectoryType}
+\DoxyCodeLine{00072\ Directory::parseDirectoryType(String\ directory\_type\_str)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{if}\ (directory\_type\_str\ ==\ \textcolor{stringliteral}{"{}full\_map"{}})}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ FULL\_MAP;}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (directory\_type\_str\ ==\ \textcolor{stringliteral}{"{}limited\_no\_broadcast"{}})}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ LIMITED\_NO\_BROADCAST;}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (directory\_type\_str\ ==\ \textcolor{stringliteral}{"{}limitless"{}})}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ LIMITLESS;}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00081\ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Directory\ Type:\ \%s"{}},\ directory\_type\_str.c\_str());}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (DirectoryType)\ -\/1;}
+\DoxyCodeLine{00084\ \ \ \ \}}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ DirectoryEntry*}
+\DoxyCodeLine{00088\ Directory::createDirectoryEntry()}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{comment}{//\ Specify\ the\ storage\ class\ to\ use\ for\ counting\ the\ directory\ sharers.}}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{comment}{//\ Due\ to\ alignment\ issues,\ the\ minimum\ size\ can\ already\ hold\ up\ to\ 64\ nodes.}}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keywordflow}{if}\ (m\_max\_num\_sharers\ <=\ 64)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ createDirectoryEntrySized<DirectorySharersBitset<64>\ >();}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_max\_num\_sharers\ <=\ 128)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ createDirectoryEntrySized<DirectorySharersBitset<128>\ >();}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_max\_num\_sharers\ <=\ 256)}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ createDirectoryEntrySized<DirectorySharersBitset<256>\ >();}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_max\_num\_sharers\ <=\ 1024)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ createDirectoryEntrySized<DirectorySharersBitset<1024>\ >();}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ createDirectoryEntrySized<DirectorySharersVector>();}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ DirectorySharers>}
+\DoxyCodeLine{00105\ DirectoryEntry*}
+\DoxyCodeLine{00106\ Directory::createDirectoryEntrySized()}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keywordflow}{switch}\ (m\_directory\_type)}
+\DoxyCodeLine{00109\ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FULL\_MAP:}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ m\_use\_max\_hw\_sharers\ =\ m\_max\_num\_sharers;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>(m\_max\_num\_sharers,\ m\_max\_num\_sharers);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ LIMITED\_NO\_BROADCAST:}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DirectoryEntryLimitedNoBroadcast<DirectorySharers>(m\_max\_hw\_sharers,\ m\_max\_num\_sharers);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ LIMITLESS:}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ DirectoryEntryLimitless<DirectorySharers>(m\_max\_hw\_sharers,\ m\_max\_num\_sharers,\ m\_limitless\_software\_trap\_penalty);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ Directory\ Type:\ \%u"{}},\ m\_directory\_type);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00123\ \ \ \ \}}
+\DoxyCodeLine{00124\ \}}
+
+\end{DoxyCode}

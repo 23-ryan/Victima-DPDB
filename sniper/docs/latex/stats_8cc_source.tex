@@ -1,0 +1,654 @@
+\doxysection{stats.\+cc}
+\label{stats_8cc_source}\index{common/misc/stats.cc@{common/misc/stats.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}itostr.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <zlib.h>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <sys/time.h>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}tlb.h"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<UInt64>(UInt64\ t)\ \{\ \textcolor{keywordflow}{return}\ t;\ \}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<float>(\textcolor{keywordtype}{float}\ t)\ \{\ \textcolor{keywordflow}{return}\ t;\ \}}
+\DoxyCodeLine{00026\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<SubsecondTime>(SubsecondTime\ t)\ \{\ \textcolor{keywordflow}{return}\ t.getFS();\ \}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<ComponentTime>(ComponentTime\ t)\ \{\ \textcolor{keywordflow}{return}\ t.getElapsedTime().getFS();\ \}}
+\DoxyCodeLine{00028\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<int*>(\textcolor{keywordtype}{int}*\ t)\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<UInt64*>(UInt64*\ t)\ \{\ \textcolor{keywordflow}{return}\ 0;\}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{template}\ <>\ UInt64\ makeStatsValue<std::vector<float>>(std::vector<float>\ t)\ \{\ \textcolor{keywordflow}{return}\ 0;\}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ db\_create\_stmts[]\ =\ \{}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{comment}{//\ Statistics}}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}names`\ (nameid\ INTEGER,\ objectname\ TEXT,\ metricname\ TEXT);"{}},}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}prefixes`\ (prefixid\ INTEGER,\ prefixname\ TEXT);"{}},}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}values`\ (prefixid\ INTEGER,\ nameid\ INTEGER,\ core\ INTEGER,\ value\ INTEGER);"{}},}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ INDEX\ \`{}idx\_prefix\_name`\ ON\ \`{}prefixes`(`prefixname`);"{}},}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ INDEX\ \`{}idx\_value\_prefix`\ ON\ \`{}values`(`prefixid`);"{}},}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{comment}{//\ Other\ users}}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}topology`\ (componentname\ TEXT,\ coreid\ INTEGER,\ masterid\ INTEGER);"{}},}
+\DoxyCodeLine{00041\ \ \ \ \textcolor{stringliteral}{"{}CREATE\ TABLE\ \`{}event`\ (event\ INTEGER,\ time\ INTEGER,\ core\ INTEGER,\ thread\ INTEGER,\ value0\ INTEGER,\ value1\ INTEGER,\ description\ TEXT);"{}},}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ db\_insert\_stmt\_name[]\ =\ \textcolor{stringliteral}{"{}INSERT\ INTO\ \`{}names`\ (nameid,\ objectname,\ metricname)\ VALUES\ (?,\ ?,\ ?);"{}};}
+\DoxyCodeLine{00044\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ db\_insert\_stmt\_prefix[]\ =\ \textcolor{stringliteral}{"{}INSERT\ INTO\ \`{}prefixes`\ (prefixid,\ prefixname)\ VALUES\ (?,\ ?);"{}};}
+\DoxyCodeLine{00045\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ db\_insert\_stmt\_value[]\ =\ \textcolor{stringliteral}{"{}INSERT\ INTO\ \`{}values`\ (prefixid,\ nameid,\ core,\ value)\ VALUES\ (?,\ ?,\ ?,\ ?);"{}};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ UInt64\ getWallclockTimeCallback(String\ objectName,\ UInt32\ index,\ String\ metricName,\ UInt64\ arg)}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keyword}{struct\ }timeval\ tv\ =\ \{0,0\};}
+\DoxyCodeLine{00050\ \ \ \ gettimeofday(\&tv,\ NULL);}
+\DoxyCodeLine{00051\ \ \ \ UInt64\ usec\ =\ (UInt64(tv.tv\_sec)\ *\ 1000000)\ +\ tv.tv\_usec;}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{return}\ usec;}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ StatsManager::StatsManager()}
+\DoxyCodeLine{00056\ \ \ \ :\ m\_keyid(0)}
+\DoxyCodeLine{00057\ \ \ \ ,\ m\_prefixnum(0)}
+\DoxyCodeLine{00058\ \ \ \ ,\ m\_db(NULL)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ init();}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ registerMetric(\textcolor{keyword}{new}\ StatsMetricCallback(\textcolor{stringliteral}{"{}time"{}},\ 0,\ \textcolor{stringliteral}{"{}walltime"{}},\ getWallclockTimeCallback,\ 0));}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ StatsManager::\string~StatsManager()}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{for}(StatsObjectList::iterator\ it1\ =\ m\_objects.begin();\ it1\ !=\ m\_objects.end();\ ++it1)}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (StatsMetricList::iterator\ it2\ =\ it1-\/>second.begin();\ it2\ !=\ it1-\/>second.end();\ ++it2)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(StatsIndexList::iterator\ it3\ =\ it2-\/>second.second.begin();\ it3\ !=\ it2-\/>second.second.end();\ ++it3)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ it3-\/>second;}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{if}\ (m\_db)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ sqlite3\_finalize(m\_stmt\_insert\_name);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ sqlite3\_finalize(m\_stmt\_insert\_prefix);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ sqlite3\_finalize(m\_stmt\_insert\_value);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ sqlite3\_close(m\_db);}
+\DoxyCodeLine{00078\ \ \ \ \}}
+\DoxyCodeLine{00079\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00082\ StatsManager::init()}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ String\ filename\ =\ Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}sim.stats.sqlite3"{}});}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keywordtype}{int}\ ret;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ unlink(filename.c\_str());}
+\DoxyCodeLine{00088\ \ \ \ ret\ =\ sqlite3\_open(filename.c\_str(),\ \&m\_db);}
+\DoxyCodeLine{00089\ \ \ \ LOG\_ASSERT\_ERROR(ret\ ==\ SQLITE\_OK,\ \textcolor{stringliteral}{"{}Cannot\ create\ DB"{}});}
+\DoxyCodeLine{00090\ \ \ \ sqlite3\_exec(m\_db,\ \textcolor{stringliteral}{"{}PRAGMA\ synchronous\ =\ OFF"{}},\ NULL,\ NULL,\ NULL);}
+\DoxyCodeLine{00091\ \ \ \ sqlite3\_exec(m\_db,\ \textcolor{stringliteral}{"{}PRAGMA\ journal\_mode\ =\ MEMORY"{}},\ NULL,\ NULL,\ NULL);}
+\DoxyCodeLine{00092\ \ \ \ sqlite3\_busy\_handler(m\_db,\ \_\_busy\_handler,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \textcolor{keyword}{sizeof}(db\_create\_stmts)/\textcolor{keyword}{sizeof}(db\_create\_stmts[0]);\ ++i)}
+\DoxyCodeLine{00095\ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ res;\ \textcolor{keywordtype}{char}*\ err;}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ res\ =\ sqlite3\_exec(m\_db,\ db\_create\_stmts[i],\ NULL,\ NULL,\ \&err);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_OK,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement\ \(\backslash\)"{}\%s\(\backslash\)"{}:\ \%s"{}},\ db\_create\_stmts[i],\ err);}
+\DoxyCodeLine{00099\ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ sqlite3\_prepare(m\_db,\ db\_insert\_stmt\_name,\ -\/1,\ \&m\_stmt\_insert\_name,\ NULL);}
+\DoxyCodeLine{00102\ \ \ \ sqlite3\_prepare(m\_db,\ db\_insert\_stmt\_prefix,\ -\/1,\ \&m\_stmt\_insert\_prefix,\ NULL);}
+\DoxyCodeLine{00103\ \ \ \ sqlite3\_prepare(m\_db,\ db\_insert\_stmt\_value,\ -\/1,\ \&m\_stmt\_insert\_value,\ NULL);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ sqlite3\_exec(m\_db,\ \textcolor{stringliteral}{"{}BEGIN\ TRANSACTION"{}},\ NULL,\ NULL,\ NULL);}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordflow}{for}(StatsObjectList::iterator\ it1\ =\ m\_objects.begin();\ it1\ !=\ m\_objects.end();\ ++it1)}
+\DoxyCodeLine{00107\ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (StatsMetricList::iterator\ it2\ =\ it1-\/>second.begin();\ it2\ !=\ it1-\/>second.end();\ ++it2)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ recordMetricName(it2-\/>second.first,\ it1-\/>first,\ it2-\/>first);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ sqlite3\_exec(m\_db,\ \textcolor{stringliteral}{"{}END\ TRANSACTION"{}},\ NULL,\ NULL,\ NULL);}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00117\ StatsManager::busy\_handler(\textcolor{keywordtype}{int}\ count)}
+\DoxyCodeLine{00118\ \{}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ With\ a\ usleep\ below\ of\ 10\ ms,\ at\ most\ one\ warning\ every\ 10s}}
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{if}\ (count\ \%\ 1000\ ==\ 999)}
+\DoxyCodeLine{00121\ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ LOG\_PRINT\_WARNING(\textcolor{stringliteral}{"{}Difficulty\ locking\ sim.stats.sqlite3,\ retrying..."{}});}
+\DoxyCodeLine{00123\ \ \ \ \}}
+\DoxyCodeLine{00124\ \ \ \ usleep(10000);}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00129\ StatsManager::recordMetricName(UInt64\ keyId,\ std::string\ objectName,\ std::string\ metricName)}
+\DoxyCodeLine{00130\ \{}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordtype}{int}\ res;}
+\DoxyCodeLine{00132\ \ \ \ sqlite3\_reset(m\_stmt\_insert\_name);}
+\DoxyCodeLine{00133\ \ \ \ sqlite3\_bind\_int(m\_stmt\_insert\_name,\ 1,\ keyId);}
+\DoxyCodeLine{00134\ \ \ \ sqlite3\_bind\_text(m\_stmt\_insert\_name,\ 2,\ objectName.c\_str(),\ -\/1,\ SQLITE\_TRANSIENT);}
+\DoxyCodeLine{00135\ \ \ \ sqlite3\_bind\_text(m\_stmt\_insert\_name,\ 3,\ metricName.c\_str(),\ -\/1,\ SQLITE\_TRANSIENT);}
+\DoxyCodeLine{00136\ \ \ \ res\ =\ sqlite3\_step(m\_stmt\_insert\_name);}
+\DoxyCodeLine{00137\ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_DONE,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement"{}});}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{bool}\ comp(std::pair<IntPtr,int>\ a,\ std::pair<IntPtr,int>\ b)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordflow}{return}\ a.second\ <\ b.second;}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{keywordtype}{bool}\ comp2(std::pair<IntPtr,\ long\ int>\ a,\ std::pair<IntPtr,long\ int>\ b)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{return}\ a.second\ <\ b.second;}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00150\ StatsManager::recordStats(String\ prefix)}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ \ LOG\_ASSERT\_ERROR(m\_db,\ \textcolor{stringliteral}{"{}m\_db\ not\ yet\ set\ up\ !?"{}});}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \textcolor{comment}{//\ Allow\ lazily-\/maintained\ statistics\ to\ be\ updated}}
+\DoxyCodeLine{00155\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_PRE\_STAT\_WRITE,\ (UInt64)prefix.c\_str());}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \textcolor{keywordtype}{int}\ res;}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordtype}{int}\ prefixid\ =\ ++m\_prefixnum;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ res\ =\ sqlite3\_exec(m\_db,\ \textcolor{stringliteral}{"{}BEGIN\ TRANSACTION"{}},\ NULL,\ NULL,\ NULL);}
+\DoxyCodeLine{00161\ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_OK,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement:\ \%s"{}},\ sqlite3\_errmsg(m\_db));}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ sqlite3\_reset(m\_stmt\_insert\_prefix);}
+\DoxyCodeLine{00164\ \ \ \ sqlite3\_bind\_int(m\_stmt\_insert\_prefix,\ 1,\ prefixid);}
+\DoxyCodeLine{00165\ \ \ \ sqlite3\_bind\_text(m\_stmt\_insert\_prefix,\ 2,\ prefix.c\_str(),\ -\/1,\ SQLITE\_TRANSIENT);}
+\DoxyCodeLine{00166\ \ \ \ res\ =\ sqlite3\_step(m\_stmt\_insert\_prefix);}
+\DoxyCodeLine{00167\ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_DONE,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement:\ \%s"{}},\ sqlite3\_errmsg(m\_db));}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordflow}{for}(StatsObjectList::iterator\ it1\ =\ m\_objects.begin();\ it1\ !=\ m\_objects.end();\ ++it1)}
+\DoxyCodeLine{00170\ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (StatsMetricList::iterator\ it2\ =\ it1-\/>second.begin();\ it2\ !=\ it1-\/>second.end();\ ++it2)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(StatsIndexList::iterator\ it3\ =\ it2-\/>second.second.begin();\ it3\ !=\ it2-\/>second.second.end();\ ++it3)}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!it3-\/>second-\/>isDefault())}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!it3-\/>second-\/>isSpecial())}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sqlite3\_reset(m\_stmt\_insert\_value);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sqlite3\_bind\_int(m\_stmt\_insert\_value,\ 1,\ prefixid);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sqlite3\_bind\_int(m\_stmt\_insert\_value,\ 2,\ it2-\/>second.first);\ \ \ \textcolor{comment}{//\ Metric\ ID}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sqlite3\_bind\_int(m\_stmt\_insert\_value,\ 3,\ it3-\/>second-\/>index);\ \ \textcolor{comment}{//\ Core\ ID}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sqlite3\_bind\_int64(m\_stmt\_insert\_value,\ 4,\ it3-\/>second-\/>recordMetric());}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ =\ sqlite3\_step(m\_stmt\_insert\_value);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_DONE,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement:\ \%s"{}},\ sqlite3\_errmsg(m\_db));}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(it3-\/>second-\/>isSpecial())}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it3-\/>second-\/>metricName\ ==\ \textcolor{stringliteral}{"{}tlb\_address\_access"{}})}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(prefix\ ==\ \textcolor{stringliteral}{"{}stop"{}})}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf\ =\ \textcolor{stringliteral}{"{}/tlb\_address\_access"{}};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}HMM\ FILE\ NAME\ "{}<<file\_name<<"{}\ "{}<<entries\_cnt<<std::endl;}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ outputfile;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ outputfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}STATS\ ADDRESS\ OF\ FIRST\ "{}<<(int*)it3-\/>second-\/>getRawMetric()<<std::endl;}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=0;i<ParametricDramDirectoryMSI::TLB::ADDRESS\_REQUEST\_VEC\_MAX;i++)}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ outputfile<<*(*((UInt64**)it3-\/>second-\/>getRawMetric())\ +\ i)<<std::endl;}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ outputfile.close();}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it3-\/>second-\/>metricName\ ==\ \textcolor{stringliteral}{"{}L2\_TLB\_miss\_per\_page"{}})}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(prefix\ ==\ \textcolor{stringliteral}{"{}stop"{}})}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf\ =\ \textcolor{stringliteral}{"{}/l2\_tlb\_miss"{}};}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ L2\ TLB\ miss\ per\ page\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ l2tlbmissfile;}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2tlbmissfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ l2tlb\_misses\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getMemoryManager()-\/>getTLB()-\/>getL2TLBmisses();}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ it:\ l2tlb\_misses)\ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2tlbmissfile\ <<\ it.first\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ it.second\ <<\ std::endl;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2tlbmissfile.close();}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it3-\/>second-\/>metricName\ ==\ \textcolor{stringliteral}{"{}utr\_utilization"{}})}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(prefix\ ==\ \textcolor{stringliteral}{"{}stop"{}})}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ UTR\ utilization\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf\ =\ \textcolor{stringliteral}{"{}/utr\_utilization"{}};}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ utilfile;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ utilfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<int>\ utilization\ =\ Sim()-\/>getUtopia()-\/>getUtr(0)-\/>utilization;}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ utilfile\ <<\ Sim()-\/>getUtopia()-\/>getUtr(0)-\/>m\_utr\_cache-\/>getNumSets()\ <<\ std::endl;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ utilfile\ <<\ Sim()-\/>getUtopia()-\/>getUtr(0)-\/>m\_utr\_cache-\/>getAssociativity()\ <<\ std::endl;}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<int>::const\_iterator\ i\ =\ utilization.begin();\ i\ !=\ utilization.end();\ ++i)\ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ utilfile\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ utilfile.close();}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it3-\/>second-\/>metricName\ ==\ \textcolor{stringliteral}{"{}ptw\_latency\_heatmap"{}})}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(prefix\ ==\ \textcolor{stringliteral}{"{}stop"{}})}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ PTW\ latency\ heatmap\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf\ =\ \textcolor{stringliteral}{"{}/ptw\_latency\_heatmap"{}};}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ ptwlatencyfile;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ptwlatencyfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ptwlatency=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getMemoryManager()-\/>getPTW()-\/>getPtwHeatmap();}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\&\ it:\ ptwlatency)\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ptwlatencyfile\ <<\ it.first\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ it.second\ <<\ std::endl;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ptwlatencyfile.close();}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it3-\/>second-\/>metricName\ ==\ \textcolor{stringliteral}{"{}cache\_timeseries"{}})}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(prefix\ ==\ \textcolor{stringliteral}{"{}stop"{}})}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Nuca\ }}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//PTW}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ Nuca\ ptw\ data\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf\ =\ \textcolor{stringliteral}{"{}/nuca\_ptw\_data"{}};}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ nucaptwfile;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<UInt64>\ nucaptwstat=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getMemoryManager()-\/>getNucaCache()-\/>getCache()-\/>getPTWTranslationStats();}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ nucaptwstat.begin();\ i\ !=\ nucaptwstat.end();\ ++i)}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.close();}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Security}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ Nuca\ ptw\ data\ security\(\backslash\)n"{}};}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf\ =\ \textcolor{stringliteral}{"{}/nuca\_ptw\_data\_security"{}};}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwstat=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getMemoryManager()-\/>getNucaCache()-\/>getCache()-\/>getSecurityTranslationStats();}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ nucaptwstat.begin();\ i\ !=\ nucaptwstat.end();\ ++i)}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.close();}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Expressive}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ Nuca\ ptw\ data\ expressive\(\backslash\)n"{}};}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf\ =\ \textcolor{stringliteral}{"{}/nuca\_ptw\_data\_expressive"{}};}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwstat=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getMemoryManager()-\/>getNucaCache()-\/>getCache()-\/>getExpressiveTranslationStats();}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ nucaptwstat.begin();\ i\ !=\ nucaptwstat.end();\ ++i)}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.close();}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ Nuca\ tlb\ entries\(\backslash\)n"{}};}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf\ =\ \textcolor{stringliteral}{"{}/nuca\_tlb"{}};}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf\ +\ sufid;}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.open(file\_name.c\_str());}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwstat=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id)-\/>getMemoryManager()-\/>getNucaCache()-\/>getCache()-\/>getTLBStats();}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ nucaptwstat.begin();\ i\ !=\ nucaptwstat.end();\ ++i)}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nucaptwfile.close();}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Caches}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//PTW\ data}}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l1\_dcache\ data\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf1\ =\ \textcolor{stringliteral}{"{}/l1\_dcache\_data"{}};}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid1\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name1\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf1\ +\ sufid1;}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ l1\_cache\_file;}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_id1\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.open(file\_name1.c\_str());}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<UInt64>\ l1\_dcache\_data=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>getPTWTranslationStats();}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l1\_dcache\_data.begin();\ i\ !=\ l1\_dcache\_data.end();\ ++i)}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.close();}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l1d\_cache\ tlb\ entries\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf1\ =\ \textcolor{stringliteral}{"{}/l1\_dcache\_tlb"{}};}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid1\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name1\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf1\ +\ sufid1;}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id1\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.open(file\_name1.c\_str());}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<UInt64>\ l1\_dcache\_tlb=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>getTLBStats();}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l1\_dcache\_tlb.begin();\ i\ !=\ l1\_dcache\_tlb.end();\ ++i)}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.close();}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l2\_cache\ data\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ suf2\ =\ \textcolor{stringliteral}{"{}/l2\_cache\_data"{}};}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ sufid2\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ file\_name2\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf2+\ sufid2;}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ofstream\ l2\_cache\_file;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ core\_id2\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.open(file\_name2.c\_str());}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<UInt64>\ l2\_cache\_data=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>getPTWTranslationStats();}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l2\_cache\_data.begin();\ i\ !=\ l2\_cache\_data.end();\ ++i)}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.close();}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ }
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l2\_cache\ tlb\ entries\ \(\backslash\)n"{}};}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf1\ =\ \textcolor{stringliteral}{"{}/l2\_cache\_tlb"{}};}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid1\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name1\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf1\ +\ sufid1;}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file;}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id1\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.open(file\_name1.c\_str());}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<UInt64>\ l2\_cache\_tlb=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>getTLBStats();}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l2\_cache\_tlb.begin();\ i\ !=\ l2\_cache\_tlb.end();\ ++i)}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.close();}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//security}}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l1\_dcache\ data\ security\(\backslash\)n"{}};}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf1\ =\ \textcolor{stringliteral}{"{}/l1\_dcache\_data\_security"{}};}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid1\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name1\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf1\ +\ sufid1;}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id1\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.open(file\_name1.c\_str());}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_dcache\_data=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>getSecurityTranslationStats();}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l1\_dcache\_data.begin();\ i\ !=\ l1\_dcache\_data.end();\ ++i)}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.close();}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l2\_cache\ data\ security\(\backslash\)n"{}};}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf2\ =\ \textcolor{stringliteral}{"{}/l2\_cache\_data\_security"{}};}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid2\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name2\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf2+\ sufid2;}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id2\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.open(file\_name2.c\_str());}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_data=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>getSecurityTranslationStats();}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l2\_cache\_data.begin();\ i\ !=\ l2\_cache\_data.end();\ ++i)}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.close();}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//expressive}}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l1\_dcache\ data\ expressive\(\backslash\)n"{}};}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf1\ =\ \textcolor{stringliteral}{"{}/l1\_dcache\_data\_expressive"{}};}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid1\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name1\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf1\ +\ sufid1;}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id1\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.open(file\_name1.c\_str());}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_dcache\_data=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L1\_DCACHE)-\/>getExpressiveTranslationStats();}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l1\_dcache\_data.begin();\ i\ !=\ l1\_dcache\_data.end();\ ++i)}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l1\_cache\_file.close();}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Logging\ l2\_cache\ data\ expressive\(\backslash\)n"{}};}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ suf2\ =\ \textcolor{stringliteral}{"{}/l2\_cache\_data\_expressive"{}};}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sufid2\ =\ std::to\_string(it3-\/>second-\/>index).c\_str();}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ file\_name2\ =\ Sim()-\/>getConfig()-\/>getOutputDirectory()+\ suf2+\ sufid2;}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id2\ =\ it3-\/>second-\/>index;}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.open(file\_name2.c\_str());}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_data=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id1)-\/>getMemoryManager()-\/>getCache(MemComponent::component\_t::L2\_CACHE)-\/>getExpressiveTranslationStats();}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<UInt64>::const\_iterator\ i\ =\ l2\_cache\_data.begin();\ i\ !=\ l2\_cache\_data.end();\ ++i)}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file\ <<\ *i\ <<\ std::endl;}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ l2\_cache\_file.close();}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00538\ \ \ \ \}}
+\DoxyCodeLine{00539\ \ \ \ res\ =\ sqlite3\_exec(m\_db,\ \textcolor{stringliteral}{"{}END\ TRANSACTION"{}},\ NULL,\ NULL,\ NULL);}
+\DoxyCodeLine{00540\ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_OK,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement:\ \%s"{}},\ sqlite3\_errmsg(m\_db));}
+\DoxyCodeLine{00541\ \}}
+\DoxyCodeLine{00542\ }
+\DoxyCodeLine{00543\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00544\ StatsManager::registerMetric(StatsMetricBase\ *metric)}
+\DoxyCodeLine{00545\ \{}
+\DoxyCodeLine{00546\ \ \ \ std::string\ \_objectName(metric-\/>objectName.c\_str()),\ \_metricName(metric-\/>metricName.c\_str());}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \ \ \ LOG\_ASSERT\_ERROR(m\_objects[\_objectName][\_metricName].second.count(metric-\/>index)\ ==\ 0,}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Duplicate\ statistic\ \%s.\%s[\%d]"{}},\ \_objectName.c\_str(),\ \_metricName.c\_str(),\ metric-\/>index);}
+\DoxyCodeLine{00550\ \ \ \ m\_objects[\_objectName][\_metricName].second[metric-\/>index]\ =\ metric;}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \ \textcolor{keywordflow}{if}\ (m\_objects[\_objectName][\_metricName].first\ ==\ 0)}
+\DoxyCodeLine{00553\ \ \ \ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ m\_objects[\_objectName][\_metricName].first\ =\ ++m\_keyid;}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_db)}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Metrics\ name\ record\ was\ already\ written,\ but\ a\ new\ metric\ was\ registered\ afterwards:\ write\ a\ new\ record}}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ recordMetricName(m\_keyid,\ \_objectName,\ \_metricName);}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00560\ \ \ \ \}}
+\DoxyCodeLine{00561\ \}}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ StatsMetricBase\ *}
+\DoxyCodeLine{00564\ StatsManager::getMetricObject(String\ objectName,\ UInt32\ index,\ String\ metricName)}
+\DoxyCodeLine{00565\ \{}
+\DoxyCodeLine{00566\ \ \ \ std::string\ \_objectName(objectName.c\_str()),\ \_metricName(metricName.c\_str());}
+\DoxyCodeLine{00567\ \ \ \ \textcolor{keywordflow}{if}\ (m\_objects.count(\_objectName)\ ==\ 0)}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00569\ \ \ \ \textcolor{keywordflow}{if}\ (m\_objects[\_objectName].count(\_metricName)\ ==\ 0)}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00571\ \ \ \ \textcolor{keywordflow}{if}\ (m\_objects[\_objectName][\_metricName].second.count(index)\ ==\ 0)}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00573\ \ \ \ \textcolor{keywordflow}{return}\ m\_objects[\_objectName][\_metricName].second[index];}
+\DoxyCodeLine{00574\ \}}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00577\ StatsManager::logTopology(String\ component,\ core\_id\_t\ core\_id,\ core\_id\_t\ master\_id)}
+\DoxyCodeLine{00578\ \{}
+\DoxyCodeLine{00579\ \ \ \ sqlite3\_stmt\ *stmt;}
+\DoxyCodeLine{00580\ \ \ \ sqlite3\_prepare(m\_db,\ \textcolor{stringliteral}{"{}INSERT\ INTO\ topology\ (componentname,\ coreid,\ masterid)\ VALUES\ (?,\ ?,\ ?);"{}},\ -\/1,\ \&stmt,\ NULL);}
+\DoxyCodeLine{00581\ \ \ \ sqlite3\_bind\_text(stmt,\ 1,\ component.c\_str(),\ -\/1,\ SQLITE\_TRANSIENT);}
+\DoxyCodeLine{00582\ \ \ \ sqlite3\_bind\_int(stmt,\ 2,\ core\_id);}
+\DoxyCodeLine{00583\ \ \ \ sqlite3\_bind\_int(stmt,\ 3,\ master\_id);}
+\DoxyCodeLine{00584\ \ \ \ \textcolor{keywordtype}{int}\ res\ =\ sqlite3\_step(stmt);}
+\DoxyCodeLine{00585\ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_DONE,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement:\ \%s"{}},\ sqlite3\_errmsg(m\_db));}
+\DoxyCodeLine{00586\ \ \ \ sqlite3\_finalize(stmt);}
+\DoxyCodeLine{00587\ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00590\ StatsManager::logEvent(event\_type\_t\ event,\ SubsecondTime\ time,\ core\_id\_t\ core\_id,\ thread\_id\_t\ thread\_id,\ UInt64\ value0,\ UInt64\ value1,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ description)}
+\DoxyCodeLine{00591\ \{}
+\DoxyCodeLine{00592\ \ \ \ \textcolor{keywordflow}{if}\ (time\ ==\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ time\ =\ Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime();}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \ sqlite3\_stmt\ *stmt;}
+\DoxyCodeLine{00596\ \ \ \ sqlite3\_prepare(m\_db,\ \textcolor{stringliteral}{"{}INSERT\ INTO\ event\ (event,\ time,\ core,\ thread,\ value0,\ value1,\ description)\ VALUES\ (?,\ ?,\ ?,\ ?,\ ?,\ ?,\ ?);"{}},\ -\/1,\ \&stmt,\ NULL);}
+\DoxyCodeLine{00597\ \ \ \ sqlite3\_bind\_int(stmt,\ 1,\ event);}
+\DoxyCodeLine{00598\ \ \ \ sqlite3\_bind\_int64(stmt,\ 2,\ time.getFS());}
+\DoxyCodeLine{00599\ \ \ \ sqlite3\_bind\_int(stmt,\ 3,\ core\_id);}
+\DoxyCodeLine{00600\ \ \ \ sqlite3\_bind\_int(stmt,\ 4,\ thread\_id);}
+\DoxyCodeLine{00601\ \ \ \ sqlite3\_bind\_int64(stmt,\ 5,\ value0);}
+\DoxyCodeLine{00602\ \ \ \ sqlite3\_bind\_int64(stmt,\ 6,\ value1);}
+\DoxyCodeLine{00603\ \ \ \ sqlite3\_bind\_text(stmt,\ 7,\ description\ ?\ description\ :\ \textcolor{stringliteral}{"{}"{}},\ -\/1,\ SQLITE\_STATIC);}
+\DoxyCodeLine{00604\ \ \ \ \textcolor{keywordtype}{int}\ res\ =\ sqlite3\_step(stmt);}
+\DoxyCodeLine{00605\ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ SQLITE\_DONE,\ \textcolor{stringliteral}{"{}Error\ executing\ SQL\ statement:\ \%s"{}},\ sqlite3\_errmsg(m\_db));}
+\DoxyCodeLine{00606\ \ \ \ sqlite3\_finalize(stmt);}
+\DoxyCodeLine{00607\ \}}
+\DoxyCodeLine{00608\ }
+\DoxyCodeLine{00609\ StatHist\ \&}
+\DoxyCodeLine{00610\ StatHist::operator\ +=\ (StatHist\ \&\ stat)}
+\DoxyCodeLine{00611\ \{}
+\DoxyCodeLine{00612\ \ \ \ \textcolor{keywordflow}{if}\ (n\ ==\ 0)\ \{\ min\ =\ stat.min;\ max\ =\ stat.max;\ \}}
+\DoxyCodeLine{00613\ \ \ \ n\ +=\ stat.n;}
+\DoxyCodeLine{00614\ \ \ \ s\ +=\ stat.s;}
+\DoxyCodeLine{00615\ \ \ \ s2\ +=\ stat.s2;}
+\DoxyCodeLine{00616\ \ \ \ \textcolor{keywordflow}{if}\ (stat.n\ \&\&\ stat.min\ <\ min)\ min\ =\ stat.min;}
+\DoxyCodeLine{00617\ \ \ \ \textcolor{keywordflow}{if}\ (stat.n\ \&\&\ stat.max\ >\ max)\ max\ =\ stat.max;}
+\DoxyCodeLine{00618\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ HIST\_MAX;\ ++i)}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ hist[i]\ +=\ stat.hist[i];}
+\DoxyCodeLine{00620\ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00621\ \}}
+\DoxyCodeLine{00622\ }
+\DoxyCodeLine{00623\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00624\ StatHist::update(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ v)}
+\DoxyCodeLine{00625\ \{}
+\DoxyCodeLine{00626\ \ \ \ \textcolor{keywordflow}{if}\ (n\ ==\ 0)\ \{}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ min\ =\ v;}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ max\ =\ v;}
+\DoxyCodeLine{00629\ \ \ \ \}}
+\DoxyCodeLine{00630\ \ \ \ n++;}
+\DoxyCodeLine{00631\ \ \ \ s\ +=\ v;}
+\DoxyCodeLine{00632\ \ \ \ s2\ +=\ v*v;}
+\DoxyCodeLine{00633\ \ \ \ \textcolor{keywordflow}{if}\ (v\ <\ min)\ min\ =\ v;}
+\DoxyCodeLine{00634\ \ \ \ \textcolor{keywordflow}{if}\ (v\ >\ max)\ max\ =\ v;}
+\DoxyCodeLine{00635\ \ \ \ \textcolor{keywordtype}{int}\ bin\ =\ floorLog2(v)\ +\ 1;}
+\DoxyCodeLine{00636\ \ \ \ \textcolor{keywordflow}{if}\ (bin\ >=\ HIST\_MAX)\ bin\ =\ HIST\_MAX\ -\/\ 1;}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ hist[bin]++;}
+\DoxyCodeLine{00638\ \}}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00641\ StatHist::print()}
+\DoxyCodeLine{00642\ \{}
+\DoxyCodeLine{00643\ \ \ \ printf(\textcolor{stringliteral}{"{}n(\%lu),\ avg(\%.2f),\ std(\%.2f),\ min(\%lu),\ max(\%lu),\ hist(\%lu"{}},}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ n,\ n\ ?\ s/\textcolor{keywordtype}{float}(n)\ :\ 0,\ n\ ?\ sqrt((s2/n\ -\/\ (s/n)*(s/n))*n/\textcolor{keywordtype}{float}(n-\/1))\ :\ 0,\ min,\ max,\ hist[0]);}
+\DoxyCodeLine{00645\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ HIST\_MAX;\ ++i)}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{},\%lu"{}},\ hist[i]);}
+\DoxyCodeLine{00647\ \ \ \ printf(\textcolor{stringliteral}{"{})\(\backslash\)n"{}});}
+\DoxyCodeLine{00648\ \}}
+
+\end{DoxyCode}

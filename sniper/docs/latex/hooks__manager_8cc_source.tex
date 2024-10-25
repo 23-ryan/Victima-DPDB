@@ -1,0 +1,65 @@
+\doxysection{hooks\+\_\+manager.\+cc}
+\label{hooks__manager_8cc_source}\index{common/system/hooks\_manager.cc@{common/system/hooks\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ HookType::hook\_type\_names[]\ =\ \{}
+\DoxyCodeLine{00005\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_PERIODIC"{}},}
+\DoxyCodeLine{00006\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_PERIODIC\_INS"{}},}
+\DoxyCodeLine{00007\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_SIM\_START"{}},}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_SIM\_END"{}},}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_ROI\_BEGIN"{}},}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_ROI\_END"{}},}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_CPUFREQ\_CHANGE"{}},}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_MAGIC\_MARKER"{}},}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_MAGIC\_USER"{}},}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_INSTR\_COUNT"{}},}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_THREAD\_CREATE"{}},}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_THREAD\_START"{}},}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_THREAD\_EXIT"{}},}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_THREAD\_STALL"{}},}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_THREAD\_RESUME"{}},}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_THREAD\_MIGRATE"{}},}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_INSTRUMENT\_MODE"{}},}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_PRE\_STAT\_WRITE"{}},}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_SYSCALL\_ENTER"{}},}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_SYSCALL\_EXIT"{}},}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_APPLICATION\_START"{}},}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_APPLICATION\_EXIT"{}},}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_APPLICATION\_ROI\_BEGIN"{}},}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_APPLICATION\_ROI\_END"{}},}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{stringliteral}{"{}HOOK\_SIGUSR1"{}},}
+\DoxyCodeLine{00030\ \};}
+\DoxyCodeLine{00031\ \textcolor{keyword}{static\_assert}(HookType::HOOK\_TYPES\_MAX\ ==\ \textcolor{keyword}{sizeof}(HookType::hook\_type\_names)\ /\ \textcolor{keyword}{sizeof}(HookType::hook\_type\_names[0]),}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ enough\ values\ in\ HookType::hook\_type\_names"{}});}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ HooksManager::HooksManager()}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{void}\ HooksManager::registerHook(HookType::hook\_type\_t\ type,\ HookCallbackFunc\ func,\ UInt64\ argument,\ HookCallbackOrder\ order)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ m\_registry[type].push\_back(HookCallback(func,\ argument,\ order));}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ SInt64\ HooksManager::callHooks(HookType::hook\_type\_t\ type,\ UInt64\ arg,\ \textcolor{keywordtype}{bool}\ expect\_return)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ order\ =\ 0;\ order\ <\ NUM\_HOOK\_ORDER;\ ++order)}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(std::vector<HookCallback>::iterator\ it\ =\ m\_registry[type].begin();\ it\ !=\ m\_registry[type].end();\ ++it)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>order\ ==\ (HookCallbackOrder)order)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ SInt64\ result\ =\ it-\/>func(it-\/>arg,\ arg);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (expect\_return\ \&\&\ result\ !=\ -\/1)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00059\ \}}
+
+\end{DoxyCode}

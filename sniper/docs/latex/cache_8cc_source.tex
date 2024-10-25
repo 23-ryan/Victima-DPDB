@@ -1,0 +1,609 @@
+\doxysection{cache.\+cc}
+\label{cache_8cc_source}\index{common/core/memory\_subsystem/cache/cache.cc@{common/core/memory\_subsystem/cache/cache.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Cache\ class}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ constructors/destructors}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keywordtype}{char}\ CStateString(CacheState::cstate\_t\ cstate)\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keywordflow}{switch}(cstate)}
+\DoxyCodeLine{00012\ \ \ \ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::INVALID:\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'I'};}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::SHARED:\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'S'};}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::SHARED\_UPGRADING:\ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'u'};}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::MODIFIED:\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'M'};}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::EXCLUSIVE:\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'E'};}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::OWNED:\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'O'};}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::INVALID\_COLD:\ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'\_'};}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::INVALID\_EVICT:\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'e'};}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CacheState::INVALID\_COHERENCY:\ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'c'};}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{charliteral}{'?'};}
+\DoxyCodeLine{00023\ \ \ \ \}}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{int}\ bits\_set(uint8\_t\ x)\ \{}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordflow}{return}\ \_\_builtin\_popcount(x);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ Cache::Cache(}
+\DoxyCodeLine{00033\ \ \ \ String\ name,}
+\DoxyCodeLine{00034\ \ \ \ String\ cfgname,}
+\DoxyCodeLine{00035\ \ \ \ core\_id\_t\ core\_id,}
+\DoxyCodeLine{00036\ \ \ \ UInt32\ num\_sets,}
+\DoxyCodeLine{00037\ \ \ \ UInt32\ associativity,}
+\DoxyCodeLine{00038\ \ \ \ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00039\ \ \ \ String\ replacement\_policy,}
+\DoxyCodeLine{00040\ \ \ \ cache\_t\ cache\_type,}
+\DoxyCodeLine{00041\ \ \ \ hash\_t\ hash,}
+\DoxyCodeLine{00042\ \ \ \ FaultInjector\ *fault\_injector,}
+\DoxyCodeLine{00043\ \ \ \ AddressHomeLookup\ *ahl,}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordtype}{bool}\ is\_tlb,\ \textcolor{keywordtype}{int}*\ page\_size,\ \textcolor{keywordtype}{int}\ number\_of\_page\_sizes)}
+\DoxyCodeLine{00045\ :}
+\DoxyCodeLine{00046\ \ \ \ CacheBase(name,\ num\_sets,\ associativity,\ cache\_block\_size,\ hash,\ ahl),}
+\DoxyCodeLine{00047\ \ \ \ m\_enabled(false),}
+\DoxyCodeLine{00048\ \ \ \ m\_num\_accesses(0),}
+\DoxyCodeLine{00049\ \ \ \ m\_num\_hits(0),}
+\DoxyCodeLine{00050\ \ \ \ m\_cache\_type(cache\_type),}
+\DoxyCodeLine{00051\ \ \ \ m\_fault\_injector(fault\_injector),}
+\DoxyCodeLine{00052\ \ \ \ m\_number\_of\_page\_sizes(number\_of\_page\_sizes),}
+\DoxyCodeLine{00053\ \ \ \ m\_pagesizes(page\_size),}
+\DoxyCodeLine{00054\ \ \ \ sum\_data\_reuse(0),}
+\DoxyCodeLine{00055\ \ \ \ number\_of\_data\_reuse(0),}
+\DoxyCodeLine{00056\ \ \ \ sum\_metadata\_reuse(0),}
+\DoxyCodeLine{00057\ \ \ \ number\_of\_metadata\_reuse(0),}
+\DoxyCodeLine{00058\ \ \ \ metadata\_passthrough\_loc(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/metadata/passthrough\_loc"{}})),}
+\DoxyCodeLine{00059\ \ \ \ potm\_enabled(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/tlb/potm\_enabled"{}}))}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ reuse\_levels[0]=5;}
+\DoxyCodeLine{00062\ \ \ \ reuse\_levels[1]=10;}
+\DoxyCodeLine{00063\ \ \ \ reuse\_levels[2]=20;}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ m\_set\_info\ =\ CacheSet::createCacheSetInfo(name,\ cfgname,\ core\_id,\ replacement\_policy,\ m\_associativity);}
+\DoxyCodeLine{00066\ \ \ \ m\_sets\ =\ \textcolor{keyword}{new}\ CacheSet*[m\_num\_sets];}
+\DoxyCodeLine{00067\ \ \ \ m\_fake\_sets\ =\ \textcolor{keyword}{new}\ CacheSet*[1];}
+\DoxyCodeLine{00068\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Creating\ "{}}\ <<\ name\ <<\ \textcolor{stringliteral}{"{}\ cache\ with\ "{}}\ <<\ m\_num\_sets\ <<\ \textcolor{stringliteral}{"{}\ sets,\ "{}}\ <<\ associativity\ <<\ \textcolor{stringliteral}{"{}-\/way\ associative,\ "{}}\ <<\ m\_blocksize\ <<\ \textcolor{stringliteral}{"{}B\ blocksize"{}}<<\ std::endl;\ }
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_sets;\ i++)}
+\DoxyCodeLine{00071\ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ m\_sets[i]\ =\ CacheSet::createCacheSet(cfgname,\ core\_id,\ replacement\_policy,\ m\_cache\_type,\ m\_associativity,\ m\_blocksize,\ m\_set\_info);}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{if}(name\ ==\ \textcolor{stringliteral}{"{}L2"{}}\ \&\&\ metadata\_passthrough\_loc\ >\ 2)\{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Creating\ one\ fake\ set\ for\ L2\ cache\ since\ metadata\ cant\ be\ cached\ in\ L2"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ m\_fake\_sets[0]\ =\ CacheSet::createCacheSet(cfgname,\ core\_id,\ replacement\_policy,\ m\_cache\_type,\ 1,\ m\_blocksize,\ m\_set\_info);}
+\DoxyCodeLine{00078\ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ }
+\DoxyCodeLine{00080\ \ }
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_SET\_USAGE\_HIST}}
+\DoxyCodeLine{00082\ \ \ \ m\_set\_usage\_hist\ =\ \textcolor{keyword}{new}\ UInt64[m\_num\_sets];}
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_sets;\ i++)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ m\_set\_usage\_hist[i]\ =\ 0;}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ m\_page\_walk\_cacheblocks.clear();}
+\DoxyCodeLine{00088\ \ \ \ m\_is\_tlb\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 5;\ i++)\{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}data-\/reuse-\/"{}})+std::to\_string(i).c\_str(),\ \&data\_reuse[i]);}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 5;\ i++)\{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}metadata-\/reuse-\/"{}})+std::to\_string(i).c\_str(),\ \&metadata\_reuse[i]);}
+\DoxyCodeLine{00097\ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 5;\ i++)\{}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}tlb-\/reuse-\/"{}})+std::to\_string(i).c\_str(),\ \&tlb\_reuse[i]);}
+\DoxyCodeLine{00102\ \ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)\{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}data-\/util-\/"{}})+std::to\_string(i).c\_str(),\ \&data\_util[i]);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)\{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}metadata-\/util-\/"{}})+std::to\_string(i).c\_str(),\ \&metadata\_util[i]);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)\{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}tlb-\/util-\/"{}})+std::to\_string(i).c\_str(),\ \&tlb\_util[i]);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}average\_data\_reuse"{}}),\ \&average\_data\_reuse);}
+\DoxyCodeLine{00123\ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}average\_metadata\_reuse"{}}),\ \&average\_metadata\_reuse);}
+\DoxyCodeLine{00124\ \ \ \ registerStatsMetric(name,\ core\_id,\ String(\textcolor{stringliteral}{"{}average\_tlb\_reuse"{}}),\ \&average\_tlb\_reuse);}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ Cache::\string~Cache()}
+\DoxyCodeLine{00129\ \{}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_SET\_USAGE\_HIST}}
+\DoxyCodeLine{00132\ \ \ \ printf(\textcolor{stringliteral}{"{}Cache\ \%s\ set\ usage:"{}},\ m\_name.c\_str());}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ (SInt32)\ m\_num\_sets;\ i++)}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ \%"{}}\ PRId64,\ m\_set\_usage\_hist[i]);}
+\DoxyCodeLine{00135\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_set\_usage\_hist;}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordflow}{if}\ (m\_set\_info)}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_set\_info;}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ (SInt32)\ m\_num\_sets;\ i++)}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_sets[i];}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_sets;}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keywordflow}{if}(m\_name\ ==\ \textcolor{stringliteral}{"{}L2"{}}\ \&\&\ metadata\_passthrough\_loc\ >\ 2)\{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ 1;\ i++)}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_fake\_sets[i];}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_fake\_sets;}
+\DoxyCodeLine{00149\ \ \ \ \}}
+\DoxyCodeLine{00150\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ Lock\&}
+\DoxyCodeLine{00153\ Cache::getSetLock(IntPtr\ addr)}
+\DoxyCodeLine{00154\ \{}
+\DoxyCodeLine{00155\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00156\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ splitAddress(addr,\ tag,\ set\_index);}
+\DoxyCodeLine{00159\ \ \ \ assert(set\_index\ <\ m\_num\_sets);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordflow}{return}\ m\_sets[set\_index]-\/>getLock();}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00165\ Cache::invalidateSingleLine(IntPtr\ addr)}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00168\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordtype}{bool}\ result\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00170\ \ \ \ \textcolor{keywordtype}{bool}\ fake\_result\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00171\ \ \ \ }
+\DoxyCodeLine{00172\ \ \ \ splitAddress(addr,\ tag,\ set\_index);}
+\DoxyCodeLine{00173\ \ \ \ assert(set\_index\ <\ m\_num\_sets);}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \textcolor{keywordflow}{if}(m\_name\ ==\ \textcolor{stringliteral}{"{}L2"{}}\ \&\&\ metadata\_passthrough\_loc\ >\ 2)\{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ splitAddress(addr,\ tag,\ set\_index);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ fake\_result\ =\ m\_fake\_sets[0]-\/>invalidate(tag);}
+\DoxyCodeLine{00178\ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \ }
+\DoxyCodeLine{00180\ \ \ \ result\ =\ m\_sets[set\_index]-\/>invalidate(tag);}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \textcolor{keywordflow}{return}\ result\ ||\ fake\_result;}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ CacheBlockInfo*}
+\DoxyCodeLine{00186\ Cache::accessSingleLine(IntPtr\ addr,\ access\_t\ access\_type,}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ Byte*\ buff,\ UInt32\ bytes,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ update\_replacement,\ \textcolor{keywordtype}{bool}\ tlb\_entry,\ \textcolor{keywordtype}{bool}\ is\_metadata)}
+\DoxyCodeLine{00188\ \{}
+\DoxyCodeLine{00189\ \ \ \ \textcolor{comment}{//assert((buff\ ==\ NULL)\ ==\ (bytes\ ==\ 0));}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00192\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00193\ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00194\ \ \ \ UInt32\ block\_offset;}
+\DoxyCodeLine{00195\ \ \ \ splitAddress(addr,\ tag,\ set\_index,\ block\_offset);}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ CacheSet*\ set\ =\ m\_sets[set\_index];}
+\DoxyCodeLine{00198\ \ \ \ CacheBlockInfo*\ cache\_block\_info\ =\ set-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{if}\ (cache\_block\_info\ ==\ NULL)}
+\DoxyCodeLine{00201\ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_name\ ==\ \textcolor{stringliteral}{"{}L2"{}}\ \&\&\ metadata\_passthrough\_loc\ >\ 2)\{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}[L2]\ Searching\ in\ fake\ set\ of\ L2"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ set\ =\ m\_fake\_sets[0];}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ cache\_block\_info\ =\ set-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//if(cache\_block\_info)}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}[L2]\ Found\ a\ fake\ set\ of\ L2"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cache\_block\_info\ ==\ NULL)}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00212\ \ \ \ \}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \textcolor{keywordflow}{if}(tlb\_entry\ \&\&\ !(cache\_block\_info-\/>isTLBBlock()))\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00216\ \ \ \ }
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \textcolor{keywordflow}{if}\ (access\_type\ ==\ LOAD)}
+\DoxyCodeLine{00219\ \ \ \ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ assumes\ error\ occurs\ in\ memory.\ If\ we\ want\ to\ model\ bus\ errors,\ insert\ the\ error\ into\ buff\ instead}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ m\_fault\_injector-\/>preRead(addr,\ set\_index\ *\ m\_associativity\ +\ line\_index,\ bytes,\ (Byte*)m\_sets[set\_index]-\/>getDataPtr(line\_index,\ block\_offset),\ now);}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \ \ set-\/>read\_line(line\_index,\ block\_offset,\ buff,\ bytes,\ update\_replacement);}
+\DoxyCodeLine{00225\ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00227\ \ \ \ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ set-\/>write\_line(line\_index,\ block\_offset,\ buff,\ bytes,\ update\_replacement);}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ assumes\ error\ occurs\ in\ memory.\ If\ we\ want\ to\ model\ bus\ errors,\ insert\ the\ error\ into\ buff\ instead}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ m\_fault\_injector-\/>postWrite(addr,\ set\_index\ *\ m\_associativity\ +\ line\_index,\ bytes,\ (Byte*)m\_sets[set\_index]-\/>getDataPtr(line\_index,\ block\_offset),\ now);}
+\DoxyCodeLine{00233\ \ \ \ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \textcolor{keywordflow}{return}\ cache\_block\_info;}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00239\ Cache::insertSingleLine(IntPtr\ addr,\ Byte*\ fill\_buff,}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ eviction,\ IntPtr*\ evict\_addr,}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ CacheBlockInfo*\ evict\_block\_info,\ Byte*\ evict\_buff,}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ SubsecondTime\ now,\ CacheCntlr\ *cntlr,}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ btype)}
+\DoxyCodeLine{00244\ \{}
+\DoxyCodeLine{00245\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00246\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00247\ \ \ \ splitAddress(addr,\ tag,\ set\_index);}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ CacheBlockInfo*\ cache\_block\_info\ =\ CacheBlockInfo::create(m\_cache\_type);}
+\DoxyCodeLine{00251\ \ \ \ cache\_block\_info-\/>setTag(tag);}
+\DoxyCodeLine{00252\ \ \ \ cache\_block\_info-\/>setBlockType(btype);}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \textcolor{keywordtype}{bool}\ metadata\_request\ =\ (btype\ ==\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE)\ ||\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (btype\ ==\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE\_PASSTHROUGH)\ ||\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (btype\ ==\ CacheBlockInfo::block\_type\_t::SECURITY)\ ||\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (btype\ ==\ CacheBlockInfo::block\_type\_t::EXPRESSIVE)\ ||\ \ }
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (btype\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY)\ ||}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (btype\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY\_PASSTHROUGH);}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \textcolor{keywordflow}{if}(m\_name\ ==\ \textcolor{stringliteral}{"{}L2"{}}\ \&\&\ metadata\_request\ \&\&\ metadata\_passthrough\_loc\ >\ 2)\{}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}[L2]\ Inserting\ in\ fake\ set\ of\ L2:\ "{}\ <<\ addr\ <<std::endl;}}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ m\_fake\_sets[0]-\/>insert(cache\_block\_info,\ fill\_buff,}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ eviction,\ evict\_block\_info,\ evict\_buff,\ cntlr);}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \}}
+\DoxyCodeLine{00269\ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ m\_sets[set\_index]-\/>insert(cache\_block\_info,\ fill\_buff,}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ eviction,\ evict\_block\_info,\ evict\_buff,\ cntlr);\ }
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ *evict\_addr\ =\ tagToAddress(evict\_block\_info-\/>getTag());}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \textcolor{keywordflow}{if}(\ m\_name\ ==\ \textcolor{stringliteral}{"{}nuca-\/cache"{}}\ \&\&\ (\ evict\_block\_info-\/>getBlockType()==\ CacheBlockInfo::TLB\_ENTRY\ ||\ evict\_block\_info-\/>getBlockType()\ ==\ CacheBlockInfo::TLB\_ENTRY\_PASSTHROUGH)\ \&\&\ !(potm\_enabled))\{}
+\DoxyCodeLine{00279\ \ \ \ \ \ *eviction\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ evict\_addr=\ NULL;}
+\DoxyCodeLine{00281\ \ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \textcolor{keywordflow}{if}((*eviction)\ ==\ \textcolor{keyword}{true})\{}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ reuse\_value\ =\ evict\_block\_info-\/>getReuse();}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ }
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(cache\_block\_info-\/>getBlockType()==CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE)\{}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(reuse\_value\ ==\ 0)\ data\_reuse[0]++;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[0]\ )\ data\_reuse[1]++;}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[1])\ data\_reuse[2]++;}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[2])\ data\_reuse[3]++;}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ data\_reuse[4]++;}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ sum\_data\_reuse+=reuse\_value;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ sum\_data\_utilization\ +=\ evict\_block\_info-\/>getUsage();}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ data\_util[bits\_set(evict\_block\_info-\/>getUsage())-\/1]++;}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ number\_of\_data\_reuse++;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ average\_data\_reuse\ =\ sum\_data\_reuse/number\_of\_data\_reuse;}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(cache\_block\_info-\/>getBlockType()\ ==\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE)\{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(reuse\_value\ ==\ 0)\ metadata\_reuse[0]++;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[0]\ )\ metadata\_reuse[1]++;}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[1])\ metadata\_reuse[2]++;}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[2])\ metadata\_reuse[3]++;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ metadata\_reuse[4]++;}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ sum\_metadata\_reuse+=reuse\_value;}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ sum\_metadata\_utilization\ +=\ evict\_block\_info-\/>getUsage();}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ metadata\_util[bits\_set(evict\_block\_info-\/>getUsage())-\/1]++;}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ number\_of\_metadata\_reuse++;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ average\_metadata\_reuse\ =\ sum\_metadata\_reuse/number\_of\_metadata\_reuse;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ cache\_block\_info-\/>getBlockType()\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY\ ||\ \ cache\_block\_info-\/>getBlockType()\ ==\ CacheBlockInfo::block\_type\_t::TLB\_ENTRY\_PASSTHROUGH)}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(reuse\_value\ ==\ 0)\ tlb\_reuse[0]++;}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[0]\ )\ tlb\_reuse[1]++;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[1])\ \ tlb\_reuse[2]++;}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(reuse\_value\ <=\ reuse\_levels[2])\ \ tlb\_reuse[3]++;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ tlb\_reuse[4]++;}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ sum\_tlb\_reuse+=reuse\_value;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ sum\_tlb\_utilization\ +=\ evict\_block\_info-\/>getUsage();}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ tlb\_util[bits\_set(evict\_block\_info-\/>getUsage())-\/1]++;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ number\_of\_tlb\_reuse++;}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ }
+\DoxyCodeLine{00336\ \ \ \ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ no\ callback\ is\ generated\ for\ read\ of\ evicted\ data}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \_\_attribute\_\_((unused))\ CacheBlockInfo*\ res\ =\ m\_sets[set\_index]-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(res\ !=\ NULL,\ \textcolor{stringliteral}{"{}Inserted\ line\ no\ longer\ there?"{}});}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ m\_fault\_injector-\/>postWrite(addr,\ set\_index\ *\ m\_associativity\ +\ line\_index,\ m\_sets[set\_index]-\/>getBlockSize(),\ (Byte*)m\_sets[set\_index]-\/>getDataPtr(line\_index,\ 0),\ now);}
+\DoxyCodeLine{00345\ \ \ \ \}}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_SET\_USAGE\_HIST}}
+\DoxyCodeLine{00348\ \ \ \ ++m\_set\_usage\_hist[set\_index];}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \textcolor{keyword}{delete}\ cache\_block\_info;}
+\DoxyCodeLine{00352\ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ CacheBlockInfo*}
+\DoxyCodeLine{00357\ Cache::accessSingleLineTLB(IntPtr\ addr,\ access\_t\ access\_type,}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ Byte*\ buff,\ UInt32\ bytes,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ update\_replacement)}
+\DoxyCodeLine{00359\ \{}
+\DoxyCodeLine{00360\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00361\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00362\ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00363\ \ \ \ UInt32\ block\_offset;}
+\DoxyCodeLine{00364\ \ \ \ CacheBlockInfo*\ cache\_block\_info;}
+\DoxyCodeLine{00365\ \ \ \ CacheSet*\ set;}
+\DoxyCodeLine{00366\ \ \ \ \textcolor{keywordtype}{bool}\ found\_cache\_block\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00367\ \ \ \ }
+\DoxyCodeLine{00368\ \ \ \ }
+\DoxyCodeLine{00369\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ page\_size\ =\ 0;\ page\_size\ <\ m\_number\_of\_page\_sizes;\ page\_size++)\{\ \textcolor{comment}{//\ @kanellok\ iterate\ over\ all\ possible\ page\ sizes}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ m\_name\ <<\ "{}\ lookup:\ Page\ size\ =\ "{}\ <<\ m\_pagesizes[page\_size]\ <<\ "{}\ Number\ of\ page\ sizes\ =\ "{}\ <<\ \ m\_number\_of\_page\_sizes\ <<\ \ std::endl;}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ splitAddressTLB(addr,\ tag,\ set\_index,\ block\_offset,\ m\_pagesizes[page\_size]);\ \textcolor{comment}{//@kanellok\ provide\ the\ page\ size\ to\ find\ the\ index}}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Address\ =\ \ "{}\ <<\ addr\ <<\ std::endl;}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Set\ index\ =\ \ "{}\ <<\ set\_index\ <<\ std::endl;}}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Tag\ =\ \ "{}\ <<\ tag\ \ <<\ std::endl;}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ std::endl;}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \ \ set\ =\ m\_sets[set\_index];}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ cache\_block\_info\ =\ set-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Set\ -\/\ Cache\ Block\ Info\ "{}\ <<\ set-\/>find(tag,\ \&line\_index)\ <<\ std::endl;}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cache\_block\_info\ ==\ NULL)}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ found\_cache\_block\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (access\_type\ ==\ LOAD)}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ assumes\ error\ occurs\ in\ memory.\ If\ we\ want\ to\ model\ bus\ errors,\ insert\ the\ error\ into\ buff\ instead}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ m\_fault\_injector-\/>preRead(addr,\ set\_index\ *\ m\_associativity\ +\ line\_index,\ bytes,\ (Byte*)m\_sets[set\_index]-\/>getDataPtr(line\_index,\ block\_offset),\ now);}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ set-\/>read\_line(line\_index,\ block\_offset,\ buff,\ bytes,\ update\_replacement);}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ set-\/>write\_line(line\_index,\ block\_offset,\ buff,\ bytes,\ update\_replacement);}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ assumes\ error\ occurs\ in\ memory.\ If\ we\ want\ to\ model\ bus\ errors,\ insert\ the\ error\ into\ buff\ instead}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ m\_fault\_injector-\/>postWrite(addr,\ set\_index\ *\ m\_associativity\ +\ line\_index,\ bytes,\ (Byte*)m\_sets[set\_index]-\/>getDataPtr(line\_index,\ block\_offset),\ now);}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00407\ \ \ \ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Outcome\ =\ "{}\ <<\ (bool)(cache\_block\_info)\ <<\ std::endl;}}
+\DoxyCodeLine{00410\ \ \ \ \textcolor{comment}{//std::cout\ <<\ std::endl;}}
+\DoxyCodeLine{00411\ \ \ \ }
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \ \ \ \textcolor{keywordflow}{if}(found\_cache\_block)\ \textcolor{keywordflow}{return}\ cache\_block\_info;}
+\DoxyCodeLine{00414\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00415\ \}}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00418\ Cache::insertSingleLineTLB(IntPtr\ addr,\ Byte*\ fill\_buff,}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}*\ eviction,\ IntPtr*\ evict\_addr,}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ CacheBlockInfo*\ evict\_block\_info,\ Byte*\ evict\_buff,}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ SubsecondTime\ now,\ CacheCntlr\ *cntlr,}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ btype,\ \textcolor{keywordtype}{int}\ page\_size)}
+\DoxyCodeLine{00423\ \{}
+\DoxyCodeLine{00424\ \ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00425\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00426\ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00427\ \ \ \ splitAddressTLB(addr,\ tag,\ set\_index,\ page\_size);}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \textcolor{comment}{//\ \ std::cout\ <<\ m\_name\ <<\ "{}\ insert:\ Page\ size\ =\ "{}\ <<\ page\_size\ <<\ std::endl;}}
+\DoxyCodeLine{00430\ \ \ \ \textcolor{comment}{//\ \ std::cout\ <<\ "{}Address\ =\ \ "{}\ <<\ addr\ <<\ std::endl;}}
+\DoxyCodeLine{00431\ \ \ \ \textcolor{comment}{//\ \ std::cout\ <<\ "{}Set\ index\ =\ \ "{}\ <<\ set\_index\ <<\ std::endl;}}
+\DoxyCodeLine{00432\ \ \ \ \textcolor{comment}{//\ \ std::cout\ <<\ "{}Tag\ =\ \ "{}\ <<\ tag\ \ <<\ std::endl;}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ CacheBlockInfo*\ cache\_block\_info\ =\ CacheBlockInfo::create(m\_cache\_type);}
+\DoxyCodeLine{00436\ \ \ \ cache\_block\_info-\/>setTag(tag);}
+\DoxyCodeLine{00437\ \ \ \ cache\_block\_info-\/>setBlockType(btype);}
+\DoxyCodeLine{00438\ \ \ \ cache\_block\_info-\/>setPageSize(page\_size);}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ m\_sets[set\_index]-\/>insert(cache\_block\_info,\ fill\_buff,}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ eviction,\ evict\_block\_info,\ evict\_buff,\ cntlr);}
+\DoxyCodeLine{00442\ \ \ \ \textcolor{keywordflow}{if}(*eviction\ ==\ \textcolor{keyword}{true})\ page\_size\ =\ evict\_block\_info-\/>getPageSize();}
+\DoxyCodeLine{00443\ \ \ \ *evict\_addr\ =\ tagToAddressTLB(evict\_block\_info-\/>getTag(),page\_size);}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Inserted\ "{}\ <<\ addr\ <<\ "{}\ in\ set\ "{}\ <<\ set\_index\ <<\ "{}\ with\ tag\ "{}\ <<\ tag\ <<\ std::endl;}}
+\DoxyCodeLine{00447\ \ \ \ \textcolor{comment}{//if(*eviction\ ==\ true)}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Evicted\ \ address\ \ "{}\ <<\ *evict\_addr<<\ std::endl;}}
+\DoxyCodeLine{00449\ \ \ \ \textcolor{comment}{//std::cout\ <<\ std::endl;}}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fault\_injector)\ \{}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ no\ callback\ is\ generated\ for\ read\ of\ evicted\ data}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \_\_attribute\_\_((unused))\ CacheBlockInfo*\ res\ =\ m\_sets[set\_index]-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(res\ !=\ NULL,\ \textcolor{stringliteral}{"{}Inserted\ line\ no\ longer\ there?"{}});}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \ \ \ \ m\_fault\_injector-\/>postWrite(addr,\ set\_index\ *\ m\_associativity\ +\ line\_index,\ m\_sets[set\_index]-\/>getBlockSize(),\ (Byte*)m\_sets[set\_index]-\/>getDataPtr(line\_index,\ 0),\ now);}
+\DoxyCodeLine{00458\ \ \ \ \}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_SET\_USAGE\_HIST}}
+\DoxyCodeLine{00461\ \ \ \ ++m\_set\_usage\_hist[set\_index];}
+\DoxyCodeLine{00462\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \textcolor{keyword}{delete}\ cache\_block\_info;}
+\DoxyCodeLine{00465\ \}}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \textcolor{comment}{//\ Single\ line\ cache\ access\ at\ addr}}
+\DoxyCodeLine{00470\ CacheBlockInfo*}
+\DoxyCodeLine{00471\ Cache::peekSingleLine(IntPtr\ addr)}
+\DoxyCodeLine{00472\ \{}
+\DoxyCodeLine{00473\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00474\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00475\ \ \ \ splitAddress(addr,\ tag,\ set\_index);}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \textcolor{comment}{//\ \ std::cout\ <<\ "{}Peeking\ single\ line\ with\ address:\ \ "{}\ <<\ addr\ <<\ "{}and\ tag"{}\ <<\ tag\ <<\ std::endl;}}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \ \ \ \textcolor{keywordflow}{if}(m\_sets[set\_index]-\/>find(tag)\ ==\ NULL)\{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ }
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_name\ ==\ \textcolor{stringliteral}{"{}L2"{}}\ \&\&\ metadata\_passthrough\_loc\ >2)}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_fake\_sets[0]-\/>find(tag);}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ }
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00485\ \ \ \ \}}
+\DoxyCodeLine{00486\ \ \ \ \textcolor{keywordflow}{return}\ m\_sets[set\_index]-\/>find(tag);}
+\DoxyCodeLine{00487\ \}}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \textcolor{keywordtype}{void}\ Cache::updateSetReplacement(IntPtr\ addr)}
+\DoxyCodeLine{00492\ \{}
+\DoxyCodeLine{00493\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00494\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00495\ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00496\ \ \ \ UInt32\ block\_offset;}
+\DoxyCodeLine{00497\ \ \ \ UInt32\ bytes\ =\ 8;}
+\DoxyCodeLine{00498\ \ \ \ Byte*\ buff\ =\ NULL;}
+\DoxyCodeLine{00499\ \ \ \ CacheBlockInfo*\ cache\_block\_info;}
+\DoxyCodeLine{00500\ \ \ \ CacheSet*\ set;}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \ splitAddress(addr,\ tag,\ set\_index,\ block\_offset);}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ cache\_block\_info\ =\ m\_sets[set\_index]-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00505\ \ \ \ }
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \ \ \ m\_sets[set\_index]-\/>read\_line(line\_index,\ block\_offset,\ buff,\ bytes,\textcolor{keyword}{true});}
+\DoxyCodeLine{00508\ \ \ \ }
+\DoxyCodeLine{00509\ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00514\ Cache::updateCounters(\textcolor{keywordtype}{bool}\ cache\_hit)}
+\DoxyCodeLine{00515\ \{}
+\DoxyCodeLine{00516\ \ \ \ \textcolor{keywordflow}{if}\ (m\_enabled)}
+\DoxyCodeLine{00517\ \ \ \ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ m\_num\_accesses\ ++;}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cache\_hit)}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ m\_num\_hits\ ++;}
+\DoxyCodeLine{00521\ \ \ \ \}}
+\DoxyCodeLine{00522\ \}}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00525\ Cache::updateHits(Core::mem\_op\_t\ mem\_op\_type,\ UInt64\ hits)}
+\DoxyCodeLine{00526\ \{}
+\DoxyCodeLine{00527\ \ \ \ \textcolor{keywordflow}{if}\ (m\_enabled)}
+\DoxyCodeLine{00528\ \ \ \ \{}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ m\_num\_accesses\ +=\ hits;}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ m\_num\_hits\ +=\ hits;}
+\DoxyCodeLine{00531\ \ \ \ \}}
+\DoxyCodeLine{00532\ \}}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ CacheSet*\ }
+\DoxyCodeLine{00535\ Cache::getCacheSet(UInt32\ set\_index)}
+\DoxyCodeLine{00536\ \{}
+\DoxyCodeLine{00537\ \ \ \ \textcolor{keywordflow}{return}\ m\_sets[set\_index];}
+\DoxyCodeLine{00538\ \}}
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00541\ Cache::measureStats()}
+\DoxyCodeLine{00542\ \{}
+\DoxyCodeLine{00543\ \ \ \ uint64\_t\ accum\ =\ 0;\ \textcolor{comment}{/*\ accumulate\ stats\ over\ all\ sets\ */}}
+\DoxyCodeLine{00544\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ set\_index\ =\ 0;\ set\_index\ <\ m\_num\_sets;\ ++set\_index)}
+\DoxyCodeLine{00545\ \ \ \ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ accum\ +=\ m\_sets[set\_index]-\/>countPageWalkCacheBlocks();}
+\DoxyCodeLine{00547\ \ \ \ \}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ m\_page\_walk\_cacheblocks.push\_back(accum);}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ \ accum\ =\ 0;\ \textcolor{comment}{/*\ accumulate\ stats\ over\ all\ sets\ */}}
+\DoxyCodeLine{00552\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ set\_index\ =\ 0;\ set\_index\ <\ m\_num\_sets;\ ++set\_index)}
+\DoxyCodeLine{00553\ \ \ \ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ accum\ +=\ m\_sets[set\_index]-\/>countSecurityCacheBlocks();}
+\DoxyCodeLine{00555\ \ \ \ \}}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \ \ \ m\_security\_cacheblocks.push\_back(accum);}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \ \ \ accum\ =\ 0;\ \textcolor{comment}{/*\ accumulate\ stats\ over\ all\ sets\ */}}
+\DoxyCodeLine{00560\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ set\_index\ =\ 0;\ set\_index\ <\ m\_num\_sets;\ ++set\_index)}
+\DoxyCodeLine{00561\ \ \ \ \{}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ accum\ +=\ m\_sets[set\_index]-\/>countExpressiveCacheBlocks();}
+\DoxyCodeLine{00563\ \ \ \ \}}
+\DoxyCodeLine{00564\ }
+\DoxyCodeLine{00565\ \ \ \ m\_expressive\_cacheblocks.push\_back(accum);}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \ \ \ accum\ =\ 0;\ \textcolor{comment}{/*\ accumulate\ stats\ over\ all\ sets\ */}}
+\DoxyCodeLine{00568\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ set\_index\ =\ 0;\ set\_index\ <\ m\_num\_sets;\ ++set\_index)}
+\DoxyCodeLine{00569\ \ \ \ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ accum\ +=\ m\_sets[set\_index]-\/>countUtopiaCacheBlocks();}
+\DoxyCodeLine{00571\ \ \ \ \}}
+\DoxyCodeLine{00572\ \ \ \ m\_utopia\_cacheblocks.push\_back(accum);}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ accum\ =\ 0;\ \textcolor{comment}{/*\ accumulate\ stats\ over\ all\ sets\ */}}
+\DoxyCodeLine{00575\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ set\_index\ =\ 0;\ set\_index\ <\ m\_num\_sets;\ ++set\_index)}
+\DoxyCodeLine{00576\ \ \ \ \{}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ accum\ +=\ m\_sets[set\_index]-\/>countTLBCacheBlocks();}
+\DoxyCodeLine{00578\ \ \ \ \}}
+\DoxyCodeLine{00579\ \ \ \ m\_tlb\_cacheblocks.push\_back(accum);}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ }
+\DoxyCodeLine{00583\ \}}
+\DoxyCodeLine{00584\ \textcolor{keywordtype}{void}\ Cache::markMetadata(IntPtr\ address,\ CacheBlockInfo::block\_type\_t\ blocktype)\{}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \ \ \ }
+\DoxyCodeLine{00587\ \ \ \ IntPtr\ tag;}
+\DoxyCodeLine{00588\ \ \ \ UInt32\ set\_index;}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \ \ \ splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ }
+\DoxyCodeLine{00593\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ getCacheSet(set\_index)-\/>getAssociativity();\ i++)\{}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(peekBlock(set\_index,i)-\/>getTag()\ ==\ tag)\{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ peekBlock(set\_index,i)-\/>setBlockType(blocktype);}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00600\ \ \ \ \}}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \}}
+\DoxyCodeLine{00603\ }
+
+\end{DoxyCode}

@@ -1,0 +1,337 @@
+\doxysection{pagetable\+\_\+walker\+\_\+radix.\+cc}
+\label{pagetable__walker__radix_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_radix.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/pagetable\_walker\_radix.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}pagetable\_walker\_radix.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache\_cntlr.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pwc.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <math.h>}\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <time.h>}\ }
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI\{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableWalkerRadix::counter\ =\ 0;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \ PageTableWalkerRadix::PageTableWalkerRadix(\textcolor{keywordtype}{int}\ number\_of\_levels,\ }
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core*\ \_core,\ ShmemPerfModel*\ \_m\_shmem\_perf\_model,\ }
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *level\_bit\_indices,\textcolor{keywordtype}{int}\ *level\_percentages,\ PWC*\ pwc,\ \textcolor{keywordtype}{bool}\ pwc\_enabled,UtopiaCache*\ \_shadow\_cache)}
+\DoxyCodeLine{00018\ \ \ \ \ :PageTableWalker(\_core-\/>getId(),\ 0,\ \_m\_shmem\_perf\_model,\ pwc,\ pwc\_enabled)}
+\DoxyCodeLine{00019\ \ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(level\_bit\_indices!=NULL)\{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>shadow\_cache=\_shadow\_cache;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>core\ =\_core;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>m\_shmem\_perf\_model=\_m\_shmem\_perf\_model;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats\_radix.number\_of\_levels=number\_of\_levels;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats\_radix.address\_bit\_indices=(\textcolor{keywordtype}{int}\ *)malloc((number\_of\_levels+1)*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats\_radix.hit\_percentages=(\textcolor{keywordtype}{int}\ *)malloc((number\_of\_levels+1)*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ number\_of\_levels+1;\ i++)}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i<number\_of\_levels)\{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats\_radix.hit\_percentages[i]=level\_percentages[i];}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>stats\_radix.address\_bit\_indices[i]=level\_bit\_indices[i];}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>starting\_table=InitiateTablePtw((\textcolor{keywordtype}{int})pow(2.0,(\textcolor{keywordtype}{float})level\_bit\_indices[0]));}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ latency\_per\_level\ =\ \textcolor{keyword}{new}\ SubsecondTime[number\_of\_levels];}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}ptw\_radix\_"{}};}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ name\ =\ name+std::to\_string(counter).c\_str();}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ number\_of\_levels+1;\ i++)\{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ String\ metric\_name\ =\ \textcolor{stringliteral}{"{}page\_level\_latency\_"{}};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ String\ metric\ =\ metric\_name+std::to\_string(i).c\_str();}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ metric,\ \&latency\_per\_level[i]);\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ counter++;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ SubsecondTime\ PageTableWalkerRadix::init\_walk(IntPtr\ eip,\ IntPtr\ address,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ CacheCntlr\ *\_cache,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ addresses.clear();}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ cache\ =\ \_cache;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ stats.page\_walks++;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ total\_latency;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ now\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats\_radix.number\_of\_levels;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ pwc\_hit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_walk\_cache\_enabled)\{\ \textcolor{comment}{//@kanellok\ access\ page\ walk\ caches\ }}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PWC::where\_t\ pwc\_where;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_walk\_cache\_enabled)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ pwc\_address\ =\ (IntPtr)(\&starting\_table-\/>entries[a1]);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pwc\_where\ =\ pwc-\/>lookup(pwc\_address,\ t\_start\ ,\textcolor{keyword}{true},\ 1,\ count);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pwc\_where\ ==\ PWC::HIT\ )\ pwc\_hit\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pwc\_hit\ ==\ \textcolor{keyword}{true})\{}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\ =\ pwc-\/>access\_latency.getLatency();\ }
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(\&starting\_table-\/>entries[a1]))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eip,}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf,\ data\_length,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ modeled,}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count,\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE,\ SubsecondTime::Zero(),shadow\_cache);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addresses.push\_back((IntPtr)(\&starting\_table-\/>entries[a1]));}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_end\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_walk\_cache\_enabled)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\ =\ t\_end\ -\/\ t\_start\ +\ pwc-\/>miss\_latency.getLatency();}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\ =\ t\_end\ -\/\ t\_start;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,now);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>tagCachesBlockType(cache\_address,CacheBlockInfo::block\_type\_t::PAGE\_TABLE);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ latency\_per\_level[0]\ +=\ total\_latency;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_NONE)\{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ starting\_table-\/>entries[a1]=*CreateNewPtwEntryAtLevel(1,stats\_radix.number\_of\_levels,stats\_radix.address\_bit\_indices,stats\_radix.hit\_percentages,\textcolor{keyword}{this},address);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_ADDRESS)\{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<std::hex<<address<<"{}\ -\/\ "{}<<std::hex<<a1<<"{}\ -\/\ "{}<<level<<"{}\ Address\(\backslash\)n"{};}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ latency\_per\_level[0]\ +=\ total\_latency;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ total\_latency;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ final\_latency\ =\ total\_latency+InitializeWalkRecursive(eip,\ address,2,starting\_table-\/>entries[a1].next\_level\_table,lock\_signal,data\_buf,data\_length,\ modeled,\ count);}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shmem\_perf\_model-\/>setElapsedTime(ShmemPerfModel::\_USER\_THREAD,now);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ vpn\ =\ address\ >>\ init\_walk\_functional(address);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ track\_per\_page\_ptw\_latency(vpn,final\_latency);}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ final\_latency;}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ SubsecondTime\ PageTableWalkerRadix::InitializeWalkRecursive(IntPtr\ eip,\ uint64\_t\ address,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ level,ptw\_table*\ new\_table,}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ pwc\_address;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_start;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ total\_latency;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats\_radix.number\_of\_levels;\ i\ >=\ level;\ i-\/-\/)}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ pwc\_hit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_walk\_cache\_enabled)\{\ \textcolor{comment}{//@kanellok\ access\ page\ walk\ caches\ }}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PWC::where\_t\ pwc\_where;}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_walk\_cache\_enabled\ \&\&\ level\ !=\ (stats\_radix.number\_of\_levels)\ )}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pwc\_address\ =\ (IntPtr)(\&new\_table-\/>entries[a1]);}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pwc\_where\ =\ pwc-\/>lookup(pwc\_address,\ t\_start\ ,\textcolor{keyword}{true},\ level,\ count);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pwc\_where\ ==\ PWC::HIT\ )\ pwc\_hit\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pwc\_hit\ ==\ \textcolor{keyword}{true})\{}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\ =\ pwc-\/>access\_latency.getLatency();\ }
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t\_start\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ cache\_address\ =\ ((IntPtr)(\&new\_table-\/>entries[a1]))\ \&\ (\string~((64\ -\/\ 1)));\ }
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache-\/>processMemOpFromCore(}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eip,\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lock\_signal,}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t::READ,}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cache\_address,\ 0,}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_buf,\ data\_length,}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ modeled,}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count,\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_end\ =\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD);}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(page\_walk\_cache\_enabled)}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\ =\ t\_end\ -\/\ t\_start\ +\ pwc-\/>miss\_latency.getLatency();}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ total\_latency\ =\ t\_end\ -\/\ t\_start;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addresses.push\_back((IntPtr)(\&new\_table-\/>entries[a1]));}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mem\_manager-\/>tagCachesBlockType(cache\_address,CacheBlockInfo::block\_type\_t::PAGE\_TABLE);}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ latency\_per\_level[level-\/1]\ +=\ total\_latency;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_NONE)\{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new\_table-\/>entries[a1]=*CreateNewPtwEntryAtLevel(level,stats\_radix.number\_of\_levels,stats\_radix.address\_bit\_indices,stats\_radix.hit\_percentages,\textcolor{keyword}{this},\ address);}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_ADDRESS)\{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<std::hex<<address<<"{}\ -\/\ "{}<<std::hex<<a1<<"{}\ -\/\ "{}<<level<<"{}\ Address\(\backslash\)n"{};}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ total\_latency;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ total\_latency+InitializeWalkRecursive(eip,address,level+1,new\_table-\/>entries[a1].next\_level\_table,lock\_signal,data\_buf,data\_length,modeled,count);}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00232\ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableWalkerRadix::init\_walk\_functional(IntPtr\ address)\{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Address\ \ =\ "{}\ <<\ address\ <<\ "{}Number\ of\ levels"{}\ <<\ stats\_radix.number\_of\_levels\ <<\ std::endl;}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats\_radix.number\_of\_levels;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_NONE)\{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ starting\_table-\/>entries[a1]=*CreateNewPtwEntryAtLevel(1,stats\_radix.number\_of\_levels,stats\_radix.address\_bit\_indices,stats\_radix.hit\_percentages,\textcolor{keyword}{this},\ address);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_ADDRESS)\{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size=0;}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=stats\_radix.number\_of\_levels;i>0;i-\/-\/)\{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_size+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(page\_size);}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ init\_walk\_recursive\_functional(address,2,starting\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00255\ \ \ \ \ \}}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordtype}{int}\ PageTableWalkerRadix::init\_walk\_recursive\_functional(uint64\_t\ address,\textcolor{keywordtype}{int}\ level,ptw\_table*\ new\_table)\{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Level\ \ =\ "{}\ <<\ level\ <<\ std::endl;}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats\_radix.number\_of\_levels;\ i\ >=\ level;\ i-\/-\/)}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}EntryType\ =\ "{}\ <<\ new\_table-\/>entries[a1].entry\_type\ <<\ std::endl;}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_NONE)\{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ new\_table-\/>entries[a1]=*CreateNewPtwEntryAtLevel(level,stats\_radix.number\_of\_levels,stats\_radix.address\_bit\_indices,stats\_radix.hit\_percentages,\textcolor{keyword}{this},\ address);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_ADDRESS)\{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ page\_size=0;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=stats\_radix.number\_of\_levels;i>level-\/1;i-\/-\/)\{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ page\_size+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(page\_size);}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ init\_walk\_recursive\_functional(address,level+1,new\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00280\ \ \ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordtype}{bool}\ PageTableWalkerRadix::isPageFault(IntPtr\ address)\{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout\ <<\ "{}Address\ \ =\ "{}\ <<\ address\ <<\ "{}Number\ of\ levels"{}\ <<\ stats\_radix.number\_of\_levels\ <<\ std::endl;}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats\_radix.number\_of\_levels;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_NONE)\{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(starting\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_ADDRESS)\{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ isPageFaultHelper(address,2,starting\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \}}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordtype}{bool}\ PageTableWalkerRadix::isPageFaultHelper(uint64\_t\ address,\textcolor{keywordtype}{int}\ level,ptw\_table*\ new\_table)\{}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ uint64\_t\ a1;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift\_bits=0;}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}Level\ \ =\ "{}\ <<\ level\ <<\ std::endl;}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ stats\_radix.number\_of\_levels;\ i\ >=\ level;\ i-\/-\/)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ shift\_bits+=stats\_radix.address\_bit\_indices[i];}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ a1=((address>>shift\_bits))\&0x1ff;}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}EntryType\ =\ "{}\ <<\ new\_table-\/>entries[a1].entry\_type\ <<\ std::endl;}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_NONE)\{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(new\_table-\/>entries[a1].entry\_type==ptw\_table\_entry\_type::PTW\_ADDRESS)\{}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ isPageFaultHelper(address,level+1,new\_table-\/>entries[a1].next\_level\_table);}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \}}
+
+\end{DoxyCode}

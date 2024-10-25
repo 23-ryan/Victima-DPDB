@@ -1,0 +1,37 @@
+\doxysection{memory\+\_\+manager.\+cc}
+\label{fast__nehalem_2memory__manager_8cc_source}\index{common/core/memory\_subsystem/fast\_nehalem/memory\_manager.cc@{common/core/memory\_subsystem/fast\_nehalem/memory\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fast\_cache.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{namespace\ }FastNehalem}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ CacheBase\ *MemoryManager::l3cache\ =\ NULL,\ *MemoryManager::dram\ =\ NULL;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ MemoryManager::MemoryManager(Core*\ core,\ Network*\ network,\ ShmemPerfModel*\ shmem\_perf\_model)}
+\DoxyCodeLine{00013\ \ \ \ :\ MemoryManagerFast(core,\ network,\ shmem\_perf\_model)}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keywordflow}{if}\ (!dram)}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ dram\ =\ \textcolor{keyword}{new}\ Dram(core,\ \textcolor{stringliteral}{"{}dram"{}},\ 150);}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{if}\ (!l3cache)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ l3cache\ =\ \textcolor{keyword}{new}\ CacheLocked<16,\ 8192>(core,\ \textcolor{stringliteral}{"{}L3"{}},\ MemComponent::L3\_CACHE,\ 35,\ dram);}
+\DoxyCodeLine{00019\ \ \ \ l2cache\ =\ \textcolor{keyword}{new}\ Cache<8,\ 256>(core,\ \textcolor{stringliteral}{"{}L2"{}},\ MemComponent::L2\_CACHE,\ 9,\ l3cache);}
+\DoxyCodeLine{00020\ \ \ \ icache\ =\ \textcolor{keyword}{new}\ Cache<4,\ 32>(core,\ \textcolor{stringliteral}{"{}L1-\/I"{}},\ MemComponent::L1\_ICACHE,\ 0,\ l2cache);}
+\DoxyCodeLine{00021\ \ \ \ dcache\ =\ \textcolor{keyword}{new}\ Cache<8,\ 32>(core,\ \textcolor{stringliteral}{"{}L1-\/D"{}},\ MemComponent::L1\_DCACHE,\ 0,\ l2cache);}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ MemoryManager::\string~MemoryManager()}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{delete}\ icache;}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keyword}{delete}\ dcache;}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keyword}{delete}\ l2cache;}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \}}
+
+\end{DoxyCode}

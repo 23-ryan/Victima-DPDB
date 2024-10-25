@@ -1,0 +1,498 @@
+\doxysection{Streamer Class Reference}
+\label{classStreamer}\index{Streamer@{Streamer}}
+
+
+{\ttfamily \#include $<$stream\+\_\+prefetcher.\+h$>$}
+
+
+
+Inheritance diagram for Streamer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=105pt]{classStreamer__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Streamer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=105pt]{classStreamer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Streamer} (String config\+Name, \textbf{ core\+\_\+id\+\_\+t} \+\_\+core\+\_\+id)
+\item 
+\textbf{ $\sim$\+Streamer} ()
+\item 
+int32\+\_\+t \textbf{ find} (\textbf{ Int\+Ptr} page)
+\item 
+void \textbf{ update\+\_\+age} (int32\+\_\+t current)
+\item 
+int32\+\_\+t \textbf{ find\+\_\+replacement} ()
+\item 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ \textbf{ generate\+Prefetch\+Address} (\textbf{ Stream\+Entry} $\ast$stream\+\_\+entry, \textbf{ Int\+Ptr} current\+\_\+page, \textbf{ Int\+Ptr} current\+\_\+offset)
+\item 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ \textbf{ get\+Next\+Address} (\textbf{ Int\+Ptr} current\+\_\+address, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, bool cache\+\_\+hit, bool prefetch\+\_\+hit, \textbf{ Int\+Ptr} eip)
+\item 
+void \textbf{ incr\+\_\+conf} (\textbf{ Stream\+Entry} $\ast$entry)
+\item 
+void \textbf{ decr\+\_\+conf} (\textbf{ Stream\+Entry} $\ast$entry)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions inherited from \textbf{ Prefetcher}}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ m\+\_\+core\+\_\+id}
+\item 
+bool \textbf{ m\+\_\+allocate\+\_\+on\+\_\+miss}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+num\+\_\+prefetches}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+num\+\_\+streams}
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ m\+\_\+prefetch\+\_\+front}
+\item 
+uint8\+\_\+t \textbf{ m\+\_\+max\+\_\+conf}
+\item 
+uint8\+\_\+t \textbf{ m\+\_\+conf\+\_\+thresh}
+\item 
+std\+::vector$<$ \textbf{ Stream\+Entry} $\ast$ $>$ \textbf{ m\+\_\+stream\+\_\+table}
+\item 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+struct \{\\
+\>\textbf{ UInt64} \textbf{ pref\_called}\\
+\>\textbf{ UInt64} \textbf{ table\_hit}\\
+\>\textbf{ UInt64} \textbf{ table\_replacement}\\
+\>\textbf{ UInt64} \textbf{ incr\_conf}\\
+\>\textbf{ UInt64} \textbf{ decr\_conf}\\
+\>\textbf{ UInt64} \textbf{ steady}\\
+\>\textbf{ UInt64} \textbf{ gen\_prefetch}\\
+\} \textbf{ stats}\\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\doxysubsubsection*{Additional Inherited Members}
+\doxysubsection*{Static Public Member Functions inherited from \textbf{ Prefetcher}}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Prefetcher} $\ast$ \textbf{ create\+Prefetcher} (String type, String config\+Name, \textbf{ core\+\_\+id\+\_\+t} core\+\_\+id, \textbf{ UInt32} shared\+\_\+cores)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 22} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{Streamer@{Streamer}!Streamer@{Streamer}}
+\index{Streamer@{Streamer}!Streamer@{Streamer}}
+\doxysubsubsection{Streamer()}
+{\footnotesize\ttfamily \label{classStreamer_a3493235c841d2ae06caf722e0b48c8ee} 
+Streamer\+::\+Streamer (\begin{DoxyParamCaption}\item[{String}]{config\+Name}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{\+\_\+core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 14} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+num\+\_\+streams}, \textbf{ m\+\_\+stream\+\_\+table}, \textbf{ register\+Stats\+Metric()}, \textbf{ stats}, and \textbf{ uint32\+\_\+t}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=279pt]{classStreamer_a3493235c841d2ae06caf722e0b48c8ee_cgraph}
+\end{center}
+\end{figure}
+\index{Streamer@{Streamer}!````~Streamer@{$\sim$Streamer}}
+\index{````~Streamer@{$\sim$Streamer}!Streamer@{Streamer}}
+\doxysubsubsection{$\sim$Streamer()}
+{\footnotesize\ttfamily \label{classStreamer_a713b5c47448af40f966d5e641f402af3} 
+Streamer\+::$\sim$\+Streamer (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{Streamer@{Streamer}!decr\_conf@{decr\_conf}}
+\index{decr\_conf@{decr\_conf}!Streamer@{Streamer}}
+\doxysubsubsection{decr\_conf()}
+{\footnotesize\ttfamily \label{classStreamer_ad2945125c22553023c61152d10e05918} 
+void Streamer\+::decr\+\_\+conf (\begin{DoxyParamCaption}\item[{\textbf{ Stream\+Entry} $\ast$}]{entry}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+References \textbf{ Stream\+Entry\+::conf}.
+
+\index{Streamer@{Streamer}!find@{find}}
+\index{find@{find}!Streamer@{Streamer}}
+\doxysubsubsection{find()}
+{\footnotesize\ttfamily \label{classStreamer_a75c32ac5ca70e6e90ae70b08b158a08b} 
+int32\+\_\+t Streamer\+::find (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{page}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 103} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+stream\+\_\+table}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=285pt]{classStreamer_a75c32ac5ca70e6e90ae70b08b158a08b_icgraph}
+\end{center}
+\end{figure}
+\index{Streamer@{Streamer}!find\_replacement@{find\_replacement}}
+\index{find\_replacement@{find\_replacement}!Streamer@{Streamer}}
+\doxysubsubsection{find\_replacement()}
+{\footnotesize\ttfamily \label{classStreamer_a4208a77ceb971fe6da07963cc98dbb53} 
+int32\+\_\+t Streamer\+::find\+\_\+replacement (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+stream\+\_\+table}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=344pt]{classStreamer_a4208a77ceb971fe6da07963cc98dbb53_icgraph}
+\end{center}
+\end{figure}
+\index{Streamer@{Streamer}!generatePrefetchAddress@{generatePrefetchAddress}}
+\index{generatePrefetchAddress@{generatePrefetchAddress}!Streamer@{Streamer}}
+\doxysubsubsection{generatePrefetchAddress()}
+{\footnotesize\ttfamily \label{classStreamer_a84c6000a11105230ddacb11ee4714cc6} 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ Streamer\+::generate\+Prefetch\+Address (\begin{DoxyParamCaption}\item[{\textbf{ Stream\+Entry} $\ast$}]{stream\+\_\+entry}{, }\item[{\textbf{ Int\+Ptr}}]{current\+\_\+page}{, }\item[{\textbf{ Int\+Ptr}}]{current\+\_\+offset}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 150} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ Stream\+Entry\+::dir}, \textbf{ LOG2\+\_\+\+CACHE\+\_\+\+BLOCK\+\_\+\+SIZE}, \textbf{ LOG2\+\_\+\+PAGE\+\_\+\+SIZE}, \textbf{ m\+\_\+num\+\_\+prefetches}, \textbf{ m\+\_\+prefetch\+\_\+front}, \textbf{ NUM\+\_\+\+CACHE\+\_\+\+BLOCKS\+\_\+\+IN\+\_\+\+PAGE}, and \textbf{ stats}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classStreamer_a84c6000a11105230ddacb11ee4714cc6_icgraph}
+\end{center}
+\end{figure}
+\index{Streamer@{Streamer}!getNextAddress@{getNextAddress}}
+\index{getNextAddress@{getNextAddress}!Streamer@{Streamer}}
+\doxysubsubsection{getNextAddress()}
+{\footnotesize\ttfamily \label{classStreamer_a7c077eea2dcdd29442d00aa874c09bd7} 
+std\+::vector$<$ \textbf{ Int\+Ptr} $>$ Streamer\+::get\+Next\+Address (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{current\+\_\+address}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{bool}]{cache\+\_\+hit}{, }\item[{bool}]{prefetch\+\_\+hit}{, }\item[{\textbf{ Int\+Ptr}}]{eip}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Implements \textbf{ Prefetcher} \doxyref{}{p.}{classPrefetcher_ab38e02dd64bc9685acfeb5451c32004e}.
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ CACHE\+\_\+\+BLOCK\+\_\+\+MASK}, \textbf{ Stream\+Entry\+::conf}, \textbf{ decr\+\_\+conf}, \textbf{ Stream\+Entry\+::dir}, \textbf{ find()}, \textbf{ find\+\_\+replacement()}, \textbf{ generate\+Prefetch\+Address()}, \textbf{ incr\+\_\+conf}, \textbf{ Stream\+Entry\+::last\+\_\+offset}, \textbf{ LOG2\+\_\+\+CACHE\+\_\+\+BLOCK\+\_\+\+SIZE}, \textbf{ LOG2\+\_\+\+PAGE\+\_\+\+SIZE}, \textbf{ m\+\_\+allocate\+\_\+on\+\_\+miss}, \textbf{ m\+\_\+conf\+\_\+thresh}, \textbf{ m\+\_\+stream\+\_\+table}, \textbf{ Stream\+Entry\+::page}, \textbf{ stats}, \textbf{ update\+\_\+age()}, \textbf{ Stream\+Entry\+::valid}, and \textbf{ Core\+::\+WRITE}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classStreamer_a7c077eea2dcdd29442d00aa874c09bd7_cgraph}
+\end{center}
+\end{figure}
+\index{Streamer@{Streamer}!incr\_conf@{incr\_conf}}
+\index{incr\_conf@{incr\_conf}!Streamer@{Streamer}}
+\doxysubsubsection{incr\_conf()}
+{\footnotesize\ttfamily \label{classStreamer_aa40a46af3c48d1961d5f65c53efdbe2a} 
+void Streamer\+::incr\+\_\+conf (\begin{DoxyParamCaption}\item[{\textbf{ Stream\+Entry} $\ast$}]{entry}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+References \textbf{ Stream\+Entry\+::conf}, and \textbf{ m\+\_\+max\+\_\+conf}.
+
+\index{Streamer@{Streamer}!update\_age@{update\_age}}
+\index{update\_age@{update\_age}!Streamer@{Streamer}}
+\doxysubsubsection{update\_age()}
+{\footnotesize\ttfamily \label{classStreamer_a6694ef7822a03427e27743b94bfc6c73} 
+void Streamer\+::update\+\_\+age (\begin{DoxyParamCaption}\item[{int32\+\_\+t}]{current}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 116} of file \textbf{ stream\+\_\+prefetcher.\+cc}.
+
+
+
+References \textbf{ m\+\_\+stream\+\_\+table}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=321pt]{classStreamer_a6694ef7822a03427e27743b94bfc6c73_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{Streamer@{Streamer}!decr\_conf@{decr\_conf}}
+\index{decr\_conf@{decr\_conf}!Streamer@{Streamer}}
+\doxysubsubsection{decr\_conf}
+{\footnotesize\ttfamily \label{classStreamer_a783a020043cd032b04004a28d07618b9} 
+\textbf{ UInt64} Streamer\+::decr\+\_\+conf}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+\index{Streamer@{Streamer}!gen\_prefetch@{gen\_prefetch}}
+\index{gen\_prefetch@{gen\_prefetch}!Streamer@{Streamer}}
+\doxysubsubsection{gen\_prefetch}
+{\footnotesize\ttfamily \label{classStreamer_ad139b1df8e566b5ed4690e4aa06ec969} 
+\textbf{ UInt64} Streamer\+::gen\+\_\+prefetch}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+\index{Streamer@{Streamer}!incr\_conf@{incr\_conf}}
+\index{incr\_conf@{incr\_conf}!Streamer@{Streamer}}
+\doxysubsubsection{incr\_conf}
+{\footnotesize\ttfamily \label{classStreamer_a2cba74193020f06af54268b4d072c1b7} 
+\textbf{ UInt64} Streamer\+::incr\+\_\+conf}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+\index{Streamer@{Streamer}!m\_allocate\_on\_miss@{m\_allocate\_on\_miss}}
+\index{m\_allocate\_on\_miss@{m\_allocate\_on\_miss}!Streamer@{Streamer}}
+\doxysubsubsection{m\_allocate\_on\_miss}
+{\footnotesize\ttfamily \label{classStreamer_a6c0183d7083b6acb547c6473b839d3b9} 
+bool Streamer\+::m\+\_\+allocate\+\_\+on\+\_\+miss\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+\index{Streamer@{Streamer}!m\_conf\_thresh@{m\_conf\_thresh}}
+\index{m\_conf\_thresh@{m\_conf\_thresh}!Streamer@{Streamer}}
+\doxysubsubsection{m\_conf\_thresh}
+{\footnotesize\ttfamily \label{classStreamer_a4968b6df00788e9b3428083c8060c7fd} 
+uint8\+\_\+t Streamer\+::m\+\_\+conf\+\_\+thresh\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ get\+Next\+Address()}.
+
+\index{Streamer@{Streamer}!m\_core\_id@{m\_core\_id}}
+\index{m\_core\_id@{m\_core\_id}!Streamer@{Streamer}}
+\doxysubsubsection{m\_core\_id}
+{\footnotesize\ttfamily \label{classStreamer_a5f44292cc5f971c5da2e552b697790ce} 
+\textbf{ core\+\_\+id\+\_\+t} Streamer\+::m\+\_\+core\+\_\+id\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ Streamer()}.
+
+\index{Streamer@{Streamer}!m\_max\_conf@{m\_max\_conf}}
+\index{m\_max\_conf@{m\_max\_conf}!Streamer@{Streamer}}
+\doxysubsubsection{m\_max\_conf}
+{\footnotesize\ttfamily \label{classStreamer_a0998d0d6ba74caa0cf135424d157bf6c} 
+uint8\+\_\+t Streamer\+::m\+\_\+max\+\_\+conf\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ incr\+\_\+conf()}.
+
+\index{Streamer@{Streamer}!m\_num\_prefetches@{m\_num\_prefetches}}
+\index{m\_num\_prefetches@{m\_num\_prefetches}!Streamer@{Streamer}}
+\doxysubsubsection{m\_num\_prefetches}
+{\footnotesize\ttfamily \label{classStreamer_ad3ad752cd0d5de5b4bc3faaf8a144521} 
+\textbf{ uint32\+\_\+t} Streamer\+::m\+\_\+num\+\_\+prefetches\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}.
+
+\index{Streamer@{Streamer}!m\_num\_streams@{m\_num\_streams}}
+\index{m\_num\_streams@{m\_num\_streams}!Streamer@{Streamer}}
+\doxysubsubsection{m\_num\_streams}
+{\footnotesize\ttfamily \label{classStreamer_ab710b6f9ab73ab4b7e3128ccb181599a} 
+\textbf{ uint32\+\_\+t} Streamer\+::m\+\_\+num\+\_\+streams\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ Streamer()}.
+
+\index{Streamer@{Streamer}!m\_prefetch\_front@{m\_prefetch\_front}}
+\index{m\_prefetch\_front@{m\_prefetch\_front}!Streamer@{Streamer}}
+\doxysubsubsection{m\_prefetch\_front}
+{\footnotesize\ttfamily \label{classStreamer_aec6fc519635a0c224f8d4c2669fc038d} 
+\textbf{ uint32\+\_\+t} Streamer\+::m\+\_\+prefetch\+\_\+front\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}.
+
+\index{Streamer@{Streamer}!m\_stream\_table@{m\_stream\_table}}
+\index{m\_stream\_table@{m\_stream\_table}!Streamer@{Streamer}}
+\doxysubsubsection{m\_stream\_table}
+{\footnotesize\ttfamily \label{classStreamer_a93bd6056ae8598f7a178fac939d421e3} 
+std\+::vector$<$\textbf{ Stream\+Entry}$\ast$$>$ Streamer\+::m\+\_\+stream\+\_\+table\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 31} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+Referenced by \textbf{ find()}, \textbf{ find\+\_\+replacement()}, \textbf{ get\+Next\+Address()}, \textbf{ Streamer()}, and \textbf{ update\+\_\+age()}.
+
+\index{Streamer@{Streamer}!pref\_called@{pref\_called}}
+\index{pref\_called@{pref\_called}!Streamer@{Streamer}}
+\doxysubsubsection{pref\_called}
+{\footnotesize\ttfamily \label{classStreamer_a6e1d6ce9afa121980ed6e81ed530ef6d} 
+\textbf{ UInt64} Streamer\+::pref\+\_\+called}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+\index{Streamer@{Streamer}!stats@{stats}}
+\index{stats@{stats}!Streamer@{Streamer}}
+\doxysubsubsection{[struct]}
+{\footnotesize\ttfamily \label{classStreamer_a0f18f24f8ee0f1cb429469c9e98d487e} 
+struct  \{ ... \}  Streamer\+::stats\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Referenced by \textbf{ generate\+Prefetch\+Address()}, \textbf{ get\+Next\+Address()}, and \textbf{ Streamer()}.
+
+\index{Streamer@{Streamer}!steady@{steady}}
+\index{steady@{steady}!Streamer@{Streamer}}
+\doxysubsubsection{steady}
+{\footnotesize\ttfamily \label{classStreamer_a487bceb34d5326f7f0add2f67c7b9a09} 
+\textbf{ UInt64} Streamer\+::steady}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+\index{Streamer@{Streamer}!table\_hit@{table\_hit}}
+\index{table\_hit@{table\_hit}!Streamer@{Streamer}}
+\doxysubsubsection{table\_hit}
+{\footnotesize\ttfamily \label{classStreamer_a86efef7bd11c64d0c96ffacadc30e50d} 
+\textbf{ UInt64} Streamer\+::table\+\_\+hit}
+
+
+
+Definition at line \textbf{ 36} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+\index{Streamer@{Streamer}!table\_replacement@{table\_replacement}}
+\index{table\_replacement@{table\_replacement}!Streamer@{Streamer}}
+\doxysubsubsection{table\_replacement}
+{\footnotesize\ttfamily \label{classStreamer_ab47f1c3de14faa317ae20235908f0b0b} 
+\textbf{ UInt64} Streamer\+::table\+\_\+replacement}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ stream\+\_\+prefetcher.\+h}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ stream\+\_\+prefetcher.\+h}\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ stream\+\_\+prefetcher.\+cc}\end{DoxyCompactItemize}

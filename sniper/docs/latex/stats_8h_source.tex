@@ -1,0 +1,141 @@
+\doxysection{stats.\+h}
+\label{stats_8h_source}\index{common/misc/stats.h@{common/misc/stats.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}itostr.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <sqlite3.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }StatsMetricBase}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ String\ objectName;}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ UInt32\ index;}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ String\ metricName;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ special;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ StatsMetricBase(String\ \_objectName,\ UInt32\ \_index,\ String\ \_metricName,\ \textcolor{keywordtype}{bool}\ \_special\ =\ \textcolor{keyword}{false})\ :}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ objectName(\_objectName),\ index(\_index),\ metricName(\_metricName),\ special(\_special)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//if(special)}}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//std::cout<<"{}REGISTERED\ SPECIAL\ METRIC\ KOSTAAAAAAAAAAAAA"{}<<std::endl;}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~StatsMetricBase()\ \{\}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt64\ recordMetric()\ =\ 0;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ isDefault()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \}\ \textcolor{comment}{//\ Return\ true\ when\ value\ hasn't\ changed\ from\ its\ initialization\ value}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isSpecial()\ \{\ \textcolor{keywordflow}{return}\ special;\ \}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ getRawMetric()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ NULL;\ \}}
+\DoxyCodeLine{00027\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>\ UInt64\ makeStatsValue(T\ t);}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>\ \textcolor{keyword}{class\ }StatsMetric\ :\ \textcolor{keyword}{public}\ StatsMetricBase}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ T\ *metric;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ StatsMetric(String\ \_objectName,\ UInt32\ \_index,\ String\ \_metricName,\ T\ *\_metric,\ \textcolor{keywordtype}{bool}\ \_special)\ :}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ StatsMetricBase(\_objectName,\ \_index,\ \_metricName,\ \_special),\ metric(\_metric)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(special)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}Registered\ special\ metric:\ "{}}<<\_metricName<<std::endl;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt64\ recordMetric()}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ makeStatsValue<T>(*metric);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ isDefault()}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ recordMetric()\ ==\ 0;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}*\ getRawMetric()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00051\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ metric;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{typedef}\ UInt64\ (*StatsCallback)(String\ objectName,\ UInt32\ index,\ String\ metricName,\ UInt64\ arg);}
+\DoxyCodeLine{00057\ \textcolor{keyword}{class\ }StatsMetricCallback\ :\ \textcolor{keyword}{public}\ StatsMetricBase}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ StatsCallback\ func;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ UInt64\ arg;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ StatsMetricCallback(String\ \_objectName,\ UInt32\ \_index,\ String\ \_metricName,\ StatsCallback\ \_func,\ UInt64\ \_arg)\ :}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ StatsMetricBase(\_objectName,\ \_index,\ \_metricName),\ func(\_func),\ arg(\_arg)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ UInt64\ recordMetric()}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ func(objectName,\ index,\ metricName,\ arg);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00069\ \};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{class\ }StatsManager}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{comment}{//\ Event\ type\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\ \ \ \ \ \ \ \ \ \ \ \ \ \ thread\ \ \ \ \ \ \ \ \ \ \ \ arg0\ \ \ \ \ \ \ \ \ \ \ arg1\ \ \ \ \ \ \ \ \ \ \ \ \ \ description}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ EVENT\_MARKER\ =\ 1,\ \ \ \ \ \ \ \textcolor{comment}{//\ calling\ core\ \ \ \ \ \ calling\ thread\ \ \ \ magic\ arg0\ \ \ \ \ magic\ arg1\ \ \ \ \ \ \ \ str\ (SimMarker/SimNamedMarker)}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ EVENT\_THREAD\_NAME,\ \ \ \ \ \ \textcolor{comment}{//\ calling\ core\ \ \ \ \ \ calling\ thread\ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ thread\ name\ (SimSetThreadName)}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ EVENT\_APP\_START,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ -\/1\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/1\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ app\ id\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}"{}}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ EVENT\_APP\_EXIT,\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ -\/1\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/1\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ app\ id\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}"{}}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ EVENT\_THREAD\_CREATE,\ \ \ \ \textcolor{comment}{//\ initial\ core\ \ \ \ \ \ created\ thread\ \ \ \ app\ id\ \ \ \ \ \ \ \ \ creator\ thread\ \ \ \ "{}"{}}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ EVENT\_THREAD\_EXIT,\ \ \ \ \ \ \textcolor{comment}{//\ current\ core\ \ \ \ \ \ exiting\ thread\ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}"{}}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \}\ event\_type\_t;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ StatsManager();}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \string~StatsManager();}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ init();}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ recordStats(String\ prefix);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ registerMetric(StatsMetricBase\ *metric);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ StatsMetricBase\ *getMetricObject(String\ objectName,\ UInt32\ index,\ String\ metricName);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ logTopology(String\ component,\ core\_id\_t\ core\_id,\ core\_id\_t\ master\_id);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ logMarker(SubsecondTime\ time,\ core\_id\_t\ core\_id,\ thread\_id\_t\ thread\_id,\ UInt64\ value0,\ UInt64\ value1,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ description)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \{\ logEvent(EVENT\_MARKER,\ time,\ core\_id,\ thread\_id,\ value0,\ value1,\ description);\ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ logEvent(event\_type\_t\ event,\ SubsecondTime\ time,\ core\_id\_t\ core\_id,\ thread\_id\_t\ thread\_id,\ UInt64\ value0,\ UInt64\ value1,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ description);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ UInt64\ m\_keyid;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ UInt64\ m\_prefixnum;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ sqlite3\ *m\_db;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ sqlite3\_stmt\ *m\_stmt\_insert\_name;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ sqlite3\_stmt\ *m\_stmt\_insert\_prefix;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ sqlite3\_stmt\ *m\_stmt\_insert\_value;}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ std::string\ here\ because\ String\ (\_\_versa\_string)\ does\ not\ provide\ a\ hash\ function\ for\ STL\ containers\ with\ gcc\ <\ 4.6}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<UInt64,\ StatsMetricBase\ *>\ StatsIndexList;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::pair<UInt64,\ StatsIndexList>\ StatsMetricWithKey;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<std::string,\ StatsMetricWithKey>\ StatsMetricList;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<std::string,\ StatsMetricList>\ StatsObjectList;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ StatsObjectList\ m\_objects;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \_\_busy\_handler(\textcolor{keywordtype}{void}*\ self,\ \textcolor{keywordtype}{int}\ count)\ \{\ \textcolor{keywordflow}{return}\ ((StatsManager*)self)-\/>busy\_handler(count);\ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ busy\_handler(\textcolor{keywordtype}{int}\ count);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ recordMetricName(UInt64\ keyId,\ std::string\ objectName,\ std::string\ metricName);}
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>\ \textcolor{keywordtype}{void}\ registerStatsMetric(String\ objectName,\ UInt32\ index,\ String\ metricName,\ T\ *metric,\ \textcolor{keywordtype}{bool}\ special\ =\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \ \ \ Sim()-\/>getStatsManager()-\/>registerMetric(\textcolor{keyword}{new}\ StatsMetric<T>(objectName,\ index,\ metricName,\ metric,\ special));}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keyword}{class\ }StatHist\ \{}
+\DoxyCodeLine{00125\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ HIST\_MAX\ =\ 20;}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ n,\ s,\ s2,\ min,\ max;}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ hist[HIST\_MAX];}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{char}\ dummy[64];}
+\DoxyCodeLine{00130\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00131\ \ \ \ \ StatHist()\ :\ n(0),\ s(0),\ s2(0),\ min(0),\ max(0)\ \{\ bzero(hist,\ \textcolor{keyword}{sizeof}(hist));\ \}}
+\DoxyCodeLine{00132\ \ \ \ \ StatHist\ \&\ operator\ +=\ (StatHist\ \&\ stat);}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ v);}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ print();}
+\DoxyCodeLine{00135\ \};}
+
+\end{DoxyCode}

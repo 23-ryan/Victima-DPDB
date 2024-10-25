@@ -1,0 +1,557 @@
+\doxysection{network\+\_\+model\+\_\+emesh\+\_\+hop\+\_\+by\+\_\+hop.\+cc}
+\label{network__model__emesh__hop__by__hop_8cc_source}\index{common/network/network\_model\_emesh\_hop\_by\_hop.cc@{common/network/network\_model\_emesh\_hop\_by\_hop.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}network\_model\_emesh\_hop\_by\_hop.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}packet\_type.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_history\_list.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ output\_direction\_names[]\ =\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{stringliteral}{"{}up"{}},\ \textcolor{stringliteral}{"{}down"{}},\ \textcolor{stringliteral}{"{}left"{}},\ \textcolor{stringliteral}{"{}right"{}},\ \textcolor{stringliteral}{"{}-\/-\/-\/"{}},\ \textcolor{stringliteral}{"{}self"{}},\ \textcolor{stringliteral}{"{}peer"{}},\ \textcolor{stringliteral}{"{}destination"{}}}
+\DoxyCodeLine{00018\ \};}
+\DoxyCodeLine{00019\ \textcolor{keyword}{static\_assert}(NetworkModelEMeshHopByHop::MAX\_OUTPUT\_DIRECTIONS\ ==\ \textcolor{keyword}{sizeof}(output\_direction\_names)\ /\ \textcolor{keyword}{sizeof}(output\_direction\_names[0]),}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Not\ enough\ values\ in\ output\_direction\_names"{}});}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ OutputDirectionString(NetworkModelEMeshHopByHop::OutputDirection\ direction)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ LOG\_ASSERT\_ERROR(direction\ <\ NetworkModelEMeshHopByHop::MAX\_OUTPUT\_DIRECTIONS,\ \textcolor{stringliteral}{"{}Invalid\ output\ direction\ \%d"{}},\ direction);}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keywordflow}{return}\ output\_direction\_names[direction];}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ NetworkModelEMeshHopByHop::NetworkModelEMeshHopByHop(Network*\ net,\ EStaticNetwork\ net\_type):}
+\DoxyCodeLine{00029\ \ \ \ NetworkModel(net,\ net\_type),}
+\DoxyCodeLine{00030\ \ \ \ m\_enabled(false),}
+\DoxyCodeLine{00031\ \ \ \ m\_total\_bytes\_sent(0),}
+\DoxyCodeLine{00032\ \ \ \ m\_total\_packets\_sent(0),}
+\DoxyCodeLine{00033\ \ \ \ m\_total\_bytes\_received(0),}
+\DoxyCodeLine{00034\ \ \ \ m\_total\_packets\_received(0),}
+\DoxyCodeLine{00035\ \ \ \ m\_total\_contention\_delay(SubsecondTime::Zero()),}
+\DoxyCodeLine{00036\ \ \ \ m\_total\_packet\_latency(SubsecondTime::Zero()),}
+\DoxyCodeLine{00037\ \ \ \ m\_fake\_node(false),}
+\DoxyCodeLine{00038\ \ \ \ m\_core\_id(getNetwork()-\/>getCore()-\/>getId()),}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{comment}{//\ Placeholders.\ \ These\ values\ will\ be\ overwritten\ in\ a\ derived\ class.}}
+\DoxyCodeLine{00040\ \ \ \ m\_link\_bandwidth(Sim()-\/>getDvfsManager()-\/>getCoreDomain(m\_core\_id),\ 0),}
+\DoxyCodeLine{00041\ \ \ \ m\_hop\_latency(Sim()-\/>getDvfsManager()-\/>getCoreDomain(m\_core\_id),\ 0)}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{comment}{//\ Get\ the\ Link\ Bandwidth,\ Hop\ Latency\ and\ if\ it\ has\ broadcast\ tree\ mechanism}}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{comment}{//\ Link\ Bandwidth\ is\ specified\ in\ bits/clock\_cycle}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ m\_link\_bandwidth\ =\ ComponentBandwidthPerCycle(Sim()-\/>getDvfsManager()-\/>getCoreDomain(m\_core\_id),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/link\_bandwidth"{}}));}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{comment}{//\ Hop\ Latency\ is\ specified\ in\ cycles}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ m\_hop\_latency\ =\ ComponentLatency(Sim()-\/>getDvfsManager()-\/>getCoreDomain(m\_core\_id),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/hop\_latency"{}}));}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ UInt32\ smt\_cores\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/logical\_cpus"{}});}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ m\_concentration\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/concentration"{}})\ *\ smt\_cores;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ m\_dimensions\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/dimensions"{}});}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ m\_wrap\_around\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/wrap\_around"{}});}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{comment}{//\ Queue\ Model\ enabled?\ If\ no,\ this\ degrades\ into\ a\ hop\ counter\ model}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ m\_queue\_model\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/queue\_model/enabled"{}});}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ m\_queue\_model\_type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/queue\_model/type"{}});}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ m\_broadcast\_tree\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/broadcast\_tree/enabled"{}});}
+\DoxyCodeLine{00061\ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{catch}(...)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Could\ not\ read\ parameters\ from\ the\ configuration\ file"{}});}
+\DoxyCodeLine{00065\ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ String\ name\ =\ String(\textcolor{stringliteral}{"{}network."{}})+EStaticNetworkStrings[net\_type]+\textcolor{stringliteral}{"{}.mesh"{}};}
+\DoxyCodeLine{00068\ \ \ \ registerStatsMetric(name,\ m\_core\_id,\ \textcolor{stringliteral}{"{}bytes-\/out"{}},\ \&m\_total\_bytes\_sent);}
+\DoxyCodeLine{00069\ \ \ \ registerStatsMetric(name,\ m\_core\_id,\ \textcolor{stringliteral}{"{}packets-\/out"{}},\ \&m\_total\_packets\_sent);}
+\DoxyCodeLine{00070\ \ \ \ registerStatsMetric(name,\ m\_core\_id,\ \textcolor{stringliteral}{"{}bytes-\/in"{}},\ \&m\_total\_bytes\_received);}
+\DoxyCodeLine{00071\ \ \ \ registerStatsMetric(name,\ m\_core\_id,\ \textcolor{stringliteral}{"{}packets-\/in"{}},\ \&m\_total\_packets\_received);}
+\DoxyCodeLine{00072\ \ \ \ registerStatsMetric(name,\ m\_core\_id,\ \textcolor{stringliteral}{"{}contention-\/delay"{}},\ \&m\_total\_contention\_delay);}
+\DoxyCodeLine{00073\ \ \ \ registerStatsMetric(name,\ m\_core\_id,\ \textcolor{stringliteral}{"{}total-\/delay"{}},\ \&m\_total\_packet\_latency);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ computeMeshDimensions(m\_mesh\_width,\ m\_mesh\_height);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{if}\ (m\_core\_id\ \%\ m\_concentration\ !=\ 0\ ||\ m\_core\_id\ >=\ m\_concentration\ *\ m\_mesh\_width\ *\ m\_mesh\_height)}
+\DoxyCodeLine{00078\ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ m\_fake\_node\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00081\ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ createQueueModels(name);}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ NetworkModelEMeshHopByHop::\string~NetworkModelEMeshHopByHop()}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keywordflow}{if}\ (m\_fake\_node)}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ NUM\_OUTPUT\_DIRECTIONS;\ i++)}
+\DoxyCodeLine{00092\ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_models[i])}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_queue\_models[i];}
+\DoxyCodeLine{00095\ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \textcolor{keyword}{delete}\ m\_injection\_port\_queue\_model;}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keyword}{delete}\ m\_ejection\_port\_queue\_model;}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00102\ NetworkModelEMeshHopByHop::createQueueModels(String\ name)}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \ SubsecondTime\ min\_processing\_time\ =\ m\_link\_bandwidth.getPeriod();}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \textcolor{comment}{//\ Initialize\ the\ queue\ models\ for\ all\ the\ '4'\ output\ directions}}
+\DoxyCodeLine{00107\ \ \ \ m\_queue\_models[DOWN]\ =\ QueueModel::create(name+\textcolor{stringliteral}{"{}.link-\/down"{}},\ m\_core\_id,\ m\_queue\_model\_type,\ min\_processing\_time);}
+\DoxyCodeLine{00108\ \ \ \ m\_queue\_models[LEFT]\ =\ QueueModel::create(name+\textcolor{stringliteral}{"{}.link-\/left"{}},\ m\_core\_id,\ m\_queue\_model\_type,\ min\_processing\_time);}
+\DoxyCodeLine{00109\ \ \ \ m\_queue\_models[UP]\ =\ QueueModel::create(name+\textcolor{stringliteral}{"{}.link-\/up"{}},\ m\_core\_id,\ m\_queue\_model\_type,\ min\_processing\_time);}
+\DoxyCodeLine{00110\ \ \ \ m\_queue\_models[RIGHT]\ =\ QueueModel::create(name+\textcolor{stringliteral}{"{}.link-\/right"{}},\ m\_core\_id,\ m\_queue\_model\_type,\ min\_processing\_time);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ m\_injection\_port\_queue\_model\ =\ QueueModel::create(name+\textcolor{stringliteral}{"{}.link-\/in"{}},\ m\_core\_id,\ m\_queue\_model\_type,\ min\_processing\_time);}
+\DoxyCodeLine{00113\ \ \ \ m\_ejection\_port\_queue\_model\ =\ QueueModel::create(name+\textcolor{stringliteral}{"{}.link-\/out"{}},\ m\_core\_id,\ m\_queue\_model\_type,\ min\_processing\_time);}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00117\ NetworkModelEMeshHopByHop::routePacket(\textcolor{keyword}{const}\ NetPacket\ \&pkt,\ std::vector<Hop>\ \&nextHops)}
+\DoxyCodeLine{00118\ \{}
+\DoxyCodeLine{00119\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.type\ ==\ SHARED\_MEM\_1)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ requester\ =\ getNetwork()-\/>getCore()-\/>getMemoryManager()-\/>getShmemRequester(pkt.data);}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ Other\ Packet\ types}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ requester\ =\ pkt.sender;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ LOG\_ASSERT\_ERROR((requester\ >=\ 0)\ \&\&\ (requester\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores()),}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}requester(\%i)"{}},\ requester);}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ UInt32\ pkt\_length\ =\ getNetwork()-\/>getModeledLength(pkt);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}pkt\ length(\%u)"{}},\ pkt\_length);}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.sender\ ==\ m\_core\_id)}
+\DoxyCodeLine{00136\ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ m\_total\_packets\_sent\ ++;}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ m\_total\_bytes\_sent\ +=\ pkt\_length;}
+\DoxyCodeLine{00139\ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.receiver\ ==\ NetPacket::BROADCAST)}
+\DoxyCodeLine{00142\ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fake\_node)}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores();\ i++)}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ addHop(DESTINATION,\ i,\ i,\ pkt.time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_broadcast\_tree\_enabled)}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Injection\ Port\ Modeling}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ SubsecondTime\ injection\_port\_queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pkt.sender\ ==\ m\_core\_id)}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ injection\_port\_queue\_delay\ =\ computeInjectionPortQueueDelay(pkt.receiver,\ pkt.time,\ pkt\_length);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ SubsecondTime\ curr\_time\ =\ pkt.time\ +\ injection\_port\_queue\_delay;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Broadcast\ tree\ is\ enabled}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Build\ the\ broadcast\ tree}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ SInt32\ sx,\ sy,\ cx,\ cy;}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ computePosition(pkt.sender,\ sx,\ sy);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ computePosition(m\_core\_id,\ cx,\ cy);}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cy\ >=\ sy)}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ addHop(UP,\ NetPacket::BROADCAST,\ computeCoreId(cx,cy+1),\ curr\_time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cy\ <=\ sy)}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ addHop(DOWN,\ NetPacket::BROADCAST,\ computeCoreId(cx,cy-\/1),\ curr\_time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cy\ ==\ sy)}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cx\ >=\ sx)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addHop(RIGHT,\ NetPacket::BROADCAST,\ computeCoreId(cx+1,cy),\ curr\_time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cx\ <=\ sx)}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addHop(LEFT,\ NetPacket::BROADCAST,\ computeCoreId(cx-\/1,cy),\ curr\_time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cx\ ==\ sx)}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addHop(SELF,\ m\_core\_id,\ m\_core\_id,\ curr\_time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Broadcast\ tree\ is\ not\ enabled}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Here,\ broadcast\ messages\ are\ sent\ as\ a\ collection\ of\ unicast\ messages}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(pkt.sender\ ==\ m\_core\_id,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BROADCAST\ message\ to\ be\ sent\ at\ (\%i),\ original\ sender(\%i),\ Tree\ not\ enabled"{}},}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_core\_id,\ pkt.sender);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores();\ i++)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Injection\ Port\ Modeling}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ injection\_port\_queue\_delay\ =\ computeInjectionPortQueueDelay(i,\ pkt.time,\ pkt\_length);}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ curr\_time\ =\ pkt.time\ +\ injection\_port\_queue\_delay;}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unicast\ message\ to\ each\ core}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ OutputDirection\ direction;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ next\_dest\ =\ getNextDest(i,\ direction);}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ addHop(direction,\ i,\ next\_dest,\ curr\_time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_fake\_node)}
+\DoxyCodeLine{00202\ \ \ \ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ addHop(DESTINATION,\ pkt.receiver,\ pkt.receiver,\ pkt.time,\ pkt\_length,\ nextHops,\ requester);}
+\DoxyCodeLine{00204\ \ \ \ \}}
+\DoxyCodeLine{00205\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00206\ \ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \textcolor{comment}{//\ Injection\ Port\ Modeling}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ SubsecondTime\ injection\_port\_queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pkt.sender\ ==\ m\_core\_id)}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ injection\_port\_queue\_delay\ =\ computeInjectionPortQueueDelay(pkt.receiver,\ pkt.time,\ pkt\_length);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ *(subsecond\_time\_t*)\&pkt.queue\_delay\ +=\ injection\_port\_queue\_delay;}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ SubsecondTime\ curr\_time\ =\ pkt.time\ +\ injection\_port\_queue\_delay;}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \textcolor{comment}{//\ A\ Unicast\ packet}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ OutputDirection\ direction;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ core\_id\_t\ next\_dest\ =\ getNextDest(pkt.receiver,\ direction);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ addHop(direction,\ pkt.receiver,\ next\_dest,\ curr\_time,\ pkt\_length,\ nextHops,\ requester,\ (subsecond\_time\_t*)\&pkt.queue\_delay);}
+\DoxyCodeLine{00221\ \ \ \ \}}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00225\ NetworkModelEMeshHopByHop::processReceivedPacket(NetPacket\&\ pkt)}
+\DoxyCodeLine{00226\ \{}
+\DoxyCodeLine{00227\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ UInt32\ pkt\_length\ =\ getNetwork()-\/>getModeledLength(pkt);}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID;}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.type\ ==\ SHARED\_MEM\_1)}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ requester\ =\ getNetwork()-\/>getCore()-\/>getMemoryManager()-\/>getShmemRequester(pkt.data);}
+\DoxyCodeLine{00235\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ Other\ Packet\ types}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ requester\ =\ pkt.sender;}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ LOG\_ASSERT\_ERROR((requester\ >=\ 0)\ \&\&\ (requester\ <\ (core\_id\_t)\ Config::getSingleton()-\/>getTotalCores()),}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}requester(\%i)"{}},\ requester);}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \textcolor{keywordflow}{if}\ (\ (!m\_enabled)\ ||\ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (m\_core\_id\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores()))}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ SubsecondTime\ packet\_latency\ =\ pkt.time\ -\/\ pkt.start\_time;}
+\DoxyCodeLine{00246\ \ \ \ SubsecondTime\ contention\_delay\ =\ packet\_latency\ -\/\ (computeDistance(pkt.sender,\ m\_core\_id)\ *\ m\_hop\_latency.getLatency());}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \textcolor{keywordflow}{if}\ (pkt.sender\ !=\ m\_core\_id\ \&\&\ !m\_fake\_node)}
+\DoxyCodeLine{00249\ \ \ \ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ SubsecondTime\ processing\_time\ =\ computeProcessingTime(pkt\_length);}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ SubsecondTime\ ejection\_port\_queue\_delay\ =\ computeEjectionPortQueueDelay(pkt.time,\ pkt\_length);}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ packet\_latency\ +=\ (ejection\_port\_queue\_delay\ +\ processing\_time);}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ contention\_delay\ +=\ ejection\_port\_queue\_delay;}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ pkt.time\ +=\ (ejection\_port\_queue\_delay\ +\ processing\_time);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ pkt.queue\_delay\ +=\ ejection\_port\_queue\_delay;}
+\DoxyCodeLine{00257\ \ \ \ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ m\_total\_packets\_received\ ++;}
+\DoxyCodeLine{00260\ \ \ \ m\_total\_bytes\_received\ +=\ pkt\_length;}
+\DoxyCodeLine{00261\ \ \ \ m\_total\_packet\_latency\ +=\ packet\_latency;}
+\DoxyCodeLine{00262\ \ \ \ m\_total\_contention\_delay\ +=\ contention\_delay;}
+\DoxyCodeLine{00263\ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00266\ NetworkModelEMeshHopByHop::addHop(OutputDirection\ direction,}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ core\_id\_t\ final\_dest,\ core\_id\_t\ next\_dest,}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length,}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ std::vector<Hop>\&\ nextHops,\ core\_id\_t\ requester,}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ subsecond\_time\_t\ *queue\_delay\_stats)}
+\DoxyCodeLine{00271\ \{}
+\DoxyCodeLine{00272\ \ \ \ Hop\ h;}
+\DoxyCodeLine{00273\ \ \ \ h.final\_dest\ =\ final\_dest;}
+\DoxyCodeLine{00274\ \ \ \ h.next\_dest\ =\ next\_dest;}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \textcolor{keywordflow}{if}\ (direction\ >\ NUM\_OUTPUT\_DIRECTIONS)}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ h.time\ =\ pkt\_time;}
+\DoxyCodeLine{00278\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ h.time\ =\ pkt\_time\ +\ computeLatency(direction,\ pkt\_time,\ pkt\_length,\ requester,\ queue\_delay\_stats);}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ nextHops.push\_back(h);}
+\DoxyCodeLine{00282\ \}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ SInt32}
+\DoxyCodeLine{00285\ NetworkModelEMeshHopByHop::computeDistance(core\_id\_t\ sender,\ core\_id\_t\ receiver)}
+\DoxyCodeLine{00286\ \{}
+\DoxyCodeLine{00287\ \ \ \ SInt32\ sx,\ sy,\ dx,\ dy;}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ computePosition(sender,\ sx,\ sy);}
+\DoxyCodeLine{00290\ \ \ \ computePosition(receiver,\ dx,\ dy);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \textcolor{keywordflow}{if}\ (m\_wrap\_around)}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::min(abs(sx\ -\/\ dx),\ m\_mesh\_width\ -\/\ abs(sx\ -\/\ dx))}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ +\ std::min(abs(sy\ -\/\ dy),\ m\_mesh\_height\ -\/\ abs(sy\ -\/\ dy));}
+\DoxyCodeLine{00295\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ abs(sx\ -\/\ dx)\ +\ abs(sy\ -\/\ dy);}
+\DoxyCodeLine{00297\ \}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00300\ NetworkModelEMeshHopByHop::computePosition(core\_id\_t\ core\_id,\ SInt32\ \&x,\ SInt32\ \&y)}
+\DoxyCodeLine{00301\ \{}
+\DoxyCodeLine{00302\ \ \ \ x\ =\ (core\_id\ /\ m\_concentration)\ \%\ m\_mesh\_width;}
+\DoxyCodeLine{00303\ \ \ \ y\ =\ (core\_id\ /\ m\_concentration)\ /\ m\_mesh\_width;}
+\DoxyCodeLine{00304\ \}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ core\_id\_t}
+\DoxyCodeLine{00307\ NetworkModelEMeshHopByHop::computeCoreId(SInt32\ x,\ SInt32\ y)}
+\DoxyCodeLine{00308\ \{}
+\DoxyCodeLine{00309\ \ \ \ x\ =\ (x\ +\ m\_mesh\_width)\ \%\ m\_mesh\_width;}
+\DoxyCodeLine{00310\ \ \ \ y\ =\ (y\ +\ m\_mesh\_height)\ \%\ m\_mesh\_height;}
+\DoxyCodeLine{00311\ \ \ \ \textcolor{keywordflow}{return}\ (y\ *\ m\_mesh\_width\ +\ x)\ *\ m\_concentration;}
+\DoxyCodeLine{00312\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ SubsecondTime}
+\DoxyCodeLine{00315\ NetworkModelEMeshHopByHop::computeLatency(OutputDirection\ direction,\ SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length,\ core\_id\_t\ requester,\ subsecond\_time\_t\ *queue\_delay\_stats)}
+\DoxyCodeLine{00316\ \{}
+\DoxyCodeLine{00317\ \ \ \ LOG\_ASSERT\_ERROR(!m\_fake\_node,\ \textcolor{stringliteral}{"{}Cannot\ computeLatency\ on\ a\ fake\ network\ node"{}});}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ LOG\_ASSERT\_ERROR((direction\ >=\ 0)\ \&\&\ (direction\ <\ NUM\_OUTPUT\_DIRECTIONS),}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Invalid\ Direction(\%u)"{}},\ direction);}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \textcolor{keywordflow}{if}\ (\ (!m\_enabled)\ ||\ (requester\ >=\ (core\_id\_t)\ Config::getSingleton()-\/>getApplicationCores())\ )}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ SubsecondTime\ processing\_time\ =\ computeProcessingTime(pkt\_length);}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ SubsecondTime\ queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00328\ \ \ \ \textcolor{keywordflow}{if}\ (m\_queue\_model\_enabled)}
+\DoxyCodeLine{00329\ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ queue\_delay\ =\ m\_queue\_models[direction]-\/>computeQueueDelay(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (queue\_delay\_stats)}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ *queue\_delay\_stats\ +=\ queue\_delay;}
+\DoxyCodeLine{00333\ \ \ \ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Queue\ Delay(\%s),\ Hop\ Latency(\%s)"{}},\ itostr(queue\_delay).c\_str(),\ itostr(m\_hop\_latency.getLatency()).c\_str());}
+\DoxyCodeLine{00336\ \ \ \ SubsecondTime\ packet\_latency\ =\ m\_hop\_latency.getLatency()\ +\ queue\_delay;}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \textcolor{keywordflow}{return}\ packet\_latency;}
+\DoxyCodeLine{00339\ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ SubsecondTime}
+\DoxyCodeLine{00342\ NetworkModelEMeshHopByHop::computeInjectionPortQueueDelay(core\_id\_t\ pkt\_receiver,\ SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length)}
+\DoxyCodeLine{00343\ \{}
+\DoxyCodeLine{00344\ \ \ \ LOG\_ASSERT\_ERROR(!m\_fake\_node,\ \textcolor{stringliteral}{"{}Cannot\ computeInjectionPortQueueDelay\ on\ a\ fake\ network\ node"{}});}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_queue\_model\_enabled)}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \textcolor{keywordflow}{if}\ (pkt\_receiver\ ==\ m\_core\_id)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ SubsecondTime\ processing\_time\ =\ computeProcessingTime(pkt\_length);}
+\DoxyCodeLine{00353\ \ \ \ \textcolor{keywordflow}{return}\ m\_injection\_port\_queue\_model-\/>computeQueueDelay(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00354\ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ SubsecondTime}
+\DoxyCodeLine{00357\ NetworkModelEMeshHopByHop::computeEjectionPortQueueDelay(SubsecondTime\ pkt\_time,\ UInt32\ pkt\_length)}
+\DoxyCodeLine{00358\ \{}
+\DoxyCodeLine{00359\ \ \ \ LOG\_ASSERT\_ERROR(!m\_fake\_node,\ \textcolor{stringliteral}{"{}Cannot\ computeEjectionPortQueueDelay\ on\ a\ fake\ network\ node"{}});}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_queue\_model\_enabled)}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ SubsecondTime\ processing\_time\ =\ computeProcessingTime(pkt\_length);}
+\DoxyCodeLine{00365\ \ \ \ \textcolor{keywordflow}{return}\ m\_ejection\_port\_queue\_model-\/>computeQueueDelay(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00366\ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ SubsecondTime}
+\DoxyCodeLine{00369\ NetworkModelEMeshHopByHop::computeProcessingTime(UInt32\ pkt\_length)}
+\DoxyCodeLine{00370\ \{}
+\DoxyCodeLine{00371\ \ \ \ LOG\_ASSERT\_ERROR(!m\_fake\_node,\ \textcolor{stringliteral}{"{}Cannot\ computeProcessingTime\ on\ a\ fake\ network\ node"{}});}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \textcolor{comment}{//\ Send:\ (pkt\_length\ *\ 8)\ bits}}
+\DoxyCodeLine{00374\ \ \ \ \textcolor{comment}{//\ Bandwidth:\ (m\_link\_bandwidth)\ bits/cycle}}
+\DoxyCodeLine{00375\ \ \ \ UInt32\ num\_bits\ =\ pkt\_length\ *\ 8;}
+\DoxyCodeLine{00376\ \ \ \ \textcolor{keywordflow}{return}\ m\_link\_bandwidth.getRoundedLatency(num\_bits);}
+\DoxyCodeLine{00377\ \}}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ SInt32}
+\DoxyCodeLine{00380\ NetworkModelEMeshHopByHop::getNextDest(SInt32\ final\_dest,\ OutputDirection\&\ direction)}
+\DoxyCodeLine{00381\ \{}
+\DoxyCodeLine{00382\ \ \ \ \textcolor{comment}{//\ Do\ dimension-\/order\ routing}}
+\DoxyCodeLine{00383\ \ \ \ \textcolor{comment}{//\ Curently,\ do\ store-\/and-\/forward\ routing}}
+\DoxyCodeLine{00384\ \ \ \ \textcolor{comment}{//\ FIXME:\ Should\ change\ this\ to\ wormhole\ routing\ eventually}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \textcolor{keywordflow}{if}\ (final\_dest\ >=\ (core\_id\_t)Config::getSingleton()-\/>getApplicationCores())}
+\DoxyCodeLine{00387\ \ \ \ \{}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ a\ fake\ core\ (not\ an\ application\ core):\ warp\ straight\ to\ the\ destination}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ direction\ =\ DESTINATION;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ final\_dest;}
+\DoxyCodeLine{00391\ \ \ \ \}}
+\DoxyCodeLine{00392\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_core\_id\ /\ m\_concentration\ ==\ final\_dest\ /\ m\_concentration)}
+\DoxyCodeLine{00393\ \ \ \ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \textcolor{comment}{//\ Destination\ is\ self,\ a\ peer\ on\ our\ concentrated\ node}}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ direction\ =\ DESTINATION;}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ final\_dest;}
+\DoxyCodeLine{00397\ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_fake\_node)}
+\DoxyCodeLine{00399\ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ a\ concentrated\ node\ but\ not\ the\ master:\ first\ send\ to\ master}}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ direction\ =\ PEER;}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_core\_id\ -\/\ m\_core\_id\ \%\ m\_concentration;}
+\DoxyCodeLine{00403\ \ \ \ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ SInt32\ sx,\ sy,\ dx,\ dy;}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ computePosition(m\_core\_id,\ sx,\ sy);}
+\DoxyCodeLine{00408\ \ \ \ computePosition(final\_dest,\ dx,\ dy);}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ \textcolor{keywordflow}{if}\ ((sx\ >\ dx)\ \string^\ (m\_wrap\_around\ \&\&\ abs(sx\ -\/\ dx)\ >\ (m\_mesh\_width+1)\ /\ 2))}
+\DoxyCodeLine{00411\ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ direction\ =\ LEFT;}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ computeCoreId(sx-\/1,sy);}
+\DoxyCodeLine{00414\ \ \ \ \}}
+\DoxyCodeLine{00415\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sx\ !=\ dx)}
+\DoxyCodeLine{00416\ \ \ \ \{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ direction\ =\ RIGHT;}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ computeCoreId(sx+1,sy);}
+\DoxyCodeLine{00419\ \ \ \ \}}
+\DoxyCodeLine{00420\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ ((sy\ >\ dy)\ \string^\ (m\_wrap\_around\ \&\&\ abs(sy\ -\/\ dy)\ >\ (m\_mesh\_height+1)\ /\ 2))}
+\DoxyCodeLine{00421\ \ \ \ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ direction\ =\ DOWN;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ computeCoreId(sx,sy-\/1);}
+\DoxyCodeLine{00424\ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sy\ !=\ dy)}
+\DoxyCodeLine{00426\ \ \ \ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ direction\ =\ UP;}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ computeCoreId(sx,sy+1);}
+\DoxyCodeLine{00429\ \ \ \ \}}
+\DoxyCodeLine{00430\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00431\ \ \ \ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \textcolor{comment}{//\ A\ send\ to\ itself}}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ direction\ =\ SELF;}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_core\_id;}
+\DoxyCodeLine{00435\ \ \ \ \}}
+\DoxyCodeLine{00436\ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00439\ NetworkModelEMeshHopByHop::enable()}
+\DoxyCodeLine{00440\ \{}
+\DoxyCodeLine{00441\ \ \ \ m\_enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00442\ \}}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00445\ NetworkModelEMeshHopByHop::disable()}
+\DoxyCodeLine{00446\ \{}
+\DoxyCodeLine{00447\ \ \ \ m\_enabled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00448\ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00451\ NetworkModelEMeshHopByHop::isEnabled()}
+\DoxyCodeLine{00452\ \{}
+\DoxyCodeLine{00453\ \ \ \ \textcolor{keywordflow}{return}\ m\_enabled;}
+\DoxyCodeLine{00454\ \}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00457\ NetworkModelEMeshHopByHop::computeMeshDimensions(SInt32\ \&mesh\_width,\ SInt32\ \&mesh\_height)}
+\DoxyCodeLine{00458\ \{}
+\DoxyCodeLine{00459\ \ \ \ SInt32\ core\_count\ =\ Config::getSingleton()-\/>getApplicationCores();}
+\DoxyCodeLine{00460\ \ \ \ UInt32\ smt\_cores\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/logical\_cpus"{}});}
+\DoxyCodeLine{00461\ \ \ \ SInt32\ concentration\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/concentration"{}})\ *\ smt\_cores;}
+\DoxyCodeLine{00462\ \ \ \ SInt32\ dimensions\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/dimensions"{}});}
+\DoxyCodeLine{00463\ \ \ \ String\ size\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/size"{}});}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \textcolor{keywordflow}{if}\ (size\ ==\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00466\ \ \ \ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(dimensions)}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 1:\ \textcolor{comment}{//\ line\ /\ ring}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_width\ =\ core\_count\ /\ concentration;}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_height\ =\ 1;}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 2:\ \textcolor{comment}{//\ 2-\/d\ mesh\ /\ torus}}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_width\ =\ (SInt32)\ floor\ (sqrt(core\_count\ /\ concentration));}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_height\ =\ (SInt32)\ ceil\ (1.0\ *\ core\_count\ /\ concentration\ /\ mesh\_width);}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ value\ \%d\ for\ dimensions,\ only\ 1\ (line/ring)\ and\ 2\ (mesh/torus)\ are\ currently\ supported"{}},\ dimensions);}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(core\_count\ ==\ (concentration\ *\ mesh\_height\ *\ mesh\_width),\ \textcolor{stringliteral}{"{}Cannot\ build\ a\ mesh\ with\ \%d\ cores\ (concentration\ \%d),\ increase\ NumApplicationCores\ to\ \%d\ for\ a\ \%d\ x\ \%d\ mesh\ or\ configure\ network/emesh\_hop\_by\_hop/size=WIDTH:HEIGHT\ to\ manually\ specify\ mesh\ dimensions"{}},\ core\_count,\ concentration,\ concentration\ *\ mesh\_width\ *\ mesh\_height,\ mesh\_width,\ mesh\_height);}
+\DoxyCodeLine{00482\ \ \ \ \}}
+\DoxyCodeLine{00483\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00484\ \ \ \ \{}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \textcolor{comment}{//\ "{}:"{}-\/separated,\ "{},"{}\ is\ for\ heterogeneity}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ res\ =\ sscanf(size.c\_str(),\ \textcolor{stringliteral}{"{}\%d:\%d"{}},\ \&mesh\_width,\ \&mesh\_height);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(res\ ==\ 2,\ \textcolor{stringliteral}{"{}Invalid\ mesh\ size\ \(\backslash\)"{}\%s\(\backslash\)"{},\ expected\ \(\backslash\)"{}width:height\(\backslash\)"{}"{}},\ size.c\_str());}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(core\_count\ ==\ (concentration\ *\ mesh\_height\ *\ mesh\_width),\ \textcolor{stringliteral}{"{}Invalid\ mesh\ size\ \%s\ for\ \%d\ cores\ (concentration\ \%d):\ \%d\ x\ \%d\ (x\ \%d)\ ==\ \%d\ !=\ \%d"{}},\ size.c\_str(),\ core\_count,\ concentration,\ mesh\_width,\ mesh\_height,\ concentration,\ concentration\ *\ mesh\_width\ *\ mesh\_height,\ core\_count);}
+\DoxyCodeLine{00490\ \ \ \ \}}
+\DoxyCodeLine{00491\ \}}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ std::pair<bool,SInt32>}
+\DoxyCodeLine{00494\ NetworkModelEMeshHopByHop::computeCoreCountConstraints(SInt32\ core\_count)}
+\DoxyCodeLine{00495\ \{}
+\DoxyCodeLine{00496\ \ \ \ SInt32\ mesh\_width,\ mesh\_height;}
+\DoxyCodeLine{00497\ \ \ \ computeMeshDimensions(mesh\_width,\ mesh\_height);}
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \ \ \ assert(core\_count\ <=\ mesh\_width\ *\ mesh\_height);}
+\DoxyCodeLine{00500\ \ \ \ assert(core\_count\ >\ (mesh\_width\ -\/\ 1)\ *\ mesh\_height);}
+\DoxyCodeLine{00501\ \ \ \ assert(core\_count\ >\ mesh\_width\ *\ (mesh\_height\ -\/\ 1));}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{true},mesh\_height\ *\ mesh\_width);}
+\DoxyCodeLine{00504\ \}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ std::pair<bool,\ std::vector<core\_id\_t>\ >}
+\DoxyCodeLine{00507\ NetworkModelEMeshHopByHop::computeMemoryControllerPositions(SInt32\ num\_memory\_controllers,\ SInt32\ core\_count)}
+\DoxyCodeLine{00508\ \{}
+\DoxyCodeLine{00509\ \ \ \ UInt32\ smt\_cores\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/logical\_cpus"{}});}
+\DoxyCodeLine{00510\ \ \ \ SInt32\ concentration\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/concentration"{}})\ *\ smt\_cores;}
+\DoxyCodeLine{00511\ \ \ \ SInt32\ dimensions\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}network/emesh\_hop\_by\_hop/dimensions"{}});}
+\DoxyCodeLine{00512\ \ \ \ SInt32\ mesh\_width,\ mesh\_height;}
+\DoxyCodeLine{00513\ \ \ \ computeMeshDimensions(mesh\_width,\ mesh\_height);}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \textcolor{comment}{//\ core\_id\_list\_along\_perimeter\ :\ list\ of\ cores\ along\ the\ perimeter\ of\ the\ chip\ in\ clockwise\ order\ starting\ from\ (0,0)}}
+\DoxyCodeLine{00516\ \ \ \ std::vector<core\_id\_t>\ core\_id\_list\_along\_perimeter;}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ mesh\_width;\ i++)}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ core\_id\_list\_along\_perimeter.push\_back(i);}
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \ \ \ \textcolor{keywordflow}{if}\ (dimensions\ >\ 1\ \&\&\ mesh\_height\ >\ 1)}
+\DoxyCodeLine{00522\ \ \ \ \{}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 1;\ i\ <\ (mesh\_height-\/1);\ i++)}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ core\_id\_list\_along\_perimeter.push\_back((i\ *\ mesh\_width)\ +\ mesh\_width-\/1);}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ mesh\_width-\/1;\ i\ >=\ 0;\ i-\/-\/)}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ core\_id\_list\_along\_perimeter.push\_back(((mesh\_height-\/1)\ *\ mesh\_width)\ +\ i);}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ mesh\_height-\/2;\ i\ >=\ 1;\ i-\/-\/)}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ core\_id\_list\_along\_perimeter.push\_back(i\ *\ mesh\_width);}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \ \ \ \ \ \ assert(core\_id\_list\_along\_perimeter.size()\ ==\ (UInt32)\ (2\ *\ (mesh\_width\ +\ mesh\_height\ -\/\ 2)));}
+\DoxyCodeLine{00533\ \ \ \ \}}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \ \ \ LOG\_ASSERT\_ERROR(core\_id\_list\_along\_perimeter.size()\ >=\ (UInt32)\ num\_memory\_controllers,}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}num\ cores\ along\ perimeter(\%u),\ num\ memory\ controllers(\%i)"{}},}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ core\_id\_list\_along\_perimeter.size(),\ num\_memory\_controllers);}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \ \ \ SInt32\ spacing\_between\_memory\_controllers\ =\ core\_id\_list\_along\_perimeter.size()\ /\ num\_memory\_controllers;}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \textcolor{comment}{//\ core\_id\_list\_with\_memory\_controllers\ :\ list\ of\ cores\ that\ have\ memory\ controllers\ attached\ to\ them}}
+\DoxyCodeLine{00542\ \ \ \ std::vector<core\_id\_t>\ core\_id\_list\_with\_memory\_controllers;}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \ \textcolor{keywordflow}{for}\ (SInt32\ i\ =\ 0;\ i\ <\ num\_memory\_controllers;\ i++)}
+\DoxyCodeLine{00545\ \ \ \ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ SInt32\ index\ =\ (i\ *\ spacing\_between\_memory\_controllers\ +\ mesh\_width/2)\ \%\ core\_id\_list\_along\_perimeter.size();}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ core\_id\_list\_with\_memory\_controllers.push\_back(concentration\ *\ core\_id\_list\_along\_perimeter[index]);}
+\DoxyCodeLine{00548\ \ \ \ \}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \ \textcolor{keywordflow}{return}\ (std::make\_pair(\textcolor{keyword}{true},\ core\_id\_list\_with\_memory\_controllers));}
+\DoxyCodeLine{00551\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,124 @@
+\doxysection{spin\+\_\+loop\+\_\+detector.\+cc}
+\label{spin__loop__detector_8cc_source}\index{common/misc/spin\_loop\_detector.cc@{common/misc/spin\_loop\_detector.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Implements\ spin\ loop\ detection\ as\ described\ by}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ T.\ Li,\ A.\ R.\ Lebeck,\ and\ D.\ J.\ Sorin.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ "{}Spin\ detection\ hardware\ for\ improved\ management\ of\ multithreaded\ systems."{}}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ IEEE\ Transactions\ on\ Parallel\ and\ Distributed\ Systems\ (TPDS),\ 17:508-\/521,\ June\ 2006.}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}spin\_loop\_detector.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keywordtype}{void}\ SpinLoopDetector::commitBCT(uint64\_t\ eip)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{comment}{//\ We\ just\ executed\ a\ backward\ control\ transfer\ (BCT)}}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{comment}{//\ \`{}\`{}A\ BCT\ can\ be\ a\ backward\ conditional\ taken\ branch,\ unconditional\ branch,\ or\ jump\ instruction.''}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \textcolor{comment}{//\ Note:\ since\ we\ keep\ the\ SDT\ as\ a\ queue,\ a\ BCT's\ position\ is\ not\ constant\ so\ we\ use\ explicit\ ids}}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{comment}{//\ We\ also\ have\ an\ unbounded\ RUB\ so\ there\ is\ no\ overflow\ bit}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ Core\ *core\ =\ m\_thread-\/>getCore();}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{comment}{//\ Find\ BCT\ in\ the\ SDT}}
+\DoxyCodeLine{00021\ \ \ \ Sdt::iterator\ entry\ =\ m\_sdt.begin();}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{for}(\ ;\ entry\ !=\ m\_sdt.end();\ ++entry)}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry-\/>eip\ ==\ eip)}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{if}\ (entry\ ==\ m\_sdt.end())}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{comment}{//\ Unknown\ BCT:\ add\ to\ SDT,\ increment\ next\ SDT\ entry\ id,\ and\ update\ mask\ of\ valid\ ids}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ m\_sdt.push\_back(SdtEntry(eip,\ m\_sdt\_nextid,\ core-\/>getInstructionCount(),\ core-\/>getPerformanceModel()-\/>getElapsedTime()));}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ m\_sdt\_nextid\ =\ (m\_sdt\_nextid\ +\ 1)\ \%\ SDT\_MAX\_SIZE;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ only\ top\ SDT\_MAX\_SIZE\ entries}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sdt.size()\ >\ SDT\_MAX\_SIZE)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ m\_sdt.pop\_front();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ m\_sdt\_bitmask\ =\ 0;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(Sdt::iterator\ it\ =\ m\_sdt.begin();\ it\ !=\ m\_sdt.end();\ ++it)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ m\_sdt\_bitmask\ |=\ (1\ <<\ it-\/>id);}
+\DoxyCodeLine{00039\ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00041\ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{comment}{//\ Found!\ Check\ all\ RUB\ entries\ for\ our\ id\ to\ check\ if\ observable\ register\ state}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{comment}{//\ has\ changed\ since\ the\ end\ of\ last\ iteration\ (Spin\ Condition\ 1)}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ uint8\_t\ \textcolor{keywordtype}{id}\ =\ entry-\/>id;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ spinning\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(Rub::iterator\ it\ =\ m\_rub.begin();\ it\ !=\ m\_rub.end();\ ++it)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>second.second\ \&\ (1\ <<\ \textcolor{keywordtype}{id}))}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \`{}\`{}There\ exists\ at\ least\ one\ entry\ in\ the\ RUB\ that\ corresponds\ to\ this\ SDT\ entry.}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ This\ means\ that\ the\ observable\ register\ state\ of\ the\ thread\ differs\ and,\ thus,}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ the\ thread\ was\ not\ spinning.''}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ spinning\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ RUB\ entry\ for\ our\ loop\ id}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ it-\/>second.second\ \&=\ \string~(1\ <<\ id);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (spinning)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Spin\ loop\ detected\ !!}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ core-\/>updateSpinCount(}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ core-\/>getInstructionCount()\ -\/\ entry-\/>icount,}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ time\ difference\ will\ have\ been\ caused\ by\ instructions\ earlier\ in\ the\ queue,\ not\ by\ the\ instructions}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ in\ this\ exact\ spin\ loop.\ But,\ when\ spinning\ for\ a\ long\ time,\ the\ earlier\ instructions\ will\ be\ spin\ loops\ as\ well}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ if\ spin\ count\ is\ large\ (which\ is\ when\ we\ care)\ it\ should\ be\ reasonably\ accurate.}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>getElapsedTime()\ -\/\ entry-\/>tcount}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ entry-\/>icount\ =\ core-\/>getInstructionCount();}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ entry-\/>tcount\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00074\ \ \ \ \}}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{void}\ SpinLoopDetector::commitNonSilentStore()}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{comment}{//\ \`{}\`{}Whenever\ the\ processor\ commits\ a\ non-\/silent\ store,\ it\ clears\ the\ SDT.''}}
+\DoxyCodeLine{00080\ \ \ \ m\_sdt.clear();}
+\DoxyCodeLine{00081\ \ \ \ m\_rub.clear();}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{void}\ SpinLoopDetector::commitRegisterWrite(reg\_t\ reg,\ uint64\_t\ old\_value,\ uint64\_t\ value)}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{comment}{//\ Implements\ Register\ Update\ Buffer\ (RUB),\ see\ Section\ 3.2,\ 3rd\ paragraph}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \textcolor{comment}{//\ \`{}\`{}For\ each\ instruction\ it\ then\ commits,\ the\ processor\ checks\ if\ the\ instruction's\ architectural}}
+\DoxyCodeLine{00089\ \ \ \ \textcolor{comment}{//\ \ \ (i.e.,\ logical)\ destination\ register\ is\ already\ in\ the\ RUB.''}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{if}\ (m\_rub.count(reg)\ ==\ 0)}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{comment}{//\ \`{}\`{}If\ not,\ the\ processor\ has\ discovered\ a\ new\ register\ written\ by\ the\ thread}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ It\ then\ compares\ the\ new\ value\ of\ this\ register\ (i.e.,\ the\ value\ being\ committed)}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ to\ its\ old\ value\ (i.e.,\ the\ value\ before\ being\ overwritten\ by\ the\ commit).''}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ !=\ old\_value)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \`{}\`{}If\ not\ equal,\ the\ processor\ adds\ the\ register\ number\ and\ its\ old\ value\ to\ the\ RUB.''}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ m\_rub[reg]\ =\ std::make\_pair(old\_value,\ m\_sdt\_bitmask);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00102\ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \textcolor{comment}{//\ \`{}\`{}If\ the\ register\ is\ already\ in\ the\ RUB,\ then\ the\ processor\ compares\ its\ new\ value\ to\ its\ current\ value\ in\ the\ RUB.''}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ ==\ m\_rub[reg].first)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \`{}\`{}If\ equal,\ it\ deletes\ this\ register\ from\ the\ RUB;''}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ m\_rub.erase(reg);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{comment}{//\ \`{}\`{}otherwise,\ no\ action\ is\ necessary.''}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Actually,\ this\ happens\ when\ the\ register\ is\ already\ in\ the\ RUB\ for\ an\ older\ loop.}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unless\ it's\ a\ silent\ write,\ update\ the\ bitmask\ to\ represent\ all\ current\ loop\ candidates.}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ !=\ old\_value)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ m\_rub[reg].second\ |=\ m\_sdt\_bitmask;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \}}
+\DoxyCodeLine{00118\ \}}
+
+\end{DoxyCode}

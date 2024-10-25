@@ -1,0 +1,235 @@
+\doxysection{queue\+\_\+model\+\_\+history\+\_\+list.\+cc}
+\label{queue__model__history__list_8cc_source}\index{common/performance\_model/queue\_model\_history\_list.cc@{common/performance\_model/queue\_model\_history\_list.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}queue\_model\_history\_list.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fxsupport.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ QueueModelHistoryList::QueueModelHistoryList(String\ name,\ UInt32\ \textcolor{keywordtype}{id},\ SubsecondTime\ min\_processing\_time):}
+\DoxyCodeLine{00011\ \ \ \ m\_min\_processing\_time(min\_processing\_time),}
+\DoxyCodeLine{00012\ \ \ \ m\_utilized\_time(SubsecondTime::Zero()),}
+\DoxyCodeLine{00013\ \ \ \ m\_total\_queue\_delay(SubsecondTime::Zero()),}
+\DoxyCodeLine{00014\ \ \ \ m\_total\_requests(0),}
+\DoxyCodeLine{00015\ \ \ \ m\_total\_requests\_using\_analytical\_model(0)}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{comment}{//\ history\_list\ queuing\ model\ does\ not\ play\ nice\ with\ the\ interval\ core\ model:}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{//\ The\ interval\ model\ issues\ memory\ operations\ in\ big\ batches,\ even\ when\ it\ later\ decides\ to\ serialize\ those,}}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ The\ history\_list\ queue\ model\ will\ in\ this\ case\ return\ large,\ increasing\ latencies\ which\ are\ then\ also\ serialized.}}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{comment}{//\ Also,\ this\ queuing\ model\ does\ not\ work\ very\ well\ with\ threads\ that\ are\ out-\/of-\/order.}}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{comment}{//\ In\ general,\ in\ a\ simulation\ environment\ with\ loose\ time\ synchronization\ (or\ fluffy\ time),\ you\ don't\ want}}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{comment}{//\ to\ look\ at\ exact\ times\ (such\ as\ this\ model\ does)\ since\ those\ are\ wrong,\ but\ use\ averages\ only\ (which\ are\ fine)}}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{comment}{//\ -\/-\/\ this\ is\ exactly\ what\ the\ Windowed\ M/G/1\ queue\ model\ is\ supposed\ to\ do.}}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{comment}{//LOG\_PRINT\_WARNING\_ONCE("{}history\_list\ queuing\ model\ is\ deprecated.\ Please\ consider\ using\ windowed\_mg1\ instead."{});}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{comment}{//\ Some\ Hard-\/Coded\ values\ here}}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{comment}{//\ Assumptions}}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{comment}{//\ 1)\ Simulation\ Time\ will\ not\ exceed\ 2\string^63.}}
+\DoxyCodeLine{00029\ \ \ \ UInt32\ max\_list\_size\ =\ 0;}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00031\ \ \ \ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ m\_analytical\_model\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}queue\_model/history\_list/analytical\_model\_enabled"{}});}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ max\_list\_size\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}queue\_model/history\_list/max\_list\_size"{}});}
+\DoxyCodeLine{00034\ \ \ \ \}}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{catch}(...)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Could\ not\ read\ parameters\ from\ cfg"{}});}
+\DoxyCodeLine{00038\ \ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \ m\_max\_free\_interval\_list\_size\ =\ max\_list\_size;}
+\DoxyCodeLine{00040\ \ \ \ m\_average\_delay\ =\ MovingAverage<SubsecondTime>::createAvgType(MovingAverage<SubsecondTime>::ARITHMETIC\_MEAN,\ max\_list\_size);}
+\DoxyCodeLine{00041\ \ \ \ SubsecondTime\ max\_simulation\_time\ =\ SubsecondTime::FS()\ <<\ 63;}
+\DoxyCodeLine{00042\ \ \ \ m\_free\_interval\_list.push\_back(std::pair<const\ SubsecondTime,SubsecondTime>(SubsecondTime::Zero(),\ max\_simulation\_time));}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}num-\/requests"{}},\ \&m\_total\_requests);}
+\DoxyCodeLine{00045\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}num-\/requests-\/analytical"{}},\ \&m\_total\_requests\_using\_analytical\_model);}
+\DoxyCodeLine{00046\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}total-\/time-\/used"{}},\ \&m\_utilized\_time);}
+\DoxyCodeLine{00047\ \ \ \ registerStatsMetric(name,\ \textcolor{keywordtype}{id},\ \textcolor{stringliteral}{"{}total-\/queue-\/delay"{}},\ \&m\_total\_queue\_delay);}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ QueueModelHistoryList::\string~QueueModelHistoryList()}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keyword}{delete}\ m\_average\_delay;}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ SubsecondTime}
+\DoxyCodeLine{00056\ QueueModelHistoryList::computeQueueDelay(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time,\ core\_id\_t\ requester)}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \ LOG\_ASSERT\_ERROR(m\_free\_interval\_list.size()\ >=\ 1,}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Free\ Interval\ list\ size\ <\ 1"{}});}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ SubsecondTime\ queue\_delay;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \textcolor{comment}{//\ Check\ if\ it\ is\ an\ old\ packet}}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{comment}{//\ If\ yes,\ use\ analytical\ model}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{comment}{//\ If\ not,\ use\ the\ history\ list\ based\ queue\ model}}
+\DoxyCodeLine{00066\ \ \ \ std::pair<SubsecondTime,SubsecondTime>\ oldest\_interval\ =\ m\_free\_interval\_list.front();}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{if}\ (m\_analytical\_model\_enabled\ \&\&\ ((pkt\_time\ +\ processing\_time)\ <=\ oldest\_interval.first))}
+\DoxyCodeLine{00068\ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{comment}{//\ Increment\ the\ number\ of\ requests\ that\ use\ the\ analytical\ model}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ m\_total\_requests\_using\_analytical\_model\ ++;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ queue\_delay\ =\ computeUsingAnalyticalModel(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00072\ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ queue\_delay\ =\ computeUsingHistoryList(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ updateAverageDelay(queue\_delay);}
+\DoxyCodeLine{00077\ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ updateQueueUtilization(processing\_time);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \textcolor{comment}{//\ Increment\ total\ queue\ requests}}
+\DoxyCodeLine{00082\ \ \ \ m\_total\_requests\ ++;}
+\DoxyCodeLine{00083\ \ \ \ m\_total\_queue\_delay\ +=\ queue\_delay;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keywordflow}{return}\ queue\_delay;}
+\DoxyCodeLine{00086\ \}}
+\DoxyCodeLine{00087\ SubsecondTime}
+\DoxyCodeLine{00088\ QueueModelHistoryList::computeQueueDelayNoEffect(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time,\ core\_id\_t\ requester)}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \ \ \ LOG\_ASSERT\_ERROR(m\_free\_interval\_list.size()\ >=\ 1,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Free\ Interval\ list\ size\ <\ 1"{}});}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ SubsecondTime\ queue\_delay;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \textcolor{comment}{//\ Check\ if\ it\ is\ an\ old\ packet}}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{comment}{//\ If\ yes,\ use\ analytical\ model}}
+\DoxyCodeLine{00097\ \ \ \ \textcolor{comment}{//\ If\ not,\ use\ the\ history\ list\ based\ queue\ model}}
+\DoxyCodeLine{00098\ \ \ \ std::pair<SubsecondTime,SubsecondTime>\ oldest\_interval\ =\ m\_free\_interval\_list.front();}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordflow}{if}\ (m\_analytical\_model\_enabled\ \&\&\ ((pkt\_time\ +\ processing\_time)\ <=\ oldest\_interval.first))}
+\DoxyCodeLine{00100\ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{comment}{//\ Increment\ the\ number\ of\ requests\ that\ use\ the\ analytical\ model}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ m\_total\_requests\_using\_analytical\_model\ ++;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ queue\_delay\ =\ computeUsingAnalyticalModel(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00104\ \ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00106\ \ \ \ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ queue\_delay\ =\ computeUsingHistoryList(pkt\_time,\ processing\_time);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ updateAverageDelay(queue\_delay);}
+\DoxyCodeLine{00109\ \ \ \ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ updateQueueUtilization(processing\_time);}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \textcolor{comment}{//\ Increment\ total\ queue\ requests}}
+\DoxyCodeLine{00114\ \ \ \ m\_total\_requests\ ++;}
+\DoxyCodeLine{00115\ \ \ \ m\_total\_queue\_delay\ +=\ queue\_delay;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordflow}{return}\ queue\_delay;}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00121\ QueueModelHistoryList::getQueueUtilization()}
+\DoxyCodeLine{00122\ \{}
+\DoxyCodeLine{00123\ \ \ \ std::pair<SubsecondTime,SubsecondTime>\ newest\_interval\ =\ m\_free\_interval\_list.back();}
+\DoxyCodeLine{00124\ \ \ \ SubsecondTime\ total\_time\ =\ newest\_interval.first;}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keywordflow}{if}\ (total\_time\ ==\ SubsecondTime::Zero())}
+\DoxyCodeLine{00127\ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(m\_utilized\_time\ ==\ SubsecondTime::Zero(),\ \textcolor{stringliteral}{"{}m\_utilized\_time(\%s),\ total\_time(\%s)"{}},}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ itostr(m\_utilized\_time).c\_str(),\ itostr(total\_time).c\_str());}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00131\ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00133\ \ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\textcolor{keywordtype}{float})\ m\_utilized\_time.getInternalDataForced()\ /\ total\_time.getInternalDataForced());}
+\DoxyCodeLine{00135\ \ \ \ \}}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{float}}
+\DoxyCodeLine{00139\ QueueModelHistoryList::getFracRequestsUsingAnalyticalModel()}
+\DoxyCodeLine{00140\ \{}
+\DoxyCodeLine{00141\ \ \ \textcolor{keywordflow}{if}\ (m\_total\_requests\ ==\ 0)}
+\DoxyCodeLine{00142\ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00143\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((\textcolor{keywordtype}{float})\ m\_total\_requests\_using\_analytical\_model\ /\ m\_total\_requests);}
+\DoxyCodeLine{00145\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00148\ QueueModelHistoryList::updateQueueUtilization(SubsecondTime\ processing\_time)}
+\DoxyCodeLine{00149\ \{}
+\DoxyCodeLine{00150\ \ \ \ \textcolor{comment}{//\ Update\ queue\ utilization\ parameter}}
+\DoxyCodeLine{00151\ \ \ \ m\_utilized\_time\ +=\ processing\_time;}
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00155\ QueueModelHistoryList::updateAverageDelay(SubsecondTime\ queue\_delay)}
+\DoxyCodeLine{00156\ \{}
+\DoxyCodeLine{00157\ \ \ \ m\_average\_delay-\/>update(queue\_delay);}
+\DoxyCodeLine{00158\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ SubsecondTime}
+\DoxyCodeLine{00161\ QueueModelHistoryList::computeUsingAnalyticalModel(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time)}
+\DoxyCodeLine{00162\ \{}
+\DoxyCodeLine{00163\ \ \ \ \textcolor{comment}{//\ WH:\ Old\ code\ used\ general\ queuing\ model\ to\ estimate\ delay\ based\ on\ historical\ utilization\ rate:}}
+\DoxyCodeLine{00164\ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ queue\_delay\ =\ (rho\ *\ processing\_time)\ /\ (2\ *\ (1\ -\/\ rho)))\ +\ 1}}
+\DoxyCodeLine{00165\ \ \ \ \textcolor{comment}{//\ \ \ \ \ For\ rho\ near\ or\ over\ 1,\ which\ does\ happen\ due\ to\ other\ approximations\ (skew\ between\ cores),\ this\ yields\ nonsense.}}
+\DoxyCodeLine{00166\ \ \ \ \textcolor{comment}{//\ \ \ \ \ Yet,\ everyone\ knows\ that\ in\ a\ system\ with\ feedback,\ the\ arrival\ rate\ is\ no\ longer\ an\ independent,\ exponential\ process}}
+\DoxyCodeLine{00167\ \ \ \ \textcolor{comment}{//\ \ \ \ \ (i.e.,\ more\ delay\ causes\ upstream\ buffer\ blockages\ which\ throttle\ the\ actual\ request\ rate,\ avoiding\ rho\ from\ ever\ reaching\ 1)}}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{comment}{//\ Current\ best\ guess:\ return\ average\ of\ delays\ computed\ using\ history\ list\ model}}
+\DoxyCodeLine{00169\ \ \ \ \textcolor{keywordflow}{return}\ m\_average\_delay-\/>compute();}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ SubsecondTime}
+\DoxyCodeLine{00173\ QueueModelHistoryList::computeUsingHistoryList(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time)}
+\DoxyCodeLine{00174\ \{}
+\DoxyCodeLine{00175\ \ \ \ LOG\_ASSERT\_ERROR(m\_free\_interval\_list.size()\ <=\ m\_max\_free\_interval\_list\_size,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Free\ Interval\ list\ size(\%u)\ >\ \%u"{}},\ m\_free\_interval\_list.size(),\ m\_max\_free\_interval\_list\_size);}
+\DoxyCodeLine{00177\ \ \ \ SubsecondTime\ queue\_delay\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ FreeIntervalList::iterator\ curr\_it;}
+\DoxyCodeLine{00180\ \ \ \ \textcolor{keywordflow}{for}\ (curr\_it\ =\ m\_free\_interval\_list.begin();\ curr\_it\ !=\ m\_free\_interval\_list.end();\ curr\_it\ ++)}
+\DoxyCodeLine{00181\ \ \ \ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ std::pair<SubsecondTime,SubsecondTime>\ interval\ =\ (*curr\_it);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((pkt\_time\ >=\ interval.first)\ \&\&\ ((pkt\_time\ +\ processing\_time)\ <=\ interval.second))}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ queue\_delay\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Adjust\ the\ data\ structure\ accordingly}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ curr\_it\ =\ m\_free\_interval\_list.erase(curr\_it);}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((pkt\_time\ -\/\ interval.first)\ >=\ m\_min\_processing\_time)}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ m\_free\_interval\_list.insert(curr\_it,\ std::pair<SubsecondTime,SubsecondTime>(interval.first,\ pkt\_time));}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((interval.second\ -\/\ (pkt\_time\ +\ processing\_time))\ >=\ m\_min\_processing\_time)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ m\_free\_interval\_list.insert(curr\_it,\ std::pair<SubsecondTime,SubsecondTime>(pkt\_time\ +\ processing\_time,\ interval.second));}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \textcolor{comment}{//\ WH:\ The\ request\ comes\ before\ this\ free\ part,\ but\ doesn't\ fit.\ It\ doesn't\ make\ sense\ to\ me\ to}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ demand\ a\ fit\ and\ move\ this\ request\ down\ even\ further.\ In\ reality,\ this\ request\ would\ have\ most}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ likely\ executed\ at\ interval.first,\ while\ later\ request\ would/could\ be\ delayed.\ But\ it's\ too\ late}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ for\ that\ now.}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ (If\ we\ assume\ all\ wait\ times\ are\ additive\ then\ the\ average\ works\ out\ by\ shifting\ it\ down,}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ but\ since\ this\ is\ an\ interactive\ simulation\ all\ delays\ propagate\ through\ the\ system}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ so\ this\ won't\ be\ accurate.)}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ ((pkt\_time\ <\ interval.first)\ \textcolor{comment}{/*\&\&\ ((interval.first\ +\ processing\_time)\ <=\ interval.second)*/})}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ queue\_delay\ =\ interval.first\ -\/\ pkt\_time;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Adjust\ the\ data\ structure\ accordingly}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ curr\_it\ =\ m\_free\_interval\_list.erase(curr\_it);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((interval.second\ -\/\ (interval.first\ +\ processing\_time))\ >=\ m\_min\_processing\_time)}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ m\_free\_interval\_list.insert(curr\_it,\ std::pair<SubsecondTime,SubsecondTime>(interval.first\ +\ processing\_time,\ interval.second));}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ LOG\_ASSERT\_ERROR(queue\_delay\ !=\ SubsecondTime::MaxTime(),\ \textcolor{stringliteral}{"{}queue\ delay(\%s),\ free\ interval\ not\ found"{}},\ itostr(queue\_delay).c\_str());}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \textcolor{keywordflow}{if}\ (m\_free\_interval\_list.size()\ >\ m\_max\_free\_interval\_list\_size)}
+\DoxyCodeLine{00222\ \ \ \ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ m\_free\_interval\_list.erase(m\_free\_interval\_list.begin());}
+\DoxyCodeLine{00224\ \ \ \ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}HistoryList:\ pkt\_time(\%s),\ processing\_time(\%s),\ queue\_delay(\%s)"{}},\ itostr(pkt\_time).c\_str(),\ itostr(processing\_time).c\_str(),\ itostr(queue\_delay).c\_str());}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \textcolor{keywordflow}{return}\ queue\_delay;}
+\DoxyCodeLine{00229\ \}}
+
+\end{DoxyCode}

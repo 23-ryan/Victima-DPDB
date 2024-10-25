@@ -1,0 +1,110 @@
+\doxysection{page\+\_\+table\+\_\+virtualized.\+cc}
+\label{page__table__virtualized_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/page\_table\_virtualized.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/page\_table\_virtualized.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}page\_table\_virtualized.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}tlb.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}memory\_manager.h"{}}}
+\DoxyCodeLine{00007\ PageTableVirtualized::PageTableVirtualized(\textcolor{keywordtype}{int}\ number\_of\_levels,}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core*\ \_core,\ }
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ \_m\_shmem\_perf\_model,\ }
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *level\_bit\_indices,}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *level\_percentages,\ }
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PWC*\ pwc,\ }
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ pwc\_enabled,}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UtopiaCache*\ \_shadow\_cache):}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PageTableWalker(\_core-\/>getId(),\ 0,\ \_m\_shmem\_perf\_model,\ pwc,\ pwc\_enabled),\ }
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_nested\_tlb\_access\_latency(NULL,\ 0),}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_tlb\_l1\_cache\_access(NULL,\ 0),}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_tlb\_l2\_cache\_access(NULL,\ 0),}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_tlb\_nuca\_cache\_access(NULL,\ 0)}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ ptw\_radix\_guest\ =\ \textcolor{keyword}{new}\ PageTableWalkerRadix(number\_of\_levels,\ \_core,\ \_m\_shmem\_perf\_model,\ level\_bit\_indices,\ level\_percentages,\ pwc,\ pwc\_enabled,\ \_shadow\_cache);}
+\DoxyCodeLine{00024\ \ \ \ ptw\_radix\_host\ \ =\ \textcolor{keyword}{new}\ PageTableWalkerRadix(number\_of\_levels,\ \_core,\ \_m\_shmem\_perf\_model,\ level\_bit\_indices,\ level\_percentages,\ NULL,\ \textcolor{keyword}{false},\ \_shadow\_cache);}
+\DoxyCodeLine{00025\ \ \ \ \ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordtype}{bool}\ m\_utopia\_enabled\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/utopia/enabled"{}});}
+\DoxyCodeLine{00027\ \ \ \ \textcolor{keywordtype}{bool}\ track\_misses\ =\ \ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/tlb/track\_misses"{}});}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordtype}{bool}\ track\_accesses\ =\ Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}perf\_model/tlb/track\_accesses"{}});}
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordtype}{int}\ m\_system\_page\_size\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/tlb/pagesize"{}});}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordtype}{int}\ number\_of\_page\_sizes\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/tlb/page\_sizes"{}});}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordtype}{int}*\ page\_size\_list;}
+\DoxyCodeLine{00032\ \ \ \ page\_size\_list\ =\ (\textcolor{keywordtype}{int}\ *)\ malloc\ (\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int})*(number\_of\_page\_sizes));}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordtype}{int}\ nested\_size\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/nested\_tlb/size"{}});}
+\DoxyCodeLine{00034\ \ \ \ m\_tlb\_l1\_cache\_access\ =\ \ ComponentLatency(\_core-\/>getDvfsDomain(),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/l1\_dcache/data\_access\_time"{}}));;}
+\DoxyCodeLine{00035\ \ \ \ m\_tlb\_l2\_cache\_access\ =\ ComponentLatency(\_core-\/>getDvfsDomain(),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/l2\_cache/data\_access\_time"{}}));}
+\DoxyCodeLine{00036\ \ \ \ m\_tlb\_nuca\_cache\_access\ =\ ComponentLatency(\_core-\/>getDvfsDomain(),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/nuca/data\_access\_time"{}}));}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ m\_nested\_tlb\_access\_latency\ =\ ComponentLatency(\_core-\/>getDvfsDomain(),\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/nested\_tlb/latency"{}}));}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ nested\_tlb\ =\ \textcolor{keyword}{new}\ TLB(\textcolor{stringliteral}{"{}nested\_tlb"{}},\ \textcolor{stringliteral}{"{}perf\_model/nested\_tlb"{}},\ \_core-\/>getId(),m\_shmem\_perf\_model,\ nested\_size,m\_system\_page\_size,\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/nested\_tlb/associativity"{}}),\ NULL,\ m\_utopia\_enabled,\ \ track\_misses,\ track\_accesses,page\_size\_list,\ \ number\_of\_page\_sizes,\ ptw\_radix\_host);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ SubsecondTime\ PageTableVirtualized::init\_walk(IntPtr\ eip,\ IntPtr\ address,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ UtopiaCache*\ shadow\_cache,}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ CacheCntlr\ *\_cache,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count)\{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ address\ is\ in\ the\ guest\ address\ space,\ use\ the\ guest\ page\ table\ walker}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ std::vector<UInt64>\ guest\_pt\_addresses;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ SubsecondTime\ guest\_latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ SubsecondTime\ host\_latency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ guest\_latency\ =\ ptw\_radix\_guest-\/>init\_walk(eip,\ address,\ shadow\_cache,\ \_cache,\ lock\_signal,\ data\_buf,\ data\_length,\ modeled,\ count);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ guest\_pt\_addresses\ =\ ptw\_radix\_guest-\/>getAddresses();}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{comment}{//iterate\ over\ guest\_pt\_addresses\ and\ execute\ an\ init\_walk\ using\ the\ host\ page\ table\ walker\ for\ every\ address}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ guest\_pt\_addresses.size();\ i++)\{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ TLB::where\_t\ hit\ =\ nested\_tlb-\/>lookup(address,\ getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_USER\_THREAD),\ \textcolor{keyword}{true},\ 1,\ count,\ lock\_signal);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hit\ ==\ TLB::where\_t::MISS\ \&\&\ modeled)\{}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ host\_latency\ +=\ \ m\_nested\_tlb\_access\_latency.getLatency()\ +\ ptw\_radix\_host-\/>init\_walk(eip,\ guest\_pt\_addresses[i],\ shadow\_cache,\ \_cache,\ lock\_signal,\ data\_buf,\ data\_length,\ modeled,\ count);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(hit\ ==\ TLB::where\_t::L1\_CACHE)\{\ \textcolor{comment}{//}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ host\_latency\ +=\ \ m\_nested\_tlb\_access\_latency.getLatency()+m\_tlb\_l1\_cache\_access.getLatency();}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(hit\ ==\ TLB::where\_t::L2\_CACHE)\{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ host\_latency\ +=\ \ m\_nested\_tlb\_access\_latency.getLatency()+m\_tlb\_l2\_cache\_access.getLatency();}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(hit\ ==\ TLB::where\_t::NUCA\_CACHE)\{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ host\_latency\ +=\ \ m\_nested\_tlb\_access\_latency.getLatency()+m\_tlb\_nuca\_cache\_access.getLatency();}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(hit\ ==\ TLB::where\_t::L1)\{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ host\_latency\ +=\ \ m\_nested\_tlb\_access\_latency.getLatency();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{return}\ guest\_latency\ +\ host\_latency;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keywordtype}{int}\ PageTableVirtualized::init\_walk\_functional(IntPtr\ address)}
+\DoxyCodeLine{00092\ \{\ \ \ \ }
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{return}\ \ ptw\_radix\_guest-\/>init\_walk\_functional(address);}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ \ }
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keywordtype}{bool}\ PageTableVirtualized::isPageFault(IntPtr\ address)}
+\DoxyCodeLine{00099\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{return}\ ptw\_radix\_guest-\/>isPageFault(address);}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ }
+
+\end{DoxyCode}

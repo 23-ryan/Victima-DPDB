@@ -1,0 +1,135 @@
+\doxysection{codecache\+\_\+trace.\+cc}
+\label{codecache__trace_8cc_source}\index{pin/codecache\_trace.cc@{pin/codecache\_trace.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}codecache\_trace.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}pin.H"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ \_\_STDC\_FORMAT\_MACROS\ }\textcolor{comment}{//\ PRIu64}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <inttypes.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ uint64\_t\ cc\_counters[8];}
+\DoxyCodeLine{00016\ \textcolor{keyword}{static}\ FILE*\ cctrace;}
+\DoxyCodeLine{00017\ \textcolor{keyword}{static}\ FILE*\ ccstats;}
+\DoxyCodeLine{00018\ SubsecondTime\ next\_callback;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ atomic\_inc\_int64(a)\ \_\_sync\_fetch\_and\_add(\&(a),\ 1)}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ VOID\ cacheInit()}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ VOID\ newCacheBlock(USIZE\ new\_block\_size)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ atomic\_inc\_int64(cc\_counters[0]);}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ VOID\ fullCache(USIZE\ trace\_size,\ USIZE\ stub\_size)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \ atomic\_inc\_int64(cc\_counters[1]);}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ VOID\ cacheFlushed()}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \ \ \ atomic\_inc\_int64(cc\_counters[2]);}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ VOID\ codeCacheEntered(ADDRINT\ cache\_pc)}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ atomic\_inc\_int64(cc\_counters[3]);}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ VOID\ codeCacheExited(ADDRINT\ cache\_pc)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ VOID\ traceLinked(ADDRINT\ branch\_pc,\ ADDRINT\ target\_pc)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \ atomic\_inc\_int64(cc\_counters[4]);}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ VOID\ traceUnlinked(ADDRINT\ branch\_pc,\ ADDRINT\ stub\_pc)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ atomic\_inc\_int64(cc\_counters[5]);}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ VOID\ traceInvalidated(ADDRINT\ orig\_pc,\ ADDRINT\ cache\_pc,\ BOOL\ success)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ atomic\_inc\_int64(cc\_counters[6]);}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ VOID\ traceInserted(TRACE\ trace,\ VOID\ *v)}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \ \ \ atomic\_inc\_int64(cc\_counters[7]);}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keywordtype}{void}\ printCodeCacheTrace(\textcolor{keyword}{const}\ SubsecondTime\&\ time)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ fprintf(cctrace,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIu64,\ time.getNS());}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0\ ;\ i\ <\ 8\ ;\ i++)}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ fprintf(cctrace,\ \textcolor{stringliteral}{"{}\ \%"{}}\ PRIu64,\ cc\_counters[i]);}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ fprintf(cctrace,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{void}\ printCodeCacheStats(\textcolor{keyword}{const}\ SubsecondTime\&\ time)}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\%"{}}\ PRIu64,\ time.getNS());}
+\DoxyCodeLine{00083\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_CodeMemReserved());}
+\DoxyCodeLine{00084\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_DirectoryMemUsed());}
+\DoxyCodeLine{00085\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_CodeMemUsed());}
+\DoxyCodeLine{00086\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_ExitStubBytes());}
+\DoxyCodeLine{00087\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_LinkBytes());}
+\DoxyCodeLine{00088\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_CacheSizeLimit());}
+\DoxyCodeLine{00089\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_BlockSize());}
+\DoxyCodeLine{00090\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_NumTracesInCache());}
+\DoxyCodeLine{00091\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\ \%u"{}},\ CODECACHE\_NumExitStubsInCache());}
+\DoxyCodeLine{00092\ \ \ \ fprintf(ccstats,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keywordtype}{void}\ codeCachePeriodicCallback(\textcolor{keywordtype}{void}\ *self,\ subsecond\_time\_t\ \_time)}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \ SubsecondTime\ time(\_time);}
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{if}\ (time\ <\ next\_callback)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ next\_callback\ =\ time\ +\ SubsecondTime::NS(10000);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ printCodeCacheTrace(time);}
+\DoxyCodeLine{00104\ \ \ \ printCodeCacheStats(time);}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keywordtype}{void}\ initCodeCacheTracing()}
+\DoxyCodeLine{00108\ \{}
+\DoxyCodeLine{00109\ \ \ \ cctrace\ =\ fopen(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}cctrace.txt"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00110\ \ \ \ LOG\_ASSERT\_ERROR(cctrace\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ to\ be\ able\ to\ create\ a\ file"{}});}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ ccstats\ =\ fopen(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}ccstats.txt"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00113\ \ \ \ LOG\_ASSERT\_ERROR(cctrace\ !=\ NULL,\ \textcolor{stringliteral}{"{}Expected\ to\ be\ able\ to\ create\ a\ file"{}});}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ next\_callback\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PERIODIC,\ (HooksManager::HookCallbackFunc)codeCachePeriodicCallback,\ (UInt64)NULL);}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//CODECACHE\_AddCacheInitFunction(cacheInit,\ NULL);}}
+\DoxyCodeLine{00120\ \ \ \ CODECACHE\_AddCacheBlockFunction(newCacheBlock,\ NULL);}
+\DoxyCodeLine{00121\ \ \ \ CODECACHE\_AddFullCacheFunction(fullCache,\ NULL);}
+\DoxyCodeLine{00122\ \ \ \ CODECACHE\_AddCacheFlushedFunction(cacheFlushed,\ NULL);}
+\DoxyCodeLine{00123\ \ \ \ CODECACHE\_AddCodeCacheEnteredFunction(codeCacheEntered,\ NULL);}
+\DoxyCodeLine{00124\ \ \ \ \textcolor{comment}{//CODECACHE\_AddCodeCacheExitedFunction(codeCacheExited,\ NULL);}}
+\DoxyCodeLine{00125\ \ \ \ CODECACHE\_AddTraceLinkedFunction(traceLinked,\ NULL);}
+\DoxyCodeLine{00126\ \ \ \ CODECACHE\_AddTraceUnlinkedFunction(traceUnlinked,\ NULL);}
+\DoxyCodeLine{00127\ \ \ \ CODECACHE\_AddTraceInvalidatedFunction(traceInvalidated,\ NULL);}
+\DoxyCodeLine{00128\ \ \ \ CODECACHE\_AddTraceInsertedFunction(traceInserted,\ NULL);}
+\DoxyCodeLine{00129\ \}}
+
+\end{DoxyCode}

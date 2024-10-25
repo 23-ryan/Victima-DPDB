@@ -1,0 +1,456 @@
+\doxysection{syscall\+\_\+server.\+cc}
+\label{syscall__server_8cc_source}\index{common/system/syscall\_server.cc@{common/system/syscall\_server.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}syscall\_server.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}circular\_log.h"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}os\_compat.h"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ SyscallServer::SyscallServer()}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ m\_reschedule\_cost\ =\ SubsecondTime::NS()\ *\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/sync/reschedule\_cost"{}});}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ Sim()-\/>getHooksManager()-\/>registerHook(HookType::HOOK\_PERIODIC,\ hook\_periodic,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00021\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ SyscallServer::\string~SyscallServer()}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keywordtype}{void}\ SyscallServer::handleSleepCall(thread\_id\_t\ thread\_id,\ SubsecondTime\ wake\_time,\ SubsecondTime\ curr\_time,\ SubsecondTime\ \&end\_time)}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ m\_sleeping.push\_back(SimFutex::Waiter(thread\_id,\ 0,\ wake\_time));}
+\DoxyCodeLine{00032\ \ \ \ end\_time\ =\ Sim()-\/>getThreadManager()-\/>stallThread(thread\_id,\ ThreadManager::STALL\_SLEEP,\ curr\_time);}
+\DoxyCodeLine{00033\ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ IntPtr\ SyscallServer::handleFutexCall(thread\_id\_t\ thread\_id,\ futex\_args\_t\ \&args,\ SubsecondTime\ curr\_time,\ SubsecondTime\ \&end\_time)}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00038\ \ \ \ CLOG(\textcolor{stringliteral}{"{}futex"{}},\ \textcolor{stringliteral}{"{}Futex\ enter\ thread\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordtype}{int}\ cmd\ =\ (args.op\ \&\ FUTEX\_CMD\_MASK)\ \&\ \string~FUTEX\_PRIVATE\_FLAG;}
+\DoxyCodeLine{00041\ \ \ \ SubsecondTime\ timeout\_time\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00042\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Futex\ syscall:\ uaddr(0x\%x),\ op(\%u),\ val(\%u)"{}},\ args.uaddr,\ args.op,\ args.val);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ Core*\ core\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>getCore();}
+\DoxyCodeLine{00045\ \ \ \ LOG\_ASSERT\_ERROR\ (core\ !=\ NULL,\ \textcolor{stringliteral}{"{}Core\ should\ not\ be\ NULL"{}});}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{comment}{//\ Right\ now,\ we\ handle\ only\ a\ subset\ of\ the\ functionality}}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{comment}{//\ assert\ the\ subset}}
+\DoxyCodeLine{00049\ \ \ \ LOG\_ASSERT\_ERROR((cmd\ ==\ FUTEX\_WAIT)\ \(\backslash\)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (cmd\ ==\ FUTEX\_WAIT\_BITSET)\ \(\backslash\)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (cmd\ ==\ FUTEX\_WAKE)\ \(\backslash\)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (cmd\ ==\ FUTEX\_WAKE\_BITSET)\ \(\backslash\)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (cmd\ ==\ FUTEX\_WAKE\_OP)\ \(\backslash\)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (cmd\ ==\ FUTEX\_CMP\_REQUEUE)\ \(\backslash\)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{stringliteral}{"{}op\ =\ 0x\%x"{}},\ args.op);}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{if}\ (cmd\ ==\ FUTEX\_WAIT\ ||\ cmd\ ==\ FUTEX\_WAIT\_BITSET)}
+\DoxyCodeLine{00057\ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (args.timeout\ !=\ NULL)}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }timespec\ timeout\_buf;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::READ,\ (IntPtr)\ args.timeout,\ (\textcolor{keywordtype}{char}*)\ \&timeout\_buf,\ \textcolor{keyword}{sizeof}(timeout\_buf));}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ SubsecondTime\ timeout\_val\ =\ SubsecondTime::SEC(timeout\_buf.tv\_sec\ -\/\ Sim()-\/>getConfig()-\/>getOSEmuTimeStart())}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ SubsecondTime::NS(timeout\_buf.tv\_nsec);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cmd\ ==\ FUTEX\_WAIT\_BITSET)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ timeout\_time\ =\ timeout\_val;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FUTEX\_WAIT\_BITSET\ uses\ absolute\ timeout}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_WARNING\_ONCE(timeout\_val\ <\ curr\_time\ +\ SubsecondTime::SEC(10),\ \textcolor{stringliteral}{"{}FUTEX\_WAIT\_BITSET\ timeout\ value\ is\ more\ than\ 10\ seconds\ in\ the\ future"{}});}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_WARNING\_ONCE(timeout\_val\ >\ curr\_time,\ \textcolor{stringliteral}{"{}FUTEX\_WAIT\_BITSET\ timeout\ value\ is\ in\ the\ past"{}});}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ timeout\_time\ =\ curr\_time\ +\ timeout\_val;\ \ \ \textcolor{comment}{//\ FUTEX\_WAIT\ uses\ relative\ timeout}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00075\ \ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordtype}{int}\ act\_val;}
+\DoxyCodeLine{00078\ \ \ \ IntPtr\ res;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::READ,\ (IntPtr)\ args.uaddr,\ (\textcolor{keywordtype}{char}*)\ \&act\_val,\ \textcolor{keyword}{sizeof}(act\_val));}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{if}\ (cmd\ ==\ FUTEX\_WAIT\ ||\ cmd\ ==\ FUTEX\_WAIT\_BITSET)}
+\DoxyCodeLine{00083\ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ res\ =\ futexWait(thread\_id,\ args.uaddr,\ args.val,\ act\_val,\ cmd\ ==\ FUTEX\_WAIT\_BITSET\ ?\ args.val3\ :\ FUTEX\_BITSET\_MATCH\_ANY,\ curr\_time,\ timeout\_time,\ end\_time);}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (cmd\ ==\ FUTEX\_WAKE\ ||\ cmd\ ==\ FUTEX\_WAKE\_BITSET)}
+\DoxyCodeLine{00087\ \ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ res\ =\ futexWake(thread\_id,\ args.uaddr,\ args.val,\ cmd\ ==\ FUTEX\_WAIT\_BITSET\ ?\ args.val3\ :\ FUTEX\_BITSET\_MATCH\_ANY,\ curr\_time,\ end\_time);}
+\DoxyCodeLine{00089\ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (cmd\ ==\ FUTEX\_WAKE\_OP)}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ res\ =\ futexWakeOp(thread\_id,\ args.uaddr,\ args.uaddr2,\ args.val,\ args.val2,\ args.val3,\ curr\_time,\ end\_time);}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(cmd\ ==\ FUTEX\_CMP\_REQUEUE)}
+\DoxyCodeLine{00095\ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(args.uaddr\ !=\ args.uaddr2,\ \textcolor{stringliteral}{"{}FUTEX\_CMP\_REQUEUE:\ uaddr\ ==\ uaddr2\ ==\ \%p"{}},\ args.uaddr);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ res\ =\ futexCmpRequeue(thread\_id,\ args.uaddr,\ args.val,\ args.uaddr2,\ args.val3,\ act\_val,\ curr\_time,\ end\_time);}
+\DoxyCodeLine{00098\ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00100\ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ SYS\_futex\ cmd\ \%d"{}},\ cmd);}
+\DoxyCodeLine{00102\ \ \ \ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ CLOG(\textcolor{stringliteral}{"{}futex"{}},\ \textcolor{stringliteral}{"{}Futex\ leave\ thread\ \%d"{}},\ thread\_id);}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ SubsecondTime\ SyscallServer::applyRescheduleCost(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{bool}\ conditional)}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{if}\ (conditional\ ==\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>getCore()-\/>getInstructionCount()\ ==\ 0)}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ not\ apply\ reschedule\ cost\ when\ we\ have\ not\ yet\ executed\ any\ instructions.}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ would\ be\ the\ case\ in\ MPI\ mode\ before\ ROI.}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_reschedule\_cost;}
+\DoxyCodeLine{00119\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ -\/-\/\ Futex\ related\ functions\ -\/-\/}}
+\DoxyCodeLine{00123\ SimFutex*\ SyscallServer::findFutexByUaddr(\textcolor{keywordtype}{int}\ *uaddr,\ thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{comment}{//\ Assumes\ that\ for\ multi-\/programmed\ and\ private\ futexes,\ va2pa()\ still\ returns\ unique\ addresses\ for\ each\ thread}}
+\DoxyCodeLine{00126\ \ \ \ IntPtr\ address\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>va2pa((IntPtr)uaddr);}
+\DoxyCodeLine{00127\ \ \ \ SimFutex\ *sim\_futex\ =\ \&m\_futexes[address];}
+\DoxyCodeLine{00128\ \ \ \ \textcolor{keywordflow}{return}\ sim\_futex;}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ IntPtr\ SyscallServer::futexWait(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{int}\ *uaddr,\ \textcolor{keywordtype}{int}\ val,\ \textcolor{keywordtype}{int}\ act\_val,\ \textcolor{keywordtype}{int}\ mask,\ SubsecondTime\ curr\_time,\ SubsecondTime\ timeout\_time,\ SubsecondTime\ \&end\_time)}
+\DoxyCodeLine{00132\ \{}
+\DoxyCodeLine{00133\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Futex\ Wait"{}});}
+\DoxyCodeLine{00134\ \ \ \ SimFutex\ *sim\_futex\ =\ findFutexByUaddr(uaddr,\ thread\_id);}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordflow}{if}\ (val\ !=\ act\_val)}
+\DoxyCodeLine{00137\ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ end\_time\ =\ curr\_time;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/EWOULDBLOCK;}
+\DoxyCodeLine{00140\ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00142\ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ success\ =\ sim\_futex-\/>enqueueWaiter(thread\_id,\ mask,\ curr\_time,\ timeout\_time,\ end\_time);}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (success)}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/ETIMEDOUT;}
+\DoxyCodeLine{00148\ \ \ \ \}}
+\DoxyCodeLine{00149\ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ thread\_id\_t\ SyscallServer::wakeFutexOne(SimFutex\ *sim\_futex,\ thread\_id\_t\ thread\_by,\ \textcolor{keywordtype}{int}\ mask,\ SubsecondTime\ curr\_time)}
+\DoxyCodeLine{00152\ \{}
+\DoxyCodeLine{00153\ \ \ \ thread\_id\_t\ waiter\ =\ sim\_futex-\/>dequeueWaiter(thread\_by,\ mask,\ curr\_time\ +\ applyRescheduleCost(thread\_by));}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keywordflow}{return}\ waiter;}
+\DoxyCodeLine{00155\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ IntPtr\ SyscallServer::futexWake(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{int}\ *uaddr,\ \textcolor{keywordtype}{int}\ nr\_wake,\ \textcolor{keywordtype}{int}\ mask,\ SubsecondTime\ curr\_time,\ SubsecondTime\ \&end\_time)}
+\DoxyCodeLine{00158\ \{}
+\DoxyCodeLine{00159\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Futex\ Wake"{}});}
+\DoxyCodeLine{00160\ \ \ \ SimFutex\ *sim\_futex\ =\ findFutexByUaddr(uaddr,\ thread\_id);}
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordtype}{int}\ num\_procs\_woken\_up\ =\ 0;}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ nr\_wake;\ i++)}
+\DoxyCodeLine{00164\ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ wakeFutexOne(sim\_futex,\ thread\_id,\ mask,\ curr\_time);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (waiter\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ num\_procs\_woken\_up\ ++;}
+\DoxyCodeLine{00170\ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ end\_time\ =\ curr\_time\ +\ applyRescheduleCost(thread\_id,\ num\_procs\_woken\_up\ >\ 0);}
+\DoxyCodeLine{00173\ \ \ \ \textcolor{keywordflow}{return}\ num\_procs\_woken\_up;}
+\DoxyCodeLine{00174\ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \textcolor{keywordtype}{int}\ SyscallServer::futexDoOp(Core\ *core,\ \textcolor{keywordtype}{int}\ encoded\_op,\ \textcolor{keywordtype}{int}\ *uaddr)}
+\DoxyCodeLine{00177\ \{}
+\DoxyCodeLine{00178\ \ \ \ \textcolor{keywordtype}{int}\ op\ =\ (encoded\_op\ >>\ 28)\ \&\ 7;}
+\DoxyCodeLine{00179\ \ \ \ \textcolor{keywordtype}{int}\ cmp\ =\ (encoded\_op\ >>\ 24)\ \&\ 15;}
+\DoxyCodeLine{00180\ \ \ \ \textcolor{keywordtype}{int}\ oparg\ =\ (encoded\_op\ <<\ 8)\ >>\ 20;}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{keywordtype}{int}\ cmparg\ =\ (encoded\_op\ <<\ 20)\ >>\ 20;}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{keywordtype}{int}\ oldval,\ newval;}
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordtype}{int}\ ret\ =\ 0;}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \textcolor{keywordflow}{if}\ (encoded\_op\ \&\ (FUTEX\_OP\_OPARG\_SHIFT\ <<\ 28))}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ oparg\ =\ 1\ <<\ oparg;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ core-\/>accessMemory(Core::LOCK,\ Core::READ\_EX,\ (IntPtr)\ uaddr,\ (\textcolor{keywordtype}{char}*)\ \&oldval,\ \textcolor{keyword}{sizeof}(oldval));}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \textcolor{keywordflow}{switch}\ (op)\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_SET:}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ newval\ =\ oparg;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00194\ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_ADD:}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ newval\ =\ oldval\ +\ oparg;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00197\ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_OR:}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ newval\ =\ oldval\ |\ oparg;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00200\ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_ANDN:}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ newval\ =\ oldval\ \&\ \string~oparg;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00203\ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_XOR:}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ newval\ =\ oldval\ \string^\ oparg;}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00206\ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}futexWakeOp:\ unknown\ op\ =\ \%d"{}},\ op);}
+\DoxyCodeLine{00208\ \ \ \ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{if}\ (op\ !=\ FUTEX\_OP\_SET)}
+\DoxyCodeLine{00211\ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ Implement\ these\ using\ an\ atomic\ read-\/modify-\/write\ version\ of\ core-\/>accessMemory}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}FUTEX\_WAKE\_OP\ is\ implemented\ non-\/atomically,\ race\ condition\ may\ have\ occured"{}});}
+\DoxyCodeLine{00214\ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ core-\/>accessMemory(Core::UNLOCK,\ Core::WRITE,\ (IntPtr)\ uaddr,\ (\textcolor{keywordtype}{char}*)\ \&newval,\ \textcolor{keyword}{sizeof}(newval));}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \textcolor{keywordflow}{switch}\ (cmp)\ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_CMP\_EQ:}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ ret\ =\ (oldval\ ==\ cmparg);}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_CMP\_NE:}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ ret\ =\ (oldval\ !=\ cmparg);}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_CMP\_LT:}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ ret\ =\ (oldval\ <\ cmparg);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_CMP\_GE:}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ ret\ =\ (oldval\ >=\ cmparg);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_CMP\_LE:}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ ret\ =\ (oldval\ <=\ cmparg);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FUTEX\_OP\_CMP\_GT:}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ ret\ =\ (oldval\ >\ cmparg);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}futexWakeOp:\ unknown\ cmp\ =\ \%d"{}},\ cmp);}
+\DoxyCodeLine{00239\ \ \ \ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00242\ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ IntPtr\ SyscallServer::futexWakeOp(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{int}\ *uaddr,\ \textcolor{keywordtype}{int}\ *uaddr2,\ \textcolor{keywordtype}{int}\ nr\_wake,\ \textcolor{keywordtype}{int}\ nr\_wake2,\ \textcolor{keywordtype}{int}\ op,\ SubsecondTime\ curr\_time,\ SubsecondTime\ \&end\_time)}
+\DoxyCodeLine{00245\ \{}
+\DoxyCodeLine{00246\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Futex\ WakeOp"{}});}
+\DoxyCodeLine{00247\ \ \ \ SimFutex\ *sim\_futex\ =\ findFutexByUaddr(uaddr,\ thread\_id);}
+\DoxyCodeLine{00248\ \ \ \ SimFutex\ *sim\_futex2\ =\ findFutexByUaddr(uaddr2,\ thread\_id);}
+\DoxyCodeLine{00249\ \ \ \ \textcolor{keywordtype}{int}\ num\_procs\_woken\_up\ =\ 0;}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id);}
+\DoxyCodeLine{00252\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00253\ \ \ \ LOG\_ASSERT\_ERROR(core\ !=\ NULL,\ \textcolor{stringliteral}{"{}Cannot\ execute\ futexWakeOp()\ for\ a\ thread\ that\ is\ unscheduled"{}});}
+\DoxyCodeLine{00254\ \ \ \ \textcolor{keywordtype}{int}\ op\_ret\ =\ futexDoOp(core,\ op,\ uaddr2);}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ nr\_wake;\ i++)}
+\DoxyCodeLine{00257\ \ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ wakeFutexOne(sim\_futex,\ thread\_id,\ FUTEX\_BITSET\_MATCH\_ANY,\ curr\_time);}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (waiter\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ num\_procs\_woken\_up\ ++;}
+\DoxyCodeLine{00263\ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \textcolor{keywordflow}{if}\ (op\_ret\ >\ 0)\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ nr\_wake2;\ i++)}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ wakeFutexOne(sim\_futex2,\ thread\_id,\ FUTEX\_BITSET\_MATCH\_ANY,\ curr\_time);}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (waiter\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ num\_procs\_woken\_up\ ++;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00274\ \ \ \ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ end\_time\ =\ curr\_time\ +\ applyRescheduleCost(thread\_id,\ num\_procs\_woken\_up\ >\ 0);}
+\DoxyCodeLine{00277\ \ \ \ \textcolor{keywordflow}{return}\ num\_procs\_woken\_up;}
+\DoxyCodeLine{00278\ \}}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ IntPtr\ SyscallServer::futexCmpRequeue(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{int}\ *uaddr,\ \textcolor{keywordtype}{int}\ val,\ \textcolor{keywordtype}{int}\ *uaddr2,\ \textcolor{keywordtype}{int}\ val3,\ \textcolor{keywordtype}{int}\ act\_val,\ SubsecondTime\ curr\_time,\ SubsecondTime\ \&end\_time)}
+\DoxyCodeLine{00281\ \{}
+\DoxyCodeLine{00282\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Futex\ CMP\_REQUEUE"{}});}
+\DoxyCodeLine{00283\ \ \ \ SimFutex\ *sim\_futex\ =\ findFutexByUaddr(uaddr,\ thread\_id);}
+\DoxyCodeLine{00284\ \ \ \ \textcolor{keywordtype}{int}\ num\_procs\_woken\_up\ =\ 0;}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \textcolor{keywordflow}{if}(val3\ !=\ act\_val)}
+\DoxyCodeLine{00287\ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ end\_time\ =\ curr\_time;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/EAGAIN;}
+\DoxyCodeLine{00290\ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00292\ \ \ \ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ val;\ i++)}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ sim\_futex-\/>dequeueWaiter(thread\_id,\ FUTEX\_BITSET\_MATCH\_ANY,\ curr\_time);}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(waiter\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ num\_procs\_woken\_up++;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ SimFutex\ *requeue\_futex\ =\ findFutexByUaddr(uaddr2,\ thread\_id);}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\textcolor{keyword}{true})}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dequeueWaiter\ changes\ the\ thread\ state\ to}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ RUNNING,\ which\ is\ changed\ back\ to\ STALLED}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ by\ enqueueWaiter.\ Since\ only\ the\ MCP\ uses\ this\ state}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ should\ be\ okay.}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ sim\_futex-\/>requeueWaiter(requeue\_futex);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(waiter\ ==\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \ \ end\_time\ =\ curr\_time;}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ num\_procs\_woken\_up;}
+\DoxyCodeLine{00317\ \ \ \ \}}
+\DoxyCodeLine{00318\ \}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \textcolor{keywordtype}{void}\ SyscallServer::futexPeriodic(SubsecondTime\ time)}
+\DoxyCodeLine{00321\ \{}
+\DoxyCodeLine{00322\ \ \ \ \textcolor{comment}{//\ Wake\ sleeping\ threads}}
+\DoxyCodeLine{00323\ \ \ \ \textcolor{keywordflow}{for}(SimFutex::ThreadQueue::iterator\ it\ =\ m\_sleeping.begin();\ it\ !=\ m\_sleeping.end();\ ++it)}
+\DoxyCodeLine{00324\ \ \ \ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>timeout\ <=\ time)}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ it-\/>thread\_id;}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ m\_sleeping.erase(it);}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread(waiter,\ waiter,\ time,\ (\textcolor{keywordtype}{void}*)\textcolor{keyword}{false});}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Iterator\ will\ be\ invalid,\ wake\ up\ potential\ others\ in\ the\ next\ barrier\ synchronization\ which\ should\ only\ be\ 100ns\ away}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ \textcolor{comment}{//\ Wake\ timeout\ futexes}}
+\DoxyCodeLine{00337\ \ \ \ \textcolor{keywordflow}{for}(FutexMap::iterator\ it\ =\ m\_futexes.begin();\ it\ !=\ m\_futexes.end();\ ++it)}
+\DoxyCodeLine{00338\ \ \ \ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ it-\/>second.wakeTimedOut(time);}
+\DoxyCodeLine{00340\ \ \ \ \}}
+\DoxyCodeLine{00341\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ SubsecondTime\ SyscallServer::getNextTimeout(SubsecondTime\ time)}
+\DoxyCodeLine{00344\ \{}
+\DoxyCodeLine{00345\ \ \ \ SubsecondTime\ next\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00346\ \ \ \ \textcolor{comment}{//\ Sleeping\ threads}}
+\DoxyCodeLine{00347\ \ \ \ \textcolor{keywordflow}{for}(SimFutex::ThreadQueue::iterator\ it\ =\ m\_sleeping.begin();\ it\ !=\ m\_sleeping.end();\ ++it)}
+\DoxyCodeLine{00348\ \ \ \ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>timeout\ <\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ next\ =\ it-\/>timeout;}
+\DoxyCodeLine{00351\ \ \ \ \}}
+\DoxyCodeLine{00352\ \ \ \ \textcolor{comment}{//\ Timeout\ futexes}}
+\DoxyCodeLine{00353\ \ \ \ \textcolor{keywordflow}{for}(FutexMap::iterator\ it\ =\ m\_futexes.begin();\ it\ !=\ m\_futexes.end();\ ++it)}
+\DoxyCodeLine{00354\ \ \ \ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ SubsecondTime\ t\ =\ it-\/>second.getNextTimeout(time);}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\ <\ next)}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ next\ =\ t;}
+\DoxyCodeLine{00358\ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \textcolor{keywordflow}{return}\ next;}
+\DoxyCodeLine{00360\ \}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{comment}{//\ -\/-\/\ SimFutex\ -\/-\/\ //}}
+\DoxyCodeLine{00363\ SimFutex::SimFutex()}
+\DoxyCodeLine{00364\ \{\}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ SimFutex::\string~SimFutex()}
+\DoxyCodeLine{00367\ \{}
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\ \ \ \#if\ 0\ }\textcolor{comment}{//\ Disabled:\ applications\ are\ not\ required\ to\ do\ proper\ cleanup}}
+\DoxyCodeLine{00369\ \ \ \ \textcolor{keywordflow}{if}\ (!m\_waiting.empty())}
+\DoxyCodeLine{00370\ \ \ \ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}Threads\ still\ waiting\ for\ futex\ \%p:\ "{}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!m\_waiting.empty())}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%u\ "{}},\ m\_waiting.front().thread\_id);}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ m\_waiting.pop\_front();}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00378\ \ \ \ \}}
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00380\ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \textcolor{keywordtype}{bool}\ SimFutex::enqueueWaiter(thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{int}\ mask,\ SubsecondTime\ time,\ SubsecondTime\ timeout\_time,\ SubsecondTime\ \&time\_end)}
+\DoxyCodeLine{00383\ \{}
+\DoxyCodeLine{00384\ \ \ \ m\_waiting.push\_back(Waiter(thread\_id,\ mask,\ timeout\_time));}
+\DoxyCodeLine{00385\ \ \ \ time\_end\ =\ Sim()-\/>getThreadManager()-\/>stallThread(thread\_id,\ ThreadManager::STALL\_FUTEX,\ time);}
+\DoxyCodeLine{00386\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>getWakeupMsg();}
+\DoxyCodeLine{00387\ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ thread\_id\_t\ SimFutex::dequeueWaiter(thread\_id\_t\ thread\_by,\ \textcolor{keywordtype}{int}\ mask,\ SubsecondTime\ time)}
+\DoxyCodeLine{00390\ \{}
+\DoxyCodeLine{00391\ \ \ \ \textcolor{keywordflow}{if}\ (m\_waiting.empty())}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00393\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00394\ \ \ \ \{}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(ThreadQueue::iterator\ it\ =\ m\_waiting.begin();\ it\ !=\ m\_waiting.end();\ ++it)}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mask\ \&\ it-\/>mask)}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ it-\/>thread\_id;}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ m\_waiting.erase(it);}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread(waiter,\ thread\_by,\ time,\ (\textcolor{keywordtype}{void}*)\textcolor{keyword}{true});}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ waiter;}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00407\ \ \ \ \}}
+\DoxyCodeLine{00408\ \}}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ thread\_id\_t\ SimFutex::requeueWaiter(SimFutex\ *requeue\_futex)}
+\DoxyCodeLine{00411\ \{}
+\DoxyCodeLine{00412\ \ \ \ \textcolor{keywordflow}{if}\ (m\_waiting.empty())}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ INVALID\_THREAD\_ID;}
+\DoxyCodeLine{00414\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00415\ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ Waiter\ waiter\ =\ m\_waiting.front();}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ m\_waiting.pop\_front();}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ requeue\_futex-\/>m\_waiting.push\_back(waiter);}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ waiter.thread\_id;}
+\DoxyCodeLine{00421\ \ \ \ \}}
+\DoxyCodeLine{00422\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{keywordtype}{void}\ SimFutex::wakeTimedOut(SubsecondTime\ time)}
+\DoxyCodeLine{00425\ \{}
+\DoxyCodeLine{00426\ \ \ \ \textcolor{keywordflow}{for}(ThreadQueue::iterator\ it\ =\ m\_waiting.begin();\ it\ !=\ m\_waiting.end();\ ++it)}
+\DoxyCodeLine{00427\ \ \ \ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>timeout\ <=\ time)}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ thread\_id\_t\ waiter\ =\ it-\/>thread\_id;}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ m\_waiting.erase(it);}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>resumeThread(waiter,\ INVALID\_THREAD\_ID,\ time,\ (\textcolor{keywordtype}{void}*)\textcolor{keyword}{false});}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Iterator\ will\ be\ invalid,\ wake\ up\ potential\ others\ in\ the\ next\ barrier\ synchronization\ which\ should\ only\ be\ 100ns\ away}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00438\ \ \ \ \}}
+\DoxyCodeLine{00439\ \}}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ SubsecondTime\ SimFutex::getNextTimeout(SubsecondTime\ time)}
+\DoxyCodeLine{00442\ \{}
+\DoxyCodeLine{00443\ \ \ \ SubsecondTime\ next\ =\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00444\ \ \ \ \textcolor{keywordflow}{for}(ThreadQueue::iterator\ it\ =\ m\_waiting.begin();\ it\ !=\ m\_waiting.end();\ ++it)}
+\DoxyCodeLine{00445\ \ \ \ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it-\/>timeout\ <\ SubsecondTime::MaxTime())}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ next\ =\ it-\/>timeout;}
+\DoxyCodeLine{00448\ \ \ \ \}}
+\DoxyCodeLine{00449\ \ \ \ \textcolor{keywordflow}{return}\ next;}
+\DoxyCodeLine{00450\ \}}
+
+\end{DoxyCode}

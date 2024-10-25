@@ -1,0 +1,1029 @@
+\doxysection{Smt\+Timer Class Reference}
+\label{classSmtTimer}\index{SmtTimer@{SmtTimer}}
+
+
+{\ttfamily \#include $<$smt\+\_\+timer.\+h$>$}
+
+
+
+Inheritance diagram for Smt\+Timer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=120pt]{classSmtTimer__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Smt\+Timer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=226pt]{classSmtTimer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \textbf{ Smt\+Thread}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Smt\+Timer} (\textbf{ uint64\+\_\+t} num\+\_\+threads)
+\item 
+virtual \textbf{ $\sim$\+Smt\+Timer} ()
+\item 
+\textbf{ UInt8} \textbf{ register\+Thread} (\textbf{ Core} $\ast$core, \textbf{ Performance\+Model} $\ast$perf)
+\item 
+void \textbf{ simulate} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+virtual void \textbf{ synchronize} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ Subsecond\+Time} time)=0
+\item 
+void \textbf{ enable} ()
+\item 
+void \textbf{ disable} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+lock}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef uint8\+\_\+t \textbf{ smtthread\+\_\+id\+\_\+t}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual void \textbf{ initialize\+Thread} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)=0
+\item 
+virtual \textbf{ uint64\+\_\+t} \textbf{ thread\+Num\+Surplus\+Instructions} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)=0
+\item 
+virtual bool \textbf{ thread\+Has\+Enough\+Instructions} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)=0
+\item 
+virtual void \textbf{ notify\+Num\+Active\+Threads\+Change} ()
+\item 
+virtual void \textbf{ push\+Instructions} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id, const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&insts)=0
+\item 
+virtual boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ Subsecond\+Time} $>$ \textbf{ return\+Latency} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id)=0
+\item 
+virtual void \textbf{ execute} ()=0
+\item 
+char \textbf{ get\+State\+Str} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+num)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const \textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+\_\+threads}
+\item 
+std\+::vector$<$ \textbf{ Smt\+Thread} $\ast$ $>$ \textbf{ m\+\_\+threads}
+\item 
+bool \textbf{ in\+\_\+sync}
+\item 
+bool \textbf{ enabled}
+\item 
+\textbf{ smtthread\+\_\+id\+\_\+t} \textbf{ execute\+\_\+thread}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ roi\+Begin} ()
+\item 
+void \textbf{ thread\+Start} (\textbf{ Hooks\+Manager\+::\+Thread\+Time} $\ast$argument)
+\item 
+void \textbf{ thread\+Exit} (\textbf{ Hooks\+Manager\+::\+Thread\+Time} $\ast$argument)
+\item 
+void \textbf{ thread\+Stall} (\textbf{ Hooks\+Manager\+::\+Thread\+Stall} $\ast$argument)
+\item 
+void \textbf{ thread\+Resume} (\textbf{ Hooks\+Manager\+::\+Thread\+Resume} $\ast$argument)
+\item 
+void \textbf{ thread\+Migrate} (\textbf{ Hooks\+Manager\+::\+Thread\+Migrate} $\ast$argument)
+\item 
+\textbf{ smtthread\+\_\+id\+\_\+t} \textbf{ find\+Smt\+Thread\+From\+Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+\textbf{ smtthread\+\_\+id\+\_\+t} \textbf{ find\+Smt\+Thread\+From\+Core} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\item 
+bool \textbf{ barrier} (\textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+bool \textbf{ barrier\+Release} (bool release\+\_\+all, \textbf{ smtthread\+\_\+id\+\_\+t} thread\+\_\+id)
+\item 
+bool \textbf{ is\+Barrier\+Reached} ()
+\item 
+void \textbf{ signal\+Barrier} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ SInt64} \textbf{ hook\+Roi\+Begin} (\textbf{ UInt64} object, \textbf{ UInt64} argument)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+Thread\+Start} (\textbf{ UInt64} object, \textbf{ UInt64} argument)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+Thread\+Exit} (\textbf{ UInt64} object, \textbf{ UInt64} argument)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+Thread\+Stall} (\textbf{ UInt64} object, \textbf{ UInt64} argument)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+Thread\+Resume} (\textbf{ UInt64} object, \textbf{ UInt64} argument)
+\item 
+static \textbf{ SInt64} \textbf{ hook\+Thread\+Migrate} (\textbf{ UInt64} object, \textbf{ UInt64} argument)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 16} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{SmtTimer@{SmtTimer}!smtthread\_id\_t@{smtthread\_id\_t}}
+\index{smtthread\_id\_t@{smtthread\_id\_t}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{smtthread\_id\_t}
+{\footnotesize\ttfamily \label{classSmtTimer_a3c8f9c062218879054f22c0cddfb3b67} 
+uint8\+\_\+t \textbf{ Smt\+Timer\+::smtthread\+\_\+id\+\_\+t}\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{SmtTimer@{SmtTimer}!SmtTimer@{SmtTimer}}
+\index{SmtTimer@{SmtTimer}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{SmtTimer()}
+{\footnotesize\ttfamily \label{classSmtTimer_a0604c5acf01fd0a9d34bc5b194599223} 
+Smt\+Timer\+::\+Smt\+Timer (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{num\+\_\+threads}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 24} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+ROI\+\_\+\+BEGIN}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+EXIT}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+MIGRATE}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+RESUME}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+STALL}, \textbf{ Hook\+Type\+::\+HOOK\+\_\+\+THREAD\+\_\+\+START}, \textbf{ hook\+Roi\+Begin()}, \textbf{ hook\+Thread\+Exit()}, \textbf{ hook\+Thread\+Migrate()}, \textbf{ hook\+Thread\+Resume()}, \textbf{ hook\+Thread\+Stall()}, and \textbf{ hook\+Thread\+Start()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{classSmtTimer_a0604c5acf01fd0a9d34bc5b194599223_cgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!````~SmtTimer@{$\sim$SmtTimer}}
+\index{````~SmtTimer@{$\sim$SmtTimer}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{$\sim$SmtTimer()}
+{\footnotesize\ttfamily \label{classSmtTimer_adfd27b3464a5b0e4802b682b76cd405a} 
+Smt\+Timer\+::$\sim$\+Smt\+Timer (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ m\+\_\+threads}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{SmtTimer@{SmtTimer}!barrier@{barrier}}
+\index{barrier@{barrier}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{barrier()}
+{\footnotesize\ttfamily \label{classSmtTimer_abcf4728e3021e1c567be2aec29485ca6} 
+bool Smt\+Timer\+::barrier (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 190} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ barrier\+Release()}, \textbf{ CLOG}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::cond}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::core}, \textbf{ enabled}, \textbf{ execute\+\_\+thread}, \textbf{ Core\+::get\+Id()}, \textbf{ Thread\+::get\+Id()}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ is\+Barrier\+Reached()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::thread}, and \textbf{ Condition\+Variable\+::wait()}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_abcf4728e3021e1c567be2aec29485ca6_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_abcf4728e3021e1c567be2aec29485ca6_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!barrierRelease@{barrierRelease}}
+\index{barrierRelease@{barrierRelease}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{barrierRelease()}
+{\footnotesize\ttfamily \label{classSmtTimer_ab6d750265d8d36e4d97ba1731bbef5cd} 
+bool Smt\+Timer\+::barrier\+Release (\begin{DoxyParamCaption}\item[{bool}]{release\+\_\+all}{, }\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 101} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::cond}, \textbf{ execute\+\_\+thread}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ m\+\_\+threads}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}, \textbf{ Condition\+Variable\+::signal()}, \textbf{ thread\+Has\+Enough\+Instructions()}, and \textbf{ thread\+Num\+Surplus\+Instructions()}.
+
+
+
+Referenced by \textbf{ barrier()}, \textbf{ signal\+Barrier()}, and \textbf{ simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_ab6d750265d8d36e4d97ba1731bbef5cd_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_ab6d750265d8d36e4d97ba1731bbef5cd_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!disable@{disable}}
+\index{disable@{disable}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{disable()}
+{\footnotesize\ttfamily \label{classSmtTimer_aa8c8306267f32419ef30c048620ca1b2} 
+void Smt\+Timer\+::disable (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 379} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::cond}, \textbf{ enabled}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ m\+\_\+threads}, and \textbf{ Condition\+Variable\+::signal()}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::disable\+Detailed\+Model()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_aa8c8306267f32419ef30c048620ca1b2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=307pt]{classSmtTimer_aa8c8306267f32419ef30c048620ca1b2_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!enable@{enable}}
+\index{enable@{enable}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{enable()}
+{\footnotesize\ttfamily \label{classSmtTimer_a844e0e2023b09831951a756f2755f154} 
+void Smt\+Timer\+::enable (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 374} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ enabled}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::enable\+Detailed\+Model()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=305pt]{classSmtTimer_a844e0e2023b09831951a756f2755f154_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!execute@{execute}}
+\index{execute@{execute}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{execute()}
+{\footnotesize\ttfamily \label{classSmtTimer_ab8864fcd6ff50d838bffed443e82dfc0} 
+virtual void Smt\+Timer\+::execute (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_a4a24d4e31b2e63d294b7572ac519003c}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_ab8864fcd6ff50d838bffed443e82dfc0_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!findSmtThreadFromCore@{findSmtThreadFromCore}}
+\index{findSmtThreadFromCore@{findSmtThreadFromCore}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{findSmtThreadFromCore()}
+{\footnotesize\ttfamily \label{classSmtTimer_a7c949285b4bd06b2305892cbaef6fd1e} 
+\textbf{ Smt\+Timer\+::smtthread\+\_\+id\+\_\+t} Smt\+Timer\+::find\+Smt\+Thread\+From\+Core (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 66} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, and \textbf{ m\+\_\+threads}.
+
+
+
+Referenced by \textbf{ thread\+Migrate()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_a7c949285b4bd06b2305892cbaef6fd1e_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!findSmtThreadFromThread@{findSmtThreadFromThread}}
+\index{findSmtThreadFromThread@{findSmtThreadFromThread}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{findSmtThreadFromThread()}
+{\footnotesize\ttfamily \label{classSmtTimer_a72237730ad85d3377c0e2d394045819f} 
+\textbf{ Smt\+Timer\+::smtthread\+\_\+id\+\_\+t} Smt\+Timer\+::find\+Smt\+Thread\+From\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 56} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, and \textbf{ m\+\_\+threads}.
+
+
+
+Referenced by \textbf{ thread\+Exit()}, \textbf{ thread\+Migrate()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, and \textbf{ thread\+Start()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_a72237730ad85d3377c0e2d394045819f_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!getStateStr@{getStateStr}}
+\index{getStateStr@{getStateStr}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{getStateStr()}
+{\footnotesize\ttfamily \label{classSmtTimer_aca7ecca86dc39c4634e5b3441420050c} 
+char Smt\+Timer\+::get\+State\+Str (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 395} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ m\+\_\+threads}, and \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}.
+
+\index{SmtTimer@{SmtTimer}!hookRoiBegin@{hookRoiBegin}}
+\index{hookRoiBegin@{hookRoiBegin}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{hookRoiBegin()}
+{\footnotesize\ttfamily \label{classSmtTimer_a80c2f77b9ed735feb538394d973c9bde} 
+static \textbf{ SInt64} Smt\+Timer\+::hook\+Roi\+Begin (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{object}{, }\item[{\textbf{ UInt64}}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 56} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=309pt]{classSmtTimer_a80c2f77b9ed735feb538394d973c9bde_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!hookThreadExit@{hookThreadExit}}
+\index{hookThreadExit@{hookThreadExit}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{hookThreadExit()}
+{\footnotesize\ttfamily \label{classSmtTimer_ab29cca9c735812e1e360d5400d2fb272} 
+static \textbf{ SInt64} Smt\+Timer\+::hook\+Thread\+Exit (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{object}{, }\item[{\textbf{ UInt64}}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=316pt]{classSmtTimer_ab29cca9c735812e1e360d5400d2fb272_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!hookThreadMigrate@{hookThreadMigrate}}
+\index{hookThreadMigrate@{hookThreadMigrate}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{hookThreadMigrate()}
+{\footnotesize\ttfamily \label{classSmtTimer_a442746ec09a42ff74fc94d2dcbc402c3} 
+static \textbf{ SInt64} Smt\+Timer\+::hook\+Thread\+Migrate (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{object}{, }\item[{\textbf{ UInt64}}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 71} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=333pt]{classSmtTimer_a442746ec09a42ff74fc94d2dcbc402c3_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!hookThreadResume@{hookThreadResume}}
+\index{hookThreadResume@{hookThreadResume}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{hookThreadResume()}
+{\footnotesize\ttfamily \label{classSmtTimer_a27e467c9e02c937de4e060b7962d12cb} 
+static \textbf{ SInt64} Smt\+Timer\+::hook\+Thread\+Resume (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{object}{, }\item[{\textbf{ UInt64}}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 68} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{classSmtTimer_a27e467c9e02c937de4e060b7962d12cb_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!hookThreadStall@{hookThreadStall}}
+\index{hookThreadStall@{hookThreadStall}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{hookThreadStall()}
+{\footnotesize\ttfamily \label{classSmtTimer_a3b8cfec27fac54624141458c155be846} 
+static \textbf{ SInt64} Smt\+Timer\+::hook\+Thread\+Stall (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{object}{, }\item[{\textbf{ UInt64}}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=320pt]{classSmtTimer_a3b8cfec27fac54624141458c155be846_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!hookThreadStart@{hookThreadStart}}
+\index{hookThreadStart@{hookThreadStart}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{hookThreadStart()}
+{\footnotesize\ttfamily \label{classSmtTimer_ad983eb571ef8e7db333fa648e5186ab6} 
+static \textbf{ SInt64} Smt\+Timer\+::hook\+Thread\+Start (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{object}{, }\item[{\textbf{ UInt64}}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 59} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Smt\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=321pt]{classSmtTimer_ad983eb571ef8e7db333fa648e5186ab6_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!initializeThread@{initializeThread}}
+\index{initializeThread@{initializeThread}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{initializeThread()}
+{\footnotesize\ttfamily \label{classSmtTimer_aa9df1dfa7dd8d1e63e72bedf2d08977a} 
+virtual void Smt\+Timer\+::initialize\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_aa9ec59773f75f52c8731bd2e2c3fcc5e}.
+
+
+
+Referenced by \textbf{ register\+Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_aa9df1dfa7dd8d1e63e72bedf2d08977a_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!isBarrierReached@{isBarrierReached}}
+\index{isBarrierReached@{isBarrierReached}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{isBarrierReached()}
+{\footnotesize\ttfamily \label{classSmtTimer_ae69d995482a2a6d2558acdd169a04c2a} 
+bool Smt\+Timer\+::is\+Barrier\+Reached (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ in\+\_\+sync}, \textbf{ m\+\_\+threads}, and \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}.
+
+
+
+Referenced by \textbf{ barrier()}, and \textbf{ signal\+Barrier()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_ae69d995482a2a6d2558acdd169a04c2a_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!notifyNumActiveThreadsChange@{notifyNumActiveThreadsChange}}
+\index{notifyNumActiveThreadsChange@{notifyNumActiveThreadsChange}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{notifyNumActiveThreadsChange()}
+{\footnotesize\ttfamily \label{classSmtTimer_a1c95b82f1ec495d6ae73a1b7702f73d0} 
+virtual void Smt\+Timer\+::notify\+Num\+Active\+Threads\+Change (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Reimplemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_a1573bb6d4db5a81a90b77a6445c26037}.
+
+
+
+Definition at line \textbf{ 47} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ thread\+Exit()}, \textbf{ thread\+Migrate()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, and \textbf{ thread\+Start()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=342pt]{classSmtTimer_a1c95b82f1ec495d6ae73a1b7702f73d0_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!pushInstructions@{pushInstructions}}
+\index{pushInstructions@{pushInstructions}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{pushInstructions()}
+{\footnotesize\ttfamily \label{classSmtTimer_add366cd876225144a262363a2980a64d} 
+virtual void Smt\+Timer\+::push\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&}]{insts}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_aff960df886ed94a604ac88a389bbb289}.
+
+\index{SmtTimer@{SmtTimer}!registerThread@{registerThread}}
+\index{registerThread@{registerThread}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{registerThread()}
+{\footnotesize\ttfamily \label{classSmtTimer_ad0d71c4ff262e235c2bc265bda27df00} 
+\textbf{ UInt8} Smt\+Timer\+::register\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Performance\+Model} $\ast$}]{perf}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 44} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ initialize\+Thread()}, and \textbf{ m\+\_\+threads}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::\+Rob\+Smt\+Performance\+Model()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=333pt]{classSmtTimer_ad0d71c4ff262e235c2bc265bda27df00_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=343pt]{classSmtTimer_ad0d71c4ff262e235c2bc265bda27df00_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!returnLatency@{returnLatency}}
+\index{returnLatency@{returnLatency}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{returnLatency()}
+{\footnotesize\ttfamily \label{classSmtTimer_a5621907df60a3722060d96d9dfb78650} 
+virtual boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ Subsecond\+Time} $>$ Smt\+Timer\+::return\+Latency (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_a028638db975c0016d73a15d86449cdf5}.
+
+\index{SmtTimer@{SmtTimer}!roiBegin@{roiBegin}}
+\index{roiBegin@{roiBegin}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{roiBegin()}
+{\footnotesize\ttfamily \label{classSmtTimer_a3f855fbce0545159d77436c5c9dfca0c} 
+void Smt\+Timer\+::roi\+Begin (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 230} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ m\+\_\+threads}, and \textbf{ synchronize()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=293pt]{classSmtTimer_a3f855fbce0545159d77436c5c9dfca0c_cgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!signalBarrier@{signalBarrier}}
+\index{signalBarrier@{signalBarrier}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{signalBarrier()}
+{\footnotesize\ttfamily \label{classSmtTimer_ae54566bb12b940898bf3ef2d6f30d513} 
+void Smt\+Timer\+::signal\+Barrier (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 224} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ barrier\+Release()}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, and \textbf{ is\+Barrier\+Reached()}.
+
+
+
+Referenced by \textbf{ thread\+Exit()}, and \textbf{ thread\+Stall()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_ae54566bb12b940898bf3ef2d6f30d513_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=307pt]{classSmtTimer_ae54566bb12b940898bf3ef2d6f30d513_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!simulate@{simulate}}
+\index{simulate@{simulate}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{simulate()}
+{\footnotesize\ttfamily \label{classSmtTimer_a155ddf6455d38bcb9d5da804ab4b978c} 
+void Smt\+Timer\+::simulate (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 345} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::acquire()}, \textbf{ barrier()}, \textbf{ barrier\+Release()}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::core}, \textbf{ execute()}, \textbf{ execute\+\_\+thread}, \textbf{ Core\+::get\+Clock\+Skew\+Minimization\+Client()}, \textbf{ in\+\_\+sync}, \textbf{ INVALID\+\_\+\+THREAD\+\_\+\+ID}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ TLock$<$ T\+\_\+\+Lock\+Creator $>$\+::release()}, \textbf{ Clock\+Skew\+Minimization\+Client\+::synchronize()}, and \textbf{ thread\+Num\+Surplus\+Instructions()}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Performance\+Model\+::synchronize()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_a155ddf6455d38bcb9d5da804ab4b978c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=313pt]{classSmtTimer_a155ddf6455d38bcb9d5da804ab4b978c_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!synchronize@{synchronize}}
+\index{synchronize@{synchronize}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{synchronize()}
+{\footnotesize\ttfamily \label{classSmtTimer_a8dc2f4ba8482fd9e31f7eab26f955567} 
+virtual void Smt\+Timer\+::synchronize (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ Subsecond\+Time}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_a196978c60584357035a04281fc16089c}.
+
+
+
+Referenced by \textbf{ roi\+Begin()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=293pt]{classSmtTimer_a8dc2f4ba8482fd9e31f7eab26f955567_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadExit@{threadExit}}
+\index{threadExit@{threadExit}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadExit()}
+{\footnotesize\ttfamily \label{classSmtTimer_a98022db1416140f3c1f09ed5b792b3b2} 
+void Smt\+Timer\+::thread\+Exit (\begin{DoxyParamCaption}\item[{\textbf{ Hooks\+Manager\+::\+Thread\+Time} $\ast$}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 254} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ find\+Smt\+Thread\+From\+Thread()}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ notify\+Num\+Active\+Threads\+Change()}, \textbf{ signal\+Barrier()}, and \textbf{ Hooks\+Manager\+::\+Thread\+Time\+::thread\+\_\+id}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_a98022db1416140f3c1f09ed5b792b3b2_cgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadHasEnoughInstructions@{threadHasEnoughInstructions}}
+\index{threadHasEnoughInstructions@{threadHasEnoughInstructions}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadHasEnoughInstructions()}
+{\footnotesize\ttfamily \label{classSmtTimer_a1ba42c6ee716ccad190e6c1a81239f7a} 
+virtual bool Smt\+Timer\+::thread\+Has\+Enough\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_a4ed17f27e2de540e1766f0373acb9d61}.
+
+
+
+Referenced by \textbf{ barrier\+Release()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_a1ba42c6ee716ccad190e6c1a81239f7a_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadMigrate@{threadMigrate}}
+\index{threadMigrate@{threadMigrate}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadMigrate()}
+{\footnotesize\ttfamily \label{classSmtTimer_a7c4a8a4f47a59f9aafb8628e0cdba456} 
+void Smt\+Timer\+::thread\+Migrate (\begin{DoxyParamCaption}\item[{\textbf{ Hooks\+Manager\+::\+Thread\+Migrate} $\ast$}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 309} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::cond}, \textbf{ Hooks\+Manager\+::\+Thread\+Migrate\+::core\+\_\+id}, \textbf{ find\+Smt\+Thread\+From\+Core()}, \textbf{ find\+Smt\+Thread\+From\+Thread()}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::in\+\_\+barrier}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ notify\+Num\+Active\+Threads\+Change()}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::running}, \textbf{ Condition\+Variable\+::signal()}, \textbf{ Smt\+Timer\+::\+Smt\+Thread\+::thread}, and \textbf{ Hooks\+Manager\+::\+Thread\+Migrate\+::thread\+\_\+id}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_a7c4a8a4f47a59f9aafb8628e0cdba456_cgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadNumSurplusInstructions@{threadNumSurplusInstructions}}
+\index{threadNumSurplusInstructions@{threadNumSurplusInstructions}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadNumSurplusInstructions()}
+{\footnotesize\ttfamily \label{classSmtTimer_abfd6665eaaaf300d3fe3e64e18a970fe} 
+virtual \textbf{ uint64\+\_\+t} Smt\+Timer\+::thread\+Num\+Surplus\+Instructions (\begin{DoxyParamCaption}\item[{\textbf{ smtthread\+\_\+id\+\_\+t}}]{thread\+\_\+num}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Rob\+Smt\+Timer} \doxyref{}{p.}{classRobSmtTimer_a137d47bb5fe87e6386f15d7c3b959ecf}.
+
+
+
+Referenced by \textbf{ barrier\+Release()}, and \textbf{ simulate()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_abfd6665eaaaf300d3fe3e64e18a970fe_icgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadResume@{threadResume}}
+\index{threadResume@{threadResume}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadResume()}
+{\footnotesize\ttfamily \label{classSmtTimer_aee4d19ff49aff338c8546efc9a0a3f8c} 
+void Smt\+Timer\+::thread\+Resume (\begin{DoxyParamCaption}\item[{\textbf{ Hooks\+Manager\+::\+Thread\+Resume} $\ast$}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 286} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ find\+Smt\+Thread\+From\+Thread()}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ notify\+Num\+Active\+Threads\+Change()}, and \textbf{ Hooks\+Manager\+::\+Thread\+Resume\+::thread\+\_\+id}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_aee4d19ff49aff338c8546efc9a0a3f8c_cgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadStall@{threadStall}}
+\index{threadStall@{threadStall}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadStall()}
+{\footnotesize\ttfamily \label{classSmtTimer_ab31e1c2d55d3b966b58713371a4ff1aa} 
+void Smt\+Timer\+::thread\+Stall (\begin{DoxyParamCaption}\item[{\textbf{ Hooks\+Manager\+::\+Thread\+Stall} $\ast$}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 270} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ find\+Smt\+Thread\+From\+Thread()}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ notify\+Num\+Active\+Threads\+Change()}, \textbf{ signal\+Barrier()}, and \textbf{ Hooks\+Manager\+::\+Thread\+Stall\+::thread\+\_\+id}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSmtTimer_ab31e1c2d55d3b966b58713371a4ff1aa_cgraph}
+\end{center}
+\end{figure}
+\index{SmtTimer@{SmtTimer}!threadStart@{threadStart}}
+\index{threadStart@{threadStart}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{threadStart()}
+{\footnotesize\ttfamily \label{classSmtTimer_a239452f4aa7f5913256bb343412821f2} 
+void Smt\+Timer\+::thread\+Start (\begin{DoxyParamCaption}\item[{\textbf{ Hooks\+Manager\+::\+Thread\+Time} $\ast$}]{argument}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 242} of file \textbf{ smt\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ find\+Smt\+Thread\+From\+Thread()}, \textbf{ INVALID\+\_\+\+SMTTHREAD\+\_\+\+ID}, \textbf{ m\+\_\+lock}, \textbf{ m\+\_\+threads}, \textbf{ notify\+Num\+Active\+Threads\+Change()}, and \textbf{ Hooks\+Manager\+::\+Thread\+Time\+::thread\+\_\+id}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{classSmtTimer_a239452f4aa7f5913256bb343412821f2_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{SmtTimer@{SmtTimer}!enabled@{enabled}}
+\index{enabled@{enabled}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{enabled}
+{\footnotesize\ttfamily \label{classSmtTimer_a5fd4e95d59a46ba6ae623f6f7a67375a} 
+bool Smt\+Timer\+::enabled\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ barrier()}, \textbf{ disable()}, and \textbf{ enable()}.
+
+\index{SmtTimer@{SmtTimer}!execute\_thread@{execute\_thread}}
+\index{execute\_thread@{execute\_thread}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{execute\_thread}
+{\footnotesize\ttfamily \label{classSmtTimer_abd1aeeadf3d2e801ec5a329be2626f46} 
+\textbf{ smtthread\+\_\+id\+\_\+t} Smt\+Timer\+::execute\+\_\+thread\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ barrier()}, \textbf{ barrier\+Release()}, and \textbf{ simulate()}.
+
+\index{SmtTimer@{SmtTimer}!in\_sync@{in\_sync}}
+\index{in\_sync@{in\_sync}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{in\_sync}
+{\footnotesize\ttfamily \label{classSmtTimer_a9bcebf588b30fd03de5245dd5bdd19ba} 
+bool Smt\+Timer\+::in\+\_\+sync\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 40} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ is\+Barrier\+Reached()}, and \textbf{ simulate()}.
+
+\index{SmtTimer@{SmtTimer}!m\_lock@{m\_lock}}
+\index{m\_lock@{m\_lock}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{m\_lock}
+{\footnotesize\ttfamily \label{classSmtTimer_afc45024fcb2284dcfec602af8d2a2fff} 
+\textbf{ Lock} Smt\+Timer\+::m\+\_\+lock}
+
+
+
+Definition at line \textbf{ 90} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ barrier()}, \textbf{ Rob\+Smt\+Performance\+Model\+::disable\+Detailed\+Model()}, \textbf{ Rob\+Smt\+Performance\+Model\+::enable\+Detailed\+Model()}, \textbf{ Rob\+Smt\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}, \textbf{ Rob\+Smt\+Performance\+Model\+::simulate()}, \textbf{ simulate()}, \textbf{ Rob\+Smt\+Performance\+Model\+::synchronize()}, \textbf{ thread\+Exit()}, \textbf{ thread\+Migrate()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, and \textbf{ thread\+Start()}.
+
+\index{SmtTimer@{SmtTimer}!m\_num\_threads@{m\_num\_threads}}
+\index{m\_num\_threads@{m\_num\_threads}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{m\_num\_threads}
+{\footnotesize\ttfamily \label{classSmtTimer_a68b8ed60ee7e66a3640ac5fe948823b4} 
+const \textbf{ uint64\+\_\+t} Smt\+Timer\+::m\+\_\+num\+\_\+threads\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Rob\+Smt\+Timer\+::compute\+Current\+Windowsize()}.
+
+\index{SmtTimer@{SmtTimer}!m\_threads@{m\_threads}}
+\index{m\_threads@{m\_threads}!SmtTimer@{SmtTimer}}
+\doxysubsubsection{m\_threads}
+{\footnotesize\ttfamily \label{classSmtTimer_a744ebfd5e698445ef6c9e44f9829a04a} 
+std\+::vector$<$\textbf{ Smt\+Thread} $\ast$$>$ Smt\+Timer\+::m\+\_\+threads\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ smt\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ barrier()}, \textbf{ barrier\+Release()}, \textbf{ Rob\+Smt\+Timer\+::can\+Execute()}, \textbf{ Rob\+Smt\+Timer\+::can\+Execute()}, \textbf{ Rob\+Smt\+Timer\+::compute\+Current\+Windowsize()}, \textbf{ disable()}, \textbf{ Rob\+Smt\+Timer\+::do\+Commit()}, \textbf{ Rob\+Smt\+Timer\+::do\+Dispatch()}, \textbf{ Rob\+Smt\+Timer\+::do\+Issue()}, \textbf{ Rob\+Smt\+Timer\+::execute\+Cycle()}, \textbf{ find\+Smt\+Thread\+From\+Core()}, \textbf{ find\+Smt\+Thread\+From\+Thread()}, \textbf{ get\+State\+Str()}, \textbf{ Rob\+Smt\+Timer\+::initialize\+Thread()}, \textbf{ is\+Barrier\+Reached()}, \textbf{ Rob\+Smt\+Timer\+::issue\+Instruction()}, \textbf{ Rob\+Smt\+Timer\+::print\+Rob()}, \textbf{ Rob\+Smt\+Timer\+::print\+Rob()}, \textbf{ register\+Thread()}, \textbf{ roi\+Begin()}, \textbf{ simulate()}, \textbf{ Rob\+Smt\+Timer\+::synchronize()}, \textbf{ thread\+Exit()}, \textbf{ thread\+Migrate()}, \textbf{ thread\+Resume()}, \textbf{ thread\+Stall()}, \textbf{ thread\+Start()}, and \textbf{ $\sim$\+Smt\+Timer()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/performance\+\_\+model/performance\+\_\+models/rob\+\_\+performance\+\_\+model/\textbf{ smt\+\_\+timer.\+h}\item 
+common/performance\+\_\+model/performance\+\_\+models/rob\+\_\+performance\+\_\+model/\textbf{ smt\+\_\+timer.\+cc}\end{DoxyCompactItemize}

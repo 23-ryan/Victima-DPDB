@@ -1,0 +1,90 @@
+\doxysection{loop\+\_\+profiler.\+cc}
+\label{loop__profiler_8cc_source}\index{common/performance\_model/instruction\_tracers/loop\_profiler.cc@{common/performance\_model/instruction\_tracers/loop\_profiler.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}loop\_profiler.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ LoopProfiler::LoopProfiler(\textcolor{keyword}{const}\ Core\ *core)}
+\DoxyCodeLine{00008\ \ \ \ :\ m\_core(core)}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_total\_instructions(0)}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_eip\_last(0)}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ LoopProfiler::\string~LoopProfiler()}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ std::list<Loop*>\ loops;}
+\DoxyCodeLine{00017\ \ \ \ UInt64\ limit\ =\ m\_total\_instructions\ /\ 100000;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ m\_loops.begin();\ it\ !=\ m\_loops.end();\ ++it)}
+\DoxyCodeLine{00020\ \ \ \ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ jt\ =\ it-\/>second.begin();\ jt\ !=\ it-\/>second.end();\ ++jt)}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*jt)-\/>weight()\ >\ limit)}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ loops.push\_back(*jt);}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00026\ \ \ \ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ loops.sort(Loop::cmp);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordtype}{int}\ count\ =\ 100;}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ loops.begin();\ it\ !=\ loops.end();\ ++it)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%5"{}}\ PRId64\ \textcolor{stringliteral}{"{}x\ \%12"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{}\ ..\ \%12"{}}\ PRIx64\ \textcolor{stringliteral}{"{}:\ \%9"{}}\ PRId64\textcolor{stringliteral}{"{}\ (\%5.1f\%\%)\(\backslash\)n"{}},\ (*it)-\/>count,\ (*it)-\/>eip,\ (*it)-\/>eip\ +\ (*it)-\/>size,\ (*it)-\/>weight(),\ 100.\ *\ (*it)-\/>weight()\ /\ m\_total\_instructions);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (-\/-\/count\ ==\ 0)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00036\ \ \ \ \}}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ LoopProfiler::Loop*}
+\DoxyCodeLine{00040\ LoopProfiler::findLoop(IntPtr\ eip,\ UInt64\ size)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordflow}{if}\ (m\_loops.count(eip))}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ m\_loops[eip].begin();\ it\ !=\ m\_loops[eip].end();\ ++it)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it)-\/>size\ ==\ size)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *it;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ LoopProfiler::Loop*}
+\DoxyCodeLine{00051\ LoopProfiler::insertLoop(IntPtr\ eip,\ UInt64\ size)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ Loop\ *loop\ =\ \textcolor{keyword}{new}\ Loop(eip,\ size);}
+\DoxyCodeLine{00054\ \ \ \ m\_loops[eip].push\_back(loop);}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{return}\ loop;}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00059\ LoopProfiler::traceInstruction(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop,\ uop\_times\_t\ *times)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{comment}{//\ Only\ consider\ instructions}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{if}\ (!uop-\/>getMicroOp()-\/>isFirst())}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00064\ \ \ \ \textcolor{comment}{//\ Ignore\ dynamic\ instructions}}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{if}\ (!uop-\/>getMicroOp()-\/>getInstruction())}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ IntPtr\ eip\ =\ uop-\/>getMicroOp()-\/>getInstruction()-\/>getAddress();}
+\DoxyCodeLine{00069\ \ \ \ ++m\_total\_instructions;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \textcolor{comment}{//\ Backwards\ jump?}}
+\DoxyCodeLine{00072\ \ \ \ UInt64\ size\ =\ m\_eip\_last\ -\/\ eip;}
+\DoxyCodeLine{00073\ \ \ \ \textcolor{keywordflow}{if}\ (eip\ <\ m\_eip\_last\ \&\&\ size\ <\ 1000)}
+\DoxyCodeLine{00074\ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ Loop\ *loop\ =\ findLoop(eip,\ size);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!loop)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ loop\ =\ insertLoop(eip,\ size);}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ ++loop-\/>count;}
+\DoxyCodeLine{00081\ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ m\_eip\_last\ =\ eip;}
+\DoxyCodeLine{00084\ \}}
+
+\end{DoxyCode}

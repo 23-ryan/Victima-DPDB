@@ -1,0 +1,690 @@
+\doxysection{riscv\+\_\+meta.\+h}
+\label{riscv__meta_8h_source}\index{common/performance\_model/performance\_models/core\_model/riscv\_meta.h@{common/performance\_model/performance\_models/core\_model/riscv\_meta.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_RISCV\_META\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_RISCV\_META\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{enum}\ rv\_op}
+\DoxyCodeLine{00005\ \{}
+\DoxyCodeLine{00006\ \ \ \ \ \ \ \ \ rv\_op\_illegal\ =\ 0,}
+\DoxyCodeLine{00007\ \ \ \ \ \ \ \ \ rv\_op\_lui\ =\ 1,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Upper\ Immediate\ */}}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ \ rv\_op\_auipc\ =\ 2,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Add\ Upper\ Immediate\ to\ PC\ */}}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ rv\_op\_jal\ =\ 3,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Jump\ and\ Link\ */}}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ \ rv\_op\_jalr\ =\ 4,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Jump\ and\ Link\ Register\ */}}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ rv\_op\_beq\ =\ 5,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ Equal\ */}}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ rv\_op\_bne\ =\ 6,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ Not\ Equal\ */}}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ rv\_op\_blt\ =\ 7,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ Less\ Than\ */}}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ rv\_op\_bge\ =\ 8,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ Greater\ than\ Equal\ */}}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ rv\_op\_bltu\ =\ 9,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ Less\ Than\ Unsigned\ */}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ rv\_op\_bgeu\ =\ 10,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ Greater\ than\ Equal\ Unsigned\ */}}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ rv\_op\_lb\ =\ 11,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Byte\ */}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ rv\_op\_lh\ =\ 12,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Half\ */}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ rv\_op\_lw\ =\ 13,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Word\ */}}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ rv\_op\_lbu\ =\ 14,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Byte\ Unsigned\ */}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ rv\_op\_lhu\ =\ 15,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Half\ Unsigned\ */}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ rv\_op\_sb\ =\ 16,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Store\ Byte\ */}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ rv\_op\_sh\ =\ 17,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Store\ Half\ */}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ rv\_op\_sw\ =\ 18,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Store\ Word\ */}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ rv\_op\_addi\ =\ 19,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Add\ Immediate\ */}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ rv\_op\_slti\ =\ 20,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ Less\ Than\ Immediate\ */}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ rv\_op\_sltiu\ =\ 21,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ Less\ Than\ Immediate\ Unsigned\ */}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ rv\_op\_xori\ =\ 22,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Xor\ Immediate\ */}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ rv\_op\_ori\ =\ 23,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Or\ Immediate\ */}}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ rv\_op\_andi\ =\ 24,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ And\ Immediate\ */}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ rv\_op\_slli\ =\ 25,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Left\ Logical\ Immediate\ */}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ rv\_op\_srli\ =\ 26,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Logical\ Immediate\ */}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ rv\_op\_srai\ =\ 27,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Arithmetic\ Immediate\ */}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ rv\_op\_add\ =\ 28,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Add\ */}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ rv\_op\_sub\ =\ 29,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Subtract\ */}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ rv\_op\_sll\ =\ 30,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Left\ Logical\ */}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ rv\_op\_slt\ =\ 31,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ Less\ Than\ */}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ rv\_op\_sltu\ =\ 32,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ Less\ Than\ Unsigned\ */}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ rv\_op\_xor\ =\ 33,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Xor\ */}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ rv\_op\_srl\ =\ 34,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Logical\ */}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ rv\_op\_sra\ =\ 35,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Arithmetic\ */}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ rv\_op\_or\ =\ 36,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Or\ */}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ rv\_op\_and\ =\ 37,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ And\ */}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ rv\_op\_fence\ =\ 38,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Fence\ */}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ rv\_op\_fence\_i\ =\ 39,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Fence\ Instruction\ */}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ rv\_op\_lwu\ =\ 40,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Word\ Unsigned\ */}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ rv\_op\_ld\ =\ 41,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Double\ */}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ rv\_op\_sd\ =\ 42,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Store\ Double\ */}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ rv\_op\_addiw\ =\ 43,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Add\ Immediate\ Word\ */}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ rv\_op\_slliw\ =\ 44,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Left\ Logical\ Immediate\ Word\ */}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ rv\_op\_srliw\ =\ 45,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Logical\ Immediate\ Word\ */}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ rv\_op\_sraiw\ =\ 46,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Arithmetic\ Immediate\ Word\ */}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ rv\_op\_addw\ =\ 47,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Add\ Word\ */}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ rv\_op\_subw\ =\ 48,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Subtract\ Word\ */}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ rv\_op\_sllw\ =\ 49,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Left\ Logical\ Word\ */}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ rv\_op\_srlw\ =\ 50,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Logical\ Word\ */}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ rv\_op\_sraw\ =\ 51,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Shift\ Right\ Arithmetic\ Word\ */}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ rv\_op\_ldu\ =\ 52,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ rv\_op\_lq\ =\ 53,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ rv\_op\_sq\ =\ 54,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ rv\_op\_addid\ =\ 55,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ rv\_op\_sllid\ =\ 56,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ rv\_op\_srlid\ =\ 57,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ rv\_op\_sraid\ =\ 58,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ rv\_op\_addd\ =\ 59,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ rv\_op\_subd\ =\ 60,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ rv\_op\_slld\ =\ 61,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ rv\_op\_srld\ =\ 62,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ rv\_op\_srad\ =\ 63,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ rv\_op\_mul\ =\ 64,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Multiply\ */}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ rv\_op\_mulh\ =\ 65,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Multiply\ High\ Signed\ Signed\ */}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ rv\_op\_mulhsu\ =\ 66,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Multiply\ High\ Signed\ Unsigned\ */}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ rv\_op\_mulhu\ =\ 67,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Multiply\ High\ Unsigned\ Unsigned\ */}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ rv\_op\_div\ =\ 68,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Divide\ Signed\ */}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ rv\_op\_divu\ =\ 69,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Divide\ Unsigned\ */}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ rv\_op\_rem\ =\ 70,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Remainder\ Signed\ */}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ rv\_op\_remu\ =\ 71,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Remainder\ Unsigned\ */}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ rv\_op\_mulw\ =\ 72,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Multiple\ Word\ */}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ rv\_op\_divw\ =\ 73,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Divide\ Signed\ Word\ */}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ rv\_op\_divuw\ =\ 74,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Divide\ Unsigned\ Word\ */}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ rv\_op\_remw\ =\ 75,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Remainder\ Signed\ Word\ */}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ rv\_op\_remuw\ =\ 76,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Remainder\ Unsigned\ Word\ */}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ rv\_op\_muld\ =\ 77,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ rv\_op\_divd\ =\ 78,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ rv\_op\_divud\ =\ 79,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ rv\_op\_remd\ =\ 80,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ rv\_op\_remud\ =\ 81,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ rv\_op\_lr\_w\ =\ 82,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Reserved\ Word\ */}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ rv\_op\_sc\_w\ =\ 83,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Store\ Conditional\ Word\ */}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ rv\_op\_amoswap\_w\ =\ 84,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Swap\ Word\ */}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ rv\_op\_amoadd\_w\ =\ 85,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Add\ Word\ */}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ rv\_op\_amoxor\_w\ =\ 86,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Xor\ Word\ */}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ rv\_op\_amoor\_w\ =\ 87,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Or\ Word\ */}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ rv\_op\_amoand\_w\ =\ 88,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ And\ Word\ */}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ rv\_op\_amomin\_w\ =\ 89,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Minimum\ Word\ */}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ rv\_op\_amomax\_w\ =\ 90,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Maximum\ Word\ */}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ rv\_op\_amominu\_w\ =\ 91,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Minimum\ Unsigned\ Word\ */}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ rv\_op\_amomaxu\_w\ =\ 92,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Maximum\ Unsigned\ Word\ */}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ rv\_op\_lr\_d\ =\ 93,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Load\ Reserved\ Double\ Word\ */}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ rv\_op\_sc\_d\ =\ 94,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Store\ Conditional\ Double\ Word\ */}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ rv\_op\_amoswap\_d\ =\ 95,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Swap\ Double\ Word\ */}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ rv\_op\_amoadd\_d\ =\ 96,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Add\ Double\ Word\ */}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ rv\_op\_amoxor\_d\ =\ 97,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Xor\ Double\ Word\ */}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ rv\_op\_amoor\_d\ =\ 98,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Or\ Double\ Word\ */}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ rv\_op\_amoand\_d\ =\ 99,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ And\ Double\ Word\ */}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ rv\_op\_amomin\_d\ =\ 100,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Minimum\ Double\ Word\ */}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ rv\_op\_amomax\_d\ =\ 101,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Maximum\ Double\ Word\ */}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ rv\_op\_amominu\_d\ =\ 102,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Minimum\ Unsigned\ Double\ Word\ */}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ rv\_op\_amomaxu\_d\ =\ 103,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Atomic\ Maximum\ Unsigned\ Double\ Word\ */}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ rv\_op\_lr\_q\ =\ 104,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ rv\_op\_sc\_q\ =\ 105,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ rv\_op\_amoswap\_q\ =\ 106,\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ rv\_op\_amoadd\_q\ =\ 107,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ rv\_op\_amoxor\_q\ =\ 108,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ rv\_op\_amoor\_q\ =\ 109,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ rv\_op\_amoand\_q\ =\ 110,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ rv\_op\_amomin\_q\ =\ 111,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ rv\_op\_amomax\_q\ =\ 112,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ rv\_op\_amominu\_q\ =\ 113,\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ rv\_op\_amomaxu\_q\ =\ 114,\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ rv\_op\_ecall\ =\ 115,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Environment\ Call\ */}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ rv\_op\_ebreak\ =\ 116,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Environment\ Break\ to\ Debugger\ */}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ rv\_op\_uret\ =\ 117,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ User\ Return\ */}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ rv\_op\_sret\ =\ 118,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ System\ Return\ */}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ rv\_op\_hret\ =\ 119,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Hypervisor\ Return\ */}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ rv\_op\_mret\ =\ 120,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Machine-\/Mode\ Return\ */}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ rv\_op\_dret\ =\ 121,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Debug-\/Mode\ Return\ */}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ rv\_op\_sfence\_vm\ =\ 122,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Supervisor\ Memory\ Management\ Fence\ */}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ rv\_op\_wfi\ =\ 123,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Wait\ For\ Interrupt\ */}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ rv\_op\_csrrw\ =\ 124,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ CSR\ Atomic\ Read\ Write\ */}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ rv\_op\_csrrs\ =\ 125,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ CSR\ Atomic\ Set\ Bit\ */}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ rv\_op\_csrrc\ =\ 126,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ CSR\ Atomic\ Clear\ Bit\ */}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ rv\_op\_csrrwi\ =\ 127,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ CSR\ Atomic\ Read\ Write\ Immediate\ */}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ rv\_op\_csrrsi\ =\ 128,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ CSR\ Atomic\ Set\ Bit\ Immediate\ */}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ rv\_op\_csrrci\ =\ 129,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ CSR\ Atomic\ Clear\ Bit\ Immediate\ */}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ rv\_op\_flw\ =\ 130,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Load\ (SP)\ */}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ rv\_op\_fsw\ =\ 131,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Store\ (SP)\ */}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ rv\_op\_fmadd\_s\ =\ 132,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Fused\ Multiply\ Add\ (SP)\ */}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ rv\_op\_fmsub\_s\ =\ 133,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Fused\ Multiply\ Subtract\ (SP)\ */}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ rv\_op\_fnmsub\_s\ =\ 134,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Negate\ fused\ Multiply\ Subtract\ (SP)\ */}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ rv\_op\_fnmadd\_s\ =\ 135,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Negate\ fused\ Multiply\ Add\ (SP)\ */}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ rv\_op\_fadd\_s\ =\ 136,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Add\ (SP)\ */}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ rv\_op\_fsub\_s\ =\ 137,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Subtract\ (SP)\ */}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ rv\_op\_fmul\_s\ =\ 138,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Multiply\ (SP)\ */}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ rv\_op\_fdiv\_s\ =\ 139,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Divide\ (SP)\ */}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ rv\_op\_fsgnj\_s\ =\ 140,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Sign-\/injection\ (SP)\ */}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ rv\_op\_fsgnjn\_s\ =\ 141,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Sign-\/injection\ Negate\ (SP)\ */}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ rv\_op\_fsgnjx\_s\ =\ 142,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Sign-\/injection\ Xor\ (SP)\ */}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ rv\_op\_fmin\_s\ =\ 143,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Minimum\ (SP)\ */}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ rv\_op\_fmax\_s\ =\ 144,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Maximum\ (SP)\ */}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ rv\_op\_fsqrt\_s\ =\ 145,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Square\ Root\ (SP)\ */}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ rv\_op\_fle\_s\ =\ 146,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Less\ Than\ Equal\ (SP)\ */}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ rv\_op\_flt\_s\ =\ 147,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Less\ Than\ (SP)\ */}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ rv\_op\_feq\_s\ =\ 148,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Equal\ (SP)\ */}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_w\_s\ =\ 149,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Word\ (SP)\ */}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_wu\_s\ =\ 150,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Word\ Unsigned\ (SP)\ */}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_s\_w\ =\ 151,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Word\ to\ Float\ (SP)\ */}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_s\_wu\ =\ 152,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Word\ Unsigned\ to\ Float\ (SP)\ */}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_x\_s\ =\ 153,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Move\ to\ Integer\ Register\ (SP)\ */}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ rv\_op\_fclass\_s\ =\ 154,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Classify\ (SP)\ */}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_s\_x\ =\ 155,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Move\ from\ Integer\ Register\ (SP)\ */}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_l\_s\ =\ 156,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Double\ Word\ (SP)\ */}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_lu\_s\ =\ 157,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Double\ Word\ Unsigned\ (SP)\ */}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_s\_l\ =\ 158,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Double\ Word\ to\ Float\ (SP)\ */}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_s\_lu\ =\ 159,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Double\ Word\ Unsigned\ to\ Float\ (SP)\ */}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ rv\_op\_fld\ =\ 160,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Load\ (DP)\ */}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ rv\_op\_fsd\ =\ 161,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Store\ (DP)\ */}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ rv\_op\_fmadd\_d\ =\ 162,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Fused\ Multiply\ Add\ (DP)\ */}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ rv\_op\_fmsub\_d\ =\ 163,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Fused\ Multiply\ Subtract\ (DP)\ */}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ rv\_op\_fnmsub\_d\ =\ 164,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Negate\ fused\ Multiply\ Subtract\ (DP)\ */}}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ rv\_op\_fnmadd\_d\ =\ 165,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Negate\ fused\ Multiply\ Add\ (DP)\ */}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ rv\_op\_fadd\_d\ =\ 166,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Add\ (DP)\ */}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ rv\_op\_fsub\_d\ =\ 167,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Subtract\ (DP)\ */}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ rv\_op\_fmul\_d\ =\ 168,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Multiply\ (DP)\ */}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ rv\_op\_fdiv\_d\ =\ 169,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Divide\ (DP)\ */}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ rv\_op\_fsgnj\_d\ =\ 170,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ to\ Sign-\/injection\ (DP)\ */}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ rv\_op\_fsgnjn\_d\ =\ 171,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ to\ Sign-\/injection\ Negate\ (DP)\ */}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ rv\_op\_fsgnjx\_d\ =\ 172,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ to\ Sign-\/injection\ Xor\ (DP)\ */}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ rv\_op\_fmin\_d\ =\ 173,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Minimum\ (DP)\ */}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ rv\_op\_fmax\_d\ =\ 174,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Maximum\ (DP)\ */}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_s\_d\ =\ 175,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ DP\ to\ SP\ */}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_d\_s\ =\ 176,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ SP\ to\ DP\ */}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ rv\_op\_fsqrt\_d\ =\ 177,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Floating\ Square\ Root\ (DP)\ */}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ rv\_op\_fle\_d\ =\ 178,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Less\ Than\ Equal\ (DP)\ */}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ rv\_op\_flt\_d\ =\ 179,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Less\ Than\ (DP)\ */}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ rv\_op\_feq\_d\ =\ 180,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Equal\ (DP)\ */}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_w\_d\ =\ 181,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Word\ (DP)\ */}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_wu\_d\ =\ 182,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Word\ Unsigned\ (DP)\ */}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_d\_w\ =\ 183,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Word\ to\ Float\ (DP)\ */}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_d\_wu\ =\ 184,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Word\ Unsigned\ to\ Float\ (DP)\ */}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ rv\_op\_fclass\_d\ =\ 185,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Classify\ (DP)\ */}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_l\_d\ =\ 186,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Double\ Word\ (DP)\ */}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_lu\_d\ =\ 187,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Double\ Word\ Unsigned\ (DP)\ */}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_x\_d\ =\ 188,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Move\ to\ Integer\ Register\ (DP)\ */}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_d\_l\ =\ 189,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Double\ Word\ to\ Float\ (DP)\ */}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_d\_lu\ =\ 190,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Double\ Word\ Unsigned\ Float\ (DP)\ */}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_d\_x\ =\ 191,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Move\ from\ Integer\ Register\ (DP)\ */}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ rv\_op\_flq\ =\ 192,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Load\ (QP)\ */}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ rv\_op\_fsq\ =\ 193,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Store\ (QP)\ */}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ rv\_op\_fmadd\_q\ =\ 194,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Fused\ Multiply\ Add\ (QP)\ */}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ rv\_op\_fmsub\_q\ =\ 195,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Fused\ Multiply\ Subtract\ (QP)\ */}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ rv\_op\_fnmsub\_q\ =\ 196,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Negate\ fused\ Multiply\ Subtract\ (QP)\ */}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ rv\_op\_fnmadd\_q\ =\ 197,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Negate\ fused\ Multiply\ Add\ (QP)\ */}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ rv\_op\_fadd\_q\ =\ 198,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Add\ (QP)\ */}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ rv\_op\_fsub\_q\ =\ 199,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Subtract\ (QP)\ */}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ rv\_op\_fmul\_q\ =\ 200,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Multiply\ (QP)\ */}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ rv\_op\_fdiv\_q\ =\ 201,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Divide\ (QP)\ */}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ rv\_op\_fsgnj\_q\ =\ 202,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ to\ Sign-\/injection\ (QP)\ */}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ rv\_op\_fsgnjn\_q\ =\ 203,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ to\ Sign-\/injection\ Negate\ (QP)\ */}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ rv\_op\_fsgnjx\_q\ =\ 204,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ to\ Sign-\/injection\ Xor\ (QP)\ */}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ rv\_op\_fmin\_q\ =\ 205,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Minimum\ (QP)\ */}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ rv\_op\_fmax\_q\ =\ 206,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Maximum\ (QP)\ */}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_s\_q\ =\ 207,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ QP\ to\ SP\ */}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_q\_s\ =\ 208,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ SP\ to\ QP\ */}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_d\_q\ =\ 209,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ QP\ to\ DP\ */}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_q\_d\ =\ 210,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ DP\ to\ QP\ */}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ rv\_op\_fsqrt\_q\ =\ 211,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Floating\ Square\ Root\ (QP)\ */}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ rv\_op\_fle\_q\ =\ 212,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Less\ Than\ Equal\ (QP)\ */}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ rv\_op\_flt\_q\ =\ 213,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Less\ Than\ (QP)\ */}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ rv\_op\_feq\_q\ =\ 214,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Equal\ (QP)\ */}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_w\_q\ =\ 215,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Word\ (QP)\ */}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_wu\_q\ =\ 216,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Word\ Unsigned\ (QP)\ */}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_q\_w\ =\ 217,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Word\ to\ Float\ (QP)\ */}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_q\_wu\ =\ 218,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Word\ Unsigned\ to\ Float\ (QP)\ */}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ rv\_op\_fclass\_q\ =\ 219,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Classify\ (QP)\ */}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_l\_q\ =\ 220,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Double\ Word\ (QP)\ */}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_lu\_q\ =\ 221,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Float\ to\ Double\ Word\ Unsigned\ (QP)\ */}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_q\_l\ =\ 222,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Double\ Word\ to\ Float\ (QP)\ */}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ rv\_op\_fcvt\_q\_lu\ =\ 223,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Convert\ Double\ Word\ Unsigned\ Float\ (QP)\ */}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_x\_q\ =\ 224,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Move\ to\ Integer\ Register\ (QP)\ */}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_q\_x\ =\ 225,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ FP\ Move\ from\ Integer\ Register\ (QP)\ */}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ rv\_op\_c\_addi4spn\ =\ 226,\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ rv\_op\_c\_fld\ =\ 227,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ rv\_op\_c\_lw\ =\ 228,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ rv\_op\_c\_flw\ =\ 229,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ rv\_op\_c\_fsd\ =\ 230,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ rv\_op\_c\_sw\ =\ 231,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ rv\_op\_c\_fsw\ =\ 232,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ rv\_op\_c\_nop\ =\ 233,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ rv\_op\_c\_addi\ =\ 234,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ rv\_op\_c\_jal\ =\ 235,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ rv\_op\_c\_li\ =\ 236,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ rv\_op\_c\_addi16sp\ =\ 237,\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ rv\_op\_c\_lui\ =\ 238,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ rv\_op\_c\_srli\ =\ 239,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ rv\_op\_c\_srai\ =\ 240,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ rv\_op\_c\_andi\ =\ 241,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ rv\_op\_c\_sub\ =\ 242,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ rv\_op\_c\_xor\ =\ 243,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ rv\_op\_c\_or\ =\ 244,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ rv\_op\_c\_and\ =\ 245,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ rv\_op\_c\_subw\ =\ 246,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ rv\_op\_c\_addw\ =\ 247,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ rv\_op\_c\_j\ =\ 248,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ rv\_op\_c\_beqz\ =\ 249,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ rv\_op\_c\_bnez\ =\ 250,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ rv\_op\_c\_slli\ =\ 251,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ rv\_op\_c\_fldsp\ =\ 252,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ rv\_op\_c\_lwsp\ =\ 253,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ rv\_op\_c\_flwsp\ =\ 254,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ rv\_op\_c\_jr\ =\ 255,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ rv\_op\_c\_mv\ =\ 256,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ rv\_op\_c\_ebreak\ =\ 257,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ rv\_op\_c\_jalr\ =\ 258,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ rv\_op\_c\_add\ =\ 259,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ rv\_op\_c\_fsdsp\ =\ 260,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ rv\_op\_c\_swsp\ =\ 261,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ rv\_op\_c\_fswsp\ =\ 262,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ rv\_op\_c\_ld\ =\ 263,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ rv\_op\_c\_sd\ =\ 264,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ rv\_op\_c\_addiw\ =\ 265,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ rv\_op\_c\_ldsp\ =\ 266,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ rv\_op\_c\_sdsp\ =\ 267,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ rv\_op\_c\_lq\ =\ 268,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ rv\_op\_c\_sq\ =\ 269,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ rv\_op\_c\_lqsp\ =\ 270,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ rv\_op\_c\_sqsp\ =\ 271,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ rv\_op\_nop\ =\ 272,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ No\ operation\ */}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ rv\_op\_mv\ =\ 273,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Copy\ register\ */}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ rv\_op\_not\ =\ 274,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ One’s\ complement\ */}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ rv\_op\_neg\ =\ 275,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Two’s\ complement\ */}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ rv\_op\_negw\ =\ 276,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Two’s\ complement\ Word\ */}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ rv\_op\_sext\_w\ =\ 277,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Sign\ extend\ Word\ */}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ rv\_op\_seqz\ =\ 278,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ if\ =\ zero\ */}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ rv\_op\_snez\ =\ 279,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ if\ ≠\ zero\ */}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ rv\_op\_sltz\ =\ 280,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ if\ <\ zero\ */}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ rv\_op\_sgtz\ =\ 281,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ if\ >\ zero\ */}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_s\ =\ 282,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Single-\/precision\ move\ */}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ rv\_op\_fabs\_s\ =\ 283,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Single-\/precision\ absolute\ value\ */}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ rv\_op\_fneg\_s\ =\ 284,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Single-\/precision\ negate\ */}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_d\ =\ 285,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Double-\/precision\ move\ */}}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ rv\_op\_fabs\_d\ =\ 286,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Double-\/precision\ absolute\ value\ */}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ rv\_op\_fneg\_d\ =\ 287,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Double-\/precision\ negate\ */}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ rv\_op\_fmv\_q\ =\ 288,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Quadruple-\/precision\ move\ */}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ rv\_op\_fabs\_q\ =\ 289,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Quadruple-\/precision\ absolute\ value\ */}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ rv\_op\_fneg\_q\ =\ 290,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Quadruple-\/precision\ negate\ */}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ rv\_op\_beqz\ =\ 291,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ if\ =\ zero\ */}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ rv\_op\_bnez\ =\ 292,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ if\ ≠\ zero\ */}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ rv\_op\_blez\ =\ 293,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ if\ ≤\ zero\ */}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ rv\_op\_bgez\ =\ 294,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ if\ ≥\ zero\ */}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ rv\_op\_bltz\ =\ 295,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ if\ <\ zero\ */}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ rv\_op\_bgtz\ =\ 296,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Branch\ if\ >\ zero\ */}}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ rv\_op\_ble\ =\ 297,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ rv\_op\_bleu\ =\ 298,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ rv\_op\_bgt\ =\ 299,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ rv\_op\_bgtu\ =\ 300,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ rv\_op\_j\ =\ 301,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Jump\ */}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ rv\_op\_ret\ =\ 302,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Return\ from\ subroutine\ */}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ rv\_op\_jr\ =\ 303,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Jump\ register\ */}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ rv\_op\_rdcycle\ =\ 304,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ Cycle\ Counter\ Status\ Register\ */}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ rv\_op\_rdtime\ =\ 305,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ Timer\ Status\ register\ */}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ rv\_op\_rdinstret\ =\ 306,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ Instructions\ Retired\ Status\ Register\ */}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ rv\_op\_rdcycleh\ =\ 307,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ Cycle\ Counter\ Status\ Register\ (upper\ 32-\/bits\ on\ RV32)\ */}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ rv\_op\_rdtimeh\ =\ 308,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ Timer\ Status\ register\ (upper\ 32-\/bits\ on\ RV32)\ */}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ rv\_op\_rdinstreth\ =\ 309,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ Instructions\ Retired\ Status\ Register\ (upper\ 32-\/bits\ on\ RV32)\ */}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ rv\_op\_frcsr\ =\ 310,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ FP\ Control\ and\ Status\ Register\ */}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ rv\_op\_frrm\ =\ 311,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ FP\ Rounding\ Mode\ */}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ rv\_op\_frflags\ =\ 312,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Read\ FP\ Accrued\ Exception\ Flags\ */}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ rv\_op\_fscsr\ =\ 313,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ FP\ Control\ and\ Status\ Register\ */}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ rv\_op\_fsrm\ =\ 314,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ FP\ Rounding\ Mode\ */}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ rv\_op\_fsflags\ =\ 315,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ FP\ Accrued\ Exception\ Flags\ */}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ rv\_op\_fsrmi\ =\ 316,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ FP\ Rounding\ Mode\ Immediate\ */}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ rv\_op\_fsflagsi\ =\ 317,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Set\ FP\ Accrued\ Exception\ Flags\ Immediate\ */}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ rv\_op\_last\ =\ 318,\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00325\ \};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{keyword}{struct\ }riscvinstr\ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ opcode;}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_alu;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_mul;}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_div;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_fpu;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_fdiv;}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_ifpu;}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_memory;\ \ \ \ \ }
+\DoxyCodeLine{00336\ \};}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \textcolor{keyword}{const}\ riscvinstr\ instrlist[]\ =\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//\ opcode,\ has\_alu,\ has\_mul,\ has\_div,\ has\_fpu,\ has\_fdiv,\ has\_ifpu,\ is\_memory}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \{\ rv\_op\_illegal,\ \ 0,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 0\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00341\ \ \ \ \ \{\ rv\_op\_lui,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 1\ \ \ \ \ \ \ \ RV32I\ alu}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \{\ rv\_op\_auipc,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 2\ \ \ \ \ \ \ \ RV32I\ alu}}
+\DoxyCodeLine{00343\ \ \ \ \ \{\ rv\_op\_jal,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 3\ \ \ \ \ \ \ \ RV32I\ jump}}
+\DoxyCodeLine{00344\ \ \ \ \ \{\ rv\_op\_jalr,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 4\ \ \ \ \ \ \ \ RV32I\ jump\ indirect}}
+\DoxyCodeLine{00345\ \ \ \ \ \{\ rv\_op\_beq,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 5\ \ \ \ \ \ \ \ RV32I\ branch}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bne,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 6\ \ \ \ \ \ \ \ RV32I\ branch}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \{\ rv\_op\_blt,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 7\ \ \ \ \ \ \ \ RV32I\ branch}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bge,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 8\ \ \ \ \ \ \ \ RV32I\ branch}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bltu,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 9\ \ \ \ \ \ \ \ RV32I\ branch}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bgeu,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 10\ \ \ \ \ \ \ RV32I\ branch}}
+\DoxyCodeLine{00351\ \ \ \ \ \{\ rv\_op\_lb,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 11\ \ \ \ \ \ \ RV32I\ load}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lh,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 12\ \ \ \ \ \ \ RV32I\ load}}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lw,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 13\ \ \ \ \ \ \ RV32I\ load}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lbu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 14\ \ \ \ \ \ \ RV32I\ load}}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lhu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 15\ \ \ \ \ \ \ RV32I\ load\ \ \ \ }}
+\DoxyCodeLine{00356\ \ \ \ \ \{\ rv\_op\_sb,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 16\ \ \ \ \ \ \ RV32I\ store}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sh,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 17\ \ \ \ \ \ \ RV32I\ store}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sw,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 18\ \ \ \ \ \ \ RV32I\ store\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \{\ rv\_op\_addi,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 19\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \{\ rv\_op\_slti,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 20\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sltiu,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 21\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \{\ rv\_op\_xori,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 22\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \{\ rv\_op\_ori,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 23\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \{\ rv\_op\_andi,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 24\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \{\ rv\_op\_slli,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 25\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srli,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 26\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srai,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 27\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \{\ rv\_op\_add,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 28\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sub,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 29\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sll,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 30\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \{\ rv\_op\_slt,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 31\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sltu,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 32\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \{\ rv\_op\_xor,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 33\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srl,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 34\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sra,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 35\ \ \ \ \ \ \ RV32I\ alu}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \{\ rv\_op\_or,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 36\ \ \ \ \ \ \ RV32I\ alu}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \{\ rv\_op\_and,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 37\ \ \ \ \ \ \ RV32I\ alu\ \ \ \ }}
+\DoxyCodeLine{00378\ \ \ \ \ \{\ rv\_op\_fence,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 38\ \ \ \ \ \ \ RV32I\ fence}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fence\_i,\ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 39\ \ \ \ \ \ \ RV32I\ fence}}
+\DoxyCodeLine{00380\ \ \ \ \ \{\ rv\_op\_lwu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 40\ \ \ \ \ \ \ RV32I\ load}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \ \{\ rv\_op\_ld,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 41\ \ \ \ \ \ \ RV64I\ load}}
+\DoxyCodeLine{00383\ \ \ \ \ \{\ rv\_op\_sd,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 42\ \ \ \ \ \ \ RV64I\ store}}
+\DoxyCodeLine{00384\ \ \ \ \ \{\ rv\_op\_addiw,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 43\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \{\ rv\_op\_slliw,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 44\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srliw,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 45\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sraiw,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 46\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \{\ rv\_op\_addw,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 47\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \{\ rv\_op\_subw,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 48\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sllw,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 49\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srlw,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 50\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sraw,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 51\ \ \ \ \ \ \ RV64I\ alu}}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \{\ rv\_op\_ldu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 52\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lq,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 53\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sq,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 54\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \{\ rv\_op\_addid,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 55\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sllid,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 56\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srlid,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 57\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sraid,\ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 58\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \{\ rv\_op\_addd,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 59\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \{\ rv\_op\_subd,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 60\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \{\ rv\_op\_slld,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 61\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srld,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 62\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \{\ rv\_op\_srad,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 63\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \{\ rv\_op\_mul,\ \ \ \ \ \ 1,\ 1,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 64\ \ \ \ \ \ \ RV32M\ alu\ multiply}}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \{\ rv\_op\_mulh,\ \ \ \ \ 1,\ 1,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 65\ \ \ \ \ \ \ RV32M\ alu\ multiply}}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \{\ rv\_op\_mulhsu,\ \ \ 1,\ 1,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 66\ \ \ \ \ \ \ RV32M\ alu\ multiply}}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \{\ rv\_op\_mulhu,\ \ \ \ 1,\ 1,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 67\ \ \ \ \ \ \ RV32M\ alu\ multiply}}
+\DoxyCodeLine{00411\ \ \ \ \ \{\ rv\_op\_div,\ \ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 68\ \ \ \ \ \ \ RV32M\ alu\ divide}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \{\ rv\_op\_divu,\ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 69\ \ \ \ \ \ \ RV32M\ alu\ divide}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rem,\ \ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 70\ \ \ \ \ \ \ RV32M\ alu\ divide}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \{\ rv\_op\_remu,\ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 71\ \ \ \ \ \ \ RV32M\ alu\ divide}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \{\ rv\_op\_mulw,\ \ \ \ \ 1,\ 1,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 72\ \ \ \ \ \ \ RV64M\ alu\ multiply\ \ \ \ \ \ \ }}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \{\ rv\_op\_divw,\ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 73\ \ \ \ \ \ \ RV64M\ alu\ divide}}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \{\ rv\_op\_divuw,\ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 74\ \ \ \ \ \ \ RV64M\ alu\ divide}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \{\ rv\_op\_remw,\ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 75\ \ \ \ \ \ \ RV64M\ alu\ divide}}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \{\ rv\_op\_remuw,\ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 76\ \ \ \ \ \ \ RV64M\ alu\ divide}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \{\ rv\_op\_muld,\ \ \ \ \ 1,\ 1,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 77\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \{\ rv\_op\_divd,\ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 78\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \{\ rv\_op\_divud,\ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 79\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \{\ rv\_op\_remd,\ \ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 80\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \{\ rv\_op\_remud,\ \ \ \ 1,\ 0,\ 1,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 81\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ }
+\DoxyCodeLine{00428\ \ \ \ \ \{\ rv\_op\_lr\_w,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 82\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sc\_w,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 83\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoswap\_w,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 84\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoadd\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 85\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoxor\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 86\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoor\_w,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 87\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoand\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 88\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomin\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 89\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomax\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 90\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amominu\_w,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 91\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomaxu\_w,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 92\ \ \ \ RV32A\ atomic}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lr\_d,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 93\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sc\_d,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 94\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoswap\_d,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 95\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoadd\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 96\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoxor\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 97\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoor\_d,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 98\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoand\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 99\ \ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomin\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 100\ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomax\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 101\ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amominu\_d,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 102\ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomaxu\_d,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 103\ \ \ RV64A\ atomic}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \{\ rv\_op\_lr\_q,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sc\_q,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoswap\_q,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 106\ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoadd\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 107\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoxor\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 108\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoor\_q,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amoand\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 110\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomin\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 111\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomax\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 112\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amominu\_q,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 113\ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \{\ rv\_op\_amomaxu\_q,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 114\ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \{\ rv\_op\_ecall,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 115\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \{\ rv\_op\_ebreak,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 116\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \{\ rv\_op\_uret,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 117\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sret,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 118\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \{\ rv\_op\_hret,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 119\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \{\ rv\_op\_mret,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 120\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \{\ rv\_op\_dret,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 121\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sfence\_vm,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 122\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \{\ rv\_op\_wfi,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 123\ \ \ \ \ \ RV32S\ system}}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \{\ rv\_op\_csrrw,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 124\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \{\ rv\_op\_csrrs,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 125\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \{\ rv\_op\_csrrc,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 126\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \{\ rv\_op\_csrrwi,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 127\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \{\ rv\_op\_csrrsi,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 128\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \{\ rv\_op\_csrrci,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 129\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00481\ \ \ \ \ \{\ rv\_op\_flw,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 130\ \ \ \ \ \ RV32F\ fpu\ load}}
+\DoxyCodeLine{00482\ \ \ \ \ \{\ rv\_op\_fsw,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 131\ \ \ \ \ \ RV32F\ fpu\ store}}
+\DoxyCodeLine{00483\ \ \ \ \ \{\ rv\_op\_fmadd\_s,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 132\ \ \ \ \ \ RV32F\ fpu\ fma}}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmsub\_s,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 133\ \ \ \ \ \ RV32F\ fpu\ fma}}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fnmsub\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 134\ \ \ \ \ \ RV32F\ fpu\ fma}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fnmadd\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 135\ \ \ \ \ \ RV32F\ fpu\ fma}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fadd\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 136\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsub\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 137\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmul\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 1,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 138\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00491\ \ \ \ \ \{\ rv\_op\_fdiv\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 1,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 139\ \ \ \ \ \ RV32F\ fpu\ fdiv}}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnj\_s,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 140\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnjn\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 141\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnjx\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 142\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmin\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 143\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmax\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 144\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00497\ \ \ \ \ \{\ rv\_op\_fsqrt\_s,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 145\ \ \ \ \ \ RV32F\ fpu\ fsqrt}}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fle\_s,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 146\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \{\ rv\_op\_flt\_s,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 147\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \{\ rv\_op\_feq\_s,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 148\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_w\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 149\ \ \ \ \ \ RV32F\ fpu\ fcvt\ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_wu\_s,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 150\ \ \ \ \ \ RV32F\ fpu\ fcvt}}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_s\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 151\ \ \ \ \ \ RV32F\ fpu\ fcvt}}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_s\_wu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 152\ \ \ \ \ \ RV32F\ fpu\ fcvt}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \ \ \{\ rv\_op\_fmv\_x\_s,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 153\ \ \ \ \ \ RV32F\ fpu\ fmove\ }}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fclass\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 154\ \ \ \ \ \ RV32F\ fpu}}
+\DoxyCodeLine{00508\ \ \ \ \ \{\ rv\_op\_fmv\_s\_x,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 155\ \ \ \ \ \ RV32F\ fpu\ fmove\ }}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00510\ \ \ \ \ \{\ rv\_op\_fcvt\_l\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 156\ \ \ \ \ \ RV64F\ fpu\ fcvt}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_lu\_s,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 157\ \ \ \ \ \ RV64F\ fpu\ fcvt}}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_s\_l,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 158\ \ \ \ \ \ RV64F\ fpu\ fcvt}}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_s\_lu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 159\ \ \ \ \ \ RV64F\ fpu\ fcvt}}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \{\ rv\_op\_fld,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 160\ \ \ \ \ \ RV32D\ fpu\ load}}
+\DoxyCodeLine{00516\ \ \ \ \ \{\ rv\_op\_fsd,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 161\ \ \ \ \ \ RV32D\ fpu\ store}}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmadd\_d,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 162\ \ \ \ \ \ RV32D\ fpu\ fma}}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmsub\_d,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 163\ \ \ \ \ \ RV32D\ fpu\ fma}}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fnmsub\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 164\ \ \ \ \ \ RV32D\ fpu\ fma}}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fnmadd\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 165\ \ \ \ \ \ RV32D\ fpu\ fma}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fadd\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 166\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsub\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 167\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmul\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 1,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 168\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00526\ \ \ \ \ \{\ rv\_op\_fdiv\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 1,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 169\ \ \ \ \ \ RV32D\ fpu\ fdiv}}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnj\_d,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 170\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnjn\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 171\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnjx\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 172\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmin\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 173\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmax\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 174\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00532\ \ \ \ \ \{\ rv\_op\_fcvt\_s\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 175\ \ \ \ \ \ RV32D\ fpu\ fcvt}}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_d\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 176\ \ \ \ \ \ RV32D\ fpu\ fcvt}}
+\DoxyCodeLine{00534\ \ \ \ \ \{\ rv\_op\_fsqrt\_d,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 177\ \ \ \ \ \ RV32D\ fpu\ fsqrt}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fle\_d,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 178\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \{\ rv\_op\_flt\_d,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 179\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \{\ rv\_op\_feq\_d,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 180\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00538\ \ \ \ \ \{\ rv\_op\_fcvt\_w\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 181\ \ \ \ \ \ RV32D\ fpu\ fcvt}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_wu\_d,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 182\ \ \ \ \ \ RV32D\ fpu\ fcvt}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_d\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 183\ \ \ \ \ \ RV32D\ fpu\ fcvt}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_d\_wu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 184\ \ \ \ \ \ RV32D\ fpu\ fcvt}}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fclass\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 185\ \ \ \ \ \ RV32D\ fpu}}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_l\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 186\ \ \ \ \ \ RV64D\ fpu\ fcvt}}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_lu\_d,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 187\ \ \ \ \ \ RV64D\ fpu\ fcvt}}
+\DoxyCodeLine{00546\ \ \ \ \ \{\ rv\_op\_fmv\_x\_d,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 188\ \ \ \ \ \ RV64D\ fpu\ fmove}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_d\_l,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 189\ \ \ \ \ \ RV64D\ fpu\ fcvt}}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_d\_lu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 1,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 190\ \ \ \ \ \ RV64D\ fpu\ fcvt\ \ \ \ }}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmv\_d\_x,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 191\ \ \ \ \ \ RV64D\ fpu\ fmove}}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \{\ rv\_op\_flq,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsq,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmadd\_q,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmsub\_q,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fnmsub\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fnmadd\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fadd\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsub\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmul\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 1,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fdiv\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 1,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnj\_q,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 202\ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnjn\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 203\ \ \ \ \ \ \ }}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsgnjx\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmin\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 205\ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmax\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_s\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_q\_s,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_d\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 209}}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_q\_d,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 210}}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsqrt\_q,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 211}}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fle\_q,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 212}}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \{\ rv\_op\_flt\_q,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 213}}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \{\ rv\_op\_feq\_q,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 214}}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_w\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 215}}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_wu\_q,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 216}}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_q\_w,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 217}}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_q\_wu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 218}}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fclass\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 219}}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_l\_q,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 220}}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_lu\_q,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 221}}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_q\_l,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 222}}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fcvt\_q\_lu,\ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 223}}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmv\_x\_q,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 224}}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmv\_q\_x,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 1,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 225}}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_addi4spn,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 226\ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_fld,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_lw,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_flw,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_fsd,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_sw,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_fsw,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_nop,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_addi,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_jal,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_li,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_addi16sp,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 237\ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_lui,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_srli,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_srai,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_andi,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_sub,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_xor,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_or,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_and,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_subw,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_addw,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_j,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_beqz,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_bnez,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_slli,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_fldsp,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_lwsp,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_flwsp,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_jr,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_mv,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_ebreak,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 257\ \ \ \ \ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_jalr,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 258}}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_add,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 259}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_fsdsp,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 260}}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_swsp,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 261}}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_fswsp,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 262}}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_ld,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 263}}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_sd,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 264}}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_addiw,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 265}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_ldsp,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 266}}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_sdsp,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 267}}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_lq,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 268}}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_sq,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1\ \},\ \ \textcolor{comment}{//\ \ \ \ 269}}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_lqsp,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 270}}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \{\ rv\_op\_c\_sqsp,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 271}}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \{\ rv\_op\_nop,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 272}}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \{\ rv\_op\_mv,\ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 273}}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \{\ rv\_op\_not,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 274}}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \{\ rv\_op\_neg,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 275}}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \{\ rv\_op\_negw,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 276}}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sext\_w,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 277}}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \{\ rv\_op\_seqz,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 278}}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \{\ rv\_op\_snez,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 279}}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sltz,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 280}}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \{\ rv\_op\_sgtz,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 281}}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmv\_s,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 282}}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fabs\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 283}}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fneg\_s,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 284}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmv\_d,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 285}}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fabs\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 286}}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fneg\_d,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 287}}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fmv\_q,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 288}}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fabs\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 289}}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fneg\_q,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 290}}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \{\ rv\_op\_beqz,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 291}}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bnez,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 292}}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \{\ rv\_op\_blez,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 293}}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bgez,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 294}}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bltz,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 295}}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bgtz,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 296}}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \{\ rv\_op\_ble,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 297}}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bleu,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 298}}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bgt,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 299}}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \{\ rv\_op\_bgtu,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 300}}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \{\ rv\_op\_j,\ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 301}}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \{\ rv\_op\_ret,\ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 302}}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \{\ rv\_op\_jr,\ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 303\ }}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rdcycle,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 304\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rdtime,\ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 305\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rdinstret,\ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 306\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rdcycleh,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 307\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rdtimeh,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 308\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \{\ rv\_op\_rdinstreth,\ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 309\ \ \ \ \ \ RV32S\ csr}}
+\DoxyCodeLine{00671\ }
+\DoxyCodeLine{00672\ \ \ \ \ \{\ rv\_op\_frcsr,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 310\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \{\ rv\_op\_frrm,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 311\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \{\ rv\_op\_frflags,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 312\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fscsr,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 313\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsrm,\ \ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 314\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsflags,\ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 315\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsrmi,\ \ \ \ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 316\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \{\ rv\_op\_fsflagsi,\ \ \ \ \ \ \ 1,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \},\ \ \textcolor{comment}{//\ \ \ \ 317\ \ \ \ \ \ RV32FD\ csr}}
+\DoxyCodeLine{00680\ \ \ \ \ \{\ rv\_op\_last,\ \ \ \ \ \ \ \ \ \ \ 0,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\ \}}
+\DoxyCodeLine{00681\ \};}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_RISCV\_META\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,38 @@
+\doxysection{interval\+\_\+performance\+\_\+model.\+cc}
+\label{interval__performance__model_8cc_source}\index{common/performance\_model/performance\_models/interval\_performance\_model.cc@{common/performance\_model/performance\_models/interval\_performance\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}interval\_performance\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ IntervalPerformanceModel::IntervalPerformanceModel(Core\ *core,\ \textcolor{keywordtype}{int}\ misprediction\_penalty)}
+\DoxyCodeLine{00007\ \ \ \ \ :\ MicroOpPerformanceModel(core,\ !Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/issue\_memops\_at\_dispatch"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00008\ \ \ \ \ ,\ interval\_timer(core,}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ this,}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \ m\_core\_model,}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ misprediction\_penalty,}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/dispatch\_width"{}},\ core-\/>getId()),}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/window\_size"{}},\ core-\/>getId()),}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getBoolArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/issue\_contention"{}},\ core-\/>getId())}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ )}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ IntervalPerformanceModel::\string~IntervalPerformanceModel()}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ interval\_timer.free();\ \textcolor{comment}{//\ Free\ Windows,\ and\ remaining\ DynamicMicroOps,\ before\ deleting\ the\ allocator}}
+\DoxyCodeLine{00022\ \}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ boost::tuple<uint64\_t,uint64\_t>\ IntervalPerformanceModel::simulate(\textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{return}\ interval\_timer.simulate(insts);}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keywordtype}{void}\ IntervalPerformanceModel::notifyElapsedTimeUpdate()}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ interval\_timer.synchronize(m\_elapsed\_time.getCycleCount());}
+\DoxyCodeLine{00032\ \}}
+
+\end{DoxyCode}

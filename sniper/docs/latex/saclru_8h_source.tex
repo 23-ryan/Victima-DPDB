@@ -1,0 +1,67 @@
+\doxysection{saclru.\+h}
+\label{saclru_8h_source}\index{common/core/memory\_subsystem/cheetah/saclru.h@{common/core/memory\_subsystem/cheetah/saclru.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_SACLRU\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_SACLRU\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }CheetahSACLRU}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ N,\ \ \ \ \ \textcolor{comment}{/*\ Degree\ of\ associativity\ =\ 2\string^N\ */}}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ B,\ \ \ \ \ \textcolor{comment}{/*\ Max\ set\ field\ width\ */}}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ A,\ \ \ \ \ \textcolor{comment}{/*\ Min\ set\ field\ width\ */}}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ L,\ \ \ \ \ \textcolor{comment}{/*\ Line\ field\ width\ */}}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//T,\ \ \ \ \ /*\ Max\ no\ of\ addresses\ to\ be\ processed\ */}}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SAVE\_INTERVAL,\ \textcolor{comment}{/*\ Intervals\ at\ which\ output\ should\ be\ saved\ */}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ P\_INTERVAL;\ \ \textcolor{comment}{/*\ Intervals\ at\ which\ progress\ output\ is\ done\ */}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ TWO\_PWR\_N;\ \textcolor{comment}{/*\ 2\string^N.\ i.e.,\ Degree\ of\ associativity\ */}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ MAX\_DEPTH;\ \ \ \textcolor{comment}{/*\ B-\/A,\ Number\ of\ range\ of\ sets\ simulated\ */}}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ TWO\_POWER\_MAX\_DEPTH,\ \ \textcolor{comment}{/*\ 2\string^MAX\_DEPTH\ */}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ SET\_MASK,\ \textcolor{comment}{/*\ Masks\ */}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ DIFF\_SET\_MASK,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ \ \ BASE,\ \ \textcolor{comment}{/*\ 2\string^N+1,\ |\{0,1,\ ...,\ 2\string^N\}|\ */}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ SIZE\_OF\_TREE,\ \ \ \textcolor{comment}{/*\ 2\string^MAX\_DEPTH\ *\ 2\ *\ BASE\ ,\ No\ of\ nodes\ in\ tree}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ There\ is\ a\ factor\ of\ two\ redundancy\ in\ the\ array.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ BASE\ gives\ an\ extra\ location\ used\ to\ indicate}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ the\ number\ of\ entries\ in\ a\ row.\ */}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ BASE\_PWR\_MAX\_DEPTH\_PLUS\_ONE;\ \textcolor{comment}{/*\ Number\ of\ locations\ required\ for\ hitarr\ */}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ uint64\_t\ *arr;\ \ \ \textcolor{comment}{/*\ GBT\ array\ */}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ uint64\_t\ **sac\_hits;\ \textcolor{comment}{/*\ Hit\ counts\ in\ caches\ */}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ int64\_t\ *hitarr;\ \textcolor{comment}{/*\ Encoded\ hit\ counts\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ uint64\_t\ *base\_pwr\_array;\textcolor{comment}{/*\ Stores\ BASE\string^0,\ BASE\string^1,...,\ BASE\string^MAX\_DEPTH\ */}}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ uint64\_t\ *rm\_arr;\ \ \ \textcolor{comment}{/*\ Stores\ right-\/matches\ */}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ uint64\_t\ t\_entries;\ \textcolor{comment}{/*\ Count\ of\ addresses\ processed\ */}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ next\_save\_time;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ uint64\_t\ *depths;\ \ \textcolor{comment}{/*\ Right-\/match\ count\ array\ */}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ uint64\_t\ hitarr0;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ uint64\_t\ tag;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ CheetahSACLRU(\textcolor{keywordtype}{int}\ \_N,\ \ \ \ \ \textcolor{comment}{/*\ Degree\ of\ associativity\ =\ 2\string^N\ */}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \_B,\ \ \ \ \ \textcolor{comment}{/*\ Max\ set\ field\ width\ */}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \_A,\ \ \ \ \ \textcolor{comment}{/*\ Min\ set\ field\ width\ */}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \_L\ \ \ \ \ \ \textcolor{comment}{/*\ Line\ field\ width\ */}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \string~CheetahSACLRU();}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ outpr\_saclru(FILE\ *fd);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ init\_saclru(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ sacnmul\_woarr(intptr\_t\ addr);}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ flush(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ uint64\_t\ hits(\textcolor{keywordtype}{unsigned}\ sets\_log2,\ \textcolor{keywordtype}{unsigned}\ assoc);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ uint64\_t\ numentries(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ t\_entries;\ \}}
+\DoxyCodeLine{00059\ \};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_SACLRU\_H}}
+
+\end{DoxyCode}

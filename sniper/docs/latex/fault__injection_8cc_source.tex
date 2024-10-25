@@ -1,0 +1,101 @@
+\doxysection{fault\+\_\+injection.\+cc}
+\label{fault__injection_8cc_source}\index{common/fault\_injection/fault\_injection.cc@{common/fault\_injection/fault\_injection.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}fault\_injection.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}fault\_injector\_random.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ FaultinjectionManager\ *}
+\DoxyCodeLine{00008\ FaultinjectionManager::create()}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ String\ s\_type\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}fault\_injection/type"{}});}
+\DoxyCodeLine{00011\ \ \ \ String\ s\_injector\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}fault\_injection/injector"{}});}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ fault\_type\_t\ type;}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keywordflow}{if}\ (s\_type\ ==\ \textcolor{stringliteral}{"{}toggle"{}})}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ type\ =\ FAULT\_TYPE\_TOGGLE;}
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\_type\ ==\ \textcolor{stringliteral}{"{}set0"{}})}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ type\ =\ FAULT\_TYPE\_SET0;}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\_type\ ==\ \textcolor{stringliteral}{"{}set1"{}})}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ type\ =\ FAULT\_TYPE\_SET1;}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\_type\ ==\ \textcolor{stringliteral}{"{}none"{}})}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ fault-\/injection\ scheme\ \%s"{}},\ s\_type.c\_str());}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ fault\_injector\_t\ injector;}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{if}\ (s\_injector\ ==\ \textcolor{stringliteral}{"{}none"{}})}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ injector\ =\ FAULT\_INJECTOR\_NONE;}
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\_injector\ ==\ \textcolor{stringliteral}{"{}random"{}})}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ injector\ =\ FAULT\_INJECTOR\_RANDOM;}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unknown\ fault\ injector\ \%s"{}},\ s\_injector.c\_str());}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ FaultinjectionManager(type,\ injector);}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ FaultinjectionManager::FaultinjectionManager(fault\_type\_t\ type,\ fault\_injector\_t\ injector)}
+\DoxyCodeLine{00037\ \ \ \ :\ m\_type(type)}
+\DoxyCodeLine{00038\ \ \ \ ,\ m\_injector(injector)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ FaultInjector\ *}
+\DoxyCodeLine{00043\ FaultinjectionManager::getFaultInjector(UInt32\ core\_id,\ MemComponent::component\_t\ mem\_component)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{switch}(m\_injector)}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FAULT\_INJECTOR\_NONE:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ FaultInjector(core\_id,\ mem\_component);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FAULT\_INJECTOR\_RANDOM:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ FaultInjectorRandom(core\_id,\ mem\_component);}
+\DoxyCodeLine{00051\ \ \ \ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00057\ FaultinjectionManager::applyFault(Core\ *core,\ IntPtr\ read\_address,\ UInt32\ data\_size,\ MemoryResult\ \&memres,\ Byte\ *data,\ \textcolor{keyword}{const}\ Byte\ *fault)}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordflow}{switch}(m\_type)}
+\DoxyCodeLine{00060\ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FAULT\_TYPE\_TOGGLE:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 0;\ i\ <\ data\_size;\ ++i)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ data[i]\ \string^=\ fault[i];}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FAULT\_TYPE\_SET0:}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 0;\ i\ <\ data\_size;\ ++i)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ data[i]\ \&=\ \string~fault[i];}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FAULT\_TYPE\_SET1:}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 0;\ i\ <\ data\_size;\ ++i)}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ data[i]\ |=\ fault[i];}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ FaultInjector::FaultInjector(UInt32\ core\_id,\ MemComponent::component\_t\ mem\_component)}
+\DoxyCodeLine{00077\ \ \ \ :\ m\_core\_id(core\_id)}
+\DoxyCodeLine{00078\ \ \ \ ,\ m\_mem\_component(mem\_component)}
+\DoxyCodeLine{00079\ \{}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00083\ FaultInjector::preRead(IntPtr\ addr,\ IntPtr\ location,\ UInt32\ data\_size,\ Byte\ *fault,\ SubsecondTime\ time)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{comment}{//\ Data\ at\ virtual\ address\ <addr>\ is\ about\ to\ be\ read\ with\ size\ <data\_size>.}}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{comment}{//\ <location>\ corresponds\ to\ the\ physical\ location\ (cache\ line)\ where\ the\ data\ lives.}}
+\DoxyCodeLine{00087\ \ \ \ \textcolor{comment}{//\ Update\ <fault>\ here\ according\ to\ errors\ that\ have\ accumulated\ in\ this\ memory\ location.}}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00091\ FaultInjector::postWrite(IntPtr\ addr,\ IntPtr\ location,\ UInt32\ data\_size,\ Byte\ *fault,\ SubsecondTime\ time)}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{comment}{//\ Data\ at\ virtual\ address\ <addr>\ has\ just\ been\ written\ to.}}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{comment}{//\ Update\ <fault>\ here\ according\ to\ errors\ that\ occured\ during\ the\ writing\ of\ this\ memory\ location.}}
+\DoxyCodeLine{00095\ \}}
+
+\end{DoxyCode}

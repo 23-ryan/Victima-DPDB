@@ -1,0 +1,138 @@
+\doxysection{sync\+\_\+client.\+cc}
+\label{sync__client_8cc_source}\index{common/system/sync\_client.cc@{common/system/sync\_client.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}sync\_client.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}sync\_server.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ SyncClient::SyncClient(Thread\ *thread)}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ :\ m\_thread(thread)}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ ,\ m\_server(Sim()-\/>getSyncServer())}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ SyncClient::\string~SyncClient()}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{void}\ SyncClient::mutexInit(carbon\_mutex\_t\ *mux)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ m\_server-\/>mutexInit(thread-\/>getId(),\ mux);}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ SubsecondTime\ SyncClient::mutexLock(carbon\_mutex\_t\ *mux,\ SubsecondTime\ delay)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keywordflow}{return}\ \_\_mutexLock(mux,\ \textcolor{keyword}{false},\ delay).first;}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ std::pair<SubsecondTime,\ bool>\ SyncClient::mutexTrylock(carbon\_mutex\_t\ *mux)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{return}\ \_\_mutexLock(mux,\ \textcolor{keyword}{true},\ SubsecondTime::Zero());}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ std::pair<SubsecondTime,\ bool>\ SyncClient::\_\_mutexLock(carbon\_mutex\_t\ *mux,\ \textcolor{keywordtype}{bool}\ tryLock,\ SubsecondTime\ delay)}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00042\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00043\ \ \ \ SubsecondTime\ start\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime()\ +\ delay;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ std::pair<SubsecondTime,\ bool>\ result\ =\ m\_server-\/>mutexLock(thread-\/>getId(),\ mux,\ tryLock,\ start\_time);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>reschedule(result.first,\ core))}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(result.first,\ SyncInstruction::PTHREAD\_MUTEX));}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{return}\ std::pair<SubsecondTime,\ bool>(result.first\ >\ start\_time\ ?\ result.first\ -\/\ start\_time\ :\ SubsecondTime::Zero(),\ result.second);}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ SubsecondTime\ SyncClient::mutexUnlock(carbon\_mutex\_t\ *mux,\ SubsecondTime\ delay)}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00058\ \ \ \ SubsecondTime\ start\_time\ =\ thread-\/>getCore()-\/>getPerformanceModel()-\/>getElapsedTime()\ +\ delay;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ SubsecondTime\ time\ =\ m\_server-\/>mutexUnlock(thread-\/>getId(),\ mux,\ start\_time);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ start\_time)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ thread-\/>getCore()-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::PTHREAD\_MUTEX));}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{return}\ time\ >\ start\_time\ ?\ time\ -\/\ start\_time\ :\ SubsecondTime::Zero();}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}\ SyncClient::condInit(carbon\_cond\_t\ *cond)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ m\_server-\/>condInit(thread-\/>getId(),\ cond);}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ SubsecondTime\ SyncClient::condWait(carbon\_cond\_t\ *cond,\ carbon\_mutex\_t\ *mux)}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00078\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00079\ \ \ \ SubsecondTime\ start\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ SubsecondTime\ time\ =\ m\_server-\/>condWait(thread-\/>getId(),\ cond,\ mux,\ start\_time);}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>reschedule(time,\ core))}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::PTHREAD\_COND));}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \textcolor{keywordflow}{return}\ time\ >\ start\_time\ ?\ time\ -\/\ start\_time\ :\ SubsecondTime::Zero();}
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ SubsecondTime\ SyncClient::condSignal(carbon\_cond\_t\ *cond)}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00094\ \ \ \ SubsecondTime\ start\_time\ =\ thread-\/>getCore()-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ m\_server-\/>condSignal(thread-\/>getId(),\ cond,\ start\_time);}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ SubsecondTime\ SyncClient::condBroadcast(carbon\_cond\_t\ *cond)}
+\DoxyCodeLine{00102\ \{}
+\DoxyCodeLine{00103\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00104\ \ \ \ SubsecondTime\ start\_time\ =\ thread-\/>getCore()-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ m\_server-\/>condBroadcast(thread-\/>getId(),\ cond,\ start\_time);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::Zero();}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keywordtype}{void}\ SyncClient::barrierInit(carbon\_barrier\_t\ *barrier,\ UInt32\ count)}
+\DoxyCodeLine{00112\ \{}
+\DoxyCodeLine{00113\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ m\_server-\/>barrierInit(thread-\/>getId(),\ barrier,\ count);}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ SubsecondTime\ SyncClient::barrierWait(carbon\_barrier\_t\ *barrier)}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \ \ \ Thread\ *thread\ =\ Sim()-\/>getThreadManager()-\/>getCurrentThread();}
+\DoxyCodeLine{00121\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00122\ \ \ \ SubsecondTime\ start\_time\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ SubsecondTime\ time\ =\ m\_server-\/>barrierWait(thread-\/>getId(),\ barrier,\ start\_time);}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>reschedule(time,\ core))}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::PTHREAD\_BARRIER));}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keywordflow}{return}\ time\ >\ start\_time\ ?\ time\ -\/\ start\_time\ :\ SubsecondTime::Zero();}
+\DoxyCodeLine{00132\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,98 @@
+\doxysection{dram\+\_\+directory\+\_\+cntlr.\+h}
+\label{dram__directory__cntlr_8h_source}\index{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cntlr.h@{common/core/memory\_subsystem/pr\_l1\_pr\_l2\_dram\_directory\_msi/dram\_directory\_cntlr.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}dram\_directory\_cache.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}req\_queue\_list.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}dram\_cntlr.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}shmem\_req.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}shmem\_msg.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}coherency\_protocol.h"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{class\ }NucaCache;}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }PrL1PrL2DramDirectoryMSI}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{keyword}{class\ }DramDirectoryCntlr}
+\DoxyCodeLine{00019\ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Functional\ Models}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ MemoryManagerBase*\ m\_memory\_manager;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ m\_dram\_controller\_home\_lookup;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ DramDirectoryCache*\ m\_dram\_directory\_cache;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ ReqQueueList*\ m\_dram\_directory\_req\_queue\_list;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ NucaCache*\ m\_nuca\_cache;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ ShmemPerf\ m\_dummy\_shmem\_perf;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ CoherencyProtocol::type\_t\ m\_protocol;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ UInt64\ evict[DirectoryState::NUM\_DIRECTORY\_STATES];}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ UInt64\ forward,\ forward\_failed;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ UInt32\ getCacheBlockSize()\ \{\ \textcolor{keywordflow}{return}\ m\_cache\_block\_size;\ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ MemoryManagerBase*\ getMemoryManager()\ \{\ \textcolor{keywordflow}{return}\ m\_memory\_manager;\ \}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Private\ Functions}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ DirectoryEntry*\ processDirectoryEntryAllocationReq(ShmemReq*\ shmem\_req);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processNullifyReq(ShmemReq*\ shmem\_req);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processNextReqFromL2Cache(IntPtr\ address);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processExReqFromL2Cache(ShmemReq*\ shmem\_req,\ Byte*\ cached\_data\_buf\ =\ NULL);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processShReqFromL2Cache(ShmemReq*\ shmem\_req,\ Byte*\ cached\_data\_buf\ =\ NULL);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ retrieveDataAndSendToL2Cache(ShmemMsg::msg\_t\ reply\_msg\_type,\ core\_id\_t\ receiver,\ IntPtr\ address,\ Byte*\ cached\_data\_buf,\ ShmemMsg\ *orig\_shmem\_msg);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processDRAMReply(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processUpgradeReqFromL2Cache(ShmemReq*\ shmem\_req,\ Byte*\ cached\_data\_buf\ =\ NULL);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processInvRepFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processFlushRepFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processWbRepFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ sendDataToNUCA(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ \textcolor{keywordtype}{bool}\ count,\ CacheBlockInfo::block\_type\_t\ block\_type);}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ sendDataToDram(IntPtr\ address,\ core\_id\_t\ requester,\ Byte*\ data\_buf,\ SubsecondTime\ now,\ CacheBlockInfo::block\_type\_t\ block\_type);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateShmemPerf(ShmemReq\ *shmem\_req,\ ShmemPerf::shmem\_times\_type\_t\ reason\ =\ ShmemPerf::UNKNOWN)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ updateShmemPerf(shmem\_req-\/>getShmemMsg(),\ reason);}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateShmemPerf(ShmemMsg\ *shmem\_msg,\ ShmemPerf::shmem\_times\_type\_t\ reason\ =\ ShmemPerf::UNKNOWN)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ shmem\_msg-\/>getPerf()-\/>updateTime(getShmemPerfModel()-\/>getElapsedTime(ShmemPerfModel::\_SIM\_THREAD),\ reason);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ DramDirectoryCntlr(core\_id\_t\ core\_id,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemoryManagerBase*\ memory\_manager,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ dram\_controller\_home\_lookup,}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NucaCache*\ nuca\_cache,}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ dram\_directory\_total\_entries,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ dram\_directory\_associativity,}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ dram\_directory\_max\_num\_sharers,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ dram\_directory\_max\_hw\_sharers,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ dram\_directory\_type\_str,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ComponentLatency\ dram\_directory\_cache\_access\_time,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model);}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \string~DramDirectoryCntlr();}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMsgFromL2Cache(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMsgFromDRAM(core\_id\_t\ sender,\ ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ DramDirectoryCache*\ getDramDirectoryCache()\ \{\ \textcolor{keywordflow}{return}\ m\_dram\_directory\_cache;\ \}}
+\DoxyCodeLine{00090\ \ \ \ \};}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \}}
+
+\end{DoxyCode}

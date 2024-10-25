@@ -1,0 +1,1075 @@
+\doxysection{Interval\+Timer Class Reference}
+\label{classIntervalTimer}\index{IntervalTimer@{IntervalTimer}}
+
+
+{\ttfamily \#include $<$interval\+\_\+timer.\+h$>$}
+
+
+
+Collaboration diagram for Interval\+Timer\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Interval\+Timer} (\textbf{ Core} $\ast$core, \textbf{ Performance\+Model} $\ast$perf, const \textbf{ Core\+Model} $\ast$core\+\_\+model, int misprediction\+\_\+penalty, int dispatch\+\_\+width, int window\+\_\+size, bool do\+\_\+functional\+\_\+unit\+\_\+contention)
+\item 
+\textbf{ $\sim$\+Interval\+Timer} ()
+\item 
+void \textbf{ free} ()
+\item 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ uint64\+\_\+t} $>$ \textbf{ simulate} (const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&insts)
+\item 
+void \textbf{ synchronize} (\textbf{ uint64\+\_\+t} time)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ uint64\+\_\+t} $>$ \textbf{ dispatch\+Window} ()
+\item 
+\textbf{ uint32\+\_\+t} \textbf{ calculate\+Current\+Dispatch\+Rate} ()
+\item 
+void \textbf{ issue\+Mem\+Op} (\textbf{ Windows\+::\+Window\+Entry} \&micro\+\_\+op)
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ dispatch\+Instruction} (\textbf{ Windows\+::\+Window\+Entry} \&instruction, \textbf{ Stop\+Dispatch\+Reason} \&continue\+Dispatching)
+\item 
+void \textbf{ update\+Critical\+Path} (\textbf{ Windows\+::\+Window\+Entry} \&micro\+Op, \textbf{ uint64\+\_\+t} \&latency)
+\item 
+void \textbf{ block\+Window} ()
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ get\+Max\+Producer\+Exec\+Time} (\textbf{ Windows\+::\+Window\+Entry} \&instruction)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Core} $\ast$ \textbf{ m\+\_\+core}
+\item 
+const \textbf{ Core\+Model} $\ast$ \textbf{ m\+\_\+core\+\_\+model}
+\item 
+const \textbf{ uint32\+\_\+t} \textbf{ m\+\_\+dispatch\+\_\+width}
+\item 
+const \textbf{ uint32\+\_\+t} \textbf{ m\+\_\+branch\+\_\+misprediction\+\_\+penalty}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+mem\+\_\+dep\+\_\+mask}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+lll\+\_\+dep\+\_\+mask}
+\item 
+\textbf{ Fixed\+Point} \textbf{ m\+\_\+remaining\+\_\+dispatch\+\_\+bandwidth}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+max\+\_\+store\+\_\+completion\+\_\+time}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+max\+\_\+load\+\_\+completion\+\_\+time}
+\item 
+\textbf{ Contention\+Model} \textbf{ m\+\_\+loadstore\+\_\+contention}
+\item 
+\textbf{ Windows} $\ast$ \textbf{ m\+\_\+windows}
+\item 
+\textbf{ Performance\+Model} $\ast$ \textbf{ m\+\_\+perf\+\_\+model}
+\item 
+const \textbf{ Component\+Period} $\ast$ \textbf{ m\+\_\+frequency\+\_\+domain}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uop\+\_\+type\+\_\+count} [\textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}]
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uops\+\_\+total}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uops\+\_\+x87}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+uops\+\_\+pause}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+ICache\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+BPred\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+DCache\+Overlapped}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Long\+Latency\+Loads}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Serialization\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Serialization\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Hidden\+Longer\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Hidden\+Longer\+DCache\+Latency}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+outstanding\+Long\+Latency\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+outstanding\+Long\+Latency\+Cycles}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+last\+Accounted\+Memory\+Cycle}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+num\+Mfence\+Insns}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+total\+Mfence\+Latency}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Base}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Branch\+Predictor}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Serialization}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+cpi\+Long\+Latency}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+cpi\+Instruction\+Cache}
+\item 
+std\+::vector$<$ \textbf{ Subsecond\+Time} $>$ \textbf{ m\+\_\+cpi\+Data\+Cache}
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+cpi\+Base\+Stop\+Dispatch} [\textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+SIZE}]
+\item 
+\textbf{ uint64\+\_\+t} \textbf{ m\+\_\+cp\+Contr\+By\+Type} [\textbf{ CPCONTR\+\_\+\+TYPE\+\_\+\+SIZE}]
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 36} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{IntervalTimer@{IntervalTimer}!IntervalTimer@{IntervalTimer}}
+\index{IntervalTimer@{IntervalTimer}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{IntervalTimer()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a06f396fae93115eb7be8590d02bf42c5} 
+Interval\+Timer\+::\+Interval\+Timer (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Performance\+Model} $\ast$}]{perf}{, }\item[{const \textbf{ Core\+Model} $\ast$}]{core\+\_\+model}{, }\item[{int}]{misprediction\+\_\+penalty}{, }\item[{int}]{dispatch\+\_\+width}{, }\item[{int}]{window\+\_\+size}{, }\item[{bool}]{do\+\_\+functional\+\_\+unit\+\_\+contention}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 23} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ CPCONTR\+\_\+\+TYPE\+\_\+\+SIZE}, \textbf{ Cp\+Contr\+Type\+String()}, \textbf{ Core\+::get\+Id()}, \textbf{ Micro\+Op\+::get\+Subtype\+String()}, \textbf{ Hit\+Where\+Is\+Valid()}, \textbf{ Hit\+Where\+String()}, \textbf{ is\+Power2()}, \textbf{ itostr()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+cp\+Contr\+By\+Type}, \textbf{ m\+\_\+cpi\+Base}, \textbf{ m\+\_\+cpi\+Base\+Stop\+Dispatch}, \textbf{ m\+\_\+cpi\+Branch\+Predictor}, \textbf{ m\+\_\+cpi\+Data\+Cache}, \textbf{ m\+\_\+cpi\+Instruction\+Cache}, \textbf{ m\+\_\+cpi\+Long\+Latency}, \textbf{ m\+\_\+cpi\+Serialization}, \textbf{ m\+\_\+last\+Accounted\+Memory\+Cycle}, \textbf{ m\+\_\+lll\+\_\+dep\+\_\+mask}, \textbf{ m\+\_\+mem\+\_\+dep\+\_\+mask}, \textbf{ m\+\_\+num\+BPred\+Overlapped}, \textbf{ m\+\_\+num\+DCache\+Overlapped}, \textbf{ m\+\_\+num\+Hidden\+Longer\+DCache\+Latency}, \textbf{ m\+\_\+num\+ICache\+Overlapped}, \textbf{ m\+\_\+num\+Long\+Latency\+Loads}, \textbf{ m\+\_\+num\+Mfence\+Insns}, \textbf{ m\+\_\+num\+Serialization\+Insns}, \textbf{ m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Cycles}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Insns}, \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}, \textbf{ m\+\_\+total\+Hidden\+Longer\+DCache\+Latency}, \textbf{ m\+\_\+total\+Mfence\+Latency}, \textbf{ m\+\_\+total\+Serialization\+Latency}, \textbf{ m\+\_\+uop\+\_\+type\+\_\+count}, \textbf{ m\+\_\+uops\+\_\+pause}, \textbf{ m\+\_\+uops\+\_\+total}, \textbf{ m\+\_\+uops\+\_\+x87}, \textbf{ Hit\+Where\+::\+NUM\+\_\+\+HITWHERES}, \textbf{ register\+Stats\+Metric()}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+SIZE}, \textbf{ Stop\+Dispatch\+Reason\+String()}, \textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}, \textbf{ Hit\+Where\+::\+WHERE\+\_\+\+FIRST}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a06f396fae93115eb7be8590d02bf42c5_cgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!````~IntervalTimer@{$\sim$IntervalTimer}}
+\index{````~IntervalTimer@{$\sim$IntervalTimer}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{$\sim$IntervalTimer()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a8a3549c73c7093ee01423ae239af895c} 
+Interval\+Timer\+::$\sim$\+Interval\+Timer (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 159} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ free()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=289pt]{classIntervalTimer_a8a3549c73c7093ee01423ae239af895c_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Function Documentation}
+\index{IntervalTimer@{IntervalTimer}!blockWindow@{blockWindow}}
+\index{blockWindow@{blockWindow}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{blockWindow()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a7bc5de009eaf6010f53739f75a19d76e} 
+void Interval\+Timer\+::block\+Window (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+An micro\+Operation blocks the window\+: mark the micro-\/ops that overlap with this micro-\/op. Start the loads that overlap with this micro-\/op. 
+
+Definition at line \textbf{ 583} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Windows\+::\+Window\+Entry\+::add\+Overlap\+Flag()}, \textbf{ Windows\+::\+Window\+Entry\+::\+BPRED\+\_\+\+OVERLAP}, \textbf{ Windows\+::\+Window\+Entry\+::clear\+Dependent()}, \textbf{ Windows\+::\+Window\+Entry\+::\+DCACHE\+\_\+\+OVERLAP}, \textbf{ Windows\+::get\+Critical\+Path\+Head()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Dependency()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Dyn\+Micro\+Op()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Windows\+::get\+Instruction()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Load\+Access()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Micro\+Op()}, \textbf{ Windows\+::get\+Window\+Iterator()}, \textbf{ Windows\+::\+Iterator\+::has\+Next()}, \textbf{ Windows\+::\+Window\+Entry\+::has\+Overlap\+Flag()}, \textbf{ Windows\+::\+Window\+Entry\+::\+ICACHE\+\_\+\+OVERLAP}, \textbf{ Micro\+Op\+::is\+Branch()}, \textbf{ Windows\+::\+Window\+Entry\+::is\+Dependent()}, \textbf{ Windows\+::\+Window\+Entry\+::is\+Independent()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Long\+Latency\+Load()}, \textbf{ Micro\+Op\+::is\+Mem\+Barrier()}, \textbf{ Micro\+Op\+::is\+Serializing()}, \textbf{ issue\+Mem\+Op()}, \textbf{ m\+\_\+lll\+\_\+dep\+\_\+mask}, \textbf{ m\+\_\+num\+BPred\+Overlapped}, \textbf{ m\+\_\+num\+DCache\+Overlapped}, \textbf{ m\+\_\+num\+Hidden\+Longer\+DCache\+Latency}, \textbf{ m\+\_\+num\+ICache\+Overlapped}, \textbf{ m\+\_\+total\+Hidden\+DCache\+Latency}, \textbf{ m\+\_\+total\+Hidden\+Longer\+DCache\+Latency}, \textbf{ m\+\_\+windows}, \textbf{ Windows\+::\+Iterator\+::next()}, \textbf{ Memory\+::\+Access\+::phys}, \textbf{ Windows\+::\+Window\+Entry\+::set\+Data\+Dependent()}, \textbf{ Windows\+::\+Window\+Entry\+::set\+Exec\+Time()}, \textbf{ Windows\+::\+Window\+Entry\+::set\+Independent\+Miss()}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, and \textbf{ Windows\+::window\+Contains()}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a7bc5de009eaf6010f53739f75a19d76e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a7bc5de009eaf6010f53739f75a19d76e_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!calculateCurrentDispatchRate@{calculateCurrentDispatchRate}}
+\index{calculateCurrentDispatchRate@{calculateCurrentDispatchRate}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{calculateCurrentDispatchRate()}
+{\footnotesize\ttfamily \label{classIntervalTimer_afd1cf5384658c75738f336cfe970fc50} 
+\textbf{ uint32\+\_\+t} Interval\+Timer\+::calculate\+Current\+Dispatch\+Rate (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 310} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ TFixed\+Point$<$ \+\_\+\+\_\+\+UINT64\+\_\+\+C(0x4000)$>$\+::floor()}, \textbf{ Windows\+::get\+Critical\+Path\+Length()}, \textbf{ Windows\+::get\+Effective\+Critical\+Path\+Length()}, \textbf{ Windows\+::get\+Old\+Window\+Length()}, \textbf{ m\+\_\+dispatch\+\_\+width}, \textbf{ m\+\_\+remaining\+\_\+dispatch\+\_\+bandwidth}, \textbf{ m\+\_\+windows}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_afd1cf5384658c75738f336cfe970fc50_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_afd1cf5384658c75738f336cfe970fc50_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!dispatchInstruction@{dispatchInstruction}}
+\index{dispatchInstruction@{dispatchInstruction}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{dispatchInstruction()}
+{\footnotesize\ttfamily \label{classIntervalTimer_adcced8aecd97e8b164fbff3fd7f1f2dc} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::dispatch\+Instruction (\begin{DoxyParamCaption}\item[{\textbf{ Windows\+::\+Window\+Entry} \&}]{instruction}{, }\item[{\textbf{ Stop\+Dispatch\+Reason} \&}]{continue\+Dispatching}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 356} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ block\+Window()}, \textbf{ Windows\+::\+Window\+Entry\+::\+BPRED\+\_\+\+OVERLAP}, \textbf{ Windows\+::calculate\+Branch\+Resolution\+Latency()}, \textbf{ Windows\+::clear\+Old\+Window()}, \textbf{ Windows\+::\+Window\+Entry\+::cphead}, \textbf{ Windows\+::\+Window\+Entry\+::cptail}, \textbf{ Windows\+::\+Window\+Entry\+::\+DCACHE\+\_\+\+OVERLAP}, \textbf{ Contention\+Model\+::get\+Barrier\+Completion\+Time()}, \textbf{ Core\+Model\+::get\+Bypass\+Latency()}, \textbf{ Contention\+Model\+::get\+Completion\+Time()}, \textbf{ Windows\+::get\+Critical\+Path\+Head()}, \textbf{ Windows\+::get\+Critical\+Path\+Length()}, \textbf{ Windows\+::get\+Critical\+Path\+Tail()}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Dyn\+Micro\+Op()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Exec\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+ICache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::get\+ICache\+Latency()}, \textbf{ Performance\+Model\+::get\+Instruction\+Count()}, \textbf{ get\+Max\+Producer\+Exec\+Time()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Micro\+Op()}, \textbf{ Windows\+::get\+Minimal\+Flush\+Latency()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Period()}, \textbf{ Windows\+::\+Window\+Entry\+::has\+Overlap\+Flag()}, \textbf{ Windows\+::\+Window\+Entry\+::\+ICACHE\+\_\+\+OVERLAP}, \textbf{ Micro\+Op\+::is\+Branch()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Branch\+Mispredicted()}, \textbf{ Micro\+Op\+::is\+Execute()}, \textbf{ Micro\+Op\+::is\+Interrupt()}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Long\+Latency\+Load()}, \textbf{ Micro\+Op\+::is\+Mem\+Barrier()}, \textbf{ Micro\+Op\+::is\+Serializing()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ issue\+Mem\+Op()}, \textbf{ Hit\+Where\+::\+L1I}, \textbf{ m\+\_\+branch\+\_\+misprediction\+\_\+penalty}, \textbf{ m\+\_\+core\+\_\+model}, \textbf{ m\+\_\+cpi\+Branch\+Predictor}, \textbf{ m\+\_\+cpi\+Data\+Cache}, \textbf{ m\+\_\+cpi\+Instruction\+Cache}, \textbf{ m\+\_\+cpi\+Serialization}, \textbf{ m\+\_\+dispatch\+\_\+width}, \textbf{ m\+\_\+last\+Accounted\+Memory\+Cycle}, \textbf{ m\+\_\+loadstore\+\_\+contention}, \textbf{ m\+\_\+max\+\_\+load\+\_\+completion\+\_\+time}, \textbf{ m\+\_\+max\+\_\+store\+\_\+completion\+\_\+time}, \textbf{ m\+\_\+num\+Long\+Latency\+Loads}, \textbf{ m\+\_\+num\+Mfence\+Insns}, \textbf{ m\+\_\+num\+Serialization\+Insns}, \textbf{ m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Cycles}, \textbf{ m\+\_\+outstanding\+Long\+Latency\+Insns}, \textbf{ m\+\_\+perf\+\_\+model}, \textbf{ m\+\_\+total\+Serialization\+Latency}, \textbf{ m\+\_\+windows}, \textbf{ Windows\+::\+Window\+Entry\+::max\+Producer}, \textbf{ Windows\+::\+Window\+Entry\+::set\+Exec\+Time()}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+BRANCH\+\_\+\+MISPREDICT}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+ICACHE\+\_\+\+MISS}, \textbf{ uint64\+\_\+t}, and \textbf{ update\+Critical\+Path()}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classIntervalTimer_adcced8aecd97e8b164fbff3fd7f1f2dc_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_adcced8aecd97e8b164fbff3fd7f1f2dc_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!dispatchWindow@{dispatchWindow}}
+\index{dispatchWindow@{dispatchWindow}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{dispatchWindow()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a24640c812a7a8cd834c1d5393194d96c} 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ uint64\+\_\+t} $>$ Interval\+Timer\+::dispatch\+Window (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 225} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ ADD\+\_\+\+STOP\+\_\+\+DISPATCH\+\_\+\+REASON}, \textbf{ calculate\+Current\+Dispatch\+Rate()}, \textbf{ CPCONTR\+\_\+\+TYPE\+\_\+\+SIZE}, \textbf{ Cp\+Contr\+Type\+String()}, \textbf{ dispatch\+Instruction()}, \textbf{ Windows\+::dispatch\+Instruction()}, \textbf{ Windows\+::get\+Cp\+Contr\+Fraction()}, \textbf{ Windows\+::get\+Critical\+Path\+Length()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Dyn\+Micro\+Op()}, \textbf{ Windows\+::get\+Effective\+Critical\+Path\+Length()}, \textbf{ Performance\+Model\+::get\+Instruction\+Count()}, \textbf{ Windows\+::get\+Instruction\+To\+Dispatch()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Micro\+Op()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ Component\+Period\+::get\+Period()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Period()}, \textbf{ Dynamic\+Micro\+Op\+::is\+Last()}, \textbf{ m\+\_\+core}, \textbf{ Windows\+::m\+\_\+cpcontr\+\_\+bytype}, \textbf{ Windows\+::m\+\_\+cpcontr\+\_\+total}, \textbf{ m\+\_\+cp\+Contr\+By\+Type}, \textbf{ m\+\_\+cpi\+Base}, \textbf{ m\+\_\+cpi\+Base\+Stop\+Dispatch}, \textbf{ m\+\_\+dispatch\+\_\+width}, \textbf{ m\+\_\+frequency\+\_\+domain}, \textbf{ m\+\_\+perf\+\_\+model}, \textbf{ m\+\_\+windows}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+DISPATCH\+\_\+\+RATE}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+DISPATCH\+\_\+\+WIDTH}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+NO\+\_\+\+REASON}, \textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+WINDOW\+\_\+\+EMPTY}, \textbf{ Performance\+Model\+::trace\+Instruction()}, \textbf{ uint32\+\_\+t}, \textbf{ uint64\+\_\+t}, and \textbf{ Windows\+::w\+Is\+Empty()}.
+
+
+
+Referenced by \textbf{ simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classIntervalTimer_a24640c812a7a8cd834c1d5393194d96c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a24640c812a7a8cd834c1d5393194d96c_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!free@{free}}
+\index{free@{free}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{free()}
+{\footnotesize\ttfamily \label{classIntervalTimer_ae1d3a8ae819d5382a506d1bd1ba3fc03} 
+void Interval\+Timer\+::free (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 164} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ m\+\_\+windows}.
+
+
+
+Referenced by \textbf{ Interval\+Performance\+Model\+::$\sim$\+Interval\+Performance\+Model()}, and \textbf{ $\sim$\+Interval\+Timer()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=314pt]{classIntervalTimer_ae1d3a8ae819d5382a506d1bd1ba3fc03_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!getMaxProducerExecTime@{getMaxProducerExecTime}}
+\index{getMaxProducerExecTime@{getMaxProducerExecTime}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{getMaxProducerExecTime()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a465ec8e6c08bd7c556878b748cc488f2} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::get\+Max\+Producer\+Exec\+Time (\begin{DoxyParamCaption}\item[{\textbf{ Windows\+::\+Window\+Entry} \&}]{instruction}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 689} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Dynamic\+Micro\+Op\+::get\+Dependency()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Dyn\+Micro\+Op()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Exec\+Time()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Fetch\+Time()}, \textbf{ Windows\+::get\+Instruction()}, \textbf{ Windows\+::get\+Oldest\+Instruction()}, \textbf{ m\+\_\+windows}, \textbf{ Windows\+::old\+Window\+Contains()}, and \textbf{ uint32\+\_\+t}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a465ec8e6c08bd7c556878b748cc488f2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a465ec8e6c08bd7c556878b748cc488f2_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!issueMemOp@{issueMemOp}}
+\index{issueMemOp@{issueMemOp}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{issueMemOp()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a45747f1f25a195154ed7f15a2ce2a92a} 
+void Interval\+Timer\+::issue\+Mem\+Op (\begin{DoxyParamCaption}\item[{\textbf{ Windows\+::\+Window\+Entry} \&}]{micro\+\_\+op}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 331} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Core\+::access\+Memory()}, \textbf{ Memory\+::\+Access\+::address}, \textbf{ Subsecond\+Time\+::divide\+Rounded()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Address()}, \textbf{ Instruction\+::get\+Address()}, \textbf{ Dynamic\+Micro\+Op\+::get\+DCache\+Hit\+Where()}, \textbf{ Core\+::get\+Dvfs\+Domain()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Dyn\+Micro\+Op()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Exec\+Latency()}, \textbf{ Micro\+Op\+::get\+Instruction()}, \textbf{ Micro\+Op\+::get\+Memory\+Access\+Size()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Micro\+Op()}, \textbf{ Component\+Period\+::get\+Period()}, \textbf{ Memory\+Result\+::hit\+\_\+where}, \textbf{ Micro\+Op\+::is\+Load()}, \textbf{ Micro\+Op\+::is\+Store()}, \textbf{ Memory\+Result\+::latency}, \textbf{ m\+\_\+core}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+RETURN}, \textbf{ Core\+::\+NONE}, \textbf{ Core\+::\+READ}, \textbf{ Dynamic\+Micro\+Op\+::set\+DCache\+Hit\+Where()}, \textbf{ Dynamic\+Micro\+Op\+::set\+Exec\+Latency()}, \textbf{ uint64\+\_\+t}, \textbf{ Hit\+Where\+::\+UNKNOWN}, and \textbf{ Core\+::\+WRITE}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ dispatch\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a45747f1f25a195154ed7f15a2ce2a92a_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a45747f1f25a195154ed7f15a2ce2a92a_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!simulate@{simulate}}
+\index{simulate@{simulate}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{simulate()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a2ffc2d76a4b57a6b165f49e6ce562da2} 
+boost\+::tuple$<$ \textbf{ uint64\+\_\+t}, \textbf{ uint64\+\_\+t} $>$ Interval\+Timer\+::simulate (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \textbf{ Dynamic\+Micro\+Op} $\ast$ $>$ \&}]{insts}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 180} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Windows\+::add()}, \textbf{ Memory\+::\+Access\+::address}, \textbf{ dispatch\+Window()}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+WARNING\+\_\+\+ONCE}, \textbf{ m\+\_\+mem\+\_\+dep\+\_\+mask}, \textbf{ m\+\_\+uop\+\_\+type\+\_\+count}, \textbf{ m\+\_\+uops\+\_\+pause}, \textbf{ m\+\_\+uops\+\_\+total}, \textbf{ m\+\_\+uops\+\_\+x87}, \textbf{ m\+\_\+windows}, \textbf{ uint64\+\_\+t}, and \textbf{ Windows\+::w\+Is\+Full()}.
+
+
+
+Referenced by \textbf{ Interval\+Performance\+Model\+::simulate()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_a2ffc2d76a4b57a6b165f49e6ce562da2_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=324pt]{classIntervalTimer_a2ffc2d76a4b57a6b165f49e6ce562da2_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!synchronize@{synchronize}}
+\index{synchronize@{synchronize}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{synchronize()}
+{\footnotesize\ttfamily \label{classIntervalTimer_a9b986ef785d88d8f12ea657d14f0e6db} 
+void Interval\+Timer\+::synchronize (\begin{DoxyParamCaption}\item[{\textbf{ uint64\+\_\+t}}]{time}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Performance\+Model\+::notify\+Elapsed\+Time\+Update()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{classIntervalTimer_a9b986ef785d88d8f12ea657d14f0e6db_icgraph}
+\end{center}
+\end{figure}
+\index{IntervalTimer@{IntervalTimer}!updateCriticalPath@{updateCriticalPath}}
+\index{updateCriticalPath@{updateCriticalPath}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{updateCriticalPath()}
+{\footnotesize\ttfamily \label{classIntervalTimer_afa4096966c36121bc051b29a414a6d82} 
+void Interval\+Timer\+::update\+Critical\+Path (\begin{DoxyParamCaption}\item[{\textbf{ Windows\+::\+Window\+Entry} \&}]{micro\+\_\+op}{, }\item[{\textbf{ uint64\+\_\+t} \&}]{latency}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+Move a micro\+\_\+op to the old window. If it extends the critical path by more than the long-\/latency cut-\/off, clear the window instead. 
+
+Definition at line \textbf{ 564} of file \textbf{ interval\+\_\+timer.\+cc}.
+
+
+
+References \textbf{ Windows\+::clear\+Old\+Window()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Dyn\+Micro\+Op()}, \textbf{ Windows\+::\+Window\+Entry\+::get\+Exec\+Time()}, \textbf{ Dynamic\+Micro\+Op\+::get\+Period()}, \textbf{ Windows\+::long\+Latency\+Operation\+Latency()}, \textbf{ m\+\_\+cpi\+Long\+Latency}, \textbf{ m\+\_\+windows}, \textbf{ uint64\+\_\+t}, and \textbf{ Windows\+::update\+Critical\+Path\+Tail()}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_afa4096966c36121bc051b29a414a6d82_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classIntervalTimer_afa4096966c36121bc051b29a414a6d82_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{IntervalTimer@{IntervalTimer}!m\_branch\_misprediction\_penalty@{m\_branch\_misprediction\_penalty}}
+\index{m\_branch\_misprediction\_penalty@{m\_branch\_misprediction\_penalty}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_branch\_misprediction\_penalty}
+{\footnotesize\ttfamily \label{classIntervalTimer_a2204d8150334de664a8feeee4455c804} 
+const \textbf{ uint32\+\_\+t} Interval\+Timer\+::m\+\_\+branch\+\_\+misprediction\+\_\+penalty\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_core@{m\_core}}
+\index{m\_core@{m\_core}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_core}
+{\footnotesize\ttfamily \label{classIntervalTimer_a11d8506ae2d1fc23e14d6a19fd0c3fe3} 
+\textbf{ Core}$\ast$ Interval\+Timer\+::m\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 65} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}, and \textbf{ issue\+Mem\+Op()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_core\_model@{m\_core\_model}}
+\index{m\_core\_model@{m\_core\_model}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_core\_model}
+{\footnotesize\ttfamily \label{classIntervalTimer_afa6066e912069e16065cb1a2d70f6c67} 
+const \textbf{ Core\+Model}$\ast$ Interval\+Timer\+::m\+\_\+core\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 66} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpContrByType@{m\_cpContrByType}}
+\index{m\_cpContrByType@{m\_cpContrByType}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpContrByType}
+{\footnotesize\ttfamily \label{classIntervalTimer_a0b10bbb1756c0cc825a557e2c1ea9ad0} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+cp\+Contr\+By\+Type[\textbf{ CPCONTR\+\_\+\+TYPE\+\_\+\+SIZE}]\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiBase@{m\_cpiBase}}
+\index{m\_cpiBase@{m\_cpiBase}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiBase}
+{\footnotesize\ttfamily \label{classIntervalTimer_aa28e0ee39cf26c46ce4400965c62ee23} 
+\textbf{ Subsecond\+Time} Interval\+Timer\+::m\+\_\+cpi\+Base\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 122} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiBaseStopDispatch@{m\_cpiBaseStopDispatch}}
+\index{m\_cpiBaseStopDispatch@{m\_cpiBaseStopDispatch}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiBaseStopDispatch}
+{\footnotesize\ttfamily \label{classIntervalTimer_abbf31a90a541f1be65caad7682f2615a} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+cpi\+Base\+Stop\+Dispatch[\textbf{ STOP\+\_\+\+DISPATCH\+\_\+\+SIZE}]\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 130} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiBranchPredictor@{m\_cpiBranchPredictor}}
+\index{m\_cpiBranchPredictor@{m\_cpiBranchPredictor}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiBranchPredictor}
+{\footnotesize\ttfamily \label{classIntervalTimer_a6e5af96941e473a4694529e590641dca} 
+\textbf{ Subsecond\+Time} Interval\+Timer\+::m\+\_\+cpi\+Branch\+Predictor\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 123} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiDataCache@{m\_cpiDataCache}}
+\index{m\_cpiDataCache@{m\_cpiDataCache}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiDataCache}
+{\footnotesize\ttfamily \label{classIntervalTimer_a297f63d69eb74e3fda033f87cd86a8e9} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Interval\+Timer\+::m\+\_\+cpi\+Data\+Cache\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 128} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiInstructionCache@{m\_cpiInstructionCache}}
+\index{m\_cpiInstructionCache@{m\_cpiInstructionCache}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiInstructionCache}
+{\footnotesize\ttfamily \label{classIntervalTimer_a7048447d953b25db694bf1b0751180be} 
+std\+::vector$<$\textbf{ Subsecond\+Time}$>$ Interval\+Timer\+::m\+\_\+cpi\+Instruction\+Cache\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 127} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiLongLatency@{m\_cpiLongLatency}}
+\index{m\_cpiLongLatency@{m\_cpiLongLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiLongLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_ac3572cb8c1012d0076bb5d583e303f63} 
+\textbf{ Subsecond\+Time} Interval\+Timer\+::m\+\_\+cpi\+Long\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 125} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}, and \textbf{ update\+Critical\+Path()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_cpiSerialization@{m\_cpiSerialization}}
+\index{m\_cpiSerialization@{m\_cpiSerialization}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_cpiSerialization}
+{\footnotesize\ttfamily \label{classIntervalTimer_a721f7ce9a940695c348862c5524e3ae7} 
+\textbf{ Subsecond\+Time} Interval\+Timer\+::m\+\_\+cpi\+Serialization\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 124} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_dispatch\_width@{m\_dispatch\_width}}
+\index{m\_dispatch\_width@{m\_dispatch\_width}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_dispatch\_width}
+{\footnotesize\ttfamily \label{classIntervalTimer_aec4de5555d0e98c83843d11bed76a7a6} 
+const \textbf{ uint32\+\_\+t} Interval\+Timer\+::m\+\_\+dispatch\+\_\+width\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 69} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ calculate\+Current\+Dispatch\+Rate()}, \textbf{ dispatch\+Instruction()}, and \textbf{ dispatch\+Window()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_frequency\_domain@{m\_frequency\_domain}}
+\index{m\_frequency\_domain@{m\_frequency\_domain}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_frequency\_domain}
+{\footnotesize\ttfamily \label{classIntervalTimer_a2f367d1360c1dfbe5dd8d9d864e060c6} 
+const \textbf{ Component\+Period}$\ast$ Interval\+Timer\+::m\+\_\+frequency\+\_\+domain\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 88} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Window()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_lastAccountedMemoryCycle@{m\_lastAccountedMemoryCycle}}
+\index{m\_lastAccountedMemoryCycle@{m\_lastAccountedMemoryCycle}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_lastAccountedMemoryCycle}
+{\footnotesize\ttfamily \label{classIntervalTimer_a54b22558a38d6f3f8d1255ec5f620e86} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+last\+Accounted\+Memory\+Cycle\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 116} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_lll\_dep\_mask@{m\_lll\_dep\_mask}}
+\index{m\_lll\_dep\_mask@{m\_lll\_dep\_mask}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_lll\_dep\_mask}
+{\footnotesize\ttfamily \label{classIntervalTimer_afb6c22387650370d8b1b72bafbd69864} 
+\textbf{ UInt64} Interval\+Timer\+::m\+\_\+lll\+\_\+dep\+\_\+mask\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 72} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_loadstore\_contention@{m\_loadstore\_contention}}
+\index{m\_loadstore\_contention@{m\_loadstore\_contention}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_loadstore\_contention}
+{\footnotesize\ttfamily \label{classIntervalTimer_a2090c123f7b54b8c69bafd653615a419} 
+\textbf{ Contention\+Model} Interval\+Timer\+::m\+\_\+loadstore\+\_\+contention\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 83} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_max\_load\_completion\_time@{m\_max\_load\_completion\_time}}
+\index{m\_max\_load\_completion\_time@{m\_max\_load\_completion\_time}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_max\_load\_completion\_time}
+{\footnotesize\ttfamily \label{classIntervalTimer_a11314d6a8cd32cf12bc86b9ce9c58b22} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+max\+\_\+load\+\_\+completion\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 81} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_max\_store\_completion\_time@{m\_max\_store\_completion\_time}}
+\index{m\_max\_store\_completion\_time@{m\_max\_store\_completion\_time}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_max\_store\_completion\_time}
+{\footnotesize\ttfamily \label{classIntervalTimer_a51b89f64015bba06b1a50e69b553d68e} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+max\+\_\+store\+\_\+completion\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 80} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_mem\_dep\_mask@{m\_mem\_dep\_mask}}
+\index{m\_mem\_dep\_mask@{m\_mem\_dep\_mask}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_mem\_dep\_mask}
+{\footnotesize\ttfamily \label{classIntervalTimer_a1ba73bbb10f4ed7b4d5861664a72ec5c} 
+\textbf{ UInt64} Interval\+Timer\+::m\+\_\+mem\+\_\+dep\+\_\+mask\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 71} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}, and \textbf{ simulate()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numBPredOverlapped@{m\_numBPredOverlapped}}
+\index{m\_numBPredOverlapped@{m\_numBPredOverlapped}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numBPredOverlapped}
+{\footnotesize\ttfamily \label{classIntervalTimer_ac7a1df905439b7883016389c850edd75} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+BPred\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 101} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numDCacheOverlapped@{m\_numDCacheOverlapped}}
+\index{m\_numDCacheOverlapped@{m\_numDCacheOverlapped}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numDCacheOverlapped}
+{\footnotesize\ttfamily \label{classIntervalTimer_a908e7df49f4cfd53cc47a14660de4513} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+DCache\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 102} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numHiddenLongerDCacheLatency@{m\_numHiddenLongerDCacheLatency}}
+\index{m\_numHiddenLongerDCacheLatency@{m\_numHiddenLongerDCacheLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numHiddenLongerDCacheLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_a11f32ac21cb27b87052613d8b1cfc6c1} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+Hidden\+Longer\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 112} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numICacheOverlapped@{m\_numICacheOverlapped}}
+\index{m\_numICacheOverlapped@{m\_numICacheOverlapped}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numICacheOverlapped}
+{\footnotesize\ttfamily \label{classIntervalTimer_a5f610f8a92f8bf7295d8008610fecaea} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+ICache\+Overlapped\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 100} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numLongLatencyLoads@{m\_numLongLatencyLoads}}
+\index{m\_numLongLatencyLoads@{m\_numLongLatencyLoads}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numLongLatencyLoads}
+{\footnotesize\ttfamily \label{classIntervalTimer_ad10839a77970bed0fdad28df68af3136} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+Long\+Latency\+Loads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 104} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numMfenceInsns@{m\_numMfenceInsns}}
+\index{m\_numMfenceInsns@{m\_numMfenceInsns}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numMfenceInsns}
+{\footnotesize\ttfamily \label{classIntervalTimer_ab07c0e39b34b1c10b78a4449f6597ef4} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+Mfence\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 118} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numSerializationInsns@{m\_numSerializationInsns}}
+\index{m\_numSerializationInsns@{m\_numSerializationInsns}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numSerializationInsns}
+{\footnotesize\ttfamily \label{classIntervalTimer_a2126bba82d1ba9cc7231b95b67a45bf1} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+Serialization\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 107} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_numTotalLongLatencyLoadLatency@{m\_numTotalLongLatencyLoadLatency}}
+\index{m\_numTotalLongLatencyLoadLatency@{m\_numTotalLongLatencyLoadLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_numTotalLongLatencyLoadLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_acff75795b26ba18cdd2ec49c6faa030d} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+num\+Total\+Long\+Latency\+Load\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 105} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_outstandingLongLatencyCycles@{m\_outstandingLongLatencyCycles}}
+\index{m\_outstandingLongLatencyCycles@{m\_outstandingLongLatencyCycles}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_outstandingLongLatencyCycles}
+{\footnotesize\ttfamily \label{classIntervalTimer_a5d5e726559dd8c2ceb10c508a8c1561c} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+outstanding\+Long\+Latency\+Cycles\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_outstandingLongLatencyInsns@{m\_outstandingLongLatencyInsns}}
+\index{m\_outstandingLongLatencyInsns@{m\_outstandingLongLatencyInsns}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_outstandingLongLatencyInsns}
+{\footnotesize\ttfamily \label{classIntervalTimer_a23a8dafc2b7901bb57417ac3b877579a} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+outstanding\+Long\+Latency\+Insns\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 114} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_perf\_model@{m\_perf\_model}}
+\index{m\_perf\_model@{m\_perf\_model}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_perf\_model}
+{\footnotesize\ttfamily \label{classIntervalTimer_a1409867e6b1881fe7f19f4ed37447ad6} 
+\textbf{ Performance\+Model}$\ast$ Interval\+Timer\+::m\+\_\+perf\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 87} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ dispatch\+Window()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_remaining\_dispatch\_bandwidth@{m\_remaining\_dispatch\_bandwidth}}
+\index{m\_remaining\_dispatch\_bandwidth@{m\_remaining\_dispatch\_bandwidth}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_remaining\_dispatch\_bandwidth}
+{\footnotesize\ttfamily \label{classIntervalTimer_ac84374d9c9ef5deb9ab0d56b28342824} 
+\textbf{ Fixed\+Point} Interval\+Timer\+::m\+\_\+remaining\+\_\+dispatch\+\_\+bandwidth\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ calculate\+Current\+Dispatch\+Rate()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_totalHiddenDCacheLatency@{m\_totalHiddenDCacheLatency}}
+\index{m\_totalHiddenDCacheLatency@{m\_totalHiddenDCacheLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_totalHiddenDCacheLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_a4d67cdb7542061bb9c24969a1d9ee0a7} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+total\+Hidden\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 110} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_totalHiddenLongerDCacheLatency@{m\_totalHiddenLongerDCacheLatency}}
+\index{m\_totalHiddenLongerDCacheLatency@{m\_totalHiddenLongerDCacheLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_totalHiddenLongerDCacheLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_a672b827ad41e85930ee554f620a619aa} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+total\+Hidden\+Longer\+DCache\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_totalMfenceLatency@{m\_totalMfenceLatency}}
+\index{m\_totalMfenceLatency@{m\_totalMfenceLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_totalMfenceLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_ae08e1177ba308b306ab14cce9b912b8d} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+total\+Mfence\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 119} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_totalSerializationLatency@{m\_totalSerializationLatency}}
+\index{m\_totalSerializationLatency@{m\_totalSerializationLatency}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_totalSerializationLatency}
+{\footnotesize\ttfamily \label{classIntervalTimer_a25fa5093a0bd95bc78081664bf8496d0} 
+\textbf{ uint64\+\_\+t} Interval\+Timer\+::m\+\_\+total\+Serialization\+Latency\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 108} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ dispatch\+Instruction()}, and \textbf{ Interval\+Timer()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_uop\_type\_count@{m\_uop\_type\_count}}
+\index{m\_uop\_type\_count@{m\_uop\_type\_count}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_uop\_type\_count}
+{\footnotesize\ttfamily \label{classIntervalTimer_ae4f0bdab4832e5c94fe752b6ff47f576} 
+\textbf{ UInt64} Interval\+Timer\+::m\+\_\+uop\+\_\+type\+\_\+count[\textbf{ Micro\+Op\+::\+UOP\+\_\+\+SUBTYPE\+\_\+\+SIZE}]\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 95} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}, and \textbf{ simulate()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_uops\_pause@{m\_uops\_pause}}
+\index{m\_uops\_pause@{m\_uops\_pause}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_uops\_pause}
+{\footnotesize\ttfamily \label{classIntervalTimer_a4186ae3be4f057d19e4cf5b55f7c0086} 
+\textbf{ UInt64} Interval\+Timer\+::m\+\_\+uops\+\_\+pause\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 98} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}, and \textbf{ simulate()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_uops\_total@{m\_uops\_total}}
+\index{m\_uops\_total@{m\_uops\_total}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_uops\_total}
+{\footnotesize\ttfamily \label{classIntervalTimer_a6c0ffb5c5355c9d3399daee6c6f8a9ed} 
+\textbf{ UInt64} Interval\+Timer\+::m\+\_\+uops\+\_\+total\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 96} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}, and \textbf{ simulate()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_uops\_x87@{m\_uops\_x87}}
+\index{m\_uops\_x87@{m\_uops\_x87}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_uops\_x87}
+{\footnotesize\ttfamily \label{classIntervalTimer_a4fc62b7d03056fa4abdd2b777fb3356b} 
+\textbf{ UInt64} Interval\+Timer\+::m\+\_\+uops\+\_\+x87\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 97} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ Interval\+Timer()}, and \textbf{ simulate()}.
+
+\index{IntervalTimer@{IntervalTimer}!m\_windows@{m\_windows}}
+\index{m\_windows@{m\_windows}!IntervalTimer@{IntervalTimer}}
+\doxysubsubsection{m\_windows}
+{\footnotesize\ttfamily \label{classIntervalTimer_a6c1b18b4974dcacb597eebf83aaeb55c} 
+\textbf{ Windows}$\ast$ Interval\+Timer\+::m\+\_\+windows\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 86} of file \textbf{ interval\+\_\+timer.\+h}.
+
+
+
+Referenced by \textbf{ block\+Window()}, \textbf{ calculate\+Current\+Dispatch\+Rate()}, \textbf{ dispatch\+Instruction()}, \textbf{ dispatch\+Window()}, \textbf{ free()}, \textbf{ get\+Max\+Producer\+Exec\+Time()}, \textbf{ simulate()}, and \textbf{ update\+Critical\+Path()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/performance\+\_\+model/performance\+\_\+models/interval\+\_\+performance\+\_\+model/\textbf{ interval\+\_\+timer.\+h}\item 
+common/performance\+\_\+model/performance\+\_\+models/interval\+\_\+performance\+\_\+model/\textbf{ interval\+\_\+timer.\+cc}\end{DoxyCompactItemize}

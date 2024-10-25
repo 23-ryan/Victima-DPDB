@@ -1,0 +1,290 @@
+\doxysection{instruction\+\_\+decoder\+\_\+wlib.\+cc}
+\label{instruction__decoder__wlib_8cc_source}\index{common/performance\_model/performance\_models/micro\_op/instruction\_decoder\_wlib.cc@{common/performance\_model/performance\_models/micro\_op/instruction\_decoder\_wlib.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}instruction\_decoder\_wlib.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <x86\_decoder.h>}\ \ \textcolor{comment}{//\ TODO\ delete}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//extern\ "{}C"{}\ \{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\#include\ <xed-\/reg-\/class.h>}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\#if\ PIN\_REV\ >=\ 62732}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\#\ include\ <xed-\/decoded-\/inst-\/api.h>}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\#endif}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{void}\ InstructionDecoder::addSrcs(std::set<dl::Decoder::decoder\_reg>\ regs,\ MicroOp\ *\ currentMicroOp)\ \{}
+\DoxyCodeLine{00015\ \ \ \ dl::Decoder\ *dec\ =\ Sim()-\/>getDecoder();}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keywordflow}{for}(std::set<dl::Decoder::decoder\_reg>::iterator\ it\ =\ regs.begin();\ it\ !=\ regs.end();\ ++it)}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(Sim()-\/>getDecoder()-\/>invalid\_register(*it)))\ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ dl::Decoder::decoder\_reg\ reg\ =\ dec-\/>largest\_enclosing\_register(*it);}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>reg\_is\_program\_counter(reg))\ \textcolor{keywordflow}{continue};\ \textcolor{comment}{//\ eip/rip\ is\ known\ at\ decode\ time,\ shouldn't\ be\ a\ dependency}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>addSourceRegister(reg,\ String(dec-\/>reg\_name(reg)));}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ InstructionDecoder::addAddrs(std::set<dl::Decoder::decoder\_reg>\ regs,\ MicroOp\ *\ currentMicroOp)\ \{}
+\DoxyCodeLine{00026\ \ \ \ dl::Decoder\ *dec\ =\ Sim()-\/>getDecoder();}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{for}(std::set<dl::Decoder::decoder\_reg>::iterator\ it\ =\ regs.begin();\ it\ !=\ regs.end();\ ++it)}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(dec-\/>invalid\_register(*it)))\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ dl::Decoder::decoder\_reg\ reg\ =\ dec-\/>largest\_enclosing\_register(*it);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>reg\_is\_program\_counter(reg))\ \textcolor{keywordflow}{continue};\ \textcolor{comment}{//\ eip/rip\ is\ known\ at\ decode\ time,\ shouldn't\ be\ a\ dependency}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>addAddressRegister(reg,\ String(dec-\/>reg\_name(reg)));}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keywordtype}{void}\ InstructionDecoder::addDsts(std::set<dl::Decoder::decoder\_reg>\ regs,\ MicroOp\ *\ currentMicroOp)\ \{}
+\DoxyCodeLine{00037\ \ \ \ dl::Decoder\ *dec\ =\ Sim()-\/>getDecoder();}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{for}(std::set<dl::Decoder::decoder\_reg>::iterator\ it\ =\ regs.begin();\ it\ !=\ regs.end();\ ++it)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(dec-\/>invalid\_register(*it)))\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ dl::Decoder::decoder\_reg\ reg\ =\ dec-\/>largest\_enclosing\_register(*it);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>reg\_is\_program\_counter(reg))\ \textcolor{keywordflow}{continue};\ \textcolor{comment}{//\ eip/rip\ is\ known\ at\ decode\ time,\ shouldn't\ be\ a\ dependency}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>addDestinationRegister(reg,\ String(dec-\/>reg\_name(reg)));}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ InstructionDecoder::getNumExecs(\textcolor{keyword}{const}\ dl::DecodedInst\ *ins,\ \textcolor{keywordtype}{int}\ numLoads,\ \textcolor{keywordtype}{int}\ numStores)}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getDecoder()-\/>get\_exec\_microops(ins,\ numLoads,\ numStores);}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{const}\ std::vector<const\ MicroOp*>*\ InstructionDecoder::decode(IntPtr\ address,\ \ \textcolor{keyword}{const}\ dl::DecodedInst\ *ins,\ Instruction\ *ins\_ptr)}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \ dl::Decoder\ *dec\ =\ Sim()-\/>getDecoder();}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{comment}{//\ Determine\ register\ dependencies\ and\ number\ of\ microops\ per\ type}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ std::vector<std::set<dl::Decoder::decoder\_reg>\ >\ regs\_loads,\ regs\_stores;}
+\DoxyCodeLine{00063\ \ \ \ std::set<dl::Decoder::decoder\_reg>\ regs\_mem,\ regs\_src,\ regs\_dst;}
+\DoxyCodeLine{00064\ \ \ \ std::vector<uint16\_t>\ memop\_load\_size,\ memop\_store\_size;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordtype}{int}\ numLoads\ =\ 0;}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordtype}{int}\ numExecs\ =\ 0;}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordtype}{int}\ numStores\ =\ 0;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \textcolor{comment}{//\ Ignore\ memory-\/referencing\ operands\ in\ NOP\ instructions}}
+\DoxyCodeLine{00071\ \ \ \ \textcolor{keywordflow}{if}\ (!(ins-\/>is\_nop()))}
+\DoxyCodeLine{00072\ \ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ mem\_idx\ =\ 0;\ mem\_idx\ <\ dec-\/>num\_memory\_operands(ins);\ ++mem\_idx)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ std::set<dl::Decoder::decoder\_reg>\ regs;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ regs.insert(dec-\/>mem\_base\_reg(ins,\ mem\_idx));}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ regs.insert(dec-\/>mem\_index\_reg(ins,\ mem\_idx));}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>op\_read\_mem(ins,\ mem\_idx))\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ regs\_loads.push\_back(regs);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ memop\_load\_size.push\_back(dec-\/>size\_mem\_op(ins,\ mem\_idx));}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ numLoads++;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>op\_write\_mem(ins,\ mem\_idx))\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ regs\_stores.push\_back(regs);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ memop\_store\_size.push\_back(dec-\/>size\_mem\_op(ins,\ mem\_idx));}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ numStores++;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ regs\_mem.insert(regs.begin(),\ regs.end());}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \textcolor{keywordtype}{bool}\ is\_atomic\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{if}\ (ins-\/>is\_atomic())}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ is\_atomic\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ idx\ =\ 0;\ idx\ <\ dec-\/>num\_operands(ins);\ ++idx)}
+\DoxyCodeLine{00100\ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>is\_addr\_gen(ins,\ idx))}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ LEA-\/like\ instruction\ */}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ regs\_src.insert(regs\_mem.begin(),\ regs\_mem.end());}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dec-\/>op\_is\_reg(ins,\ idx))\ \ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ dl::Decoder::decoder\_reg\ reg\ =\ dec-\/>get\_op\_reg(ins,\ idx);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>op\_read\_reg(ins,\ idx)\ \&\&\ regs\_mem.count(reg)\ ==\ 0)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ regs\_src.insert(reg);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dec-\/>op\_write\_reg(ins,\ idx))}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ regs\_dst.insert(reg);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \textcolor{comment}{//\ Not\ sure\ if\ this\ is\ needed,\ the\ hardware\ is\ doing\ a\ lot\ of\ optimizations\ on\ stack\ operations}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ \#if\ 0}}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//if\ (INS\_IsStackRead(ins)\ ||\ INS\_IsStackWrite(ins))}}
+\DoxyCodeLine{00120\ \ \ \ \textcolor{comment}{//\{}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{comment}{//\ For\ push/pop,\ add\ the\ stack\ pointer\ as\ explicit\ destination\ register}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{comment}{//\ (It's\ already\ listed\ as\ a\ source\ memory\ operand\ for\ the\ load/store,\ but\ the\ modified\ rsp\ needs\ to\ be\ written\ back)}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{comment}{//\ (It\ should\ be\ one\ of\ the\ implicit\ operands,\ but\ those\ are\ rather\ difficult\ to\ parse\ correctly)}}
+\DoxyCodeLine{00124\ \ \ \ \textcolor{comment}{//\ \ \ regs\_dst.insert(XED\_REG\_RSP);}}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ numExecs\ =\ getNumExecs(ins,\ numLoads,\ numStores);}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \textcolor{comment}{//\ Determine\ some\ extra\ instruction\ characteristics\ that\ will\ affect\ timing}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \textcolor{comment}{//\ Determine\ instruction\ operand\ width}}
+\DoxyCodeLine{00133\ \ \ \ uint16\_t\ operand\_size\ =\ dec-\/>get\_operand\_size(ins);}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keywordtype}{bool}\ is\_serializing\ =\ ins-\/>is\_serializing();}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \textcolor{comment}{//\ Generate\ list\ of\ microops}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ std::vector<const\ MicroOp*>\ *uops\ =\ \textcolor{keyword}{new}\ std::vector<const\ MicroOp*>();\ \textcolor{comment}{//<\ Return\ value}}
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keywordtype}{int}\ totalMicroOps\ =\ numLoads\ +\ numExecs\ +\ numStores;}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{comment}{//\ FIXME:\ }}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ Capstone\ bug:\ random\ incorrect\ disassembly\ -\/-\/>\ ldr\ x1,\ [x0]\ to\ ldr\ w1,\ \#0x7faa399350}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{comment}{//\ Only\ happening\ once.\ Treat\ that\ load\ as\ an\ exec\ instruction.}}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keywordflow}{if}\ (totalMicroOps\ ==\ 0)\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ numExecs\ =\ totalMicroOps\ =\ 1;}
+\DoxyCodeLine{00147\ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ }
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ index\ =\ 0;\ index\ <\ totalMicroOps;\ ++index)}
+\DoxyCodeLine{00150\ \ \ \ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ MicroOp\ *currentMicroOp\ =\ \textcolor{keyword}{new}\ MicroOp();}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{comment}{//\ pass\ the\ decoder\ object\ to\ allow\ access\ to\ the\ library\ }}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ currentMicroOp-\/>setInstructionPointer(Memory::make\_access(address));}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{comment}{//\ Extra\ information\ on\ all\ micro\ ops\ }}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ currentMicroOp-\/>setOperandSize(operand\_size);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ currentMicroOp-\/>setInstruction(ins\_ptr);}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ currentMicroOp-\/>setDecodedInstruction(ins);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ don't\ necessarily\ know\ the\ address\ at\ this\ point\ as\ it\ could}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{comment}{//\ be\ dependent\ on\ register\ values.\ \ Therefore,\ fill\ it\ in\ at\ simulation\ time.}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ <\ numLoads)\ \textcolor{comment}{/*\ LOAD\ */}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \{\ \ \ \ \ \ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ loadIndex\ =\ index;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>makeLoad(}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ loadIndex}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ ins-\/>inst\_num\_id()}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ dec-\/>inst\_name(ins-\/>inst\_num\_id())}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ memop\_load\_size[loadIndex]}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (index\ <\ numLoads\ +\ numExecs)\ \textcolor{comment}{/*\ EXEC\ */}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \{\ \ \ \ \ \ }
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ execIndex\ =\ index\ -\/\ numLoads;}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(numExecs\ <=\ 2,\ \textcolor{stringliteral}{"{}More\ than\ 2\ exec\ uops"{}});\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>makeExecute(}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ execIndex}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ numLoads}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ ins-\/>inst\_num\_id()}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ dec-\/>inst\_name(ins-\/>inst\_num\_id())}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ ins-\/>is\_conditional\_branch()\ \textcolor{comment}{/*\ is\ conditional\ branch?\ */});}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{/*\ STORE\ */}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \{\ \ \ \ \ \ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ storeIndex\ =\ index\ -\/\ numLoads\ -\/\ numExecs;}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>makeStore(}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ storeIndex}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ numExecs}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ ins-\/>inst\_num\_id()}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ dec-\/>inst\_name(ins-\/>inst\_num\_id())}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ memop\_store\_size[storeIndex]}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setMemBarrier(\textcolor{keyword}{true});}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \textcolor{comment}{//\ Fill\ in\ the\ destination\ registers\ for\ both\ loads\ and\ executes,\ also\ on\ stores\ if\ there\ are\ no\ loads\ or\ executes}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ <\ numLoads)\ \textcolor{comment}{/*\ LOAD\ */}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \{\ \ \ \ \ \ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ loadIndex\ =\ index;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ addSrcs(regs\_loads[loadIndex],\ currentMicroOp);}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ addAddrs(regs\_loads[loadIndex],\ currentMicroOp);}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numExecs\ ==\ 0)\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ execute\ microop:\ we\ inherit\ its\ read\ operands}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ addSrcs(regs\_src,\ currentMicroOp);}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numStores\ ==\ 0)}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ store\ microop\ either:\ we\ also\ inherit\ its\ write\ operands}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addDsts(regs\_dst,\ currentMicroOp);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (index\ <\ numLoads\ +\ numExecs)\ \textcolor{comment}{/*\ EXEC\ */}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \{\ \ \ \ \ \ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ addSrcs(regs\_src,\ currentMicroOp);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ addDsts(regs\_dst,\ currentMicroOp);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ins-\/>is\_barrier())}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setMemBarrier(\textcolor{keyword}{true});}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ cases}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ins-\/>src\_dst\_merge())}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ this\ case,\ we\ have\ a\ memory\ to\ XMM\ load,\ where\ the\ result\ merges\ the\ source\ and\ destination}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ addSrcs(regs\_dst,\ currentMicroOp);}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{/*\ STORE\ */}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \{\ \ \ \ \ \ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ storeIndex\ =\ index\ -\/\ numLoads\ -\/\ numExecs;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ addSrcs(regs\_stores[storeIndex],\ currentMicroOp);}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ addAddrs(regs\_stores[storeIndex],\ currentMicroOp);}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numExecs\ ==\ 0)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ execute\ microop:\ we\ inherit\ its\ write\ operands}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ addDsts(regs\_dst,\ currentMicroOp);}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numLoads\ ==\ 0)}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ load\ microops\ either:\ we\ also\ inherit\ its\ read\ operands}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addSrcs(regs\_src,\ currentMicroOp);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_atomic)}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setMemBarrier(\textcolor{keyword}{true});}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \textcolor{comment}{/*\ Extra\ information\ of\ first\ micro\ op\ */}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ 0)}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setFirst(\textcolor{keyword}{true});}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ of\ x87\ FPU?}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ins-\/>is\_X87())}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setIsX87(\textcolor{keyword}{true});}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \textcolor{comment}{/*\ Extra\ information\ on\ last\ micro\ op\ */}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ totalMicroOps\ -\/\ 1)\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setLast(\textcolor{keyword}{true});}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Interrupts\ and\ serializing\ instructions\ are\ added\ to\ the\ last\ microOp}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Since\ we're\ user-\/level,\ there\ are\ no\ interrupts}}
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#if\ 0}}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ the\ instruction\ is\ an\ interrupt,\ place\ the\ interrupt\ flag}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (disassembler\_instruction-\/>insType\ !=\ IT\_BRANCH}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ disassembler\_instruction-\/>insType\ !=\ IT\_CALL}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ disassembler\_instruction-\/>insType\ !=\ IT\_RETURN}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ jump)\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setInterrupt(\textcolor{keyword}{true});}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00276\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ the\ instruction\ is\ serializing,\ place\ the\ serializing\ flag}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_serializing)}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ currentMicroOp-\/>setSerializing(\textcolor{keyword}{true});}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ uops-\/>push\_back(currentMicroOp);}
+\DoxyCodeLine{00284\ \ \ \ \}}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \textcolor{keywordflow}{return}\ uops;}
+\DoxyCodeLine{00287\ \}}
+
+\end{DoxyCode}

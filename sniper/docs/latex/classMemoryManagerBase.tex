@@ -1,0 +1,770 @@
+\doxysection{Memory\+Manager\+Base Class Reference}
+\label{classMemoryManagerBase}\index{MemoryManagerBase@{MemoryManagerBase}}
+
+
+{\ttfamily \#include $<$memory\+\_\+manager\+\_\+base.\+h$>$}
+
+
+
+Inheritance diagram for Memory\+Manager\+Base\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=334pt]{classMemoryManagerBase__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Memory\+Manager\+Base\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ Caching\+Protocol\+\_\+t} \{ \textbf{ PARAMETRIC\+\_\+\+DRAM\+\_\+\+DIRECTORY\+\_\+\+MSI}
+, \textbf{ FAST\+\_\+\+NEHALEM}
+, \textbf{ NUM\+\_\+\+CACHING\+\_\+\+PROTOCOL\+\_\+\+TYPES}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Memory\+Manager\+Base} (\textbf{ Core} $\ast$core, \textbf{ Network} $\ast$network, \textbf{ Shmem\+Perf\+Model} $\ast$shmem\+\_\+perf\+\_\+model)
+\item 
+virtual \textbf{ $\sim$\+Memory\+Manager\+Base} ()
+\item 
+virtual \textbf{ Hit\+Where\+::where\+\_\+t} \textbf{ core\+Initiate\+Memory\+Access} (\textbf{ Int\+Ptr} eip, \textbf{ Mem\+Component\+::component\+\_\+t} mem\+\_\+component, \textbf{ Core\+::lock\+\_\+signal\+\_\+t} lock\+\_\+signal, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} address, \textbf{ UInt32} offset, \textbf{ Byte} $\ast$data\+\_\+buf, \textbf{ UInt32} data\+\_\+length, \textbf{ Core\+::\+Mem\+Modeled} modeled)=0
+\item 
+virtual \textbf{ Subsecond\+Time} \textbf{ core\+Initiate\+Memory\+Access\+Fast} (bool icache, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ Int\+Ptr} address)
+\item 
+virtual void \textbf{ handle\+Msg\+From\+Network} (\textbf{ Net\+Packet} \&packet)=0
+\item 
+virtual \textbf{ UInt64} \textbf{ get\+Cache\+Block\+Size} () const =0
+\item 
+virtual \textbf{ UInt64} \textbf{ get\+Megapage\+Size} () const
+\item 
+virtual \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB} $\ast$ \textbf{ get\+TLB} ()=0
+\item 
+virtual \textbf{ Subsecond\+Time} \textbf{ get\+L1\+Hit\+Latency} (void)=0
+\item 
+virtual void \textbf{ add\+L1\+Hits} (bool icache, \textbf{ Core\+::mem\+\_\+op\+\_\+t} mem\+\_\+op\+\_\+type, \textbf{ UInt64} hits)=0
+\item 
+virtual \textbf{ core\+\_\+id\+\_\+t} \textbf{ get\+Shmem\+Requester} (const void $\ast$pkt\+\_\+data)=0
+\item 
+virtual void \textbf{ enable\+Models} ()=0
+\item 
+virtual void \textbf{ disable\+Models} ()=0
+\item 
+virtual \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker} $\ast$ \textbf{ get\+PTW} ()=0
+\item 
+virtual \textbf{ UInt32} \textbf{ get\+Modeled\+Length} (const void $\ast$pkt\+\_\+data)=0
+\item 
+virtual void \textbf{ measure\+Nuca\+Stats} ()=0
+\item 
+virtual \textbf{ Nuca\+Cache} $\ast$ \textbf{ get\+Nuca\+Cache} ()=0
+\item 
+virtual \textbf{ Cache} $\ast$ \textbf{ get\+Cache} (\textbf{ Mem\+Component\+::component\+\_\+t} mem\+\_\+component)=0
+\item 
+\textbf{ Core} $\ast$ \textbf{ get\+Core} ()
+\item 
+virtual void \textbf{ send\+Msg} (\textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Shmem\+Msg\+::msg\+\_\+t} msg\+\_\+type, \textbf{ Mem\+Component\+::component\+\_\+t} sender\+\_\+mem\+\_\+component, \textbf{ Mem\+Component\+::component\+\_\+t} receiver\+\_\+mem\+\_\+component, \textbf{ core\+\_\+id\+\_\+t} requester, \textbf{ core\+\_\+id\+\_\+t} receiver, \textbf{ Int\+Ptr} address, \textbf{ Byte} $\ast$data\+\_\+buf=NULL, \textbf{ UInt32} data\+\_\+length=0, \textbf{ Hit\+Where\+::where\+\_\+t} where=\textbf{ Hit\+Where\+::\+UNKNOWN}, \textbf{ Shmem\+Perf} $\ast$perf=NULL, \textbf{ Shmem\+Perf\+Model\+::\+Thread\+\_\+t} thread\+\_\+num=\textbf{ Shmem\+Perf\+Model\+::\+NUM\+\_\+\+CORE\+\_\+\+THREADS}, \textbf{ Cache\+Block\+Info\+::block\+\_\+type\+\_\+t} block\+\_\+type=\textbf{ Cache\+Block\+Info\+::block\+\_\+type\+\_\+t\+::\+NON\+\_\+\+PAGE\+\_\+\+TABLE})=0
+\item 
+virtual void \textbf{ broadcast\+Msg} (\textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Shmem\+Msg\+::msg\+\_\+t} msg\+\_\+type, \textbf{ Mem\+Component\+::component\+\_\+t} sender\+\_\+mem\+\_\+component, \textbf{ Mem\+Component\+::component\+\_\+t} receiver\+\_\+mem\+\_\+component, \textbf{ core\+\_\+id\+\_\+t} requester, \textbf{ Int\+Ptr} address, \textbf{ Byte} $\ast$data\+\_\+buf=NULL, \textbf{ UInt32} data\+\_\+length=0, \textbf{ Shmem\+Perf} $\ast$perf=NULL, \textbf{ Shmem\+Perf\+Model\+::\+Thread\+\_\+t} thread\+\_\+num=\textbf{ Shmem\+Perf\+Model\+::\+NUM\+\_\+\+CORE\+\_\+\+THREADS})=0
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \textbf{ Caching\+Protocol\+\_\+t} \textbf{ parse\+Protocol\+Type} (String \&protocol\+\_\+type)
+\item 
+static \textbf{ Memory\+Manager\+Base} $\ast$ \textbf{ create\+MMU} (String protocol\+\_\+type, \textbf{ Core} $\ast$core, \textbf{ Network} $\ast$network, \textbf{ Shmem\+Perf\+Model} $\ast$shmem\+\_\+perf\+\_\+model)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Network} $\ast$ \textbf{ get\+Network} ()
+\item 
+\textbf{ Shmem\+Perf\+Model} $\ast$ \textbf{ get\+Shmem\+Perf\+Model} ()
+\item 
+std\+::vector$<$ \textbf{ core\+\_\+id\+\_\+t} $>$ \textbf{ get\+Core\+List\+With\+Memory\+Controllers} (void)
+\item 
+void \textbf{ print\+Core\+List\+With\+Memory\+Controllers} (std\+::vector$<$ \textbf{ core\+\_\+id\+\_\+t} $>$ \&core\+\_\+list\+\_\+with\+\_\+memory\+\_\+controllers)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ parse\+Memory\+Controller\+List} (String \&memory\+\_\+controller\+\_\+positions, std\+::vector$<$ \textbf{ core\+\_\+id\+\_\+t} $>$ \&core\+\_\+list\+\_\+from\+\_\+cfg\+\_\+file, \textbf{ SInt32} application\+\_\+core\+\_\+count)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Core} $\ast$ \textbf{ m\+\_\+core}
+\item 
+\textbf{ Network} $\ast$ \textbf{ m\+\_\+network}
+\item 
+\textbf{ Shmem\+Perf\+Model} $\ast$ \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 16} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{MemoryManagerBase@{MemoryManagerBase}!CachingProtocol\_t@{CachingProtocol\_t}}
+\index{CachingProtocol\_t@{CachingProtocol\_t}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{CachingProtocol\_t}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a871c15ca181b053626d27f6d2a6ed5b6} 
+enum \textbf{ Memory\+Manager\+Base\+::\+Caching\+Protocol\+\_\+t}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PARAMETRIC\_DRAM\_DIRECTORY\_MSI@{PARAMETRIC\_DRAM\_DIRECTORY\_MSI}!MemoryManagerBase@{MemoryManagerBase}}\index{MemoryManagerBase@{MemoryManagerBase}!PARAMETRIC\_DRAM\_DIRECTORY\_MSI@{PARAMETRIC\_DRAM\_DIRECTORY\_MSI}}}\label{classMemoryManagerBase_a871c15ca181b053626d27f6d2a6ed5b6} 
+PARAMETRIC\+\_\+\+DRAM\+\_\+\+DIRECTORY\+\_\+\+MSI&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FAST\_NEHALEM@{FAST\_NEHALEM}!MemoryManagerBase@{MemoryManagerBase}}\index{MemoryManagerBase@{MemoryManagerBase}!FAST\_NEHALEM@{FAST\_NEHALEM}}}\label{classMemoryManagerBase_a871c15ca181b053626d27f6d2a6ed5b6} 
+FAST\+\_\+\+NEHALEM&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NUM\_CACHING\_PROTOCOL\_TYPES@{NUM\_CACHING\_PROTOCOL\_TYPES}!MemoryManagerBase@{MemoryManagerBase}}\index{MemoryManagerBase@{MemoryManagerBase}!NUM\_CACHING\_PROTOCOL\_TYPES@{NUM\_CACHING\_PROTOCOL\_TYPES}}}\label{classMemoryManagerBase_a871c15ca181b053626d27f6d2a6ed5b6} 
+NUM\+\_\+\+CACHING\+\_\+\+PROTOCOL\+\_\+\+TYPES&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 19} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{MemoryManagerBase@{MemoryManagerBase}!MemoryManagerBase@{MemoryManagerBase}}
+\index{MemoryManagerBase@{MemoryManagerBase}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{MemoryManagerBase()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a42461a94736966105e02504220500a1b} 
+Memory\+Manager\+Base\+::\+Memory\+Manager\+Base (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Network} $\ast$}]{network}{, }\item[{\textbf{ Shmem\+Perf\+Model} $\ast$}]{shmem\+\_\+perf\+\_\+model}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 41} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!````~MemoryManagerBase@{$\sim$MemoryManagerBase}}
+\index{````~MemoryManagerBase@{$\sim$MemoryManagerBase}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{$\sim$MemoryManagerBase()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a4bcddbfa0a56a8b6afe96627d0f6cbd6} 
+virtual Memory\+Manager\+Base\+::$\sim$\+Memory\+Manager\+Base (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 46} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{MemoryManagerBase@{MemoryManagerBase}!addL1Hits@{addL1Hits}}
+\index{addL1Hits@{addL1Hits}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{addL1Hits()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a544ed1c6ec1db56305a525f837d0b584} 
+virtual void Memory\+Manager\+Base\+::add\+L1\+Hits (\begin{DoxyParamCaption}\item[{bool}]{icache}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ UInt64}}]{hits}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_aae6c7146ba74915ca4204640909c6e3c}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_aaa9dc638497603fb5a844167afc0a2ab}.
+
+
+
+Referenced by \textbf{ Core\+::log\+Memory\+Hit()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a544ed1c6ec1db56305a525f837d0b584_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!broadcastMsg@{broadcastMsg}}
+\index{broadcastMsg@{broadcastMsg}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{broadcastMsg()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a4e407d912273cfb015c458e61024105b} 
+virtual void Memory\+Manager\+Base\+::broadcast\+Msg (\begin{DoxyParamCaption}\item[{\textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Shmem\+Msg\+::msg\+\_\+t}}]{msg\+\_\+type}{, }\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{sender\+\_\+mem\+\_\+component}{, }\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{receiver\+\_\+mem\+\_\+component}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{requester}{, }\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Byte} $\ast$}]{data\+\_\+buf}{ = {\ttfamily NULL}, }\item[{\textbf{ UInt32}}]{data\+\_\+length}{ = {\ttfamily 0}, }\item[{\textbf{ Shmem\+Perf} $\ast$}]{perf}{ = {\ttfamily NULL}, }\item[{\textbf{ Shmem\+Perf\+Model\+::\+Thread\+\_\+t}}]{thread\+\_\+num}{ = {\ttfamily \textbf{ Shmem\+Perf\+Model\+::\+NUM\+\_\+\+CORE\+\_\+\+THREADS}}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a42a9e86cd9edb9b8c86318b8b2111a75}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a6b4deb6ad351ffb947595f9ccb950b8b}.
+
+
+
+Referenced by \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Ex\+Req\+From\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Nullify\+Req()}, and \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Upgrade\+Req\+From\+L2\+Cache()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a4e407d912273cfb015c458e61024105b_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!coreInitiateMemoryAccess@{coreInitiateMemoryAccess}}
+\index{coreInitiateMemoryAccess@{coreInitiateMemoryAccess}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{coreInitiateMemoryAccess()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_ae7d1f4546ea3e304d6dfa39c428b8c47} 
+virtual \textbf{ Hit\+Where\+::where\+\_\+t} Memory\+Manager\+Base\+::core\+Initiate\+Memory\+Access (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{eip}{, }\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{mem\+\_\+component}{, }\item[{\textbf{ Core\+::lock\+\_\+signal\+\_\+t}}]{lock\+\_\+signal}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ UInt32}}]{offset}{, }\item[{\textbf{ Byte} $\ast$}]{data\+\_\+buf}{, }\item[{\textbf{ UInt32}}]{data\+\_\+length}{, }\item[{\textbf{ Core\+::\+Mem\+Modeled}}]{modeled}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a031c15bd68905ee1e9d99fd77647d9bc}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a8f90314e6cbe4eaaa62e2f4b0409462b}.
+
+
+
+Referenced by \textbf{ core\+Initiate\+Memory\+Access\+Fast()}, and \textbf{ Core\+::initiate\+Memory\+Access()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_ae7d1f4546ea3e304d6dfa39c428b8c47_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!coreInitiateMemoryAccessFast@{coreInitiateMemoryAccessFast}}
+\index{coreInitiateMemoryAccessFast@{coreInitiateMemoryAccessFast}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{coreInitiateMemoryAccessFast()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_af1f6c9db2a36fd1d2502691d5ceb5bb9} 
+virtual \textbf{ Subsecond\+Time} Memory\+Manager\+Base\+::core\+Initiate\+Memory\+Access\+Fast (\begin{DoxyParamCaption}\item[{bool}]{icache}{, }\item[{\textbf{ Core\+::mem\+\_\+op\+\_\+t}}]{mem\+\_\+op\+\_\+type}{, }\item[{\textbf{ Int\+Ptr}}]{address}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Reimplemented in \textbf{ Fast\+Nehalem\+::\+Memory\+Manager} \doxyref{}{p.}{classFastNehalem_1_1MemoryManager_a224431c25155018ccf0497d981beca2d}, and \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a4aef726791dc197e6fa9dc5b714de181}.
+
+
+
+Definition at line \textbf{ 56} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+References \textbf{ Shmem\+Perf\+Model\+::\+\_\+\+USER\+\_\+\+THREAD}, \textbf{ core\+Initiate\+Memory\+Access()}, \textbf{ get\+Cache\+Block\+Size()}, \textbf{ get\+Core()}, \textbf{ Performance\+Model\+::get\+Elapsed\+Time()}, \textbf{ Shmem\+Perf\+Model\+::get\+Elapsed\+Time()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ get\+Shmem\+Perf\+Model()}, \textbf{ Mem\+Component\+::\+L1\+\_\+\+DCACHE}, \textbf{ Mem\+Component\+::\+L1\+\_\+\+ICACHE}, \textbf{ Core\+::\+MEM\+\_\+\+MODELED\+\_\+\+COUNT\+\_\+\+TLBTIME}, \textbf{ Core\+::\+NONE}, and \textbf{ Shmem\+Perf\+Model\+::set\+Elapsed\+Time()}.
+
+
+
+Referenced by \textbf{ Core\+::access\+Memory\+Fast()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_af1f6c9db2a36fd1d2502691d5ceb5bb9_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_af1f6c9db2a36fd1d2502691d5ceb5bb9_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!createMMU@{createMMU}}
+\index{createMMU@{createMMU}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{createMMU()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_acf1e1b793fa4a94441d3e62788b3828f} 
+\textbf{ Memory\+Manager\+Base} $\ast$ Memory\+Manager\+Base\+::create\+MMU (\begin{DoxyParamCaption}\item[{String}]{protocol\+\_\+type}{, }\item[{\textbf{ Core} $\ast$}]{core}{, }\item[{\textbf{ Network} $\ast$}]{network}{, }\item[{\textbf{ Shmem\+Perf\+Model} $\ast$}]{shmem\+\_\+perf\+\_\+model}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 10} of file \textbf{ memory\+\_\+manager\+\_\+base.\+cc}.
+
+
+
+References \textbf{ FAST\+\_\+\+NEHALEM}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ PARAMETRIC\+\_\+\+DRAM\+\_\+\+DIRECTORY\+\_\+\+MSI}, and \textbf{ parse\+Protocol\+Type()}.
+
+
+
+Referenced by \textbf{ Core\+::\+Core()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=310pt]{classMemoryManagerBase_acf1e1b793fa4a94441d3e62788b3828f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=256pt]{classMemoryManagerBase_acf1e1b793fa4a94441d3e62788b3828f_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!disableModels@{disableModels}}
+\index{disableModels@{disableModels}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{disableModels()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a2249defe1e4ca2abfb2d90e3ed1d64c9} 
+virtual void Memory\+Manager\+Base\+::disable\+Models (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a1688b46f6223df024bfeaf90c40eddd5}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a3e440d638aa862e0526b8a7f37e4d00e}.
+
+
+
+Referenced by \textbf{ Core\+::disable\+Performance\+Models()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a2249defe1e4ca2abfb2d90e3ed1d64c9_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!enableModels@{enableModels}}
+\index{enableModels@{enableModels}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{enableModels()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a17c4264735a5e37ef9b2ba948da7778d} 
+virtual void Memory\+Manager\+Base\+::enable\+Models (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_ad8e6700e81e5cb18d637cbf8972aa4f7}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a9e7699933cd9a2938380195693443bac}.
+
+
+
+Referenced by \textbf{ Core\+::enable\+Performance\+Models()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a17c4264735a5e37ef9b2ba948da7778d_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getCache@{getCache}}
+\index{getCache@{getCache}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getCache()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a94d2d860dfa1dc95fa221a5f7d0aa976} 
+virtual \textbf{ Cache} $\ast$ Memory\+Manager\+Base\+::get\+Cache (\begin{DoxyParamCaption}\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{mem\+\_\+component}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Fast\+Nehalem\+::\+Memory\+Manager} \doxyref{}{p.}{classFastNehalem_1_1MemoryManager_a4a67774658886f750a28d8fc53706f90}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a9865627eee82f9029396d8687234793f}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!getCacheBlockSize@{getCacheBlockSize}}
+\index{getCacheBlockSize@{getCacheBlockSize}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getCacheBlockSize()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a607db8c60a03547b52b92914b5200075} 
+virtual \textbf{ UInt64} Memory\+Manager\+Base\+::get\+Cache\+Block\+Size (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a1c1a090da74e9f7455accdc1287dc521}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_acda892492153c1398719923c518dee92}.
+
+
+
+Referenced by \textbf{ core\+Initiate\+Memory\+Access\+Fast()}, \textbf{ Core\+::initiate\+Memory\+Access()}, and \textbf{ Core\+::read\+Instruction\+Memory()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a607db8c60a03547b52b92914b5200075_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getCore@{getCore}}
+\index{getCore@{getCore}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getCore()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a246ce4acad6cada34151196cca851f1f} 
+\textbf{ Core} $\ast$ Memory\+Manager\+Base\+::get\+Core (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 108} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+References \textbf{ m\+\_\+core}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::access\+Utopia\+Subsystem()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::broadcast\+Msg()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::core\+Initiate\+Memory\+Access()}, \textbf{ core\+Initiate\+Memory\+Access\+Fast()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Cntlr\+::\+Dram\+Cntlr()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Cntlr\+::print\+Dram\+Access\+Count()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::send\+Msg()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a246ce4acad6cada34151196cca851f1f_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getCoreListWithMemoryControllers@{getCoreListWithMemoryControllers}}
+\index{getCoreListWithMemoryControllers@{getCoreListWithMemoryControllers}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getCoreListWithMemoryControllers()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a16981eaa4883fc1f240a43e54d65ce3e} 
+std\+::vector$<$ \textbf{ core\+\_\+id\+\_\+t} $>$ Memory\+Manager\+Base\+::get\+Core\+List\+With\+Memory\+Controllers (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 58} of file \textbf{ memory\+\_\+manager\+\_\+base.\+cc}.
+
+
+
+References \textbf{ cfg}, \textbf{ Network\+Model\+::compute\+Memory\+Controller\+Positions()}, \textbf{ Config\+::get\+Application\+Cores()}, \textbf{ Config\+::get\+Singleton()}, \textbf{ config\+::\+Config\+::get\+String()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ parse\+Memory\+Controller\+List()}, and \textbf{ Network\+Model\+::parse\+Network\+Type()}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a16981eaa4883fc1f240a43e54d65ce3e_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a16981eaa4883fc1f240a43e54d65ce3e_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getL1HitLatency@{getL1HitLatency}}
+\index{getL1HitLatency@{getL1HitLatency}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getL1HitLatency()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a5b68c3176d546815089c0ccb4e4b5cf9} 
+virtual \textbf{ Subsecond\+Time} Memory\+Manager\+Base\+::get\+L1\+Hit\+Latency (\begin{DoxyParamCaption}\item[{void}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_acd7e5065450ffb371d5608cba2524c7a}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_ad2a675dc5976c1c7cd4cee1c9479c547}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!getMegapageSize@{getMegapageSize}}
+\index{getMegapageSize@{getMegapageSize}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getMegapageSize()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_aecccfe77e9d18b8fcac3efbcba677f43} 
+virtual \textbf{ UInt64} Memory\+Manager\+Base\+::get\+Megapage\+Size (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line \textbf{ 86} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!getModeledLength@{getModeledLength}}
+\index{getModeledLength@{getModeledLength}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getModeledLength()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a70ab854e2756d9c8fa4b54045114b2db} 
+virtual \textbf{ UInt32} Memory\+Manager\+Base\+::get\+Modeled\+Length (\begin{DoxyParamCaption}\item[{const void $\ast$}]{pkt\+\_\+data}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a46a538d3cb0eff2db21a1aad7e290c33}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a439230668a56ad7079418f57b22ef2a5}.
+
+
+
+Referenced by \textbf{ Network\+::get\+Modeled\+Length()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a70ab854e2756d9c8fa4b54045114b2db_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getNetwork@{getNetwork}}
+\index{getNetwork@{getNetwork}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getNetwork()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_ac7d3101d33660ac9cd70369c61dcd864} 
+\textbf{ Network} $\ast$ Memory\+Manager\+Base\+::get\+Network (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+References \textbf{ m\+\_\+network}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::broadcast\+Msg()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::send\+Msg()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::$\sim$\+Memory\+Manager()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_ac7d3101d33660ac9cd70369c61dcd864_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getNucaCache@{getNucaCache}}
+\index{getNucaCache@{getNucaCache}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getNucaCache()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a5dffd1d9ea0cd22a86e9a916fbe3da42} 
+virtual \textbf{ Nuca\+Cache} $\ast$ Memory\+Manager\+Base\+::get\+Nuca\+Cache (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Fast\+Nehalem\+::\+Memory\+Manager} \doxyref{}{p.}{classFastNehalem_1_1MemoryManager_acb3d06f4692e09ac981066fab35c6820}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_aa76bdf474c1a60a3e70fe185ab051f0e}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!getPTW@{getPTW}}
+\index{getPTW@{getPTW}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getPTW()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a6434496662d530962ec122cf90684ec9} 
+virtual \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker} $\ast$ Memory\+Manager\+Base\+::get\+PTW (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Fast\+Nehalem\+::\+Memory\+Manager} \doxyref{}{p.}{classFastNehalem_1_1MemoryManager_a74c70e4ae3a8449f5817ad4505d17283}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a5da7e84c31bcf3c7d65ee8e31f0ad731}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!getShmemPerfModel@{getShmemPerfModel}}
+\index{getShmemPerfModel@{getShmemPerfModel}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getShmemPerfModel()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_abc62b21dce9900e9e73003c3bd5ed6af} 
+\textbf{ Shmem\+Perf\+Model} $\ast$ Memory\+Manager\+Base\+::get\+Shmem\+Perf\+Model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+References \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::access\+TLBSubsystem()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::access\+Utopia\+Subsystem()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::broadcast\+Msg()}, \textbf{ Memory\+Manager\+Fast\+::core\+Initiate\+Memory\+Access()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::core\+Initiate\+Memory\+Access()}, \textbf{ core\+Initiate\+Memory\+Access\+Fast()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::handle\+Msg\+From\+Network()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::incr\+Elapsed\+Time()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::\+Memory\+Manager()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::perform\+Address\+Translation()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::send\+Msg()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_abc62b21dce9900e9e73003c3bd5ed6af_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getShmemRequester@{getShmemRequester}}
+\index{getShmemRequester@{getShmemRequester}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getShmemRequester()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_ae4a6ed6e7d0d246167d553bf4a0b670c} 
+virtual \textbf{ core\+\_\+id\+\_\+t} Memory\+Manager\+Base\+::get\+Shmem\+Requester (\begin{DoxyParamCaption}\item[{const void $\ast$}]{pkt\+\_\+data}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a07fa9017796b9653585b706f1d23065d}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_adfdb62812def7986cd0108bd1f2f0ae8}.
+
+
+
+Referenced by \textbf{ Network\+Model\+Bus\+::account\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+EMesh\+Hop\+Counter\+::process\+Received\+Packet()}, \textbf{ Network\+Model\+Magic\+::process\+Received\+Packet()}, and \textbf{ Network\+Model\+EMesh\+Hop\+By\+Hop\+::route\+Packet()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_ae4a6ed6e7d0d246167d553bf4a0b670c_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!getTLB@{getTLB}}
+\index{getTLB@{getTLB}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{getTLB()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a3a28966c61febf361584aaee23f6f637} 
+virtual \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB} $\ast$ Memory\+Manager\+Base\+::get\+TLB (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Fast\+Nehalem\+::\+Memory\+Manager} \doxyref{}{p.}{classFastNehalem_1_1MemoryManager_aa7cdf1247169c5042311ab1346ab0846}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_aa0f4ce617fa94a6773046625ed413660}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!handleMsgFromNetwork@{handleMsgFromNetwork}}
+\index{handleMsgFromNetwork@{handleMsgFromNetwork}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{handleMsgFromNetwork()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a3617ea71d419d58a929504731e51fd4d} 
+virtual void Memory\+Manager\+Base\+::handle\+Msg\+From\+Network (\begin{DoxyParamCaption}\item[{\textbf{ Net\+Packet} \&}]{packet}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_abbaddeaee75bc9649848e8d27a0fe9c7}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a9df39866582f8cf15c2fb1ce54b2eb9e}.
+
+
+
+Referenced by \textbf{ Memory\+Manager\+Network\+Callback()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a3617ea71d419d58a929504731e51fd4d_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!measureNucaStats@{measureNucaStats}}
+\index{measureNucaStats@{measureNucaStats}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{measureNucaStats()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a6af709523c548d1ae6ada1296ce538a1} 
+virtual void Memory\+Manager\+Base\+::measure\+Nuca\+Stats (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_a156dd8ccdfe18bbe47d92221f40483dc}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_aa48165962fed2744a456620c1c7be8f9}.
+
+
+
+Referenced by \textbf{ Core\+::measure\+Cache\+Stats()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=324pt]{classMemoryManagerBase_a6af709523c548d1ae6ada1296ce538a1_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!parseMemoryControllerList@{parseMemoryControllerList}}
+\index{parseMemoryControllerList@{parseMemoryControllerList}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{parseMemoryControllerList()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a464311b33ad694019436eaddbeb25eb8} 
+void Memory\+Manager\+Base\+::parse\+Memory\+Controller\+List (\begin{DoxyParamCaption}\item[{String \&}]{memory\+\_\+controller\+\_\+positions}{, }\item[{std\+::vector$<$ \textbf{ core\+\_\+id\+\_\+t} $>$ \&}]{core\+\_\+list\+\_\+from\+\_\+cfg\+\_\+file}{, }\item[{\textbf{ SInt32}}]{application\+\_\+core\+\_\+count}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 138} of file \textbf{ memory\+\_\+manager\+\_\+base.\+cc}.
+
+
+
+References \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}.
+
+
+
+Referenced by \textbf{ get\+Core\+List\+With\+Memory\+Controllers()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a464311b33ad694019436eaddbeb25eb8_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!parseProtocolType@{parseProtocolType}}
+\index{parseProtocolType@{parseProtocolType}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{parseProtocolType()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a007a816fb1b2638c3e83f65c60708b06} 
+\textbf{ Memory\+Manager\+Base\+::\+Caching\+Protocol\+\_\+t} Memory\+Manager\+Base\+::parse\+Protocol\+Type (\begin{DoxyParamCaption}\item[{String \&}]{protocol\+\_\+type}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ memory\+\_\+manager\+\_\+base.\+cc}.
+
+
+
+References \textbf{ FAST\+\_\+\+NEHALEM}, \textbf{ NUM\+\_\+\+CACHING\+\_\+\+PROTOCOL\+\_\+\+TYPES}, and \textbf{ PARAMETRIC\+\_\+\+DRAM\+\_\+\+DIRECTORY\+\_\+\+MSI}.
+
+
+
+Referenced by \textbf{ create\+MMU()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_a007a816fb1b2638c3e83f65c60708b06_icgraph}
+\end{center}
+\end{figure}
+\index{MemoryManagerBase@{MemoryManagerBase}!printCoreListWithMemoryControllers@{printCoreListWithMemoryControllers}}
+\index{printCoreListWithMemoryControllers@{printCoreListWithMemoryControllers}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{printCoreListWithMemoryControllers()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_a872f8fff072e9c9961016c74dee69f4d} 
+void Memory\+Manager\+Base\+::print\+Core\+List\+With\+Memory\+Controllers (\begin{DoxyParamCaption}\item[{std\+::vector$<$ \textbf{ core\+\_\+id\+\_\+t} $>$ \&}]{core\+\_\+list\+\_\+with\+\_\+memory\+\_\+controllers}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \textbf{ 173} of file \textbf{ memory\+\_\+manager\+\_\+base.\+cc}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!sendMsg@{sendMsg}}
+\index{sendMsg@{sendMsg}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{sendMsg()}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_ae23c93a1fd92426039c3f36eb75b0e3f} 
+virtual void Memory\+Manager\+Base\+::send\+Msg (\begin{DoxyParamCaption}\item[{\textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Shmem\+Msg\+::msg\+\_\+t}}]{msg\+\_\+type}{, }\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{sender\+\_\+mem\+\_\+component}{, }\item[{\textbf{ Mem\+Component\+::component\+\_\+t}}]{receiver\+\_\+mem\+\_\+component}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{requester}{, }\item[{\textbf{ core\+\_\+id\+\_\+t}}]{receiver}{, }\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Byte} $\ast$}]{data\+\_\+buf}{ = {\ttfamily NULL}, }\item[{\textbf{ UInt32}}]{data\+\_\+length}{ = {\ttfamily 0}, }\item[{\textbf{ Hit\+Where\+::where\+\_\+t}}]{where}{ = {\ttfamily \textbf{ Hit\+Where\+::\+UNKNOWN}}, }\item[{\textbf{ Shmem\+Perf} $\ast$}]{perf}{ = {\ttfamily NULL}, }\item[{\textbf{ Shmem\+Perf\+Model\+::\+Thread\+\_\+t}}]{thread\+\_\+num}{ = {\ttfamily \textbf{ Shmem\+Perf\+Model\+::\+NUM\+\_\+\+CORE\+\_\+\+THREADS}}, }\item[{\textbf{ Cache\+Block\+Info\+::block\+\_\+type\+\_\+t}}]{block\+\_\+type}{ = {\ttfamily \textbf{ Cache\+Block\+Info\+::block\+\_\+type\+\_\+t\+::\+NON\+\_\+\+PAGE\+\_\+\+TABLE}}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Implemented in \textbf{ Memory\+Manager\+Fast} \doxyref{}{p.}{classMemoryManagerFast_aac6c2e064cda985d88b633eedd90cb86}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager} \doxyref{}{p.}{classParametricDramDirectoryMSI_1_1MemoryManager_a971d2d1c9a40d1b4de57ffedce1e5cbf}.
+
+
+
+Referenced by \textbf{ Dram\+Cntlr\+Interface\+::handle\+Msg\+From\+Tag\+Directory()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+DRAMReply()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Ex\+Req\+From\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Nullify\+Req()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Sh\+Req\+From\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::process\+Upgrade\+Req\+From\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::retrieve\+Data\+And\+Send\+To\+L2\+Cache()}, \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::send\+Data\+To\+Dram()}, and \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::send\+Data\+To\+NUCA()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classMemoryManagerBase_ae23c93a1fd92426039c3f36eb75b0e3f_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{MemoryManagerBase@{MemoryManagerBase}!m\_core@{m\_core}}
+\index{m\_core@{m\_core}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{m\_core}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_ab185f7a5c6899474470437844ed4b59b} 
+\textbf{ Core}$\ast$ Memory\+Manager\+Base\+::m\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core()}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!m\_network@{m\_network}}
+\index{m\_network@{m\_network}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{m\_network}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_acd6238dba25ea1dd1f1a9eef113e4bbb} 
+\textbf{ Network}$\ast$ Memory\+Manager\+Base\+::m\+\_\+network\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ get\+Network()}.
+
+\index{MemoryManagerBase@{MemoryManagerBase}!m\_shmem\_perf\_model@{m\_shmem\_perf\_model}}
+\index{m\_shmem\_perf\_model@{m\_shmem\_perf\_model}!MemoryManagerBase@{MemoryManagerBase}}
+\doxysubsubsection{m\_shmem\_perf\_model}
+{\footnotesize\ttfamily \label{classMemoryManagerBase_ac54f01e208b51e29a1e191e8b862f6e6} 
+\textbf{ Shmem\+Perf\+Model}$\ast$ Memory\+Manager\+Base\+::m\+\_\+shmem\+\_\+perf\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ memory\+\_\+manager\+\_\+base.\+h}.
+
+
+
+Referenced by \textbf{ get\+Shmem\+Perf\+Model()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/\textbf{ memory\+\_\+manager\+\_\+base.\+h}\item 
+common/core/memory\+\_\+subsystem/\textbf{ memory\+\_\+manager\+\_\+base.\+cc}\end{DoxyCompactItemize}

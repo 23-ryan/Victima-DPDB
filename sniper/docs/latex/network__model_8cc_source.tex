@@ -1,0 +1,134 @@
+\doxysection{network\+\_\+model.\+cc}
+\label{network__model_8cc_source}\index{common/network/network\_model.cc@{common/network/network\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}network\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}network\_model\_magic.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}network\_model\_emesh\_hop\_counter.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}network\_model\_emesh\_hop\_by\_hop.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}network\_model\_bus.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ NetworkModel::NetworkModel(Network\ *network,\ EStaticNetwork\ net\_type)}
+\DoxyCodeLine{00015\ \ \ \ :\ \_network(network)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_collect\_traffic\_matrix(Sim()-\/>getCfg()-\/>getBool(\textcolor{stringliteral}{"{}network/collect\_traffic\_matrix"{}}))}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \ \ \ UInt32\ ncores\ =\ Sim()-\/>getConfig()-\/>getTotalCores();}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{if}\ (m\_collect\_traffic\_matrix)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ String\ netName\ =\ String(\textcolor{stringliteral}{"{}network."{}})+EStaticNetworkStrings[net\_type];}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ m\_matrix\_packets.resize(ncores+1);}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ m\_matrix\_bytes.resize(ncores+1);}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ dst\ =\ 0;\ dst\ <\ ncores+1;\ ++dst)}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ String\ dstName\ =\ dst\ <\ ncores\ ?\ itostr(dst)\ :\ \textcolor{stringliteral}{"{}broadcast"{}};}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ registerStatsMetric(netName,\ \_network-\/>getCore()-\/>getId(),\ \textcolor{stringliteral}{"{}packets-\/to-\/"{}}\ +\ dstName,\ \&m\_matrix\_packets[dst]);}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ registerStatsMetric(netName,\ \_network-\/>getCore()-\/>getId(),\ \textcolor{stringliteral}{"{}bytes-\/to-\/"{}}\ +\ dstName,\ \&m\_matrix\_bytes[dst]);}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \}}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keywordtype}{void}\ NetworkModel::countPacket(\textcolor{keyword}{const}\ NetPacket\ \&packet)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (m\_collect\_traffic\_matrix)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ SInt32\ dst\ =\ packet.receiver\ ==\ NetPacket::BROADCAST\ ?\ m\_matrix\_bytes.size()\ -\/\ 1\ :\ packet.receiver;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ m\_matrix\_packets[dst]++;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_matrix\_bytes[dst]\ +=\ getNetwork()-\/>getModeledLength(packet);}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ NetworkModel*}
+\DoxyCodeLine{00045\ NetworkModel::createModel(Network\ *net,\ UInt32\ model\_type,\ EStaticNetwork\ net\_type)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keywordflow}{switch}\ (model\_type)}
+\DoxyCodeLine{00048\ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_MAGIC:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ NetworkModelMagic(net,\ net\_type);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_EMESH\_HOP\_COUNTER:}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ NetworkModelEMeshHopCounter(net,\ net\_type);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_EMESH\_HOP\_BY\_HOP:}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ NetworkModelEMeshHopByHop(net,\ net\_type);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_BUS:}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ NetworkModelBus(net,\ net\_type);}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00064\ \ \ \ \}}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ UInt32}
+\DoxyCodeLine{00068\ NetworkModel::parseNetworkType(String\ str)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ \textcolor{keywordflow}{if}\ (str\ ==\ \textcolor{stringliteral}{"{}magic"{}})}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NETWORK\_MAGIC;}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (str\ ==\ \textcolor{stringliteral}{"{}emesh\_hop\_counter"{}})}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NETWORK\_EMESH\_HOP\_COUNTER;}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (str\ ==\ \textcolor{stringliteral}{"{}emesh\_hop\_by\_hop"{}})}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NETWORK\_EMESH\_HOP\_BY\_HOP;}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (str\ ==\ \textcolor{stringliteral}{"{}bus"{}})}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NETWORK\_BUS;}
+\DoxyCodeLine{00078\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (UInt32)-\/1;}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ std::pair<bool,SInt32>}
+\DoxyCodeLine{00083\ NetworkModel::computeCoreCountConstraints(UInt32\ network\_type,\ SInt32\ core\_count)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keywordflow}{switch}\ (network\_type)}
+\DoxyCodeLine{00086\ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_MAGIC:}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_EMESH\_HOP\_COUNTER:}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_BUS:}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{false},core\_count);}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_EMESH\_HOP\_BY\_HOP:}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NetworkModelEMeshHopByHop::computeCoreCountConstraints(core\_count);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ network\ type(\%u)"{}},\ network\_type);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{false},-\/1);}
+\DoxyCodeLine{00098\ \ \ \ \}}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ std::pair<bool,\ std::vector<core\_id\_t>\ >}
+\DoxyCodeLine{00102\ NetworkModel::computeMemoryControllerPositions(UInt32\ network\_type,\ SInt32\ num\_memory\_controllers,\ SInt32\ core\_count)}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \ \textcolor{keywordflow}{switch}\ (network\_type)}
+\DoxyCodeLine{00105\ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_MAGIC:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_EMESH\_HOP\_COUNTER:}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_BUS:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ SInt32\ spacing\_between\_memory\_controllers\ =\ core\_count\ /\ num\_memory\_controllers;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<core\_id\_t>\ core\_list\_with\_memory\_controllers;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ num\_memory\_controllers;\ i++)}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert((i*spacing\_between\_memory\_controllers)\ <\ core\_count);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_list\_with\_memory\_controllers.push\_back(i\ *\ spacing\_between\_memory\_controllers);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{false},\ core\_list\_with\_memory\_controllers);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ NETWORK\_EMESH\_HOP\_BY\_HOP:}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NetworkModelEMeshHopByHop::computeMemoryControllerPositions(num\_memory\_controllers,\ core\_count);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unrecognized\ network\ type(\%u)"{}},\ network\_type);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(\textcolor{keyword}{false},\ std::vector<core\_id\_t>());}
+\DoxyCodeLine{00127\ \ \ \ \}}
+\DoxyCodeLine{00128\ \}}
+
+\end{DoxyCode}

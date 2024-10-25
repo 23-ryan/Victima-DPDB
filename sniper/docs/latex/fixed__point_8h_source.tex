@@ -1,0 +1,63 @@
+\doxysection{fixed\+\_\+point.\+h}
+\label{fixed__point_8h_source}\index{common/misc/fixed\_point.h@{common/misc/fixed\_point.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ FIXED\_POINT\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ FIXED\_POINT\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ PIN\ requires\ special\ handling\ when\ floating\ point\ operations\ are\ used\ inside\ callbacks}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ To\ avoid\ this,\ use\ integer\ arithmetic\ with\ values\ rescaled\ by\ 10k}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{template}<SInt64\ one>}
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }TFixedPoint}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ SInt64\ m\_value;}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SInt64\ m\_one\ =\ one;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ TFixedPoint()\ :\ m\_value(0)\ \{\}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ TFixedPoint(SInt64\ i)\ \{\ this-\/>set\_int(i);\ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ set\_raw(SInt64\ value)\ \{\ this-\/>m\_value\ =\ value;\ \}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ set\_int(SInt64\ value)\ \{\ assert((INT64\_MAX\ /\ this-\/>m\_one)\ >\ llabs(value));\ this-\/>m\_value\ =\ value\ *\ this-\/>m\_one;\ \}}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{static}\ TFixedPoint\ from\_raw(SInt64\ value)\ \{\ TFixedPoint\ fp;\ fp.set\_raw(value);\ \textcolor{keywordflow}{return}\ fp;\ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator==\ (\textcolor{keyword}{const}\ TFixedPoint\&\ fp)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>m\_value\ ==\ fp.m\_value;\ \}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator==\ (SInt64\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>m\_value\ ==\ i\ *\ m\_one;\ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ TFixedPoint\ operator+\ (\textcolor{keyword}{const}\ TFixedPoint\&\ fp)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ +\ fp.m\_value);\ \}}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ TFixedPoint\ operator+\ (SInt64\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ +\ i\ *\ m\_one);\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ TFixedPoint\ operator-\/\ (\textcolor{keyword}{const}\ TFixedPoint\&\ fp)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ -\/\ fp.m\_value);\ \}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ TFixedPoint\ operator-\/\ (SInt64\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ -\/\ i\ *\ m\_one);\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ TFixedPoint\ operator*\ (\textcolor{keyword}{const}\ TFixedPoint\&\ fp)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ *\ fp.m\_value\ /\ this-\/>m\_one);\ \}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ TFixedPoint\ operator*\ (SInt64\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ *\ i);\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ TFixedPoint\ operator/\ (\textcolor{keyword}{const}\ TFixedPoint\&\ fp)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(\textcolor{comment}{/*\_\_int128\_t*/}(fp.m\_one)\ *\ this-\/>m\_value\ /\ fp.m\_value);\ \}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ TFixedPoint\ operator/\ (SInt64\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TFixedPoint::from\_raw(this-\/>m\_value\ /\ i);\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ floor(\textcolor{keyword}{const}\ TFixedPoint\ fp)\ \{\ \textcolor{keywordflow}{return}\ fp.m\_value\ /\ fp.m\_one;\ \}}
+\DoxyCodeLine{00043\ \};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{template}\ <SInt64\ one>\ \textcolor{keyword}{inline}\ TFixedPoint<one>\ operator/\ (SInt64\ i,\ TFixedPoint<one>\&\ fp)\ \{\ \textcolor{keywordflow}{return}\ TFixedPoint<one>(i)\ /\ fp;\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ Default:\ 16k\ so\ mul/div\ can\ be\ done\ using\ shift\ operations}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{typedef}\ TFixedPoint<\_\_UINT64\_C(0x4000)>\ FixedPoint;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{template}<SInt64\ one>}
+\DoxyCodeLine{00051\ std::ostream\ \&\ operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ TFixedPoint<one>\ \&\ f)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ os\ <<\ TFixedPoint<one>::floor((f*one))/(1.0*one);}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{return}\ os;}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ FIXED\_POINT\_H}}
+
+\end{DoxyCode}

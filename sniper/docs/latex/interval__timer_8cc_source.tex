@@ -1,0 +1,755 @@
+\doxysection{interval\+\_\+timer.\+cc}
+\label{interval__timer_8cc_source}\index{common/performance\_model/performance\_models/interval\_performance\_model/interval\_timer.cc@{common/performance\_model/performance\_models/interval\_performance\_model/interval\_timer.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ This\ file\ is\ covered\ under\ the\ Interval\ Academic\ License,\ see\ LICENCE.interval}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}interval\_timer.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}tools.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}itostr.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#\ include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}utils.h"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ IntervalTimer::IntervalTimer(}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ Core\ *core,\ PerformanceModel\ *\_perf,\ \textcolor{keyword}{const}\ CoreModel\ *core\_model,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ misprediction\_penalty,}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ dispatch\_width,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ window\_size,}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ do\_functional\_unit\_contention)}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ :\ m\_core(core)}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ ,\ m\_core\_model(core\_model)}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ ,\ m\_dispatch\_width(dispatch\_width)}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ ,\ m\_branch\_misprediction\_penalty(misprediction\_penalty)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ ,\ m\_remaining\_dispatch\_bandwidth(0)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ ,\ m\_max\_store\_completion\_time(0)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ ,\ m\_max\_load\_completion\_time(0)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ ,\ m\_loadstore\_contention(\textcolor{stringliteral}{"{}interval\_timer.loadstore\_contention"{}},\ core-\/>getId(),}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/num\_outstanding\_loadstores"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ ,\ m\_windows(new\ Windows(window\_size,\ do\_functional\_unit\_contention,\ core,\ core\_model))}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ ,\ m\_perf\_model(\_perf)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ ,\ m\_frequency\_domain(core-\/>getDvfsDomain())}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \textcolor{comment}{//\ Granularity\ of\ memory\ dependencies,\ in\ bytes}}
+\DoxyCodeLine{00044\ \ \ \ UInt64\ mem\_gran\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/memory\_dependency\_granularity"{}},\ core-\/>getId());}
+\DoxyCodeLine{00045\ \ \ \ LOG\_ASSERT\_ERROR(isPower2(mem\_gran),\ \textcolor{stringliteral}{"{}memory\_dependency\_granularity\ needs\ to\ be\ a\ power\ of\ 2.\ [\%u]"{}},\ mem\_gran);}
+\DoxyCodeLine{00046\ \ \ \ m\_mem\_dep\_mask\ =\ \string~(mem\_gran\ -\/\ 1);}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \textcolor{comment}{//\ Granularity\ of\ memory\ dependencies\ on\ long-\/latency\ loads,\ in\ bytes}}
+\DoxyCodeLine{00049\ \ \ \ UInt64\ lll\_gran\ =\ Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}perf\_model/core/interval\_timer/lll\_dependency\_granularity"{}},\ core-\/>getId());}
+\DoxyCodeLine{00050\ \ \ \ LOG\_ASSERT\_ERROR(isPower2(lll\_gran),\ \textcolor{stringliteral}{"{}lll\_dependency\_granularity\ needs\ to\ be\ a\ power\ of\ 2.\ [\%u]"{}},\ lll\_gran);}
+\DoxyCodeLine{00051\ \ \ \ m\_lll\_dep\_mask\ =\ \string~(lll\_gran\ -\/\ 1);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MicroOp::UOP\_SUBTYPE\_SIZE;\ ++i)}
+\DoxyCodeLine{00054\ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ m\_uop\_type\_count[i]\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ String(\textcolor{stringliteral}{"{}uop\_"{}})\ +\ MicroOp::getSubtypeString(MicroOp::uop\_subtype\_t(i)),\ \&m\_uop\_type\_count[i]);}
+\DoxyCodeLine{00057\ \ \ \ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ m\_uops\_total\ =\ 0;}
+\DoxyCodeLine{00060\ \ \ \ m\_uops\_x87\ =\ 0;}
+\DoxyCodeLine{00061\ \ \ \ m\_uops\_pause\ =\ 0;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}uops\_total"{}},\ \&m\_uops\_total);}
+\DoxyCodeLine{00064\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}uops\_x87"{}},\ \&m\_uops\_x87);}
+\DoxyCodeLine{00065\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}uops\_pause"{}},\ \&m\_uops\_pause);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ m\_numICacheOverlapped\ =\ 0;}
+\DoxyCodeLine{00068\ \ \ \ m\_numBPredOverlapped\ =\ 0;}
+\DoxyCodeLine{00069\ \ \ \ m\_numDCacheOverlapped\ =\ 0;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numICacheOverlapped"{}},\ \&m\_numICacheOverlapped);}
+\DoxyCodeLine{00072\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numBPredOverlapped"{}},\ \&m\_numBPredOverlapped);}
+\DoxyCodeLine{00073\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numDCacheOverlapped"{}},\ \&m\_numDCacheOverlapped);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ m\_numLongLatencyLoads\ =\ 0;}
+\DoxyCodeLine{00076\ \ \ \ m\_numTotalLongLatencyLoadLatency\ =\ 0;}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numLongLatencyLoads"{}},\ \&m\_numLongLatencyLoads);}
+\DoxyCodeLine{00079\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numTotalLongLatencyLoadLatency"{}},\ \&m\_numTotalLongLatencyLoadLatency);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ m\_numSerializationInsns\ =\ 0;}
+\DoxyCodeLine{00082\ \ \ \ m\_totalSerializationLatency\ =\ 0;}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numSerializationInsns"{}},\ \&m\_numSerializationInsns);}
+\DoxyCodeLine{00085\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalSerializationLatency"{}},\ \&m\_totalSerializationLatency);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ m\_totalHiddenDCacheLatency\ =\ 0;}
+\DoxyCodeLine{00088\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalHiddenDCacheLatency"{}},\ \&m\_totalHiddenDCacheLatency);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ m\_totalHiddenLongerDCacheLatency\ =\ 0;}
+\DoxyCodeLine{00091\ \ \ \ m\_numHiddenLongerDCacheLatency\ =\ 0;}
+\DoxyCodeLine{00092\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalHiddenLongerDCacheLatency"{}},\ \&m\_totalHiddenLongerDCacheLatency);}
+\DoxyCodeLine{00093\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numHiddenLongerDCacheLatency"{}},\ \&m\_numHiddenLongerDCacheLatency);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ m\_outstandingLongLatencyCycles\ =\ 0;}
+\DoxyCodeLine{00096\ \ \ \ m\_outstandingLongLatencyInsns\ =\ 0;}
+\DoxyCodeLine{00097\ \ \ \ m\_lastAccountedMemoryCycle\ =\ 0;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}outstandingLongLatencyInsns"{}},\ \&m\_outstandingLongLatencyInsns);}
+\DoxyCodeLine{00100\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}outstandingLongLatencyCycles"{}},\ \&m\_outstandingLongLatencyCycles);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00103\ \ \ \ String\ insn\_filename;}
+\DoxyCodeLine{00104\ \ \ \ insn\_filename\ =\ \textcolor{stringliteral}{"{}sim.timer\_insn\_log."{}}\ +\ itostr(core-\/>getId());}
+\DoxyCodeLine{00105\ \ \ \ insn\_filename\ =\ Sim()-\/>getConfig()-\/>formatOutputFileName(insn\_filename);}
+\DoxyCodeLine{00106\ \ \ \ m\_insn\_log\ =\ std::fopen(insn\_filename.c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ m\_numMfenceInsns\ =\ 0;}
+\DoxyCodeLine{00110\ \ \ \ m\_totalMfenceLatency\ =\ 0;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}numMfenceInsns"{}},\ \&m\_numMfenceInsns);}
+\DoxyCodeLine{00113\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}totalMfenceLatency"{}},\ \&m\_totalMfenceLatency);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ m\_cpiBase\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00116\ \ \ \ m\_cpiBranchPredictor\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00117\ \ \ \ m\_cpiSerialization\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00118\ \ \ \ m\_cpiLongLatency\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBase"{}},\ \&m\_cpiBase);}
+\DoxyCodeLine{00121\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiBranchPredictor"{}},\ \&m\_cpiBranchPredictor);}
+\DoxyCodeLine{00122\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiSerialization"{}},\ \&m\_cpiSerialization);}
+\DoxyCodeLine{00123\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ \textcolor{stringliteral}{"{}cpiLongLatency"{}},\ \&m\_cpiLongLatency);}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ m\_cpiInstructionCache.resize(HitWhere::NUM\_HITWHERES,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00127\ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpiInstructionCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiInstructionCache[h]));}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ m\_cpiDataCache.resize(HitWhere::NUM\_HITWHERES,\ SubsecondTime::Zero());}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00136\ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpiDataCache"{}}\ +\ String(HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiDataCache[h]));}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00142\ \ \ \ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ STOP\_DISPATCH\_SIZE\ ;\ i++\ )}
+\DoxyCodeLine{00145\ \ \ \ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ m\_cpiBaseStopDispatch[i]\ =\ 0;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}detailed-\/cpiBase-\/"{}}\ +\ StopDispatchReasonString((StopDispatchReason)i);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpiBaseStopDispatch[i]));}
+\DoxyCodeLine{00149\ \ \ \ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ (\textcolor{keywordtype}{unsigned}\ int)CPCONTR\_TYPE\_SIZE;\ ++i)}
+\DoxyCodeLine{00152\ \ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ m\_cpContrByType[i]\ =\ 0;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ String\ name\ =\ \textcolor{stringliteral}{"{}cpContr\_"{}}\ +\ CpContrTypeString((CpContrType)i);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}interval\_timer"{}},\ core-\/>getId(),\ name,\ \&(m\_cpContrByType[i]));}
+\DoxyCodeLine{00156\ \ \ \ \}}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ IntervalTimer::\string~IntervalTimer()}
+\DoxyCodeLine{00160\ \{}
+\DoxyCodeLine{00161\ \ \ \ free();}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keywordtype}{void}\ IntervalTimer::free()}
+\DoxyCodeLine{00165\ \{}
+\DoxyCodeLine{00166\ \ \ \ \textcolor{keywordflow}{if}\ (m\_windows)}
+\DoxyCodeLine{00167\ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_windows;}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_insn\_log)}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ std::fclose(m\_insn\_log);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ m\_windows\ =\ NULL;}
+\DoxyCodeLine{00176\ \ \ \ \}}
+\DoxyCodeLine{00177\ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{comment}{//\ Simulate\ a\ collection\ of\ micro-\/ops\ and\ report\ the\ number\ of\ instructions\ executed\ and\ the\ latency}}
+\DoxyCodeLine{00180\ boost::tuple<uint64\_t,uint64\_t>\ IntervalTimer::simulate(\textcolor{keyword}{const}\ std::vector<DynamicMicroOp*>\&\ insts)}
+\DoxyCodeLine{00181\ \{}
+\DoxyCodeLine{00182\ \ \ \ uint64\_t\ total\_instructions\_executed\ =\ 0,\ total\_latency\ =\ 0;}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<DynamicMicroOp*>::const\_iterator\ i\ =\ insts.begin()\ ;\ i\ !=\ insts.end();\ ++i\ )}
+\DoxyCodeLine{00185\ \ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*i)-\/>isSquashed())}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ *i;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{comment}{//\ Enforce\ memory\ dependency\ granularity}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*i)-\/>getMicroOp()-\/>isLoad()\ ||\ (*i)-\/>getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ Memory::Access\ addr\ =\ (*i)-\/>getAddress();}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ addr.address\ \&=\ m\_mem\_dep\_mask;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ (*i)-\/>setAddress(addr);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \ \ m\_windows-\/>add(*i);}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ m\_uop\_type\_count[(*i)-\/>getMicroOp()-\/>getSubtype()]++;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ m\_uops\_total++;}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*i)-\/>getMicroOp()-\/>isX87())\ m\_uops\_x87++;}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*i)-\/>getMicroOp()-\/>isPause())\ m\_uops\_pause++;}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_uops\_total\ >\ 10000\ \&\&\ m\_uops\_x87\ >\ m\_uops\_total\ /\ 20)}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_WARNING\_ONCE(\textcolor{stringliteral}{"{}Significant\ fraction\ of\ x87\ instructions\ encountered,\ accuracy\ will\ be\ low.\ Compile\ without\ -\/mno-\/sse2\ -\/mno-\/sse3\ to\ avoid\ these\ instructions."{}});}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ dispatch\ instructions\ from\ the\ window\ when\ it\ is\ full}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{comment}{//\ It\ needs\ to\ be\ full\ so\ that\ we\ can\ walk\ the\ window\ to\ find\ independent\ misses}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (m\_windows-\/>wIsFull())}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ uint64\_t\ instructions\_executed,\ latency;}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ boost::tie(instructions\_executed,\ latency)\ =\ dispatchWindow();}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ total\_instructions\_executed\ +=\ instructions\_executed;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ total\_latency\ +=\ latency;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<uint64\_t,uint64\_t>(total\_instructions\_executed,\ total\_latency);}
+\DoxyCodeLine{00223\ \}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ boost::tuple<uint64\_t,\ uint64\_t>\ IntervalTimer::dispatchWindow()\ \{}
+\DoxyCodeLine{00226\ \ \ \ uint64\_t\ instructions\_executed\ =\ 0;}
+\DoxyCodeLine{00227\ \ \ \ uint64\_t\ latency\ =\ 0;}
+\DoxyCodeLine{00228\ \ \ \ uint64\_t\ micro\_ops\_executed\ =\ 0;}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ uint32\_t\ dispatch\_rate\ =\ calculateCurrentDispatchRate();}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ StopDispatchReason\ continue\_dispatching\ =\ STOP\_DISPATCH\_NO\_REASON;}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ SubsecondTime\ micro\_op\_period\ =\ m\_frequency\_domain-\/>getPeriod();\ \textcolor{comment}{//\ Approximate\ the\ current\ cycle\ count\ if\ we\ don't\ find\ a\ MicroOp}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \textcolor{comment}{//\ Instruction\ dispatch}}
+\DoxyCodeLine{00237\ \ \ \ \textcolor{comment}{//\ micro\_ops\_executed\ must\ be\ <\ dispatch\_rate.\ \ micro\_ops\_executed\ <=\ dispatch\_rate\ will\ cause\ significant\ speedups\ (see\ calculateCurrentDispatchRate())}}
+\DoxyCodeLine{00238\ \ \ \ \textcolor{keywordflow}{while}\ (\ (!m\_windows-\/>wIsEmpty())\ \&\&\ (instructions\_executed\ <\ m\_dispatch\_width)\ \&\&\ (micro\_ops\_executed\ <\ dispatch\_rate)\ \&\&\ (continue\_dispatching\ ==\ STOP\_DISPATCH\_NO\_REASON))}
+\DoxyCodeLine{00239\ \ \ \ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ Windows::WindowEntry\&\ micro\_op\ =\ m\_windows-\/>getInstructionToDispatch();}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \ \ uint64\_t\ instruction\_latency\ =\ dispatchInstruction(micro\_op,\ continue\_dispatching);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ latency\ +=\ instruction\_latency;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ m\_windows-\/>dispatchInstruction();}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ micro\_ops\_executed++;}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getDynMicroOp()-\/>isLast())}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ instructions\_executed++;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ m\_core-\/>getPerformanceModel()-\/>traceInstruction(micro\_op.getDynMicroOp(),\ NULL);}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (latency\ >\ 16)}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ uint64\_t\ insn\_count\ =\ m\_perf\_model-\/>getInstructionCount();}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ uint64\_t\ cycle\_count\ =\ m\_perf\_model-\/>getCycleCount();}
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\#\ ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *opcode\_name\ =\ micro\_op.getMicroOp()-\/>getInstructionOpcodeName().c\_str();}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *opcode\_name\ =\ \textcolor{stringliteral}{"{}Unknown"{}};}
+\DoxyCodeLine{00263\ \textcolor{preprocessor}{\#\ endif}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}[\%ld,\%ld]\ \%s\ latency=\%d\(\backslash\)n"{}},\ cycle\_count,\ insn\_count,\ opcode\_name,\ instruction\_latency);}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00266\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ micro\_op\_period\ =\ micro\_op.getDynMicroOp()-\/>getPeriod();}
+\DoxyCodeLine{00269\ \ \ \ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \textcolor{comment}{//\ The\ minimum\ latency\ for\ dispatching\ these\ micro-\/ops\ is\ 1\ cycle}}
+\DoxyCodeLine{00272\ \ \ \ \textcolor{comment}{//\ Detect\ the\ microarchitectural\ limiting\ factors\ for\ this\ cycle\ for\ cpi\ accounting}}
+\DoxyCodeLine{00273\ \ \ \ \textcolor{keywordflow}{if}\ (latency\ ==\ 0)}
+\DoxyCodeLine{00274\ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_windows-\/>wIsEmpty())}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ continue\_dispatching\ =\ ADD\_STOP\_DISPATCH\_REASON(STOP\_DISPATCH\_WINDOW\_EMPTY,\ continue\_dispatching);}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (instructions\_executed\ >=\ m\_dispatch\_width)}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ continue\_dispatching\ =\ ADD\_STOP\_DISPATCH\_REASON(STOP\_DISPATCH\_DISPATCH\_WIDTH,\ continue\_dispatching);}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_ops\_executed\ >=\ dispatch\_rate)}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ continue\_dispatching\ =\ ADD\_STOP\_DISPATCH\_REASON(STOP\_DISPATCH\_DISPATCH\_RATE,\ continue\_dispatching);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Each\ time\ we\ have\ to\ stop\ because\ the\ critical\ path\ tells\ us\ to:}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ Add\ the\ current\ critical\ path\ components\ to\ their\ corresponding\ total}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ If\ the\ critical\ path\ got\ extended\ due\ to\ issue\ contention,\ add\ that\ separately}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ critical\_path\_length\ =\ m\_windows-\/>getCriticalPathLength();}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ effective\_cp\_length\ =\ m\_windows-\/>getEffectiveCriticalPathLength(critical\_path\_length,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ (\textcolor{keywordtype}{unsigned}\ int)CPCONTR\_TYPE\_SIZE;\ ++i)}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cpContrByType[i]\ +=\ m\_windows-\/>getCpContrFraction((CpContrType)i,\ effective\_cp\_length);}
+\DoxyCodeLine{00293\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#if\ 0}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}cpContr:\ "{}});}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ (\textcolor{keywordtype}{unsigned}\ int)CPCONTR\_TYPE\_SIZE;\ ++i)}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%s\ \%3lu\ \ "{}},\ CpContrTypeString((CpContrType)i).c\_str(),\ m\_windows-\/>m\_cpcontr\_bytype[i]);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}/\ total\ \%4lu\(\backslash\)n"{}},\ m\_windows-\/>m\_cpcontr\_total);}
+\DoxyCodeLine{00298\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \ \ latency\ =\ 1;}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ CPI-\/stacks}}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ m\_cpiBase\ +=\ 1\ *\ micro\_op\_period;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ m\_cpiBaseStopDispatch[continue\_dispatching]\ +=\ 1;}
+\DoxyCodeLine{00305\ \ \ \ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \textcolor{keywordflow}{return}\ boost::tuple<uint64\_t,uint64\_t>(instructions\_executed,\ latency);}
+\DoxyCodeLine{00308\ \}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ uint32\_t\ IntervalTimer::calculateCurrentDispatchRate()\ \{}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \textcolor{keywordtype}{int}\ critical\_path\_length\ =\ m\_windows-\/>getCriticalPathLength();}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ uint32\_t\ dispatch\_rate;}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \textcolor{keywordflow}{if}\ (critical\_path\_length\ >\ 0)}
+\DoxyCodeLine{00317\ \ \ \ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ FixedPoint\ ipc\ =\ FixedPoint(m\_windows-\/>getOldWindowLength())\ /\ m\_windows-\/>getEffectiveCriticalPathLength(critical\_path\_length,\ \textcolor{keyword}{false})\ +\ m\_remaining\_dispatch\_bandwidth;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ dispatch\_rate\ =\ FixedPoint::floor(ipc);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ m\_remaining\_dispatch\_bandwidth\ =\ (dispatch\_rate\ <\ m\_dispatch\_width)\ ?\ (ipc\ -\/\ dispatch\_rate)\ :\ 0;}
+\DoxyCodeLine{00321\ \ \ \ \}}
+\DoxyCodeLine{00322\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00323\ \ \ \ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ dispatch\_rate\ =\ m\_dispatch\_width;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ m\_remaining\_dispatch\_bandwidth\ =\ 0;}
+\DoxyCodeLine{00326\ \ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \textcolor{keywordflow}{return}\ dispatch\_rate;}
+\DoxyCodeLine{00329\ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \textcolor{keywordtype}{void}\ IntervalTimer::issueMemOp(Windows::WindowEntry\&\ micro\_op)}
+\DoxyCodeLine{00332\ \{}
+\DoxyCodeLine{00333\ \ \ \ \textcolor{comment}{//\ Issue\ memory\ operations\ to\ the\ memory\ hierarchy.}}
+\DoxyCodeLine{00334\ \ \ \ \textcolor{comment}{//\ This\ function\ is\ called:}}
+\DoxyCodeLine{00335\ \ \ \ \textcolor{comment}{//\ -\/\ not\ at\ all\ if\ all\ memory\ operations\ are\ issued\ at\ fetch\ (perf\_model/core/interval\_timer/issue\_memops\_at\_dispatch\ ==\ false)}}
+\DoxyCodeLine{00336\ \ \ \ \textcolor{comment}{//\ -\/\ from\ blockWindow\ for\ overlapping\ accesses}}
+\DoxyCodeLine{00337\ \ \ \ \textcolor{comment}{//\ -\/\ from\ dispatchInstruction\ otherwise}}
+\DoxyCodeLine{00338\ \ \ \ \textcolor{keywordflow}{if}\ ((micro\_op.getMicroOp()-\/>isLoad()\ ||\ micro\_op.getMicroOp()-\/>isStore())}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \&\&\ micro\_op.getDynMicroOp()-\/>getDCacheHitWhere()\ ==\ HitWhere::UNKNOWN)}
+\DoxyCodeLine{00340\ \ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ MemoryResult\ res\ =\ m\_core-\/>accessMemory(}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ Core::NONE,}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ micro\_op.getMicroOp()-\/>isLoad()\ ?\ Core::READ\ :\ Core::WRITE,}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ micro\_op.getDynMicroOp()-\/>getAddress().address,}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ NULL,}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ micro\_op.getMicroOp()-\/>getMemoryAccessSize(),}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ Core::MEM\_MODELED\_RETURN,}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ micro\_op.getMicroOp()-\/>getInstruction()\ ?\ micro\_op.getMicroOp()-\/>getInstruction()-\/>getAddress()\ :\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(NULL)}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ uint64\_t\ latency\ =\ SubsecondTime::divideRounded(res.latency,\ m\_core-\/>getDvfsDomain()-\/>getPeriod());}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ micro\_op.getDynMicroOp()-\/>setExecLatency(micro\_op.getDynMicroOp()-\/>getExecLatency()\ +\ latency);\ \textcolor{comment}{//\ execlatency\ already\ contains\ bypass\ latency}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ micro\_op.getDynMicroOp()-\/>setDCacheHitWhere(res.hit\_where);}
+\DoxyCodeLine{00353\ \ \ \ \}}
+\DoxyCodeLine{00354\ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ uint64\_t\ IntervalTimer::dispatchInstruction(Windows::WindowEntry\&\ micro\_op,\ StopDispatchReason\&\ continue\_dispatching)}
+\DoxyCodeLine{00357\ \{}
+\DoxyCodeLine{00358\ \ \ \ \textcolor{comment}{//\ If\ it's\ not\ already\ done,\ issue\ the\ memory\ operation}}
+\DoxyCodeLine{00359\ \ \ \ issueMemOp(micro\_op);}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ uint64\_t\ latency\ =\ 0;}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ uint64\_t\ max\_producer\_exec\_time\ =\ getMaxProducerExecTime(micro\_op);}
+\DoxyCodeLine{00364\ \ \ \ micro\_op.maxProducer\ =\ max\_producer\_exec\_time;}
+\DoxyCodeLine{00365\ \ \ \ micro\_op.cphead\ =\ m\_windows-\/>getCriticalPathHead();}
+\DoxyCodeLine{00366\ \ \ \ micro\_op.cptail\ =\ m\_windows-\/>getCriticalPathTail();}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \textcolor{keywordtype}{bool}\ icache\_miss\ =\ (micro\_op.getDynMicroOp()-\/>getICacheHitWhere()\ !=\ HitWhere::L1I)\ \&\ (!micro\_op.hasOverlapFlag(Windows::WindowEntry::ICACHE\_OVERLAP));}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \textcolor{keywordflow}{if}\ (icache\_miss)}
+\DoxyCodeLine{00371\ \ \ \ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ uint64\_t\ icache\_latency\ =\ micro\_op.getDynMicroOp()-\/>getICacheLatency();}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ latency\ +=\ icache\_latency;}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ m\_windows-\/>clearOldWindow(micro\_op.cptail\ +\ icache\_latency);}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \ \ continue\_dispatching\ =\ STOP\_DISPATCH\_ICACHE\_MISS;}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ icache\ CPI-\/stack\ counters}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ m\_cpiInstructionCache[micro\_op.getDynMicroOp()-\/>getICacheHitWhere()]\ +=\ icache\_latency\ *\ micro\_op.getDynMicroOp()-\/>getPeriod();}
+\DoxyCodeLine{00380\ \ \ \ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isBranch())}
+\DoxyCodeLine{00383\ \ \ \ \{}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getDynMicroOp()-\/>isBranchMispredicted()\ \&\&\ !micro\_op.hasOverlapFlag(Windows::WindowEntry::BPRED\_OVERLAP))}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ uint64\_t\ bpred\_latency\ =\ m\_branch\_misprediction\_penalty\ +\ m\_windows-\/>calculateBranchResolutionLatency();}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ latency\ +=\ bpred\_latency;}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ continue\_dispatching\ =\ STOP\_DISPATCH\_BRANCH\_MISPREDICT;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ m\_windows-\/>clearOldWindow(micro\_op.cptail\ +\ bpred\_latency);}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ bpred\ CPI-\/stack\ counters}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ m\_cpiBranchPredictor\ +=\ bpred\_latency\ *\ micro\_op.getDynMicroOp()-\/>getPeriod();}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ \ \ \ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isSerializing()\ ||\ micro\_op.getMicroOp()-\/>isInterrupt())}
+\DoxyCodeLine{00397\ \ \ \ \{}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ uint64\_t\ flushLatency\ =\ std::max(m\_windows-\/>getCriticalPathLength(),\ m\_windows-\/>getMinimalFlushLatency(m\_dispatch\_width));}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ uint64\_t\ serialize\_latency\ =\ flushLatency\ +\ micro\_op.getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ latency\ +=\ serialize\_latency;}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \ \ m\_numSerializationInsns++;}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ m\_totalSerializationLatency\ +=\ serialize\_latency;}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ m\_cpiSerialization\ +=\ serialize\_latency\ *\ micro\_op.getDynMicroOp()-\/>getPeriod();}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ micro\_op.setExecTime(m\_windows-\/>getCriticalPathTail());}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ m\_windows-\/>clearOldWindow(micro\_op.getExecTime());}
+\DoxyCodeLine{00408\ \ \ \ \}}
+\DoxyCodeLine{00409\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isExecute()\ \&\&\ micro\_op.getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00410\ \ \ \ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ the\ M/L/SFENCE\ operations\ (when\ supplied\ as\ a\ single\ execute\ operation)\ now\ as\ a\ strict\ MFENCE}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \textcolor{comment}{//uint64\_t\ current\_cycle\ =\ m\_windows-\/>getCriticalPathTail();}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ uint64\_t\ cycle\_to\_wait\_until\ =\ std::max(max\_producer\_exec\_time,std::max(m\_max\_store\_completion\_time,m\_max\_load\_completion\_time));}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ have\ loads\ or\ stores\ that\ will\ complete\ in\ the\ future,\ wait\ for\ them\ all\ to\ complete}}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \textcolor{comment}{//\ Otherwise,\ our\ critical\ path\ is\ longer,\ and\ we\ become\ a\ nop}}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ code\ below\ doesn't\ work.\ \ CriticalPath\ is\ just\ the\ time\ that\ we\ put\ the\ last\ instruction\ in.}}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ need\ to\ use\ the\ maxProd,\ and\ we\ can't\ just\ add\ latencies,\ because\ we\ don't\ have\ a\ concept\ of\ latency}}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \textcolor{comment}{//\ \ in\ the\ old-\/window\ (only\ execution\ ciompletion\ time)}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ just\ need\ to\ make\ sure\ that\ the\ memory\ dependencies\ are\ properly\ taken\ care\ of.}}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \textcolor{comment}{//if\ (cycle\_to\_wait\_until\ >\ current\_cycle)\ \{}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ uint64\_t\ mfence\_latency\ =\ cycle\_to\_wait\_until\ -\/\ current\_cycle;}}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ //\ Keep\ track\ of\ the\ memory\ fence\ instructions\ and\ their\ contributed\ latencies}}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ m\_totalMfenceLatency\ +=\ mfence\_latency;}}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ m\_numMfenceInsns++;}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ micro\_op.setExecTime(cycle\_to\_wait\_until\ +\ micro\_op.getDynMicroOp()-\/>getExecLatency());}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ updateCriticalPath(micro\_op,\ latency);}
+\DoxyCodeLine{00428\ \ \ \ \}}
+\DoxyCodeLine{00429\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00430\ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ uint64\_t\ exec\_latency\ =\ micro\_op.getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.hasOverlapFlag(Windows::WindowEntry::DCACHE\_OVERLAP))}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ do\ nothing\ for\ overlapped\ loads,\ as\ they\ don't\ add\ to\ the\ critical\ path\ and\ happen\ in\ parallel\ to\ other\ loads\ (MLP\ >\ 1)}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (micro\_op.getDynMicroOp()-\/>isLongLatencyLoad())}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ dcache\_latency\ =\ exec\_latency;}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Long\ latency\ loads\ trump\ all\ other\ latencies}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ dispatch\_cycle\ =\ std::max(max\_producer\_exec\_time,\ m\_windows-\/>getCriticalPathHead());}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ sched\_cycle\ =\ dispatch\_cycle;}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ contention\_exec\_cycle;}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ logic\ only\ works\ for\ LFENCEs,\ when\ marked\ on\ load\ uops}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ contention\_exec\_cycle\ =\ m\_loadstore\_contention.getBarrierCompletionTime(sched\_cycle,\ dcache\_latency);}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ contention\_exec\_cycle\ =\ m\_loadstore\_contention.getCompletionTime(sched\_cycle,\ dcache\_latency);}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Calculate\ our\ new\ latency\ from\ the\ load\ contention\ completion\ time}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ reswin\_extra\_latency\ =\ sched\_cycle\ -\/\ dispatch\_cycle;}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ contention\_extra\_latency\ =\ contention\_exec\_cycle\ -\/\ sched\_cycle;}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ long\_latency\_load\_latency\ =\ reswin\_extra\_latency\ +\ contention\_extra\_latency;\ \textcolor{comment}{//\ dcache\_latency\ is\ already\ taken\ into\ account\ in\ contention\_extra\_latency}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ latency\ +=\ long\_latency\_load\_latency;}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \textcolor{preprocessor}{\#if\ DEBUG\_IT\_INSN\_PRINT}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ insn\_count\ =\ m\_perf\_model-\/>getInstructionCount();}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ cycle\_count\ =\ m\_perf\_model-\/>getCycleCount();}
+\DoxyCodeLine{00461\ \textcolor{preprocessor}{\#\ ifdef\ ENABLE\_MICROOP\_STRINGS}}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *opcode\_name\ =\ micro\_op.getInstructionOpcodeName().c\_str();}
+\DoxyCodeLine{00463\ \textcolor{preprocessor}{\#\ else}}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *opcode\_name\ =\ \textcolor{stringliteral}{"{}Unknown"{}};}
+\DoxyCodeLine{00465\ \textcolor{preprocessor}{\#\ endif}}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}[\%ld,\%ld]\ \%s("{}},\ cycle\_count,\ insn\_count,\ opcode\_name);}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.isLoad())}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}L"{}});}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.isExecute())}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}X"{}});}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.isStore())}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{}S"{}});}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(m\_insn\_log,\ \textcolor{stringliteral}{"{})\ latency=\%ld\ (\%ld+\%ld(\%ld))\(\backslash\)n"{}},\ latency,\ reswin\_extra\_latency,\ contention\_extra\_latency,\ dcache\_latency);}
+\DoxyCodeLine{00474\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setExecTime(contention\_exec\_cycle);}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setExecTime(m\_windows-\/>getCriticalPathTail());}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ m\_windows-\/>clearOldWindow(micro\_op.getExecTime()\ +\ long\_latency\_load\_latency);}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>blockWindow();}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ m\_numLongLatencyLoads++;}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ m\_numTotalLongLatencyLoadLatency+=long\_latency\_load\_latency;}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ dcache\ CPI-\/stack\ counters}}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cpiDataCache[micro\_op.getDynMicroOp()-\/>getDCacheHitWhere()]\ +=\ long\_latency\_load\_latency\ *\ micro\_op.getDynMicroOp()-\/>getPeriod();}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Non\ long-\/latency-\/load\ load\ operations}}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ dcache\_latency\ =\ exec\_latency;}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ dispatch\_cycle\ =\ std::max(max\_producer\_exec\_time,\ m\_windows-\/>getCriticalPathHead());}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ sched\_cycle\ =\ dispatch\_cycle;}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ contentionExecTime;}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ logic\ only\ works\ for\ LFENCEs,\ when\ marked\ on\ load\ uops}}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ contentionExecTime\ =\ m\_loadstore\_contention.getBarrierCompletionTime(sched\_cycle,\ dcache\_latency);}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ contentionExecTime\ =\ m\_loadstore\_contention.getCompletionTime(sched\_cycle,\ dcache\_latency);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setExecTime(contentionExecTime);}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ doesn't\ block\ window\ but\ adds\ to\ the\ critical\ path\ (unless\ long-\/latency).\ */}}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ updateCriticalPath(micro\_op,\ latency);}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ m\_max\_load\_completion\_time\ =\ std::max(m\_max\_load\_completion\_time,\ micro\_op.getExecTime());}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compute\ MLP}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getDynMicroOp()-\/>isLongLatencyLoad())}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ now\ =\ m\_windows-\/>getCriticalPathTail();}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ done\ =\ now\ +\ exec\_latency;}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ins\ will\ be\ outstanding\ for\ until\ it\ is\ done.\ By\ accounting\ beforehand\ I\ don't\ need\ to}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ worry\ about\ fast-\/forwarding\ simulations}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ m\_outstandingLongLatencyInsns\ +=\ exec\_latency;}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ account\ for\ the\ cycles\ that\ have\ not\ yet\ been\ accounted\ for\ by\ other\ long}}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ latency\ misses\ (don't\ account\ cycles\ twice).}}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_lastAccountedMemoryCycle\ <\ now)}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_lastAccountedMemoryCycle\ =\ now;}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (done\ >\ m\_lastAccountedMemoryCycle)}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outstandingLongLatencyCycles\ +=\ done\ -\/\ m\_lastAccountedMemoryCycle;}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_lastAccountedMemoryCycle\ =\ done;}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isStore())\ \{}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ uint64\_t\ store\_latency\ =\ exec\_latency;}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ uint64\_t\ dispatch\_cycle\ =\ std::max(max\_producer\_exec\_time,\ m\_windows-\/>getCriticalPathHead());}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ uint64\_t\ sched\_cycle\ =\ dispatch\_cycle;}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ uint64\_t\ bypass\_latency\ =\ m\_core\_model-\/>getBypassLatency(micro\_op.getDynMicroOp());}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ uint64\_t\ data\_ready\_cycle\ =\ sched\_cycle\ +\ bypass\_latency\ +\ 1;\ \textcolor{comment}{//\ This\ store\ result\ will\ be\ ready\ to\ use\ one\ cycle\ later}}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ micro\_op.setExecTime(data\_ready\_cycle);\ \textcolor{comment}{//\ Time\ the\ critical\ path\ calculation\ will\ use}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ updateCriticalPath(micro\_op,\ latency);}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ See\ Redmine\ issue\ \#89:\ CPU\ forwarding\ logic\ vs.\ RFO\ store\ completion\ delaying\ the\ CPU}}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ uint64\_t\ exec\_time\_cycle\ =\ sched\_cycle\ +\ store\_latency;\ \textcolor{comment}{//\ For\ future\ instructions\ that\ depend\ on\ this\ instruction's\ result}}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ m\_max\_store\_completion\_time\ =\ std::max(m\_max\_store\_completion\_time,\ exec\_time\_cycle);}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ Don't\ update\ micro\_op.setExecTime\ (else\ it\ will\ eventually\ affect\ the\ critical\ path\ head,\ once\ this\ instruction}}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ goes\ through\ Windows::dispatchInstruction).\ If\ we\ need\ this\ time,\ figure\ out\ another\ place\ to\ put\ it.}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//micro\_op.setExecTime(exec\_time\_cycle);}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ uint64\_t\ dispatch\_cycle\ =\ std::max(max\_producer\_exec\_time,\ m\_windows-\/>getCriticalPathHead());}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ micro\_op.setExecTime(dispatch\_cycle\ +\ exec\_latency);}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ updateCriticalPath(micro\_op,\ latency);}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00555\ \ \ \ \}}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \ \ \ \textcolor{keywordflow}{return}\ latency;}
+\DoxyCodeLine{00558\ \}}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00564\ \textcolor{keywordtype}{void}\ IntervalTimer::updateCriticalPath(Windows::WindowEntry\&\ micro\_op,\ uint64\_t\&\ latency)}
+\DoxyCodeLine{00565\ \{}
+\DoxyCodeLine{00566\ \ \ \ uint64\_t\ lll\ =\ m\_windows-\/>longLatencyOperationLatency(micro\_op);}
+\DoxyCodeLine{00567\ \ \ \ \textcolor{keywordflow}{if}\ (lll\ ==\ 0)}
+\DoxyCodeLine{00568\ \ \ \ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ m\_windows-\/>updateCriticalPathTail(micro\_op);}
+\DoxyCodeLine{00570\ \ \ \ \}}
+\DoxyCodeLine{00571\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00572\ \ \ \ \{}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ latency\ +=\ lll;}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ m\_cpiLongLatency\ +=\ lll\ *\ micro\_op.getDynMicroOp()-\/>getPeriod();}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ m\_windows-\/>clearOldWindow(micro\_op.getExecTime());}
+\DoxyCodeLine{00576\ \ \ \ \}}
+\DoxyCodeLine{00577\ \}}
+\DoxyCodeLine{00578\ }
+\DoxyCodeLine{00583\ \textcolor{keywordtype}{void}\ IntervalTimer::blockWindow()}
+\DoxyCodeLine{00584\ \{}
+\DoxyCodeLine{00585\ \ \ \ \textcolor{comment}{//\ Calculate\ the\ overlaps\ for\ all\ instructions\ in\ the\ window.}}
+\DoxyCodeLine{00586\ \ \ \ \textcolor{keywordtype}{bool}\ mem\_barrier\_pending\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ \ \ \ Windows::Iterator\ window\_iterator\ =\ m\_windows-\/>getWindowIterator();}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \ \ \ Windows::WindowEntry\&\ head\ =\ window\_iterator.next();\ \textcolor{comment}{//\ Returns\ the\ current\ head:\ disregard\ it.}}
+\DoxyCodeLine{00591\ \ \ \ head.setIndependentMiss();}
+\DoxyCodeLine{00592\ }
+\DoxyCodeLine{00593\ \ \ \ IntPtr\ head\_address\ =\ head.getMicroOp()-\/>isLoad()\ ?\ head.getDynMicroOp()-\/>getLoadAccess().phys\ :\ 0;}
+\DoxyCodeLine{00594\ \ \ \ head\_address\ \&=\ m\_lll\_dep\_mask;}
+\DoxyCodeLine{00595\ }
+\DoxyCodeLine{00596\ \ \ \ \textcolor{keywordflow}{while}(window\_iterator.hasNext())\ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ Windows::WindowEntry\&\ micro\_op\ =\ window\_iterator.next();}
+\DoxyCodeLine{00598\ }
+\DoxyCodeLine{00599\ \ \ \ \ \ \ micro\_op.clearDependent();}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ micro\_op.addOverlapFlag(Windows::WindowEntry::ICACHE\_OVERLAP);}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ m\_numICacheOverlapped++;}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isSerializing())}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isMemBarrier())}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ mem\_barrier\_pending\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00608\ }
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \textcolor{comment}{//\ Generate\ dependencies\ using\ dependencies}}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ micro\_op.getDynMicroOp()-\/>getDependenciesLength();\ i++)}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_windows-\/>windowContains(micro\_op.getDynMicroOp()-\/>getDependency(i)))}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ Windows::WindowEntry\&\ dependee\ =\ m\_windows-\/>getInstruction(micro\_op.getDynMicroOp()-\/>getDependency(i));}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dependee.isDependent())}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Dependee\ depends\ on\ the\ long-\/latency\ load\ blocking\ the\ window:\ do\ not\ issue\ this\ uop\ now}}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setDataDependent();}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dependee.isIndependent()\ \&\&\ dependee.getDynMicroOp()-\/>isLongLatencyLoad())}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Our\ dependee\ is\ independent\ of\ the\ long-\/latency\ load\ blocking\ the\ window,}}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ but\ it\ is\ a\ long-\/latency\ event\ by\ itself:\ do\ not\ issue\ this\ uop\ now}}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Since\ the\ window\ head\ is\ independent\ and\ long-\/latency,}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ code\ path\ will\ also\ start\ the\ chain\ of\ dependent\ loads.}}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setDataDependent();}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ else:\ our\ dependee\ is\ independent\ of\ the\ long-\/latency\ load\ blocking\ the\ window,}}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ is\ not\ a\ long-\/latency\ load\ in\ itself,\ which\ means\ it\ will\ complete\ under\ the\ original\ LLL.}}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Therefore,\ we\ can\ also\ be\ hidden\ under\ the\ long-\/latency\ load\ which\ makes\ us\ not\ dependent.}}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00635\ }
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isLoad())}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ IntPtr\ address\ =\ micro\_op.getDynMicroOp()-\/>getLoadAccess().phys;}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((address\ \&\ m\_lll\_dep\_mask)\ ==\ head\_address)}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ load\ accesses\ the\ same\ cache\ line\ as\ the\ long-\/latency\ load\ that's\ blocking\ the\ ROB}}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ should\ be\ an\ overlapped\ miss,\ but\ due\ to\ the\ way\ the\ cache\ model\ works\ (instant\ completion),}}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ will\ see\ an\ L1\ hit.\ Still,\ we\ can't\ complete\ until\ the\ miss\ is\ resolved.}}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Model\ this\ by\ making\ us\ dependent\ on\ the\ long-\/latency\ load.}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setDataDependent();}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isBranch()\ \&\&\ !micro\_op.isDependent())}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \ \ micro\_op.addOverlapFlag(Windows::WindowEntry::BPRED\_OVERLAP);}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ m\_numBPredOverlapped++;}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (micro\_op.getMicroOp()-\/>isLoad()\ \&\&\ !micro\_op.isDependent())}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ no\ previous\ membars\ \&\ not\ data\ dependend,\ mark\ as\ overlapped}}
+\DoxyCodeLine{00657\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ *\ if\ long\ latency\ miss\ -\/>\ mark\ as\ independent\ miss}}
+\DoxyCodeLine{00658\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ *\ if\ short\ latency\ -\/>\ check\ if\ delayed\ hit\ and\ also\ mark\ as\ independent\ (secondary)\ miss}}
+\DoxyCodeLine{00659\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!mem\_barrier\_pending)}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!micro\_op.hasOverlapFlag(Windows::WindowEntry::DCACHE\_OVERLAP))}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ overlappedLatency\ =\ micro\_op.getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ longLatency\ =\ head.getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_totalHiddenDCacheLatency\ +=\ overlappedLatency;}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (overlappedLatency\ >\ longLatency)}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_totalHiddenLongerDCacheLatency\ +=\ overlappedLatency\ -\/\ longLatency;}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_numHiddenLongerDCacheLatency\ +=\ 1;}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.addOverlapFlag(Windows::WindowEntry::DCACHE\_OVERLAP);}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_numDCacheOverlapped++;}
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Issue\ the\ memory\ operation\ now}}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ issueMemOp(micro\_op);}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setIndependentMiss();}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ micro\_op.setExecTime(m\_windows-\/>getCriticalPathHead());}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00685\ \ \ \ \}}
+\DoxyCodeLine{00686\ \}}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \textcolor{comment}{//\ Allow\ the\ use\ of\ negative\ times\ for\ comparisons}}
+\DoxyCodeLine{00689\ uint64\_t\ IntervalTimer::getMaxProducerExecTime(Windows::WindowEntry\&\ micro\_op)\ \{}
+\DoxyCodeLine{00690\ \ \ \ int64\_t\ oldestStartTime\ =\ m\_windows-\/>getOldestInstruction().getExecTime()\ -\/\ m\_windows-\/>getOldestInstruction().getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00691\ \ \ \ int64\_t\ oldestFetchTime\ =\ m\_windows-\/>getOldestInstruction().getFetchTime();}
+\DoxyCodeLine{00692\ \ \ \ int64\_t\ currentFetchTime\ =\ micro\_op.getFetchTime();}
+\DoxyCodeLine{00693\ \ \ \ int64\_t\ relativeFetchTime\ =\ currentFetchTime\ -\/\ oldestFetchTime;}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \ \ \ int64\_t\ max\_producer\_exec\_time\ =\ 0;}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ i\ =\ 0;\ i\ <\ micro\_op.getDynMicroOp()-\/>getDependenciesLength();\ i++)\ \{}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_windows-\/>oldWindowContains(micro\_op.getDynMicroOp()-\/>getDependency(i)))\ \{}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ Windows::WindowEntry\&\ producer\ =\ m\_windows-\/>getInstruction(micro\_op.getDynMicroOp()-\/>getDependency(i));}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ int64\_t\ producerExecTime\ =\ producer.getExecTime();}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ int64\_t\ producerStartTime\ =\ producerExecTime\ -\/\ producer.getDynMicroOp()-\/>getExecLatency();}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ int64\_t\ relativeStartTime\ =\ producerStartTime\ -\/\ oldestStartTime;}
+\DoxyCodeLine{00703\ }
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (relativeFetchTime\ >\ relativeStartTime)\ \{}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (relativeStartTime\ <\ 0)}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ relativeStartTime\ =\ 0;}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ producerExecTime\ +=\ (relativeFetchTime\ -\/\ relativeStartTime);}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ \ max\_producer\_exec\_time\ =\ std::max(max\_producer\_exec\_time,\ producerExecTime);}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00712\ \ \ \ \}}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \ \ \ \textcolor{keywordflow}{return}\ max\_producer\_exec\_time;}
+\DoxyCodeLine{00715\ \}}
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00717\ String\ StopDispatchReasonStringHelper(StopDispatchReason\ r)}
+\DoxyCodeLine{00718\ \{}
+\DoxyCodeLine{00719\ \ \ \ \textcolor{keywordflow}{switch}(r)}
+\DoxyCodeLine{00720\ \ \ \ \{}
+\DoxyCodeLine{00721\ \ \ \ \textcolor{keywordflow}{case}\ STOP\_DISPATCH\_NO\_REASON:}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}NoReason"{}});}
+\DoxyCodeLine{00723\ \ \ \ \textcolor{keywordflow}{case}\ STOP\_DISPATCH\_WINDOW\_EMPTY:}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}WindowEmpty"{}});}
+\DoxyCodeLine{00725\ \ \ \ \textcolor{keywordflow}{case}\ STOP\_DISPATCH\_DISPATCH\_WIDTH:}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}DispatchWidth"{}});}
+\DoxyCodeLine{00727\ \ \ \ \textcolor{keywordflow}{case}\ STOP\_DISPATCH\_DISPATCH\_RATE:}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}DispatchRate"{}});}
+\DoxyCodeLine{00729\ \ \ \ \textcolor{keywordflow}{case}\ STOP\_DISPATCH\_ICACHE\_MISS:}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}ICacheMiss"{}});}
+\DoxyCodeLine{00731\ \ \ \ \textcolor{keywordflow}{case}\ STOP\_DISPATCH\_BRANCH\_MISPREDICT:}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}BranchMispredict"{}});}
+\DoxyCodeLine{00733\ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ String(\textcolor{stringliteral}{"{}UnknownStopDispatchReason"{}});}
+\DoxyCodeLine{00735\ \ \ \ \}}
+\DoxyCodeLine{00736\ \}}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00738\ String\ StopDispatchReasonString(StopDispatchReason\ r)}
+\DoxyCodeLine{00739\ \{}
+\DoxyCodeLine{00740\ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ STOP\_DISPATCH\_NO\_REASON)}
+\DoxyCodeLine{00741\ \ \ \ \{}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ StopDispatchReasonStringHelper(r);}
+\DoxyCodeLine{00743\ \ \ \ \}}
+\DoxyCodeLine{00744\ \ \ \ String\ s;}
+\DoxyCodeLine{00745\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ (0x1\ <<\ i)\ <\ STOP\_DISPATCH\_SIZE\ ;\ i++\ )}
+\DoxyCodeLine{00746\ \ \ \ \{}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (r\ >>\ i)\ \&\ 0x1\ )}
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ !=\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \ \ \ \ s\ +=\ \textcolor{stringliteral}{"{}+"{}};}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ s\ +=\ StopDispatchReasonStringHelper((StopDispatchReason)(0x1\ <<\ i));}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00755\ \ \ \ \}}
+\DoxyCodeLine{00756\ \ \ \ \textcolor{keywordflow}{return}\ s;}
+\DoxyCodeLine{00757\ \}}
+
+\end{DoxyCode}

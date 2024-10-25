@@ -1,0 +1,163 @@
+\doxysection{config.\+h}
+\label{config_8h_source}\index{common/misc/config.h@{common/misc/config.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ config.h}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ The\ Config\ class\ is\ used\ to\ set,\ store,\ and\ retrieve\ all\ the\ configurable}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ parameters\ of\ the\ simulator.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Initial\ creation:\ Sep\ 18,\ 2008\ by\ jasonm}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#ifndef\ CONFIG\_H}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ CONFIG\_H}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Enable\ to\ run\ core\ performance\ model\ in\ separate\ thread}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ When\ \#\ simulated\ cores\ >\ \#\ host\ cores,\ this\ is\ probably\ not\ very\ useful}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\#define\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}clock\_skew\_minimization\_object.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}cache\_efficiency\_tracker.h"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{struct\ }NetworkModelAnalyticalParameters;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{class\ }Config}
+\DoxyCodeLine{00028\ \{}
+\DoxyCodeLine{00029\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keyword}{enum}\ SimulationMode}
+\DoxyCodeLine{00031\ \ \ \ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ PINTOOL\ =\ 0,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ STANDALONE,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ NUM\_SIMULATION\_MODES}
+\DoxyCodeLine{00035\ \ \ \ \};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keyword}{enum}\ SimulationROI}
+\DoxyCodeLine{00038\ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ ROI\_FULL,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ ROI\_MAGIC,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ ROI\_SCRIPT}
+\DoxyCodeLine{00042\ \ \ \ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<UInt32,core\_id\_t>\ CommToCoreMap;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ Config(SimulationMode\ mode);}
+\DoxyCodeLine{00047\ \ \ \ \string~Config();}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordtype}{void}\ loadFromFile(\textcolor{keywordtype}{char}*\ filename);}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keywordtype}{void}\ loadFromCmdLine();}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \textcolor{comment}{//\ Return\ the\ total\ number\ of\ modules\ in\ all\ processes}}
+\DoxyCodeLine{00053\ \ \ \ UInt32\ getTotalCores();}
+\DoxyCodeLine{00054\ \ \ \ UInt32\ getApplicationCores();}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keywordtype}{bool}\ getMegapageEnabled()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00056\ \ \ \ UInt64\ getMegapageSize()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{comment}{//\ For\ mapping\ between\ user-\/land\ communication\ id's\ to\ actual\ core\ id's}}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keywordtype}{void}\ updateCommToCoreMap(UInt32\ comm\_id,\ core\_id\_t\ core\_id);}
+\DoxyCodeLine{00060\ \ \ \ UInt32\ getCoreFromCommId(UInt32\ comm\_id);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{comment}{//\ Fills\ in\ an\ array\ with\ the\ models\ for\ each\ static\ network}}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordtype}{void}\ getNetworkModels(UInt32\ *)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \textcolor{comment}{//\ Get\ CoreId\ length}}
+\DoxyCodeLine{00066\ \ \ \ UInt32\ getCoreIDLength()}
+\DoxyCodeLine{00067\ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_core\_id\_length;\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ SimulationMode\ getSimulationMode()}
+\DoxyCodeLine{00070\ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_simulation\_mode;\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \textcolor{comment}{//\ Knobs}}
+\DoxyCodeLine{00073\ \ \ \ UInt32\ getNumHostCores()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_num\_host\_cores;\ \}}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableSMCSupport()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_smc\_support;\ \}}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordtype}{void}\ forceEnableSMCSupport()\ \{\ m\_knob\_enable\_smc\_support\ =\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordtype}{bool}\ getIssueMemopsAtFunctional()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_issue\_memops\_at\_functional;\ \}}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableICacheModeling()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_icache\_modeling;\ \}}
+\DoxyCodeLine{00078\ \ \ \ SimulationROI\ getSimulationROI()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_roi;\ \}}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableProgressTrace()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_progress\_trace;\ \}}
+\DoxyCodeLine{00080\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableSync()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_sync;\ \}}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableSyncReport()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_sync\_report;\ \}}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordtype}{bool}\ getOSEmuPthreadReplace()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_osemu\_pthread\_replace;\ \}}
+\DoxyCodeLine{00083\ \ \ \ UInt32\ getOSEmuNprocs()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_osemu\_nprocs;\ \}}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordtype}{bool}\ getOSEmuClockReplace()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_osemu\_clock\_replace;\ \}}
+\DoxyCodeLine{00085\ \ \ \ time\_t\ getOSEmuTimeStart()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_osemu\_time\_start;\ \}}
+\DoxyCodeLine{00086\ \ \ \ ClockSkewMinimizationObject::Scheme\ getClockSkewMinimizationScheme()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_clock\_skew\_minimization\_scheme;\ \}}
+\DoxyCodeLine{00087\ \ \ \ UInt64\ getHPIInstructionsPerCore()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_hpi\_percore;\ \}}
+\DoxyCodeLine{00088\ \ \ \ UInt64\ getHPIInstructionsGlobal()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_hpi\_global;\ \}}
+\DoxyCodeLine{00089\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableSpinLoopDetection()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_spinloopdetection;\ \}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordtype}{bool}\ suppressStdout()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_suppress\_stdout;\ \}}
+\DoxyCodeLine{00091\ \ \ \ \textcolor{keywordtype}{bool}\ suppressStderr()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_suppress\_stderr;\ \}}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keywordtype}{bool}\ getEnablePinPlay()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_pinplay;\ \}}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordtype}{bool}\ getEnableSyscallEmulation()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_enable\_syscall\_emulation;\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \textcolor{keywordtype}{bool}\ getBBVsEnabled()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_knob\_bbvs;\ \}}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordtype}{void}\ setBBVsEnabled(\textcolor{keywordtype}{bool}\ enable)\ \{\ m\_knob\_bbvs\ =\ enable;\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \textcolor{keyword}{const}\ CacheEfficiencyTracker::Callbacks\&\ getCacheEfficiencyCallbacks()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cache\_efficiency\_callbacks;\ \}}
+\DoxyCodeLine{00099\ \ \ \ \textcolor{keywordtype}{bool}\ hasCacheEfficiencyCallbacks()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cache\_efficiency\_callbacks.notify\_evict\_func\ !=\ NULL;\ \}}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordtype}{void}\ setCacheEfficiencyCallbacks(CacheEfficiencyTracker::CallbackGetOwner\ get\_owner\_func,\ CacheEfficiencyTracker::CallbackNotifyAccess\ notify\_access\_func,\ CacheEfficiencyTracker::CallbackNotifyEvict\ notify\_evict\_func,\ UInt64\ user\_arg);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \textcolor{comment}{//\ Logging}}
+\DoxyCodeLine{00103\ \ \ \ String\ getOutputDirectory()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00104\ \ \ \ String\ formatOutputFileName(String\ filename)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00105\ \ \ \ \textcolor{keywordtype}{void}\ logCoreMap();}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordtype}{bool}\ getCircularLogEnabled()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_circular\_log\_enabled;\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keyword}{static}\ Config\ *getSingleton();}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00111\ \ \ \ UInt32\ \ m\_total\_cores;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Total\ number\ of\ cores\ in\ all\ processes}}
+\DoxyCodeLine{00112\ \ \ \ UInt32\ \ m\_core\_id\_length;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ bytes\ needed\ to\ store\ a\ core\_id}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ UInt64\ m\_megapage\_enabled;}
+\DoxyCodeLine{00115\ \ \ \ UInt64\ m\_megapage\_size;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ CommToCoreMap\ m\_comm\_to\_core\_map;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \textcolor{comment}{//\ Simulation\ Mode}}
+\DoxyCodeLine{00120\ \ \ \ SimulationMode\ m\_simulation\_mode;}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \textcolor{keyword}{static}\ Config\ *m\_singleton;}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \textcolor{keyword}{static}\ String\ m\_knob\_output\_directory;}
+\DoxyCodeLine{00125\ \ \ \ \textcolor{keyword}{static}\ UInt32\ m\_knob\_total\_cores;}
+\DoxyCodeLine{00126\ \ \ \ \textcolor{keyword}{static}\ UInt32\ m\_knob\_num\_host\_cores;}
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_smc\_support;}
+\DoxyCodeLine{00128\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_issue\_memops\_at\_functional;}
+\DoxyCodeLine{00129\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_icache\_modeling;}
+\DoxyCodeLine{00130\ \ \ \ \textcolor{keyword}{static}\ SimulationROI\ m\_knob\_roi;}
+\DoxyCodeLine{00131\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_progress\_trace;}
+\DoxyCodeLine{00132\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_sync;}
+\DoxyCodeLine{00133\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_sync\_report;}
+\DoxyCodeLine{00134\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_osemu\_pthread\_replace;}
+\DoxyCodeLine{00135\ \ \ \ \textcolor{keyword}{static}\ UInt32\ m\_knob\_osemu\_nprocs;}
+\DoxyCodeLine{00136\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_osemu\_clock\_replace;}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keyword}{static}\ time\_t\ m\_knob\_osemu\_time\_start;}
+\DoxyCodeLine{00138\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_bbvs;}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keyword}{static}\ ClockSkewMinimizationObject::Scheme\ m\_knob\_clock\_skew\_minimization\_scheme;}
+\DoxyCodeLine{00140\ \ \ \ \textcolor{keyword}{static}\ UInt64\ m\_knob\_hpi\_percore;}
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keyword}{static}\ UInt64\ m\_knob\_hpi\_global;}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_spinloopdetection;}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_suppress\_stdout;}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_suppress\_stderr;}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_circular\_log\_enabled;}
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_pinplay;}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ m\_knob\_enable\_syscall\_emulation;}
+\DoxyCodeLine{00148\ \ \ \ }
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keyword}{static}\ CacheEfficiencyTracker::Callbacks\ m\_cache\_efficiency\_callbacks;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \textcolor{keyword}{static}\ SimulationMode\ parseSimulationMode(String\ mode);}
+\DoxyCodeLine{00153\ \ \ \ \textcolor{keyword}{static}\ UInt32\ computeCoreIDLength(UInt32\ core\_count);}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keyword}{static}\ UInt32\ getNearestAcceptableCoreCount(UInt32\ core\_count);}
+\DoxyCodeLine{00155\ \};}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

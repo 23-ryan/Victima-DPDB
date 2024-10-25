@@ -1,0 +1,90 @@
+\doxysection{thread.\+h}
+\label{thread_8h_source}\index{common/core/thread.h@{common/core/thread.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_THREAD\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_THREAD\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cond.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }SyscallMdl;}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }SyncClient;}
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }RoutineTracerThread;}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }Thread}
+\DoxyCodeLine{00013\ \{}
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ UInt64\ (*va2pa\_func\_t)(UInt64\ arg,\ UInt64\ va);}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ thread\_id\_t\ m\_thread\_id;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ app\_id\_t\ m\_app\_id;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ String\ m\_name;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ ConditionVariable\ m\_cond;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ SubsecondTime\ m\_wakeup\_time;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *m\_wakeup\_msg;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ Core\ *m\_core;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ SyscallMdl\ *m\_syscall\_model;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ SyncClient\ *m\_sync\_client;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ RoutineTracerThread\ *m\_rtn\_tracer;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ va2pa\_func\_t\ m\_va2pa\_func;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ UInt64\ m\_va2pa\_arg;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ Thread(thread\_id\_t\ thread\_id,\ app\_id\_t\ app\_id);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \string~Thread();}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ pid\_t\ tid;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ IntPtr\ tid\_ptr;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ clear\_tid;}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \}\ m\_os\_info;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ thread\_id\_t\ getId()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thread\_id;\ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ app\_id\_t\ getAppId()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_app\_id;\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ String\ getName()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_name;\ \}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setName(String\ name)\ \{\ m\_name\ =\ name;\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ SyncClient\ *getSyncClient()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sync\_client;\ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ RoutineTracerThread*\ getRoutineTracer()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_rtn\_tracer;\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setVa2paFunc(va2pa\_func\_t\ va2pa\_func,\ UInt64\ m\_va2pa\_arg);}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ UInt64\ va2pa(UInt64\ logical\_address)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_va2pa\_func)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_va2pa\_func(m\_va2pa\_arg,\ logical\_address);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ logical\_address;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ SubsecondTime\ wait(Lock\ \&lock)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ m\_wakeup\_msg\ =\ NULL;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ m\_cond.wait(lock);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_wakeup\_time;}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ signal(SubsecondTime\ time,\ \textcolor{keywordtype}{void}*\ msg\ =\ NULL)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ m\_wakeup\_time\ =\ time;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ m\_wakeup\_msg\ =\ msg;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ m\_cond.signal();}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ SubsecondTime\ getWakeupTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_wakeup\_time;\ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *getWakeupMsg()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_wakeup\_msg;\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ Core*\ getCore()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_core;\ \}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setCore(Core*\ core);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ reschedule(SubsecondTime\ \&time,\ Core\ *current\_core);}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ updateCoreTLS(\textcolor{keywordtype}{int}\ threadIndex\ =\ -\/1);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ SyscallMdl\ *getSyscallMdl()\ \{\ \textcolor{keywordflow}{return}\ m\_syscall\_model;\ \}}
+\DoxyCodeLine{00082\ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_THREAD\_H}}
+
+\end{DoxyCode}

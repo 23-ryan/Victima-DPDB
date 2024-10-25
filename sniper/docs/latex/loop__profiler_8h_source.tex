@@ -1,0 +1,47 @@
+\doxysection{loop\+\_\+profiler.\+h}
+\label{loop__profiler_8h_source}\index{common/performance\_model/instruction\_tracers/loop\_profiler.h@{common/performance\_model/instruction\_tracers/loop\_profiler.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_LOOP\_PROFILER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_LOOP\_PROFILER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }LoopProfiler\ :\ \textcolor{keyword}{public}\ InstructionTracer}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Loop}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ Loop(IntPtr\ \_eip,\ UInt64\ \_size)\ :\ eip(\_eip),\ size(\_size),\ count(0)\ \{\}}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ cmp(\textcolor{keyword}{const}\ Loop*\ a,\ \textcolor{keyword}{const}\ Loop*\ b)\ \{\ \textcolor{keywordflow}{return}\ a-\/>weight()\ >\ b-\/>weight();\ \}}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ \ UInt64\ weight()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\ *\ count;\ \}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ IntPtr\ eip;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \ UInt64\ size;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ UInt64\ count;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Core\ *m\_core;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::vector<Loop*>\ LoopList;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,\ LoopList>\ LoopMap;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ LoopMap\ m\_loops;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ UInt64\ m\_total\_instructions;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \ \ IntPtr\ m\_eip\_last;}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ Loop*\ findLoop(IntPtr\ eip,\ UInt64\ size);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ Loop*\ insertLoop(IntPtr\ eip,\ UInt64\ size);}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ LoopProfiler(\textcolor{keyword}{const}\ Core\ *core);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~LoopProfiler();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ traceInstruction(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop,\ uop\_times\_t\ *times);}
+\DoxyCodeLine{00039\ \};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_LOOP\_PROFILER\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,147 @@
+\doxysection{smtransport.\+cc}
+\label{smtransport_8cc_source}\index{common/transport/smtransport.cc@{common/transport/smtransport.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}smtransport.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ -\/-\/\ SmTransport\ -\/-\/\ //}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ SmTransport::SmTransport()}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ m\_global\_node\ =\ \textcolor{keyword}{new}\ SmNode(-\/1,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00012\ \ \ \ m\_core\_nodes\ =\ \textcolor{keyword}{new}\ SmNode*\ [\ Config::getSingleton()-\/>getTotalCores()\ ];}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ Config::getSingleton()-\/>getTotalCores();\ i++)}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ m\_core\_nodes[i]\ =\ NULL;}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ SmTransport::\string~SmTransport()}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ The\ networks\ actually\ delete\ the\ Transport::Nodes,\ so\ we}}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{comment}{//\ shouldn't\ do\ it\ ourselves.}}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{comment}{//\ for\ (UInt32\ i\ =\ 0;\ i\ <\ Config::getSingleton()-\/>getNumLocalCores();\ i++)}}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{comment}{//\ \ \ \ delete\ m\_core\_nodes[i];}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keyword}{delete}\ []\ m\_core\_nodes;}
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keyword}{delete}\ m\_global\_node;}
+\DoxyCodeLine{00026\ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ Transport::Node*\ SmTransport::createNode(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00029\ \{}
+\DoxyCodeLine{00030\ \ \ \ LOG\_ASSERT\_ERROR((UInt32)core\_id\ <\ Config::getSingleton()-\/>getTotalCores(),}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Request\ index\ out\ of\ range:\ \%d"{}},\ core\_id);}
+\DoxyCodeLine{00032\ \ \ \ LOG\_ASSERT\_ERROR(m\_core\_nodes[core\_id]\ ==\ NULL,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Transport\ already\ allocated\ for\ id:\ \%d."{}},\ core\_id);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ m\_core\_nodes[core\_id]\ =\ \textcolor{keyword}{new}\ SmNode(core\_id,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Created\ node:\ \%p\ on\ id:\ \%d"{}},\ m\_core\_nodes[core\_id],\ core\_id);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{return}\ m\_core\_nodes[core\_id];}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{void}\ SmTransport::barrier()}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \ \textcolor{comment}{//\ We\ assume\ a\ single\ process,\ so\ this\ is\ a\ NOOP}}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ Transport::Node*\ SmTransport::getGlobalNode()}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keywordflow}{return}\ m\_global\_node;}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ SmTransport::SmNode*\ SmTransport::getNodeFromId(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \ \ \ LOG\_ASSERT\_ERROR((UInt32)core\_id\ <\ Config::getSingleton()-\/>getTotalCores(),}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Core\ id\ out\ of\ range:\ \%d"{}},\ core\_id);}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keywordflow}{return}\ m\_core\_nodes[core\_id];}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keywordtype}{void}\ SmTransport::clearNodeForId(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{comment}{//\ This\ is\ called\ upon\ deletion\ of\ the\ node,\ so\ we\ should\ simply}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{comment}{//\ not\ keep\ around\ a\ dead\ pointer.}}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keywordflow}{if}\ ((UInt32)core\_id\ <\ Config::getSingleton()-\/>getTotalCores())}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ m\_core\_nodes[core\_id]\ =\ NULL;}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ -\/-\/\ SmTransportNode\ -\/-\/\ //}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ SmTransport::SmNode::SmNode(core\_id\_t\ core\_id,\ SmTransport\ *smt)}
+\DoxyCodeLine{00070\ \ \ \ :\ Node(core\_id)}
+\DoxyCodeLine{00071\ \ \ \ ,\ m\_smt(smt)}
+\DoxyCodeLine{00072\ \{}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ SmTransport::SmNode::\string~SmNode()}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \ LOG\_ASSERT\_WARNING(m\_queue.empty(),\ \textcolor{stringliteral}{"{}Unread\ messages\ in\ queue\ for\ core:\ \%d"{}},\ getCoreId());}
+\DoxyCodeLine{00078\ \ \ \ m\_smt-\/>clearNodeForId(getCoreId());}
+\DoxyCodeLine{00079\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{void}\ SmTransport::SmNode::globalSend(SInt32\ dest\_proc,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buffer,\ UInt32\ length)}
+\DoxyCodeLine{00082\ \{}
+\DoxyCodeLine{00083\ \ \ \ LOG\_ASSERT\_ERROR(dest\_proc\ ==\ 0,\ \textcolor{stringliteral}{"{}Destination\ other\ than\ zero:\ \%d"{}},\ dest\_proc);}
+\DoxyCodeLine{00084\ \ \ \ send((SmNode*)m\_smt-\/>getGlobalNode(),\ buffer,\ length);}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keywordtype}{void}\ SmTransport::SmNode::send(SInt32\ dest\_id,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ buffer,\ UInt32\ length)}
+\DoxyCodeLine{00088\ \{}
+\DoxyCodeLine{00089\ \ \ \ SmNode\ *dest\_node\ =\ m\_smt-\/>getNodeFromId(dest\_id);}
+\DoxyCodeLine{00090\ \ \ \ LOG\_ASSERT\_ERROR(dest\_node\ !=\ NULL,\ \textcolor{stringliteral}{"{}Attempt\ to\ send\ to\ non-\/existent\ node:\ \%d"{}},\ dest\_id);}
+\DoxyCodeLine{00091\ \ \ \ send(dest\_node,\ buffer,\ length);}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keywordtype}{void}\ SmTransport::SmNode::send(SmNode\ *dest\_node,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buffer,\ UInt32\ length)}
+\DoxyCodeLine{00095\ \{}
+\DoxyCodeLine{00096\ \ \ \ Byte\ *data\ =\ \textcolor{keyword}{new}\ Byte[length];}
+\DoxyCodeLine{00097\ \ \ \ memcpy(data,\ buffer,\ length);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}sending\ msg\ -\/-\/\ size:\ \%i,\ data:\ \%p,\ dest:\ \%p"{}},\ length,\ data,\ dest\_node);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ dest\_node-\/>m\_lock.acquire();}
+\DoxyCodeLine{00102\ \ \ \ dest\_node-\/>m\_queue.push(data);}
+\DoxyCodeLine{00103\ \ \ \ dest\_node-\/>m\_lock.release();}
+\DoxyCodeLine{00104\ \ \ \ dest\_node-\/>m\_cond.broadcast();}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ Byte*\ SmTransport::SmNode::recv()}
+\DoxyCodeLine{00108\ \{}
+\DoxyCodeLine{00109\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}attempting\ recv\ -\/-\/\ this:\ \%p"{}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})}
+\DoxyCodeLine{00114\ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_queue.empty())}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ Byte\ *data\ =\ m\_queue.front();}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ m\_queue.pop();}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}msg\ recv'd\ -\/-\/\ data:\ \%p,\ this:\ \%p"{}},\ data,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ data;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ m\_cond.wait(m\_lock);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00129\ \ \ \ \}}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{bool}\ SmTransport::SmNode::query()}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \ \textcolor{keywordtype}{bool}\ result\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ m\_lock.acquire();}
+\DoxyCodeLine{00137\ \ \ \ result\ =\ !m\_queue.empty();}
+\DoxyCodeLine{00138\ \ \ \ m\_lock.release();}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00141\ \}}
+
+\end{DoxyCode}

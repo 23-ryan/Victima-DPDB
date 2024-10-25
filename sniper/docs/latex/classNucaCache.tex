@@ -1,0 +1,587 @@
+\doxysection{Nuca\+Cache Class Reference}
+\label{classNucaCache}\index{NucaCache@{NucaCache}}
+
+
+{\ttfamily \#include $<$nuca\+\_\+cache.\+h$>$}
+
+
+
+Collaboration diagram for Nuca\+Cache\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Nuca\+Cache} (\textbf{ Memory\+Manager\+Base} $\ast$memory\+\_\+manager, \textbf{ Shmem\+Perf\+Model} $\ast$shmem\+\_\+perf\+\_\+model, \textbf{ Address\+Home\+Lookup} $\ast$home\+\_\+lookup, \textbf{ UInt32} cache\+\_\+block\+\_\+size, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Parameters} \&parameters)
+\item 
+\textbf{ $\sim$\+Nuca\+Cache} ()
+\item 
+boost\+::tuple$<$ \textbf{ Subsecond\+Time}, \textbf{ Hit\+Where\+::where\+\_\+t} $>$ \textbf{ read} (\textbf{ Int\+Ptr} address, \textbf{ Byte} $\ast$data\+\_\+buf, \textbf{ Subsecond\+Time} now, \textbf{ Shmem\+Perf} $\ast$perf, bool count, bool is\+\_\+metadata)
+\item 
+boost\+::tuple$<$ \textbf{ Subsecond\+Time}, \textbf{ Hit\+Where\+::where\+\_\+t} $>$ \textbf{ write} (\textbf{ Int\+Ptr} address, \textbf{ Byte} $\ast$data\+\_\+buf, bool \&eviction, \textbf{ Int\+Ptr} \&evict\+\_\+address, \textbf{ Byte} $\ast$evict\+\_\+buf, \textbf{ Subsecond\+Time} now, bool count, bool is\+\_\+metadata)
+\item 
+void \textbf{ mark\+Translation\+Metadata} (\textbf{ Int\+Ptr} address, \textbf{ Cache\+Block\+Info\+::block\+\_\+type\+\_\+t} blocktype)
+\item 
+\textbf{ Cache} $\ast$ \textbf{ get\+Cache} ()
+\item 
+void \textbf{ measure\+Stats} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ access\+Data\+Array} (\textbf{ Cache\+::access\+\_\+t} access, \textbf{ Subsecond\+Time} \textbf{ t\+\_\+start}, \textbf{ Shmem\+Perf} $\ast$perf)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ m\+\_\+core\+\_\+id}
+\item 
+\textbf{ Memory\+Manager\+Base} $\ast$ \textbf{ m\+\_\+memory\+\_\+manager}
+\item 
+\textbf{ Shmem\+Perf\+Model} $\ast$ \textbf{ m\+\_\+shmem\+\_\+perf\+\_\+model}
+\item 
+\textbf{ Address\+Home\+Lookup} $\ast$ \textbf{ m\+\_\+home\+\_\+lookup}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+cache\+\_\+block\+\_\+size}
+\item 
+\textbf{ Component\+Latency} \textbf{ m\+\_\+data\+\_\+access\+\_\+time}
+\item 
+\textbf{ Component\+Latency} \textbf{ m\+\_\+tags\+\_\+access\+\_\+time}
+\item 
+\textbf{ Component\+Bandwidth} \textbf{ m\+\_\+data\+\_\+array\+\_\+bandwidth}
+\item 
+\textbf{ Cache} $\ast$ \textbf{ m\+\_\+cache}
+\item 
+\textbf{ Queue\+Model} $\ast$ \textbf{ m\+\_\+queue\+\_\+model}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+reads}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+writes}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+read\+\_\+misses}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+write\+\_\+misses}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+metadata\+\_\+reads}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+metadata\+\_\+writes}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+metadata\+\_\+read\+\_\+misses}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+metadata\+\_\+write\+\_\+misses}
+\item 
+\textbf{ Shmem\+Perf} \textbf{ m\+\_\+dummy\+\_\+shmem\+\_\+perf}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 17} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{NucaCache@{NucaCache}!NucaCache@{NucaCache}}
+\index{NucaCache@{NucaCache}!NucaCache@{NucaCache}}
+\doxysubsubsection{NucaCache()}
+{\footnotesize\ttfamily \label{classNucaCache_ae0d5ee573c6989be651d99af26688a05} 
+Nuca\+Cache\+::\+Nuca\+Cache (\begin{DoxyParamCaption}\item[{\textbf{ Memory\+Manager\+Base} $\ast$}]{memory\+\_\+manager}{, }\item[{\textbf{ Shmem\+Perf\+Model} $\ast$}]{shmem\+\_\+perf\+\_\+model}{, }\item[{\textbf{ Address\+Home\+Lookup} $\ast$}]{home\+\_\+lookup}{, }\item[{\textbf{ UInt32}}]{cache\+\_\+block\+\_\+size}{, }\item[{\textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Parameters} \&}]{parameters}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 9} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Parameters\+::associativity}, \textbf{ Queue\+Model\+::create()}, \textbf{ Component\+Bandwidth\+::get\+Rounded\+Latency()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Parameters\+::hash\+\_\+function}, \textbf{ m\+\_\+cache}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+size}, \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+data\+\_\+array\+\_\+bandwidth}, \textbf{ m\+\_\+metadata\+\_\+read\+\_\+misses}, \textbf{ m\+\_\+metadata\+\_\+reads}, \textbf{ m\+\_\+metadata\+\_\+write\+\_\+misses}, \textbf{ m\+\_\+metadata\+\_\+writes}, \textbf{ m\+\_\+queue\+\_\+model}, \textbf{ m\+\_\+read\+\_\+misses}, \textbf{ m\+\_\+reads}, \textbf{ m\+\_\+write\+\_\+misses}, \textbf{ m\+\_\+writes}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Parameters\+::num\+\_\+sets}, \textbf{ Cache\+Base\+::parse\+Address\+Hash()}, \textbf{ Cache\+Base\+::\+PR\+\_\+\+L1\+\_\+\+CACHE}, \textbf{ register\+Stats\+Metric()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Cache\+Parameters\+::replacement\+\_\+policy}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_ae0d5ee573c6989be651d99af26688a05_cgraph}
+\end{center}
+\end{figure}
+\index{NucaCache@{NucaCache}!````~NucaCache@{$\sim$NucaCache}}
+\index{````~NucaCache@{$\sim$NucaCache}!NucaCache@{NucaCache}}
+\doxysubsubsection{$\sim$NucaCache()}
+{\footnotesize\ttfamily \label{classNucaCache_aad8aaf802ac131a32ee59ea96e310f90} 
+Nuca\+Cache\+::$\sim$\+Nuca\+Cache (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 53} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ m\+\_\+cache}, and \textbf{ m\+\_\+queue\+\_\+model}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{NucaCache@{NucaCache}!accessDataArray@{accessDataArray}}
+\index{accessDataArray@{accessDataArray}!NucaCache@{NucaCache}}
+\doxysubsubsection{accessDataArray()}
+{\footnotesize\ttfamily \label{classNucaCache_a0b741907a32689b6de44de1853550d0d} 
+\textbf{ Subsecond\+Time} Nuca\+Cache\+::access\+Data\+Array (\begin{DoxyParamCaption}\item[{\textbf{ Cache\+::access\+\_\+t}}]{access}{, }\item[{\textbf{ Subsecond\+Time}}]{t\+\_\+start}{, }\item[{\textbf{ Shmem\+Perf} $\ast$}]{perf}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 170} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ Queue\+Model\+::compute\+Queue\+Delay()}, \textbf{ Component\+Latency\+::get\+Latency()}, \textbf{ Component\+Bandwidth\+::get\+Rounded\+Latency()}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+size}, \textbf{ m\+\_\+core\+\_\+id}, \textbf{ m\+\_\+data\+\_\+access\+\_\+time}, \textbf{ m\+\_\+data\+\_\+array\+\_\+bandwidth}, \textbf{ m\+\_\+queue\+\_\+model}, \textbf{ Shmem\+Perf\+::\+NUCA\+\_\+\+BUS}, \textbf{ Shmem\+Perf\+::\+NUCA\+\_\+\+DATA}, \textbf{ Shmem\+Perf\+::\+NUCA\+\_\+\+QUEUE}, \textbf{ t\+\_\+start}, \textbf{ Shmem\+Perf\+::update\+Time()}, and \textbf{ Subsecond\+Time\+::\+Zero()}.
+
+
+
+Referenced by \textbf{ read()}, and \textbf{ write()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a0b741907a32689b6de44de1853550d0d_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a0b741907a32689b6de44de1853550d0d_icgraph}
+\end{center}
+\end{figure}
+\index{NucaCache@{NucaCache}!getCache@{getCache}}
+\index{getCache@{getCache}!NucaCache@{NucaCache}}
+\doxysubsubsection{getCache()}
+{\footnotesize\ttfamily \label{classNucaCache_a7ebb17c7a63c2790d9381d72527b1be9} 
+\textbf{ Cache} $\ast$ Nuca\+Cache\+::get\+Cache (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+References \textbf{ m\+\_\+cache}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB\+::allocate()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+TLB\+::lookup()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a7ebb17c7a63c2790d9381d72527b1be9_icgraph}
+\end{center}
+\end{figure}
+\index{NucaCache@{NucaCache}!markTranslationMetadata@{markTranslationMetadata}}
+\index{markTranslationMetadata@{markTranslationMetadata}!NucaCache@{NucaCache}}
+\doxysubsubsection{markTranslationMetadata()}
+{\footnotesize\ttfamily \label{classNucaCache_adbc4cbe6dddb6264a16327b99814f6bf} 
+void Nuca\+Cache\+::mark\+Translation\+Metadata (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Cache\+Block\+Info\+::block\+\_\+type\+\_\+t}}]{blocktype}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 195} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ Cache\+::get\+Cache\+Set()}, \textbf{ Cache\+Block\+Info\+::get\+Tag()}, \textbf{ m\+\_\+cache}, \textbf{ Cache\+::peek\+Block()}, \textbf{ Cache\+Block\+Info\+::set\+Block\+Type()}, and \textbf{ Cache\+Base\+::split\+Address()}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Page\+Table\+Walker\+Cuckoo\+::access\+Table()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::access\+Utopia\+Subsystem()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Modrian\+Memory\+Manager\+::\+Find\+Permissions\+Recursive()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Modrian\+Memory\+Manager\+::init\+\_\+walk()}, \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+XMem\+Manager\+::init\+\_\+walk()}, and \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::tag\+Caches\+Block\+Type()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_adbc4cbe6dddb6264a16327b99814f6bf_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_adbc4cbe6dddb6264a16327b99814f6bf_icgraph}
+\end{center}
+\end{figure}
+\index{NucaCache@{NucaCache}!measureStats@{measureStats}}
+\index{measureStats@{measureStats}!NucaCache@{NucaCache}}
+\doxysubsubsection{measureStats()}
+{\footnotesize\ttfamily \label{classNucaCache_a013824389c2ac89f0a970f150fc4505b} 
+void Nuca\+Cache\+::measure\+Stats (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 218} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ m\+\_\+cache}, and \textbf{ Cache\+::measure\+Stats()}.
+
+
+
+Referenced by \textbf{ Parametric\+Dram\+Directory\+MSI\+::\+Memory\+Manager\+::measure\+Nuca\+Stats()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a013824389c2ac89f0a970f150fc4505b_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a013824389c2ac89f0a970f150fc4505b_icgraph}
+\end{center}
+\end{figure}
+\index{NucaCache@{NucaCache}!read@{read}}
+\index{read@{read}!NucaCache@{NucaCache}}
+\doxysubsubsection{read()}
+{\footnotesize\ttfamily \label{classNucaCache_ae422fd5422a041ea844553d9a30d80d5} 
+boost\+::tuple$<$ \textbf{ Subsecond\+Time}, \textbf{ Hit\+Where\+::where\+\_\+t} $>$ Nuca\+Cache\+::read (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Byte} $\ast$}]{data\+\_\+buf}{, }\item[{\textbf{ Subsecond\+Time}}]{now}{, }\item[{\textbf{ Shmem\+Perf} $\ast$}]{perf}{, }\item[{bool}]{count}{, }\item[{bool}]{is\+\_\+metadata}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 61} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ access\+Data\+Array()}, \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ Component\+Latency\+::get\+Latency()}, \textbf{ Cache\+Base\+::\+LOAD}, \textbf{ m\+\_\+cache}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+size}, \textbf{ m\+\_\+metadata\+\_\+read\+\_\+misses}, \textbf{ m\+\_\+metadata\+\_\+reads}, \textbf{ m\+\_\+read\+\_\+misses}, \textbf{ m\+\_\+reads}, \textbf{ m\+\_\+tags\+\_\+access\+\_\+time}, \textbf{ Hit\+Where\+::\+MISS}, \textbf{ Hit\+Where\+::\+NUCA\+\_\+\+CACHE}, \textbf{ Shmem\+Perf\+::\+NUCA\+\_\+\+TAGS}, \textbf{ Cache\+::peek\+Single\+Line()}, and \textbf{ Shmem\+Perf\+::update\+Time()}.
+
+
+
+Referenced by \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::retrieve\+Data\+And\+Send\+To\+L2\+Cache()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_ae422fd5422a041ea844553d9a30d80d5_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_ae422fd5422a041ea844553d9a30d80d5_icgraph}
+\end{center}
+\end{figure}
+\index{NucaCache@{NucaCache}!write@{write}}
+\index{write@{write}!NucaCache@{NucaCache}}
+\doxysubsubsection{write()}
+{\footnotesize\ttfamily \label{classNucaCache_a4064c33bccad2e5e581ebe5bc4e9a2ce} 
+boost\+::tuple$<$ \textbf{ Subsecond\+Time}, \textbf{ Hit\+Where\+::where\+\_\+t} $>$ Nuca\+Cache\+::write (\begin{DoxyParamCaption}\item[{\textbf{ Int\+Ptr}}]{address}{, }\item[{\textbf{ Byte} $\ast$}]{data\+\_\+buf}{, }\item[{bool \&}]{eviction}{, }\item[{\textbf{ Int\+Ptr} \&}]{evict\+\_\+address}{, }\item[{\textbf{ Byte} $\ast$}]{evict\+\_\+buf}{, }\item[{\textbf{ Subsecond\+Time}}]{now}{, }\item[{bool}]{count}{, }\item[{bool}]{is\+\_\+metadata}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 111} of file \textbf{ nuca\+\_\+cache.\+cc}.
+
+
+
+References \textbf{ access\+Data\+Array()}, \textbf{ Cache\+::access\+Single\+Line()}, \textbf{ Cache\+Block\+Info\+::get\+CState()}, \textbf{ Component\+Latency\+::get\+Latency()}, \textbf{ Cache\+Block\+Info\+::increase\+Reuse()}, \textbf{ Cache\+::insert\+Single\+Line()}, \textbf{ m\+\_\+cache}, \textbf{ m\+\_\+cache\+\_\+block\+\_\+size}, \textbf{ m\+\_\+dummy\+\_\+shmem\+\_\+perf}, \textbf{ m\+\_\+metadata\+\_\+write\+\_\+misses}, \textbf{ m\+\_\+metadata\+\_\+writes}, \textbf{ m\+\_\+tags\+\_\+access\+\_\+time}, \textbf{ m\+\_\+write\+\_\+misses}, \textbf{ m\+\_\+writes}, \textbf{ Hit\+Where\+::\+MISS}, \textbf{ Cache\+State\+::\+MODIFIED}, \textbf{ Hit\+Where\+::\+NUCA\+\_\+\+CACHE}, \textbf{ Cache\+::peek\+Single\+Line()}, \textbf{ Cache\+Block\+Info\+::set\+CState()}, and \textbf{ Cache\+Base\+::\+STORE}.
+
+
+
+Referenced by \textbf{ Pr\+L1\+Pr\+L2\+Dram\+Directory\+MSI\+::\+Dram\+Directory\+Cntlr\+::send\+Data\+To\+NUCA()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a4064c33bccad2e5e581ebe5bc4e9a2ce_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classNucaCache_a4064c33bccad2e5e581ebe5bc4e9a2ce_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{NucaCache@{NucaCache}!m\_cache@{m\_cache}}
+\index{m\_cache@{m\_cache}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_cache}
+{\footnotesize\ttfamily \label{classNucaCache_acb75be9c984101e650f02d43188a62f9} 
+\textbf{ Cache}$\ast$ Nuca\+Cache\+::m\+\_\+cache\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ get\+Cache()}, \textbf{ mark\+Translation\+Metadata()}, \textbf{ measure\+Stats()}, \textbf{ Nuca\+Cache()}, \textbf{ read()}, \textbf{ write()}, and \textbf{ $\sim$\+Nuca\+Cache()}.
+
+\index{NucaCache@{NucaCache}!m\_cache\_block\_size@{m\_cache\_block\_size}}
+\index{m\_cache\_block\_size@{m\_cache\_block\_size}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_cache\_block\_size}
+{\footnotesize\ttfamily \label{classNucaCache_afb2fa1837c6cda96e8a067e2467ad85a} 
+\textbf{ UInt32} Nuca\+Cache\+::m\+\_\+cache\+\_\+block\+\_\+size\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 24} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ access\+Data\+Array()}, \textbf{ Nuca\+Cache()}, \textbf{ read()}, and \textbf{ write()}.
+
+\index{NucaCache@{NucaCache}!m\_core\_id@{m\_core\_id}}
+\index{m\_core\_id@{m\_core\_id}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_core\_id}
+{\footnotesize\ttfamily \label{classNucaCache_a3cfc72d05c4167c7f42cf4d2db2c7db5} 
+\textbf{ core\+\_\+id\+\_\+t} Nuca\+Cache\+::m\+\_\+core\+\_\+id\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 20} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ access\+Data\+Array()}, and \textbf{ Nuca\+Cache()}.
+
+\index{NucaCache@{NucaCache}!m\_data\_access\_time@{m\_data\_access\_time}}
+\index{m\_data\_access\_time@{m\_data\_access\_time}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_data\_access\_time}
+{\footnotesize\ttfamily \label{classNucaCache_a474cd7d945673eb75f0b47ae4f5adfce} 
+\textbf{ Component\+Latency} Nuca\+Cache\+::m\+\_\+data\+\_\+access\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ access\+Data\+Array()}.
+
+\index{NucaCache@{NucaCache}!m\_data\_array\_bandwidth@{m\_data\_array\_bandwidth}}
+\index{m\_data\_array\_bandwidth@{m\_data\_array\_bandwidth}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_data\_array\_bandwidth}
+{\footnotesize\ttfamily \label{classNucaCache_a3c204f3a17800bb2cfdd0bea1ca8f910} 
+\textbf{ Component\+Bandwidth} Nuca\+Cache\+::m\+\_\+data\+\_\+array\+\_\+bandwidth\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ access\+Data\+Array()}, and \textbf{ Nuca\+Cache()}.
+
+\index{NucaCache@{NucaCache}!m\_dummy\_shmem\_perf@{m\_dummy\_shmem\_perf}}
+\index{m\_dummy\_shmem\_perf@{m\_dummy\_shmem\_perf}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_dummy\_shmem\_perf}
+{\footnotesize\ttfamily \label{classNucaCache_adeb7dec088ba64a0b558e208ef5ee668} 
+\textbf{ Shmem\+Perf} Nuca\+Cache\+::m\+\_\+dummy\+\_\+shmem\+\_\+perf\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ write()}.
+
+\index{NucaCache@{NucaCache}!m\_home\_lookup@{m\_home\_lookup}}
+\index{m\_home\_lookup@{m\_home\_lookup}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_home\_lookup}
+{\footnotesize\ttfamily \label{classNucaCache_afdfe171b2cb74912eabba5ce19176571} 
+\textbf{ Address\+Home\+Lookup}$\ast$ Nuca\+Cache\+::m\+\_\+home\+\_\+lookup\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 23} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+\index{NucaCache@{NucaCache}!m\_memory\_manager@{m\_memory\_manager}}
+\index{m\_memory\_manager@{m\_memory\_manager}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_memory\_manager}
+{\footnotesize\ttfamily \label{classNucaCache_a92fedd69436ce73f838aea74338e5c34} 
+\textbf{ Memory\+Manager\+Base}$\ast$ Nuca\+Cache\+::m\+\_\+memory\+\_\+manager\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 21} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+\index{NucaCache@{NucaCache}!m\_metadata\_read\_misses@{m\_metadata\_read\_misses}}
+\index{m\_metadata\_read\_misses@{m\_metadata\_read\_misses}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_metadata\_read\_misses}
+{\footnotesize\ttfamily \label{classNucaCache_aef9f63c78d9cdaae066df7c22bd44f8a} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+metadata\+\_\+read\+\_\+misses\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ read()}.
+
+\index{NucaCache@{NucaCache}!m\_metadata\_reads@{m\_metadata\_reads}}
+\index{m\_metadata\_reads@{m\_metadata\_reads}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_metadata\_reads}
+{\footnotesize\ttfamily \label{classNucaCache_acbed13a33730ed89e40368d9570c1c6c} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+metadata\+\_\+reads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ read()}.
+
+\index{NucaCache@{NucaCache}!m\_metadata\_write\_misses@{m\_metadata\_write\_misses}}
+\index{m\_metadata\_write\_misses@{m\_metadata\_write\_misses}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_metadata\_write\_misses}
+{\footnotesize\ttfamily \label{classNucaCache_a4d194bfd0553c4c4c42e0b8ffb1d0670} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+metadata\+\_\+write\+\_\+misses\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ write()}.
+
+\index{NucaCache@{NucaCache}!m\_metadata\_writes@{m\_metadata\_writes}}
+\index{m\_metadata\_writes@{m\_metadata\_writes}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_metadata\_writes}
+{\footnotesize\ttfamily \label{classNucaCache_a48cdae25ab613b13a0c3ecd967266511} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+metadata\+\_\+writes\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 33} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ write()}.
+
+\index{NucaCache@{NucaCache}!m\_queue\_model@{m\_queue\_model}}
+\index{m\_queue\_model@{m\_queue\_model}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_queue\_model}
+{\footnotesize\ttfamily \label{classNucaCache_ac055d4ada76db0682f8a12aa93f5ec37} 
+\textbf{ Queue\+Model}$\ast$ Nuca\+Cache\+::m\+\_\+queue\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ access\+Data\+Array()}, \textbf{ Nuca\+Cache()}, and \textbf{ $\sim$\+Nuca\+Cache()}.
+
+\index{NucaCache@{NucaCache}!m\_read\_misses@{m\_read\_misses}}
+\index{m\_read\_misses@{m\_read\_misses}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_read\_misses}
+{\footnotesize\ttfamily \label{classNucaCache_ab8aa1a54bad3d42b5749b5d20c43581e} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+read\+\_\+misses\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ read()}.
+
+\index{NucaCache@{NucaCache}!m\_reads@{m\_reads}}
+\index{m\_reads@{m\_reads}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_reads}
+{\footnotesize\ttfamily \label{classNucaCache_aa6780ce3606d63e338092d89a8adf398} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+reads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ read()}.
+
+\index{NucaCache@{NucaCache}!m\_shmem\_perf\_model@{m\_shmem\_perf\_model}}
+\index{m\_shmem\_perf\_model@{m\_shmem\_perf\_model}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_shmem\_perf\_model}
+{\footnotesize\ttfamily \label{classNucaCache_af9223037861e26d5cc85e90dae42f8f6} 
+\textbf{ Shmem\+Perf\+Model}$\ast$ Nuca\+Cache\+::m\+\_\+shmem\+\_\+perf\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+\index{NucaCache@{NucaCache}!m\_tags\_access\_time@{m\_tags\_access\_time}}
+\index{m\_tags\_access\_time@{m\_tags\_access\_time}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_tags\_access\_time}
+{\footnotesize\ttfamily \label{classNucaCache_a5dc4a486183d5add0786831dd114490d} 
+\textbf{ Component\+Latency} Nuca\+Cache\+::m\+\_\+tags\+\_\+access\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ read()}, and \textbf{ write()}.
+
+\index{NucaCache@{NucaCache}!m\_write\_misses@{m\_write\_misses}}
+\index{m\_write\_misses@{m\_write\_misses}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_write\_misses}
+{\footnotesize\ttfamily \label{classNucaCache_ac50994d9acb32b5212de9b51e867e10e} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+write\+\_\+misses\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ write()}.
+
+\index{NucaCache@{NucaCache}!m\_writes@{m\_writes}}
+\index{m\_writes@{m\_writes}!NucaCache@{NucaCache}}
+\doxysubsubsection{m\_writes}
+{\footnotesize\ttfamily \label{classNucaCache_af1b556b51247c72b68512acd9b58bb23} 
+\textbf{ UInt64} Nuca\+Cache\+::m\+\_\+writes\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 32} of file \textbf{ nuca\+\_\+cache.\+h}.
+
+
+
+Referenced by \textbf{ Nuca\+Cache()}, and \textbf{ write()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ nuca\+\_\+cache.\+h}\item 
+common/core/memory\+\_\+subsystem/parametric\+\_\+dram\+\_\+directory\+\_\+msi/\textbf{ nuca\+\_\+cache.\+cc}\end{DoxyCompactItemize}

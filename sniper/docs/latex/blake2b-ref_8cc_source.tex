@@ -1,0 +1,371 @@
+\doxysection{blake2b-\/ref.cc}
+\label{blake2b-ref_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/blake2b-\/ref.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cuckoo/blake2b-\/ref.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ BLAKE2\ reference\ source\ code\ package\ -\/\ reference\ C\ implementations}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ Copyright\ 2012,\ Samuel\ Neves\ <sneves@dei.uc.pt>.\ \ You\ may\ use\ this\ under\ the}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ terms\ of\ the\ CC0,\ the\ OpenSSL\ Licence,\ or\ the\ Apache\ Public\ License\ 2.0,\ at}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ your\ option.\ \ The\ terms\ of\ these\ licenses\ can\ be\ found\ at:}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ -\/\ CC0\ 1.0\ Universal\ :\ http://creativecommons.org/publicdomain/zero/1.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ \ \ -\/\ OpenSSL\ license\ \ \ :\ https://www.openssl.org/source/license.html}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ -\/\ Apache\ 2.0\ \ \ \ \ \ \ \ :\ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00011\ \textcolor{comment}{}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ More\ information\ about\ the\ BLAKE2\ hash\ function\ can\ be\ found\ at}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ https://blake2.net.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <stdint.h>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}blake2-\/impl.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}blake2.h"{}}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ blake2b\_IV[8]\ =\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ 0x6a09e667f3bcc908ULL,\ 0xbb67ae8584caa73bULL,\ 0x3c6ef372fe94f82bULL,}
+\DoxyCodeLine{00025\ \ \ \ \ 0xa54ff53a5f1d36f1ULL,\ 0x510e527fade682d1ULL,\ 0x9b05688c2b3e6c1fULL,}
+\DoxyCodeLine{00026\ \ \ \ \ 0x1f83d9abfb41bd6bULL,\ 0x5be0cd19137e2179ULL\};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ blake2b\_sigma[12][16]\ =\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \{0,\ 1,\ 2,\ 3,\ 4,\ 5,\ 6,\ 7,\ 8,\ 9,\ 10,\ 11,\ 12,\ 13,\ 14,\ 15\},}
+\DoxyCodeLine{00030\ \ \ \ \ \{14,\ 10,\ 4,\ 8,\ 9,\ 15,\ 13,\ 6,\ 1,\ 12,\ 0,\ 2,\ 11,\ 7,\ 5,\ 3\},}
+\DoxyCodeLine{00031\ \ \ \ \ \{11,\ 8,\ 12,\ 0,\ 5,\ 2,\ 15,\ 13,\ 10,\ 14,\ 3,\ 6,\ 7,\ 1,\ 9,\ 4\},}
+\DoxyCodeLine{00032\ \ \ \ \ \{7,\ 9,\ 3,\ 1,\ 13,\ 12,\ 11,\ 14,\ 2,\ 6,\ 5,\ 10,\ 4,\ 0,\ 15,\ 8\},}
+\DoxyCodeLine{00033\ \ \ \ \ \{9,\ 0,\ 5,\ 7,\ 2,\ 4,\ 10,\ 15,\ 14,\ 1,\ 11,\ 12,\ 6,\ 8,\ 3,\ 13\},}
+\DoxyCodeLine{00034\ \ \ \ \ \{2,\ 12,\ 6,\ 10,\ 0,\ 11,\ 8,\ 3,\ 4,\ 13,\ 7,\ 5,\ 15,\ 14,\ 1,\ 9\},}
+\DoxyCodeLine{00035\ \ \ \ \ \{12,\ 5,\ 1,\ 15,\ 14,\ 13,\ 4,\ 10,\ 0,\ 7,\ 6,\ 3,\ 9,\ 2,\ 8,\ 11\},}
+\DoxyCodeLine{00036\ \ \ \ \ \{13,\ 11,\ 7,\ 14,\ 12,\ 1,\ 3,\ 9,\ 5,\ 0,\ 15,\ 4,\ 8,\ 6,\ 2,\ 10\},}
+\DoxyCodeLine{00037\ \ \ \ \ \{6,\ 15,\ 14,\ 9,\ 11,\ 3,\ 0,\ 8,\ 12,\ 2,\ 13,\ 7,\ 1,\ 4,\ 10,\ 5\},}
+\DoxyCodeLine{00038\ \ \ \ \ \{10,\ 2,\ 8,\ 4,\ 7,\ 6,\ 1,\ 5,\ 15,\ 11,\ 9,\ 14,\ 3,\ 12,\ 13,\ 0\},}
+\DoxyCodeLine{00039\ \ \ \ \ \{0,\ 1,\ 2,\ 3,\ 4,\ 5,\ 6,\ 7,\ 8,\ 9,\ 10,\ 11,\ 12,\ 13,\ 14,\ 15\},}
+\DoxyCodeLine{00040\ \ \ \ \ \{14,\ 10,\ 4,\ 8,\ 9,\ 15,\ 13,\ 6,\ 1,\ 12,\ 0,\ 2,\ 11,\ 7,\ 5,\ 3\}\};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ blake2b\_set\_lastnode(blake2b\_state\ *S)\ \{\ S-\/>f[1]\ =\ (uint64\_t)-\/1;\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{/*\ Some\ helper\ functions,\ not\ necessarily\ useful\ */}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ blake2b\_is\_lastblock(\textcolor{keyword}{const}\ blake2b\_state\ *S)\ \{\ \textcolor{keywordflow}{return}\ S-\/>f[0]\ !=\ 0;\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ blake2b\_set\_lastblock(blake2b\_state\ *S)\ \{}
+\DoxyCodeLine{00048\ \ \ \textcolor{keywordflow}{if}\ (S-\/>last\_node)}
+\DoxyCodeLine{00049\ \ \ \ \ blake2b\_set\_lastnode(S);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ S-\/>f[0]\ =\ (uint64\_t)-\/1;}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ blake2b\_increment\_counter(blake2b\_state\ *S,\ \textcolor{keyword}{const}\ uint64\_t\ inc)\ \{}
+\DoxyCodeLine{00055\ \ \ S-\/>t[0]\ +=\ inc;}
+\DoxyCodeLine{00056\ \ \ S-\/>t[1]\ +=\ (S-\/>t[0]\ <\ inc);}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ blake2b\_init0(blake2b\_state\ *S)\ \{}
+\DoxyCodeLine{00060\ \ \ \textcolor{keywordtype}{size\_t}\ i;}
+\DoxyCodeLine{00061\ \ \ memset(S,\ 0,\ \textcolor{keyword}{sizeof}(blake2b\_state));}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ ++i)}
+\DoxyCodeLine{00064\ \ \ \ \ S-\/>h[i]\ =\ blake2b\_IV[i];}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{/*\ init\ xors\ IV\ with\ input\ parameter\ block\ */}}
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{int}\ blake2b\_init\_param(blake2b\_state\ *S,\ \textcolor{keyword}{const}\ blake2b\_param\ *P)\ \{}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *p\ =\ (\textcolor{keyword}{const}\ uint8\_t\ *)(P);}
+\DoxyCodeLine{00070\ \ \ \textcolor{keywordtype}{size\_t}\ i;}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ blake2b\_init0(S);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \textcolor{comment}{/*\ IV\ XOR\ ParamBlock\ */}}
+\DoxyCodeLine{00075\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ ++i)}
+\DoxyCodeLine{00076\ \ \ \ \ S-\/>h[i]\ \string^=\ load64(p\ +\ \textcolor{keyword}{sizeof}(S-\/>h[i])\ *\ i);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ S-\/>outlen\ =\ P-\/>digest\_length;}
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keywordtype}{int}\ blake2b\_init(blake2b\_state\ *S,\ \textcolor{keywordtype}{size\_t}\ outlen)\ \{}
+\DoxyCodeLine{00083\ \ \ blake2b\_param\ P[1];}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordflow}{if}\ ((!outlen)\ ||\ (outlen\ >\ BLAKE2B\_OUTBYTES))}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ P-\/>digest\_length\ =\ (uint8\_t)outlen;}
+\DoxyCodeLine{00089\ \ \ P-\/>key\_length\ =\ 0;}
+\DoxyCodeLine{00090\ \ \ P-\/>fanout\ =\ 1;}
+\DoxyCodeLine{00091\ \ \ P-\/>depth\ =\ 1;}
+\DoxyCodeLine{00092\ \ \ store32(\&P-\/>leaf\_length,\ 0);}
+\DoxyCodeLine{00093\ \ \ store32(\&P-\/>node\_offset,\ 0);}
+\DoxyCodeLine{00094\ \ \ store32(\&P-\/>xof\_length,\ 0);}
+\DoxyCodeLine{00095\ \ \ P-\/>node\_depth\ =\ 0;}
+\DoxyCodeLine{00096\ \ \ P-\/>inner\_length\ =\ 0;}
+\DoxyCodeLine{00097\ \ \ memset(P-\/>reserved,\ 0,\ \textcolor{keyword}{sizeof}(P-\/>reserved));}
+\DoxyCodeLine{00098\ \ \ memset(P-\/>salt,\ 0,\ \textcolor{keyword}{sizeof}(P-\/>salt));}
+\DoxyCodeLine{00099\ \ \ memset(P-\/>personal,\ 0,\ \textcolor{keyword}{sizeof}(P-\/>personal));}
+\DoxyCodeLine{00100\ \ \ \textcolor{keywordflow}{return}\ blake2b\_init\_param(S,\ P);}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keywordtype}{int}\ blake2b\_init\_key(blake2b\_state\ *S,\ \textcolor{keywordtype}{size\_t}\ outlen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *key,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ keylen)\ \{}
+\DoxyCodeLine{00105\ \ \ blake2b\_param\ P[1];}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \textcolor{keywordflow}{if}\ ((!outlen)\ ||\ (outlen\ >\ BLAKE2B\_OUTBYTES))}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \textcolor{keywordflow}{if}\ (!key\ ||\ !keylen\ ||\ keylen\ >\ BLAKE2B\_KEYBYTES)}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ P-\/>digest\_length\ =\ (uint8\_t)outlen;}
+\DoxyCodeLine{00114\ \ \ P-\/>key\_length\ =\ (uint8\_t)keylen;}
+\DoxyCodeLine{00115\ \ \ P-\/>fanout\ =\ 1;}
+\DoxyCodeLine{00116\ \ \ P-\/>depth\ =\ 1;}
+\DoxyCodeLine{00117\ \ \ store32(\&P-\/>leaf\_length,\ 0);}
+\DoxyCodeLine{00118\ \ \ store32(\&P-\/>node\_offset,\ 0);}
+\DoxyCodeLine{00119\ \ \ store32(\&P-\/>xof\_length,\ 0);}
+\DoxyCodeLine{00120\ \ \ P-\/>node\_depth\ =\ 0;}
+\DoxyCodeLine{00121\ \ \ P-\/>inner\_length\ =\ 0;}
+\DoxyCodeLine{00122\ \ \ memset(P-\/>reserved,\ 0,\ \textcolor{keyword}{sizeof}(P-\/>reserved));}
+\DoxyCodeLine{00123\ \ \ memset(P-\/>salt,\ 0,\ \textcolor{keyword}{sizeof}(P-\/>salt));}
+\DoxyCodeLine{00124\ \ \ memset(P-\/>personal,\ 0,\ \textcolor{keyword}{sizeof}(P-\/>personal));}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordflow}{if}\ (blake2b\_init\_param(S,\ P)\ <\ 0)}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \{}
+\DoxyCodeLine{00130\ \ \ \ \ uint8\_t\ block[BLAKE2B\_BLOCKBYTES];}
+\DoxyCodeLine{00131\ \ \ \ \ memset(block,\ 0,\ BLAKE2B\_BLOCKBYTES);}
+\DoxyCodeLine{00132\ \ \ \ \ memcpy(block,\ key,\ keylen);}
+\DoxyCodeLine{00133\ \ \ \ \ blake2b\_update(S,\ block,\ BLAKE2B\_BLOCKBYTES);}
+\DoxyCodeLine{00134\ \ \ \ \ secure\_zero\_memory(block,\ BLAKE2B\_BLOCKBYTES);\ \textcolor{comment}{/*\ Burn\ the\ key\ from\ stack\ */}}
+\DoxyCodeLine{00135\ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\#define\ G(r,\ i,\ a,\ b,\ c,\ d)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\ \ \ \ a\ =\ a\ +\ b\ +\ m[blake2b\_sigma[r][2\ *\ i\ +\ 0]];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\ \ \ \ d\ =\ rotr64(d\ \string^\ a,\ 32);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\ \ \ \ c\ =\ c\ +\ d;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\ \ \ \ b\ =\ rotr64(b\ \string^\ c,\ 24);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\ \ \ \ a\ =\ a\ +\ b\ +\ m[blake2b\_sigma[r][2\ *\ i\ +\ 1]];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\ \ \ \ d\ =\ rotr64(d\ \string^\ a,\ 16);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\ \ \ \ c\ =\ c\ +\ d;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\ \ \ \ b\ =\ rotr64(b\ \string^\ c,\ 63);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\ \ \}\ while\ (0)}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\#define\ ROUND(r)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\ \ do\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 0,\ v[0],\ v[4],\ v[8],\ v[12]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 1,\ v[1],\ v[5],\ v[9],\ v[13]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 2,\ v[2],\ v[6],\ v[10],\ v[14]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 3,\ v[3],\ v[7],\ v[11],\ v[15]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 4,\ v[0],\ v[5],\ v[10],\ v[15]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 5,\ v[1],\ v[6],\ v[11],\ v[12]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 6,\ v[2],\ v[7],\ v[8],\ v[13]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\ \ \ \ G(r,\ 7,\ v[3],\ v[4],\ v[9],\ v[14]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\ \ \}\ while\ (0)}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ blake2b\_compress(blake2b\_state\ *S,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ block[BLAKE2B\_BLOCKBYTES])\ \{}
+\DoxyCodeLine{00165\ \ \ uint64\_t\ m[16];}
+\DoxyCodeLine{00166\ \ \ uint64\_t\ v[16];}
+\DoxyCodeLine{00167\ \ \ \textcolor{keywordtype}{size\_t}\ i;}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 16;\ ++i)\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ m[i]\ =\ load64(block\ +\ i\ *\ \textcolor{keyword}{sizeof}(m[i]));}
+\DoxyCodeLine{00171\ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ ++i)\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ v[i]\ =\ S-\/>h[i];}
+\DoxyCodeLine{00175\ \ \ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ v[8]\ =\ blake2b\_IV[0];}
+\DoxyCodeLine{00178\ \ \ v[9]\ =\ blake2b\_IV[1];}
+\DoxyCodeLine{00179\ \ \ v[10]\ =\ blake2b\_IV[2];}
+\DoxyCodeLine{00180\ \ \ v[11]\ =\ blake2b\_IV[3];}
+\DoxyCodeLine{00181\ \ \ v[12]\ =\ blake2b\_IV[4]\ \string^\ S-\/>t[0];}
+\DoxyCodeLine{00182\ \ \ v[13]\ =\ blake2b\_IV[5]\ \string^\ S-\/>t[1];}
+\DoxyCodeLine{00183\ \ \ v[14]\ =\ blake2b\_IV[6]\ \string^\ S-\/>f[0];}
+\DoxyCodeLine{00184\ \ \ v[15]\ =\ blake2b\_IV[7]\ \string^\ S-\/>f[1];}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ ROUND(0);}
+\DoxyCodeLine{00187\ \ \ ROUND(1);}
+\DoxyCodeLine{00188\ \ \ ROUND(2);}
+\DoxyCodeLine{00189\ \ \ ROUND(3);}
+\DoxyCodeLine{00190\ \ \ ROUND(4);}
+\DoxyCodeLine{00191\ \ \ ROUND(5);}
+\DoxyCodeLine{00192\ \ \ ROUND(6);}
+\DoxyCodeLine{00193\ \ \ ROUND(7);}
+\DoxyCodeLine{00194\ \ \ ROUND(8);}
+\DoxyCodeLine{00195\ \ \ ROUND(9);}
+\DoxyCodeLine{00196\ \ \ ROUND(10);}
+\DoxyCodeLine{00197\ \ \ ROUND(11);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ ++i)\ \{}
+\DoxyCodeLine{00200\ \ \ \ \ S-\/>h[i]\ =\ S-\/>h[i]\ \string^\ v[i]\ \string^\ v[i\ +\ 8];}
+\DoxyCodeLine{00201\ \ \ \}}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\#undef\ G}}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\#undef\ ROUND}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{keywordtype}{int}\ blake2b\_update(blake2b\_state\ *S,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *pin,\ \textcolor{keywordtype}{size\_t}\ inlen)\ \{}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *in\ =\ (\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *)pin;}
+\DoxyCodeLine{00209\ \ \ \textcolor{keywordflow}{if}\ (inlen\ >\ 0)\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ left\ =\ S-\/>buflen;}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ fill\ =\ BLAKE2B\_BLOCKBYTES\ -\/\ left;}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{if}\ (inlen\ >\ fill)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ S-\/>buflen\ =\ 0;}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ memcpy(S-\/>buf\ +\ left,\ in,\ fill);\ \textcolor{comment}{/*\ Fill\ buffer\ */}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ blake2b\_increment\_counter(S,\ BLAKE2B\_BLOCKBYTES);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ blake2b\_compress(S,\ S-\/>buf);\ \textcolor{comment}{/*\ Compress\ */}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ in\ +=\ fill;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ inlen\ -\/=\ fill;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (inlen\ >\ BLAKE2B\_BLOCKBYTES)\ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ blake2b\_increment\_counter(S,\ BLAKE2B\_BLOCKBYTES);}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ blake2b\_compress(S,\ in);}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ in\ +=\ BLAKE2B\_BLOCKBYTES;}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ inlen\ -\/=\ BLAKE2B\_BLOCKBYTES;}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ memcpy(S-\/>buf\ +\ S-\/>buflen,\ in,\ inlen);}
+\DoxyCodeLine{00227\ \ \ \ \ S-\/>buflen\ +=\ inlen;}
+\DoxyCodeLine{00228\ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keywordtype}{int}\ blake2b\_final(blake2b\_state\ *S,\ \textcolor{keywordtype}{void}\ *out,\ \textcolor{keywordtype}{size\_t}\ outlen)\ \{}
+\DoxyCodeLine{00233\ \ \ uint8\_t\ buffer[BLAKE2B\_OUTBYTES]\ =\ \{0\};}
+\DoxyCodeLine{00234\ \ \ \textcolor{keywordtype}{size\_t}\ i;}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \textcolor{keywordflow}{if}\ (out\ ==\ NULL\ ||\ outlen\ <\ S-\/>outlen)}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \textcolor{keywordflow}{if}\ (blake2b\_is\_lastblock(S))}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ blake2b\_increment\_counter(S,\ S-\/>buflen);}
+\DoxyCodeLine{00243\ \ \ blake2b\_set\_lastblock(S);}
+\DoxyCodeLine{00244\ \ \ memset(S-\/>buf\ +\ S-\/>buflen,\ 0,\ BLAKE2B\_BLOCKBYTES\ -\/\ S-\/>buflen);\ \textcolor{comment}{/*\ Padding\ */}}
+\DoxyCodeLine{00245\ \ \ blake2b\_compress(S,\ S-\/>buf);}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ ++i)\ \textcolor{comment}{/*\ Output\ full\ hash\ to\ temp\ buffer\ */}}
+\DoxyCodeLine{00248\ \ \ \ \ store64(buffer\ +\ \textcolor{keyword}{sizeof}(S-\/>h[i])\ *\ i,\ S-\/>h[i]);}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ memcpy(out,\ buffer,\ S-\/>outlen);}
+\DoxyCodeLine{00251\ \ \ secure\_zero\_memory(buffer,\ \textcolor{keyword}{sizeof}(buffer));}
+\DoxyCodeLine{00252\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00253\ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \textcolor{comment}{/*\ inlen,\ at\ least,\ should\ be\ uint64\_t.\ Others\ can\ be\ size\_t.\ */}}
+\DoxyCodeLine{00256\ \textcolor{keywordtype}{int}\ blake2b(\textcolor{keywordtype}{void}\ *out,\ \textcolor{keywordtype}{size\_t}\ outlen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *in,\ \textcolor{keywordtype}{size\_t}\ inlen,}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *key,\ \textcolor{keywordtype}{size\_t}\ keylen)\ \{}
+\DoxyCodeLine{00258\ \ \ blake2b\_state\ S[1];}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \textcolor{comment}{/*\ Verify\ parameters\ */}}
+\DoxyCodeLine{00261\ \ \ \textcolor{keywordflow}{if}\ (NULL\ ==\ in\ \&\&\ inlen\ >\ 0)}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \textcolor{keywordflow}{if}\ (NULL\ ==\ out)}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \textcolor{keywordflow}{if}\ (NULL\ ==\ key\ \&\&\ keylen\ >\ 0)}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \textcolor{keywordflow}{if}\ (!outlen\ ||\ outlen\ >\ BLAKE2B\_OUTBYTES)}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \textcolor{keywordflow}{if}\ (keylen\ >\ BLAKE2B\_KEYBYTES)}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \textcolor{keywordflow}{if}\ (keylen\ >\ 0)\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordflow}{if}\ (blake2b\_init\_key(S,\ outlen,\ key,\ keylen)\ <\ 0)}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00279\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordflow}{if}\ (blake2b\_init(S,\ outlen)\ <\ 0)}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00282\ \ \ \}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ blake2b\_update(S,\ (\textcolor{keyword}{const}\ uint8\_t\ *)in,\ inlen);}
+\DoxyCodeLine{00285\ \ \ blake2b\_final(S,\ out,\ outlen);}
+\DoxyCodeLine{00286\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00287\ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \textcolor{keywordtype}{int}\ blake2(\textcolor{keywordtype}{void}\ *out,\ \textcolor{keywordtype}{size\_t}\ outlen,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *in,\ \textcolor{keywordtype}{size\_t}\ inlen,}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *key,\ \textcolor{keywordtype}{size\_t}\ keylen)\ \{}
+\DoxyCodeLine{00291\ \ \ \textcolor{keywordflow}{return}\ blake2b(out,\ outlen,\ in,\ inlen,\ key,\ keylen);}
+\DoxyCodeLine{00292\ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{preprocessor}{\#if\ defined(SUPERCOP)}}
+\DoxyCodeLine{00295\ \textcolor{keywordtype}{int}\ crypto\_hash(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *out,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *in,}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ inlen)\ \{}
+\DoxyCodeLine{00297\ \ \ \textcolor{keywordflow}{return}\ blake2b(out,\ BLAKE2B\_OUTBYTES,\ in,\ inlen,\ NULL,\ 0);}
+\DoxyCodeLine{00298\ \}}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#if\ defined(BLAKE2B\_SELFTEST)}}
+\DoxyCodeLine{00302\ \textcolor{preprocessor}{\#include\ "{}blake2-\/kat.h"{}}}
+\DoxyCodeLine{00303\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00304\ \textcolor{keywordtype}{int}\ main(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00305\ \ \ uint8\_t\ key[BLAKE2B\_KEYBYTES];}
+\DoxyCodeLine{00306\ \ \ uint8\_t\ buf[BLAKE2\_KAT\_LENGTH];}
+\DoxyCodeLine{00307\ \ \ \textcolor{keywordtype}{size\_t}\ i,\ step;}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ BLAKE2B\_KEYBYTES;\ ++i)}
+\DoxyCodeLine{00310\ \ \ \ \ key[i]\ =\ (uint8\_t)i;}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ BLAKE2\_KAT\_LENGTH;\ ++i)}
+\DoxyCodeLine{00313\ \ \ \ \ buf[i]\ =\ (uint8\_t)i;}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \textcolor{comment}{/*\ Test\ simple\ API\ */}}
+\DoxyCodeLine{00316\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ BLAKE2\_KAT\_LENGTH;\ ++i)\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ uint8\_t\ hash[BLAKE2B\_OUTBYTES];}
+\DoxyCodeLine{00318\ \ \ \ \ blake2b(hash,\ BLAKE2B\_OUTBYTES,\ buf,\ i,\ key,\ BLAKE2B\_KEYBYTES);}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ memcmp(hash,\ blake2b\_keyed\_kat[i],\ BLAKE2B\_OUTBYTES))\ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00322\ \ \ \ \ \}}
+\DoxyCodeLine{00323\ \ \ \}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \textcolor{comment}{/*\ Test\ streaming\ API\ */}}
+\DoxyCodeLine{00326\ \ \ \textcolor{keywordflow}{for}\ (step\ =\ 1;\ step\ <\ BLAKE2B\_BLOCKBYTES;\ ++step)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ BLAKE2\_KAT\_LENGTH;\ ++i)\ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ uint8\_t\ hash[BLAKE2B\_OUTBYTES];}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ blake2b\_state\ S;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ uint8\_t\ *p\ =\ buf;}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ mlen\ =\ i;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ err\ =\ 0;}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((err\ =\ blake2b\_init\_key(\&S,\ BLAKE2B\_OUTBYTES,\ key,}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BLAKE2B\_KEYBYTES))\ <\ 0)\ \{}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (mlen\ >=\ step)\ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((err\ =\ blake2b\_update(\&S,\ p,\ step))\ <\ 0)\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ mlen\ -\/=\ step;}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ p\ +=\ step;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((err\ =\ blake2b\_update(\&S,\ p,\ mlen))\ <\ 0)\ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((err\ =\ blake2b\_final(\&S,\ hash,\ BLAKE2B\_OUTBYTES))\ <\ 0)\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ memcmp(hash,\ blake2b\_keyed\_kat[i],\ BLAKE2B\_OUTBYTES))\ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \ \ \}}
+\DoxyCodeLine{00357\ \ \ \}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ puts(\textcolor{stringliteral}{"{}ok"{}});}
+\DoxyCodeLine{00360\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00361\ fail:}
+\DoxyCodeLine{00362\ \ \ puts(\textcolor{stringliteral}{"{}error"{}});}
+\DoxyCodeLine{00363\ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00364\ \}}
+\DoxyCodeLine{00365\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

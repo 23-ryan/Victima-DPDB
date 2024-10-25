@@ -1,0 +1,247 @@
+\doxysection{config.\+cpp}
+\label{config_8cpp_source}\index{common/config/config.cpp@{common/config/config.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Config\ Class}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Author:\ Charles\ Gruenwald\ III}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <boost/algorithm/string.hpp>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <cstdarg>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }config}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \ \textcolor{keywordtype}{void}\ Error(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ format,\ ...)}
+\DoxyCodeLine{00017\ \ \ \ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)n***\ Configuration\ error\ ***\(\backslash\)n"{}});}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ va\_list\ args;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ va\_start(args,\ format);}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ vfprintf(stderr,\ format,\ args);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ va\_end(args);}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ exit(0);}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{bool}\ Config::isLeaf(\textcolor{keyword}{const}\ String\ \&\ path)}
+\DoxyCodeLine{00028\ \ \ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !boost::find\_first(path,\ \textcolor{stringliteral}{"{}/"{}});}
+\DoxyCodeLine{00030\ \ \ \ \ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{comment}{//Configuration\ Management}}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keyword}{const}\ Section\ \&\ Config::getSection(\textcolor{keyword}{const}\ String\ \&\ path)}
+\DoxyCodeLine{00034\ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getSection\_unsafe(path);}
+\DoxyCodeLine{00036\ \ \ \ \ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ Section\ \&\ Config::getSection\_unsafe(\textcolor{keyword}{const}\ String\ \&\ path)}
+\DoxyCodeLine{00039\ \ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Handle\ the\ base\ case}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isLeaf(path))}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_root.hasSection(path))}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_root.addSubsection(path);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_root.getSection\_unsafe(path);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{comment}{//split\ up\ the\ path\ on\ "{}/"{},\ and\ loop\ through\ each\ entry\ of\ this}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{comment}{//split\ to\ obtain\ the\ actual\ section}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ PathElementList\ path\_elements;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ Config::splitPathElements(path,\ path\_elements);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ Section\ *\ current\ =\ \&m\_root;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(PathElementList::iterator\ path\_element\ =\ path\_elements.begin();}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ path\_element\ !=\ path\_elements.end();\ path\_element++)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//add\ the\ section\ if\ it\ doesn't\ already\ exist}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!current-\/>hasSection(*path\_element))}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current-\/>addSubsection(*path\_element);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Find\ the\ current\ element\ name\ as\ a\ sub\ section\ of\ the\ current\ section}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ current\ =\ \&(current-\/>getSection\_unsafe(*path\_element));}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *current;}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//Small\ wrapper\ which\ sets\ the\ m\_path\ variable\ appropriatly\ and\ calls\ the\ virtual\ loadConfig()}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{void}\ Config::load(\textcolor{keyword}{const}\ String\ \&\ path)}
+\DoxyCodeLine{00071\ \ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ m\_path\ =\ path;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ loadConfig();}
+\DoxyCodeLine{00074\ \ \ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{void}\ Config::clear()}
+\DoxyCodeLine{00077\ \ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ m\_root.clear();}
+\DoxyCodeLine{00079\ \ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{bool}\ Config::hasKey(\textcolor{keyword}{const}\ String\ \&\ path,\ UInt64\ index)}
+\DoxyCodeLine{00082\ \ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Handle\ the\ base\ case}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isLeaf(path))}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_root.hasKey(path,\ index))}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Disect\ the\ path}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ PathPair\ path\_pair\ =\ Config::splitPath(path);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ Section\ \&\ section\ =\ getSection\_unsafe(path\_pair.first);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(section.hasKey(path\_pair.second,\ index))}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00100\ \ \ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ Config::getKey(\textcolor{keyword}{const}\ String\ \&\ path,\ UInt64\ index)}
+\DoxyCodeLine{00103\ \ \ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Handle\ the\ base\ case}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isLeaf(path))}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_root.hasKey(path,\ index))}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ UINT64\_MAX)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Configuration\ value\ \%s\ not\ found."{}},\ path.c\_str());}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Configuration\ value\ \%s[\%i]\ not\ found."{}},\ path.c\_str(),\ index);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_root.getKey(path,\ index);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Disect\ the\ path}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ PathPair\ path\_pair\ =\ Config::splitPath(path);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ Section\ \&\ section\ =\ getSection\_unsafe(path\_pair.first);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!section.hasKey(path\_pair.second,\ index))}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ ==\ UINT64\_MAX)}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Configuration\ value\ \%s\ not\ found."{}},\ path.c\_str());}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config::Error(\textcolor{stringliteral}{"{}Configuration\ value\ \%s[\%i]\ not\ found."{}},\ path.c\_str(),\ index);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ section.getKey(path\_pair.second,\ index);}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{const}\ Section\ \&\ Config::addSection(\textcolor{keyword}{const}\ String\ \&\ path)}
+\DoxyCodeLine{00136\ \ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Disect\ the\ path}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ PathPair\ path\_pair\ =\ Config::splitPath(path);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ Section\ \&parent\ =\ getSection\_unsafe(path\_pair.first);}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ parent.addSubsection(path\_pair.second);}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ std::pair<String,String>\ Config::splitPath(\textcolor{keyword}{const}\ String\ \&\ path)}
+\DoxyCodeLine{00144\ \ \ \ \ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Throw\ away\ path\_elements,\ just\ return\ base\ and\ key/section}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ std::vector<String>\ path\_elements;}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Config::splitPathElements(path,\ path\_elements);}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ std::pair<String,String>\ Config::splitPathElements(\textcolor{keyword}{const}\ String\ \&\ path,\ PathElementList\ \&\ path\_elements)}
+\DoxyCodeLine{00151\ \ \ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{comment}{//split\ up\ the\ path\ on\ "{}/"{},\ the\ last\ entry\ is\ the\ name\ of\ the\ key}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Everything\ up\ to\ the\ last\ "{}/"{}\ is\ the\ 'base\_path'\ (which\ will\ specify\ a\ section)}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ boost::split(path\_elements,\ path,\ boost::is\_any\_of(\textcolor{stringliteral}{"{}/"{}}));}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Grab\ the\ appropriate\ pieces\ from\ the\ split}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ String\ key\_name\ =\ path\_elements[path\_elements.size()\ -\/\ 1];}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ String\ base\_path\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(path.rfind(\textcolor{stringliteral}{"{}/"{}})\ !=\ String::npos)}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ base\_path\ =\ path.substr(0,\ path.rfind(\textcolor{stringliteral}{"{}/"{}}));}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PathPair(base\_path,key\_name);}
+\DoxyCodeLine{00164\ \ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ V>}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{const}\ Key\ \&\ Config::addKeyInternal(\textcolor{keyword}{const}\ String\ \&\ path,\ \textcolor{keyword}{const}\ V\ \&\ value,\ UInt64\ index)}
+\DoxyCodeLine{00168\ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Handle\ the\ base\ case}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isLeaf(path))}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_root.addKey(path,\ value,\ index);}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ PathPair\ path\_pair\ =\ Config::splitPath(path);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ Section\ \&parent\ =\ getSection\_unsafe(path\_pair.first);}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ parent.addKey(path\_pair.second,\ value,\ index);}
+\DoxyCodeLine{00176\ \ \ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//Convert\ the\ in-\/memory\ representation\ into\ a\ string}}
+\DoxyCodeLine{00179\ \ \ \ \ String\ Config::showTree(\textcolor{keyword}{const}\ Section\ \&\ current,\ \textcolor{keywordtype}{int}\ depth)}
+\DoxyCodeLine{00180\ \ \ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ String\ result\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ String\ ret\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ String\ tabs\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i=0;i<depth;i++)}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ tabs\ =\ tabs.append(\textcolor{stringliteral}{"{}\ \ \ \ "{}});}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{comment}{//First\ loop\ through\ all\ the\ subsections}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ SectionList\ \textcolor{keyword}{const}\ \&\ subsections\ =\ current.getSubsections();}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(SectionList::const\_iterator\ i\ =\ subsections.begin();\ i\ !=\ subsections.end();\ i++)}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ Section\ \textcolor{keyword}{const}\ \&\ subsection\ =\ *(i-\/>second);}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ result\ +=\ tabs\ +\ \textcolor{stringliteral}{"{}Section:\ "{}}\ +\ i-\/>second-\/>getName()\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//recurse}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ result\ +=\ showTree(subsection,\ depth+1);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Now\ add\ all\ the\ keys\ of\ this\ section}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ KeyList\ \textcolor{keyword}{const}\ \&\ keys\ =\ current.getKeys();}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(KeyList::const\_iterator\ i\ =\ keys.begin();\ i\ !=\ keys.end();i++)}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ result\ +=\ tabs\ +\ \textcolor{stringliteral}{"{}Key:\ "{}}\ +\ i-\/>second-\/>getName()\ +\ \textcolor{stringliteral}{"{}\ -\/\ "{}}\ +\ i-\/>second-\/>getString()\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00205\ \ \ \ \ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{void}\ Config::set(\textcolor{keyword}{const}\ String\ \&\ path,\ \textcolor{keyword}{const}\ String\ \&\ new\_value)}
+\DoxyCodeLine{00208\ \ \ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ addKey(path,\ new\_value);}
+\DoxyCodeLine{00210\ \ \ \ \ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{void}\ Config::set(\textcolor{keyword}{const}\ String\ \&\ path,\ SInt64\ new\_value)}
+\DoxyCodeLine{00213\ \ \ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ addKey(path,\ new\_value);}
+\DoxyCodeLine{00215\ \ \ \ \ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{void}\ Config::set(\textcolor{keyword}{const}\ String\ \&\ path,\ \textcolor{keywordtype}{double}\ new\_value)}
+\DoxyCodeLine{00218\ \ \ \ \ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ addKey(path,\ new\_value);}
+\DoxyCodeLine{00220\ \ \ \ \ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//Below\ are\ the\ getters\ which\ also\ handle\ default\ values}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{bool}\ Config::getBoolArray(\textcolor{keyword}{const}\ String\ \&\ path,\ UInt64\ index)}
+\DoxyCodeLine{00224\ \ \ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getKey(path,\ index).getBool();}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ SInt64\ Config::getIntArray(\textcolor{keyword}{const}\ String\ \&\ path,\ UInt64\ index)}
+\DoxyCodeLine{00229\ \ \ \ \ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getKey(path,\ index).getInt();}
+\DoxyCodeLine{00231\ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{const}\ String\ Config::getStringArray(\textcolor{keyword}{const}\ String\ \&\ path,\ UInt64\ index)}
+\DoxyCodeLine{00234\ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getKey(path,\ index).getString();}
+\DoxyCodeLine{00236\ \ \ \ \ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordtype}{double}\ Config::getFloatArray(\textcolor{keyword}{const}\ String\ \&\ path,\ UInt64\ index)}
+\DoxyCodeLine{00239\ \ \ \ \ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getKey(path,index).getFloat();}
+\DoxyCodeLine{00241\ \ \ \ \ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \}\textcolor{comment}{//end\ of\ namespace\ config}}
+
+\end{DoxyCode}

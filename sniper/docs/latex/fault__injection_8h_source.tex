@@ -1,0 +1,56 @@
+\doxysection{fault\+\_\+injection.\+h}
+\label{fault__injection_8h_source}\index{common/fault\_injection/fault\_injection.h@{common/fault\_injection/fault\_injection.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_FAULT\_INJECTION\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_FAULT\_INJECTION\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{class\ }FaultInjector;}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }FaultinjectionManager}
+\DoxyCodeLine{00010\ \{}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ fault\_type\_t\ \{}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ FAULT\_TYPE\_TOGGLE,}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ \ FAULT\_TYPE\_SET0,}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ \ FAULT\_TYPE\_SET1,}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ fault\_type\_t\ m\_type;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ fault\_injector\_t\ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ FAULT\_INJECTOR\_NONE,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ FAULT\_INJECTOR\_RANDOM,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ fault\_injector\_t\ m\_injector;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{static}\ FaultinjectionManager*\ create();}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ FaultinjectionManager(fault\_type\_t\ type,\ fault\_injector\_t\ injector);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ FaultInjector*\ getFaultInjector(UInt32\ core\_id,\ MemComponent::component\_t\ mem\_component);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ applyFault(Core\ *core,\ IntPtr\ read\_address,\ UInt32\ data\_size,\ MemoryResult\ \&memres,\ Byte\ *data,\ \textcolor{keyword}{const}\ Byte\ *fault);}
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{class\ }FaultInjector}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ UInt32\ m\_core\_id;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ MemComponent::component\_t\ m\_mem\_component;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ FaultInjector(UInt32\ core\_id,\ MemComponent::component\_t\ mem\_component);}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ preRead(IntPtr\ addr,\ IntPtr\ location,\ UInt32\ data\_size,\ Byte\ *fault,\ SubsecondTime\ time);}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ postWrite(IntPtr\ addr,\ IntPtr\ location,\ UInt32\ data\_size,\ Byte\ *fault,\ SubsecondTime\ time);}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_FAULT\_INJECTION\_H}}
+
+\end{DoxyCode}

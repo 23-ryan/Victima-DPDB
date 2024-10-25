@@ -1,0 +1,171 @@
+\doxysection{trace\+\_\+thread.\+h}
+\label{trace__thread_8h_source}\index{common/trace\_frontend/trace\_thread.h@{common/trace\_frontend/trace\_thread.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_TRACE\_THREAD\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_TRACE\_THREAD\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}\_thread.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}sift\_reader.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}operand.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}semaphore.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <decoder.h>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//extern\ "{}C"{}\ \{}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\#include\ "{}xed-\/interface.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#define\ NUM\_PAPI\_COUNTERS\ 6}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ PAPI\_TOT\_INS\ 0}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#define\ PAPI\_TOT\_CYC\ 1}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ PAPI\_L1\_DCM\ 2}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ PAPI\_L2\_DCM\ 3}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ PAPI\_L3\_TCM\ 4}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ PAPI\_BR\_MSP\ 5}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{class\ }Instruction;}
+\DoxyCodeLine{00030\ \textcolor{keyword}{class\ }DynamicInstruction;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{class\ }TraceThread\ :\ \textcolor{keyword}{public}\ Runnable}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ multi-\/process\ mode,\ we\ want\ each\ process\ to\ have\ its\ own\ private\ memory\ space}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{comment}{//\ Therefore,\ perform\ a\ virtual\ to\ physical\ address\ mapping\ by\ including\ the\ core\_id}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{comment}{//\ Virtual\ addresses\ are\ converted\ to\ physical\ addresses\ by\ pasting\ the\ core\_id\ at}}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{comment}{//\ bit\ positions\ pa\_core\_shift..+pa\_core\_size}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{comment}{//\ The\ highest\ virtual\ address\ used\ is\ normally\ 00007fffffffffff,\ with\ pa\_core\_shift==48}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{comment}{//\ the\ core\_id\ is\ 2\ above\ the\ highest\ used\ bit.}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ pa\_core\_shift\ =\ 48;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ pa\_core\_size\ =\ 16;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ pa\_va\_mask\ =\ \string~(((UInt64(1)\ <<\ pa\_core\_size)\ -\/\ 1)\ <<\ pa\_core\_shift);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{comment}{//\ Optionally\ we\ can\ also\ do\ address\ randomization\ on\ a\ per-\/page\ basis.}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ can\ avoid\ artificial\ set\ contention\ when\ replaying\ multiple\ copies\ of\ the\ same\ trace.}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ va\_page\_shift\ =\ 12;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ va\_page\_mask\ =\ (UInt64(1)\ <<\ va\_page\_shift)\ -\/\ 1;}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keyword}{static}\ UInt64\ \_va2pa(UInt64\ self,\ UInt64\ va)\ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)self)-\/>va2pa(va);\ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ UInt64\ va2pa(UInt64\ va,\ \textcolor{keywordtype}{bool}\ *noMapping\ =\ NULL);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ UInt64\ remapAddress(UInt64\ va\_page);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \_Thread\ *m\_\_thread;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ Thread\ *m\_thread;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ SubsecondTime\ m\_time\_start;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ Sift::Reader\ m\_trace;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_trace\_has\_pa;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_address\_randomization;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_appid\_from\_coreid;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ uint8\_t\ m\_address\_randomization\_table[256];}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_stop;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ std::unordered\_map<IntPtr,\ Instruction\ *>\ m\_icache;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{comment}{//std::unordered\_map<IntPtr,\ const\ xed\_decoded\_inst\_t\ *>\ m\_decoder\_cache;\ \ //\ TODO\ convert\ to\ DecoderLib}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{comment}{//static\ bool\ xed\_initialized;\ \ //\ TODO\ convert\ to\ DecoderLib}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{comment}{//xed\_state\_t\ m\_xed\_state\_init;\ \ //\ TODO\ convert\ to\ DecoderLib}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ std::unordered\_map<IntPtr,\ const\ dl::DecodedInst\ *>\ m\_decoder\_cache;\ \ \textcolor{comment}{//\ TODO\ convert\ to\ DecoderLib}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ UInt64\ m\_bbv\_base;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ UInt64\ m\_bbv\_count;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ UInt64\ m\_bbv\_last;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_bbv\_end;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ m\_isa;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{comment}{//xed\_syntax\_enum\_t\ m\_syntax;}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ uint8\_t\ m\_output\_leftover[160];}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ uint16\_t\ m\_output\_leftover\_size;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ String\ m\_tracefile;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ String\ m\_responsefile;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ app\_id\_t\ m\_app\_id;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_blocked;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_cleanup;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_started;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ run();}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \textcolor{keyword}{static}\ Sift::Mode\ \_\_handleInstructionCountFunc(\textcolor{keywordtype}{void}*\ arg,\ uint32\_t\ icount)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleInstructionCountFunc(icount);\ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_handleCacheOnlyFunc(\textcolor{keywordtype}{void}*\ arg,\ uint8\_t\ icount,\ Sift::CacheOnlyType\ type,\ uint64\_t\ eip,\ uint64\_t\ address)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \{\ ((TraceThread*)arg)-\/>handleCacheOnlyFunc(icount,\ type,\ eip,\ address);\ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_handleOutputFunc(\textcolor{keywordtype}{void}*\ arg,\ uint8\_t\ fd,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ uint32\_t\ size)}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \{\ ((TraceThread*)arg)-\/>handleOutputFunc(fd,\ data,\ size);\ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keyword}{static}\ uint64\_t\ \_\_handleSyscallFunc(\textcolor{keywordtype}{void}*\ arg,\ uint16\_t\ syscall\_number,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ uint32\_t\ size)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleSyscallFunc(syscall\_number,\ data,\ size);\ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keyword}{static}\ int32\_t\ \_\_handleNewThreadFunc(\textcolor{keywordtype}{void}*\ arg)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleNewThreadFunc();\ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keyword}{static}\ int32\_t\ \_\_handleJoinFunc(\textcolor{keywordtype}{void}*\ arg,\ int32\_t\ join\_thread\_id)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleJoinFunc(join\_thread\_id);\ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keyword}{static}\ uint64\_t\ \_\_handleMagicFunc(\textcolor{keywordtype}{void}*\ arg,\ uint64\_t\ a,\ uint64\_t\ b,\ uint64\_t\ c)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleMagicFunc(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \_\_handleEmuFunc(\textcolor{keywordtype}{void}*\ arg,\ Sift::EmuType\ type,\ Sift::EmuRequest\ \&req,\ Sift::EmuReply\ \&res)}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleEmuFunc(type,\ req,\ res);\ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_handleRoutineChangeFunc(\textcolor{keywordtype}{void}*\ arg,\ Sift::RoutineOpType\ event,\ uint64\_t\ eip,\ uint64\_t\ esp,\ uint64\_t\ callEip)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \{\ ((TraceThread*)arg)-\/>handleRoutineChangeFunc(event,\ eip,\ esp,\ callEip);\ \}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_\_handleRoutineAnnounceFunc(\textcolor{keywordtype}{void}*\ arg,\ uint64\_t\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ uint64\_t\ offset,\ uint32\_t\ line,\ uint32\_t\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \{\ ((TraceThread*)arg)-\/>handleRoutineAnnounceFunc(eip,\ name,\ imgname,\ offset,\ line,\ column,\ filename);\ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \textcolor{keyword}{static}\ int32\_t\ \_\_handleForkFunc(\textcolor{keywordtype}{void}*\ arg)}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleForkFunc();\}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \ \_\_handleMallocEnterFunc(\textcolor{keywordtype}{void}*\ arg,\ uint64\_t\ pointer,\ \ uint64\_t\ size)}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleMallocEnterFunc(pointer,size);\}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \ \_\_handleCallocEnterFunc(\textcolor{keywordtype}{void}*\ arg,\ uint64\_t\ pointer,\ \ uint64\_t\ size)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleCallocEnterFunc(pointer,size);\}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \ \_\_handleReallocEnterFunc(\textcolor{keywordtype}{void}*\ arg,\ uint64\_t\ init\_pointer,\ uint64\_t\ pointer,\ \ uint64\_t\ size)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleReallocEnterFunc(init\_pointer,pointer,size);\}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \ \_\_handleFreeEnterFunc(\textcolor{keywordtype}{void}*\ arg,\ uint64\_t\ pointer)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ((TraceThread*)arg)-\/>handleFreeEnterFunc(pointer);\}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ Sift::Mode\ handleInstructionCountFunc(uint32\_t\ icount);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleCacheOnlyFunc(uint8\_t\ icount,\ Sift::CacheOnlyType\ type,\ uint64\_t\ eip,\ uint64\_t\ address);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleOutputFunc(uint8\_t\ fd,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ uint32\_t\ size);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ uint64\_t\ handleSyscallFunc(uint16\_t\ syscall\_number,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ uint32\_t\ size);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ int32\_t\ handleNewThreadFunc();}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ int32\_t\ handleForkFunc();}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ int32\_t\ handleJoinFunc(int32\_t\ thread);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ uint64\_t\ handleMagicFunc(uint64\_t\ a,\ uint64\_t\ b,\ uint64\_t\ c);}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ handleEmuFunc(Sift::EmuType\ type,\ Sift::EmuRequest\ \&req,\ Sift::EmuReply\ \&res);}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleRoutineChangeFunc(Sift::RoutineOpType\ event,\ uint64\_t\ eip,\ uint64\_t\ esp,\ uint64\_t\ callEip);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleRoutineAnnounceFunc(uint64\_t\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ uint64\_t\ offset,\ uint32\_t\ line,\ uint32\_t\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMallocEnterFunc(uint64\_t\ pointer,\ uint64\_t\ size\ );}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleCallocEnterFunc(uint64\_t\ pointer,\ uint64\_t\ size);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleReallocEnterFunc(uint64\_t\ init\_pointer,\ uint64\_t\ pointer,\ uint64\_t\ size);}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleFreeEnterFunc(uint64\_t\ pointer);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ }
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ Instruction*\ decode(Sift::Instruction\ \&inst);}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleInstructionWarmup(Sift::Instruction\ \&inst,\ Sift::Instruction\ \&next\_inst,\ Core\ *core,\ \textcolor{keywordtype}{bool}\ do\_icache\_warmup,\ UInt64\ icache\_warmup\_addr,\ UInt64\ icache\_warmup\_size);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleInstructionDetailed(Sift::Instruction\ \&inst,\ Sift::Instruction\ \&next\_inst,\ PerformanceModel\ *prfmdl);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{comment}{//void\ addDetailedMemoryInfo(DynamicInstruction\ *dynins,\ Sift::Instruction\ \&inst,\ const\ xed\_decoded\_inst\_t\ \&xed\_inst,\ uint32\_t\ mem\_idx,\ Operand::Direction\ op\_type,\ bool\ is\_pretetch,\ PerformanceModel\ *prfmdl);}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ addDetailedMemoryInfo(DynamicInstruction\ *dynins,\ Sift::Instruction\ \&inst,\ \textcolor{keyword}{const}\ dl::DecodedInst\ \&decoded\_inst,\ uint32\_t\ mem\_idx,\ Operand::Direction\ op\_type,\ \textcolor{keywordtype}{bool}\ is\_pretetch,\ PerformanceModel\ *prfmdl);}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ unblock();}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ SubsecondTime\ getCurrentTime()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{comment}{//static\ dl::Decoder\ *m\_decoder;}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ dl::DecoderFactory\ *m\_factory;\ \ \textcolor{comment}{//\ we\ need\ a\ factory\ here\ to\ be\ able\ to\ create\ instructions\ of\ any\ kind}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{comment}{//const\ xed\_decoded\_inst\_t*\ staticDecode(Sift::Instruction\ \&inst);}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \textcolor{keyword}{const}\ dl::DecodedInst*\ staticDecode(Sift::Instruction\ \&inst);}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ *m\_papi\_counters;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_stopped;}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ TraceThread(Thread\ *thread,\ SubsecondTime\ time\_start,\ String\ tracefile,\ String\ responsefile,\ app\_id\_t\ app\_id,\ \textcolor{keywordtype}{bool}\ cleanup);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \string~TraceThread();}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ spawn();}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ stop()\ \{\ m\_stop\ =\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ UInt64\ getProgressExpect();}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ UInt64\ getProgressValue();}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ Thread*\ getThread()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thread;\ \}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleAccessMemory(Core::lock\_signal\_t\ lock\_signal,\ Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ d\_addr,\ \textcolor{keywordtype}{char}*\ data\_buffer,\ UInt32\ data\_size);}
+\DoxyCodeLine{00163\ \};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_TRACE\_THREAD\_H}}
+
+\end{DoxyCode}

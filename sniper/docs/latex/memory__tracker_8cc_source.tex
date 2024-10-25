@@ -1,0 +1,227 @@
+\doxysection{memory\+\_\+tracker.\+cc}
+\label{memory__tracker_8cc_source}\index{common/system/memory\_tracker.cc@{common/system/memory\_tracker.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}memory\_tracker.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config\_file.hpp"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ MemoryTracker::MemoryTracker()}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \ \ \ Sim()-\/>getConfig()-\/>setCacheEfficiencyCallbacks(\_\_ce\_get\_owner,\ \_\_ce\_notify\_access,\ \_\_ce\_notify\_evict,\ (UInt64)\textcolor{keyword}{this});}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{comment}{//Megapage\ single\_megapage(std::atoi(Sim()-\/>getCfg()-\/>getString("{}perf\_model/megapage/size"{}).c\_str())\ <<\ 20);}}
+\DoxyCodeLine{00014\ \ \ \textcolor{comment}{//\ m\_megapages.push\_back(single\_megapage);}}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ MemoryTracker::\string~MemoryTracker()}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ FILE\ *fp\ =\ fopen(Sim()-\/>getConfig()-\/>formatOutputFileName(\textcolor{stringliteral}{"{}sim.memorytracker"{}}).c\_str(),\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00020\ \ \ \ std::unordered\_set<UInt64>\ sites\_printed;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}W\(\backslash\)t"{}});}
+\DoxyCodeLine{00023\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h))}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%s,"{}},\ HitWhereString((HitWhere::where\_t)h));}
+\DoxyCodeLine{00026\ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ m\_allocation\_sites.begin();\ it\ !=\ m\_allocation\_sites.end();\ ++it)}
+\DoxyCodeLine{00029\ \ \ \ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keyword}{const}\ CallStack\ \&stack\ =\ it-\/>first;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keyword}{const}\ AllocationSite\ *site\ =\ it-\/>second;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (site-\/>total\_loads\ +\ site-\/>total\_stores)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ jt\ =\ stack.begin();\ jt\ !=\ stack.end();\ ++jt)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sites\_printed.count(*jt)\ ==\ 0)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ RoutineTracer::Routine\ *rtn\ =\ Sim()-\/>getRoutineTracer()-\/>getRoutineInfo(*jt);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtn)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}F\(\backslash\)t\%"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{}\(\backslash\)t\%s\(\backslash\)t\%s\(\backslash\)n"{}},\ *jt,\ rtn-\/>m\_name,\ rtn-\/>m\_location);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sites\_printed.insert(*jt);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}S\(\backslash\)t\%lx\(\backslash\)t"{}},\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})site);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ jt\ =\ stack.begin();\ jt\ !=\ stack.end();\ ++jt)}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}:\%"{}}\ PRIxPTR,\ *jt);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)tnum-\/allocations=\%"{}}\ PRId64,\ site-\/>num\_allocations);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)ttotal-\/allocated=\%"{}}\ PRId64,\ site-\/>total\_size);}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)thit-\/where="{}});}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ h\ =\ HitWhere::WHERE\_FIRST\ ;\ h\ <\ HitWhere::NUM\_HITWHERES\ ;\ h++)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (HitWhereIsValid((HitWhere::where\_t)h)\ \&\&\ site-\/>hit\_where\_load[h]\ +\ site-\/>hit\_where\_store[h]\ >\ 0)}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}L\%s:\%"{}}\ PRId64\ \textcolor{stringliteral}{"{},"{}},\ HitWhereString((HitWhere::where\_t)h),\ site-\/>hit\_where\_load[h]);}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}S\%s:\%"{}}\ PRId64\ \textcolor{stringliteral}{"{},"{}},\ HitWhereString((HitWhere::where\_t)h),\ site-\/>hit\_where\_store[h]);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (site-\/>evicted\_by.size())}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)tevicted-\/by="{}});}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ it\ =\ site-\/>evicted\_by.begin();\ it\ !=\ site-\/>evicted\_by.end();\ ++it)}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\%lx:\%"{}}\ PRId64\ \textcolor{stringliteral}{"{},"{}},\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})it-\/>first,\ it-\/>second);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ fprintf(fp,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \}}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keywordtype}{void}\ MemoryTracker::logMalloc(thread\_id\_t\ thread\_id,\ UInt64\ eip,\ UInt64\ address,\ UInt64\ size)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ ::RoutineTracerThread\ *tracer\ =\ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>getRoutineTracer();}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keyword}{const}\ CallStack\ stack\ =\ \textcolor{keyword}{dynamic\_cast<}MemoryTracker::RoutineTracerThread*\textcolor{keyword}{>}(tracer)-\/>getCallsiteStack();}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ AllocationSite\ *site\ =\ NULL;}
+\DoxyCodeLine{00078\ \ \ \ AllocationSites::iterator\ it\ =\ m\_allocation\_sites.find(stack);}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{if}\ (it\ !=\ m\_allocation\_sites.end())}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ site\ =\ it-\/>second;}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00082\ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ site\ =\ \textcolor{keyword}{new}\ AllocationSite();}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ m\_allocation\_sites[stack]\ =\ site;}
+\DoxyCodeLine{00085\ \ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \textcolor{comment}{//\ Store\ the\ first\ address\ of\ the\ first\ cache\ line\ that\ no\ longer\ belongs\ to\ the\ allocation}}
+\DoxyCodeLine{00088\ \ \ \ UInt64\ lower\ =\ address\ \&\ \string~63,\ upper\ =\ (address\ +\ size\ +\ 63)\ \&\ \string~63;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{comment}{//printf("{}memtracker:\ site\ \%p(\%lx)\ malloc\ \%lx\ +\ \%10lx\ (\%lx\ ..\ \%lx)\(\backslash\)n"{},\ site,\ eip,\ address,\ size,\ lower,\ upper);}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \textcolor{keyword}{auto}\ previous\ =\ m\_allocations.upper\_bound(lower);}
+\DoxyCodeLine{00093\ \ \ \ \textcolor{keywordflow}{if}\ (previous\ !=\ m\_allocations.end()\ \&\&\ lower\ >=\ previous-\/>first\ -\/\ previous-\/>second.size)}
+\DoxyCodeLine{00094\ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{comment}{//printf("{}\(\backslash\)t\%p\ overwriting\ \%p\(\backslash\)n"{},\ site,\ previous-\/>second.site);}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previous-\/>first\ -\/\ previous-\/>second.size\ <\ lower)}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ UInt64\ start\ =\ previous-\/>first\ -\/\ previous-\/>second.size;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ m\_allocations[lower]\ =\ Allocation(lower\ -\/\ start,\ previous-\/>second.site);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printf("{}\(\backslash\)tremain\ \%p\ \%lx\ ..\ \%lx\(\backslash\)n"{},\ previous-\/>second.site,\ start,\ lower);}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previous-\/>first\ >\ upper)}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ m\_allocations[previous-\/>first]\ =\ Allocation(previous-\/>first\ -\/\ upper,\ previous-\/>second.site);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//printf("{}\(\backslash\)tremain\ \%p\ \%lx\ ..\ \%lx\(\backslash\)n"{},\ previous-\/>second.site,\ upper,\ previous-\/>first);}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ m\_allocations.erase(previous);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ m\_allocations[upper]\ =\ Allocation(upper\ -\/\ lower,\ site);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ASSERT\_FIND\_OWNER}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt64\ addr\ =\ lower;\ addr\ <\ upper;\ addr\ +=\ 64)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ m\_allocations\_slow[addr]\ =\ site;}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ m\_allocation\_sites[stack]-\/>num\_allocations++;}
+\DoxyCodeLine{00121\ \ \ \ m\_allocation\_sites[stack]-\/>total\_size\ +=\ size;}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keywordtype}{void}\ MemoryTracker::doMemAlloc()}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \ \ \ printf(\textcolor{stringliteral}{"{}In\ Memory\ Tracker\ Mem\ Alloc\(\backslash\)n"{}});}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keywordtype}{void}\ MemoryTracker::logFree(thread\_id\_t\ thread\_id,\ UInt64\ eip,\ UInt64\ address)}
+\DoxyCodeLine{00130\ \{}
+\DoxyCodeLine{00131\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \textcolor{comment}{//printf("{}memtracker:\ free\ \%lx\(\backslash\)n"{},\ address);}}
+\DoxyCodeLine{00134\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ UInt64\ MemoryTracker::ce\_get\_owner(core\_id\_t\ core\_id,\ UInt64\ address)}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00139\ \ \ \ AllocationSite\ *owner\ =\ NULL;}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \textcolor{comment}{//\ upper\_bound\ returns\ the\ first\ entry\ greater\ than\ address}}
+\DoxyCodeLine{00142\ \ \ \ \textcolor{comment}{//\ Because\ the\ key\ in\ m\_allocations\ is\ the\ first\ cache\ line\ that\ no\ longer\ falls\ into\ the\ range,}}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ we\ will\ find\ the\ correct\ alloction\ *if*\ address\ falls\ within\ it}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keyword}{auto}\ upper\ =\ m\_allocations.upper\_bound(address);}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keywordflow}{if}\ (upper\ !=\ m\_allocations.end()\ \&\&\ address\ >=\ upper-\/>first\ -\/\ upper-\/>second.size)}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ owner\ =\ upper-\/>second.site;}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ASSERT\_FIND\_OWNER}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ AllocationSite\ *owner\_slow\ =\ (m\_allocations\_slow.count(address\ \&\ \string~63)\ ==\ 0)\ ?\ NULL\ :\ m\_allocations\_slow[address\ \&\ \string~63];}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ LOG\_ASSERT\_WARNING(owner\ ==\ owner\_slow,\ \textcolor{stringliteral}{"{}ASSERT\_FIND\_OWNER:\ owners\ for\ \%lx\ don't\ match\ (fast\ \%p\ !=\ slow\ \%p)"{}},\ address,\ owner,\ owner\_slow);}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \textcolor{keywordflow}{return}\ (UInt64)owner;}
+\DoxyCodeLine{00154\ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{void}\ MemoryTracker::ce\_notify\_access(UInt64\ owner,\ Core::mem\_op\_t\ mem\_op\_type,\ HitWhere::where\_t\ hit\_where)}
+\DoxyCodeLine{00157\ \{}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordflow}{if}\ (owner)}
+\DoxyCodeLine{00159\ \ \ \ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ AllocationSite\ *site\ =\ (AllocationSite*)owner;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ site-\/>total\_stores++;}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ site-\/>hit\_where\_store[hit\_where]++;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ site-\/>total\_loads++;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ site-\/>hit\_where\_load[hit\_where]++;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00171\ \ \ \ \}}
+\DoxyCodeLine{00172\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{keywordtype}{void}\ MemoryTracker::ce\_notify\_evict(\textcolor{keywordtype}{bool}\ on\_roi\_end,\ UInt64\ owner,\ UInt64\ evictor,\ CacheBlockInfo::BitsUsedType\ bits\_used,\ UInt32\ bits\_total)}
+\DoxyCodeLine{00175\ \{}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keywordflow}{if}\ (!on\_roi\_end\ \&\&\ owner)}
+\DoxyCodeLine{00177\ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ AllocationSite\ *site\ =\ (AllocationSite*)owner;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ AllocationSite\ *evictor\_site\ =\ (AllocationSite*)evictor;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (site-\/>evicted\_by.count(evictor\_site)\ ==\ 0)}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ site-\/>evicted\_by[evictor\_site]\ =\ 0;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ site-\/>evicted\_by[evictor\_site]++;}
+\DoxyCodeLine{00183\ \ \ \ \}}
+\DoxyCodeLine{00184\ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ MemoryTracker::RoutineTracer::RoutineTracer()}
+\DoxyCodeLine{00187\ \{}
+\DoxyCodeLine{00188\ \ \ \ Sim()-\/>setMemoryTracker(\textcolor{keyword}{new}\ MemoryTracker());}
+\DoxyCodeLine{00189\ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ MemoryTracker::RoutineTracer::\string~RoutineTracer()}
+\DoxyCodeLine{00192\ \{}
+\DoxyCodeLine{00193\ \ \ \ \textcolor{keyword}{delete}\ Sim()-\/>getMemoryTracker();}
+\DoxyCodeLine{00194\ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{keywordtype}{void}\ MemoryTracker::RoutineTracer::addRoutine(IntPtr\ eip,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *imgname,\ IntPtr\ offset,\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename)}
+\DoxyCodeLine{00197\ \{}
+\DoxyCodeLine{00198\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \textcolor{keywordflow}{if}\ (m\_routines.count(eip)\ ==\ 0)}
+\DoxyCodeLine{00201\ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ m\_routines[eip]\ =\ \textcolor{keyword}{new}\ RoutineTracer::Routine(eip,\ name,\ imgname,\ offset,\ column,\ line,\ filename);}
+\DoxyCodeLine{00203\ \ \ \ \}}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{keywordtype}{bool}\ MemoryTracker::RoutineTracer::hasRoutine(IntPtr\ eip)}
+\DoxyCodeLine{00207\ \{}
+\DoxyCodeLine{00208\ \ \ \ ScopedLock\ sl(m\_lock);}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keywordflow}{return}\ m\_routines.count(eip)\ >\ 0;}
+\DoxyCodeLine{00211\ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{keywordtype}{void}\ MemoryTracker::RoutineTracerThread::functionEnter(IntPtr\ eip,\ IntPtr\ callEip)}
+\DoxyCodeLine{00214\ \{}
+\DoxyCodeLine{00215\ \ \ \ m\_callsite\_stack.push\_back(callEip);}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{keywordtype}{void}\ MemoryTracker::RoutineTracerThread::functionExit(IntPtr\ eip)}
+\DoxyCodeLine{00219\ \{}
+\DoxyCodeLine{00220\ \ \ \ m\_callsite\_stack.pop\_back();}
+\DoxyCodeLine{00221\ \}}
+
+\end{DoxyCode}

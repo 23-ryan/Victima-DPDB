@@ -1,0 +1,80 @@
+\doxysection{bit\+\_\+vector.\+h}
+\label{bit__vector_8h_source}\index{common/misc/bit\_vector.h@{common/misc/bit\_vector.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Jonathan\ Eastep\ (eastep@mit.edu)}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ 10.10.08}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ This\ file\ provides\ a\ bit\ vector\ class}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ BIT\_VECTOR\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ BIT\_VECTOR\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#define\ BITVECT\_DEBUG\ 0}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }BitVector}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ UInt32\ m\_capacity;}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ UInt32\ m\_size;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ SInt32\ m\_last\_pos;\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt32\ VECTOR\_SIZE;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ std::vector<UInt64>\ m\_words;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \textcolor{comment}{//used\ in\ find\ function,\ for\ iterating\ through\ the\ set\ bits}}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{comment}{//marks\ the\ position\ of\ the\ last\ set\ bit\ found.}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{comment}{//value\ of\ -\/1\ means\ no\ last\_pos\ bit}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#if\ BITVECT\_DEBUG}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ debug();}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ BitVector(UInt32\ bits):\ }
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ m\_capacity(bits),}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ m\_size(0),}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ m\_last\_pos(-\/1),}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ VECTOR\_SIZE((bits\ +\ 64\ -\/\ 1)\ >>\ 6)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ m\_words.resize(VECTOR\_SIZE);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \string~BitVector()\ \{\}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{comment}{//starting\ from\ position\ 'last\_pos',\ find\ the\ next\ "{}1"{}\ bit.}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{comment}{//private\ variable\ 'last\_pos'\ remembers\ the\ last\ position\ found,}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{comment}{//allowing\ subsequent\ calls\ to\ "{}find"{}\ to\ effectively\ iterate}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{comment}{//through\ the\ entire\ BitVector}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{comment}{//returns\ -\/1\ if\ no\ bits\ set\ (after\ last\_pos)}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ SInt32\ find();}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ resetFind();}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{comment}{//given\ an\ 8bit\ word,\ test\ to\ see\ if\ 'bit'\ is\ set}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{comment}{//this\ is\ a\ helper\ function\ to\ the\ "{}find"{}\ function}}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ bTestBit(UInt8\ word,\ UInt32\ bit);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ UInt32\ capacity()\ \{\ \textcolor{keywordflow}{return}\ m\_capacity;\ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ UInt32\ size()\ \{\ \textcolor{keywordflow}{return}\ m\_size;\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ reset();}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ at(UInt32\ bit);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ set(UInt32\ bit);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clear(UInt32\ bit);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#ifdef\ BITVECT\_DEBUG}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ set(\textcolor{keyword}{const}\ BitVector\&\ vec2);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ clear(\textcolor{keyword}{const}\ BitVector\&\ vec2);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ test(\textcolor{keyword}{const}\ BitVector\&\ vec2);}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

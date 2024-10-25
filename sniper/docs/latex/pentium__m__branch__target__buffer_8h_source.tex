@@ -1,0 +1,106 @@
+\doxysection{pentium\+\_\+m\+\_\+branch\+\_\+target\+\_\+buffer.\+h}
+\label{pentium__m__branch__target__buffer_8h_source}\index{common/performance\_model/branch\_predictors/pentium\_m\_branch\_target\_buffer.h@{common/performance\_model/branch\_predictors/pentium\_m\_branch\_target\_buffer.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PENTIUM\_M\_BRANCH\_TARGET\_BUFFER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PENTIUM\_M\_BRANCH\_TARGET\_BUFFER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ NUM\_WAYS\ 4}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ NUM\_ENTRIES\ 512}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }PentiumMBranchTargetBuffer\ :\ BranchPredictor}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\ \ \ \#define\ IP\_TO\_INDEX(\_ip)\ ((\_ip\ >>\ 4)\ \&\ 0x1ff)}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\ \ \ \#define\ TAG\_OFFSET\_MASK\ 0x3fe00f}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\ \ \ \#define\ IP\_TO\_TAGOFF(\_ip)\ (\_ip\ \&\ TAG\_OFFSET\_MASK)}}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{comment}{//\ offset\ =\ ip[3:0]\ (4\ bits)}}
+\DoxyCodeLine{00018\ \ \ \ \textcolor{comment}{//\ index\ =\ ip[12:4]\ (9\ bits),\ 512\ entries}}
+\DoxyCodeLine{00019\ \ \ \ \textcolor{comment}{//\ tag\ =\ ip[21:13]\ (9\ bits)}}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{class\ }Way}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ Way()}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ :\ m\_tag\_offset(NUM\_ENTRIES,\ 0)}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ ,\ m\_plru(NUM\_ENTRIES,\ 0)}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ std::vector<UInt32>\ m\_tag\_offset;\ \textcolor{comment}{//\ tag\ and\ offset\ data}}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ std::vector<UInt64>\ m\_plru;\ \textcolor{comment}{//\ Should\ be\ pseudo-\/LRU,\ using\ LRU\ instead}}
+\DoxyCodeLine{00030\ \ \ \ \};}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00033\ \ \ \ PentiumMBranchTargetBuffer()}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ :\ m\_ways(NUM\_WAYS)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ ,\ m\_lru\_use\_count(0)}
+\DoxyCodeLine{00036\ \ \ \ \{\}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordtype}{bool}\ predict(IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00039\ \ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ BranchPredictorReturnValue\ lookup(IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00044\ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ hit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ UInt32\ tag\_offset\ =\ IP\_TO\_TAGOFF(ip);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ UInt32\ index\ =\ IP\_TO\_INDEX(ip);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0\ ;\ i\ <\ NUM\_WAYS\ ;\ i++)}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[i].m\_tag\_offset[index]\ ==\ tag\_offset)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ hit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ BranchPredictorReturnValue\ ret\ =\ \{\ \textcolor{keyword}{false},\ hit,\ 0,\ BranchPredictorReturnValue::InvalidBranch\ \};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00060\ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{bool}\ predicted,\ \textcolor{keywordtype}{bool}\ actual,\ IntPtr\ ip,\ IntPtr\ target)}
+\DoxyCodeLine{00063\ \ \ \ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \textcolor{comment}{//\ Start\ with\ way\ 0\ as\ the\ least\ recently\ used}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ UInt32\ lru\_way\ =\ 0;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ UInt32\ tag\_offset\ =\ IP\_TO\_TAGOFF(ip);}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ UInt32\ index\ =\ IP\_TO\_INDEX(ip);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ w\ =\ 0\ ;\ w\ <\ NUM\_WAYS\ ;\ ++w\ )}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_tag\_offset[index]\ ==\ tag\_offset)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ m\_ways[w].m\_plru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Once\ we\ have\ a\ tag\ match\ and\ have\ updated\ the\ LRU\ information,}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ can\ return}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Keep\ track\ of\ the\ LRU\ in\ case\ we\ do\ not\ have\ a\ tag\ match}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_ways[w].m\_plru[index]\ <\ m\_ways[lru\_way].m\_plru[index])}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ lru\_way\ =\ w;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ will\ get\ here\ only\ if\ we\ have\ not\ matched\ the\ tag}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ that\ is\ the\ case,\ select\ the\ LRU\ entry,\ and\ update\ the\ tag}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{comment}{//\ appropriately}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ m\_ways[lru\_way].m\_tag\_offset[index]\ =\ tag\_offset;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ m\_ways[lru\_way].m\_plru[index]\ =\ m\_lru\_use\_count++;}
+\DoxyCodeLine{00091\ \ \ \ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00094\ \ \ \ std::vector<Way>\ m\_ways;}
+\DoxyCodeLine{00095\ \ \ \ UInt64\ m\_lru\_use\_count;}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ PENTIUM\_M\_BRANCH\_TARGET\_BUFFER\_H\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00100\ }
+
+\end{DoxyCode}

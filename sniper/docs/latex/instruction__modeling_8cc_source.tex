@@ -1,0 +1,380 @@
+\doxysection{instruction\+\_\+modeling.\+cc}
+\label{instruction__modeling_8cc_source}\index{pin/instruction\_modeling.cc@{pin/instruction\_modeling.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}instruction\_modeling.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}inst\_mode\_macros.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}local\_storage.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}spin\_loop\_detection.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}lite/memory\_modeling.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}lite/handle\_syscalls.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}instruction\_decoder.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}dynamic\_instruction.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}magic\_client.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}inst\_mode.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}branch\_predictor.h"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ InstructionModeling::handleInstruction(THREADID\ thread\_id,\ Instruction\ *instruction)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ Thread\ *thread\ =\ localStore[thread\_id].thread;}
+\DoxyCodeLine{00029\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00030\ \ \ \ PerformanceModel\ *prfmdl\ =\ core-\/>getPerformanceModel();}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{if}\ (localStore[thread\_id].dynins)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ prfmdl-\/>queueInstruction(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ localStore[thread\_id].dynins\ =\ prfmdl-\/>createDynamicInstruction(instruction,\ instruction-\/>getAddress());}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keywordtype}{void}\ InstructionModeling::handleBasicBlock(THREADID\ thread\_id)}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ Thread\ *thread\ =\ localStore[thread\_id].thread;}
+\DoxyCodeLine{00041\ \ \ \ Core\ *core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00042\ \ \ \ assert(core);}
+\DoxyCodeLine{00043\ \ \ \ PerformanceModel\ *prfmdl\ =\ core-\/>getPerformanceModel();}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{if}\ (localStore[thread\_id].dynins)}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ prfmdl-\/>queueInstruction(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ localStore[thread\_id].dynins\ =\ NULL;}
+\DoxyCodeLine{00049\ \ \ \ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#ifndef\ ENABLE\_PERF\_MODEL\_OWN\_THREAD}}
+\DoxyCodeLine{00052\ \ \ \ prfmdl-\/>iterate();}
+\DoxyCodeLine{00053\ \ \ \ SubsecondTime\ time\ =\ prfmdl-\/>getElapsedTime();}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{if}\ (thread-\/>reschedule(time,\ core))}
+\DoxyCodeLine{00055\ \ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ core\ =\ thread-\/>getCore();}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ prfmdl\ =\ core-\/>getPerformanceModel();}
+\DoxyCodeLine{00058\ \ \ \ \}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ handleBranch(THREADID\ thread\_id,\ ADDRINT\ eip,\ BOOL\ taken,\ ADDRINT\ target)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ assert(localStore[thread\_id].dynins);}
+\DoxyCodeLine{00065\ \ \ \ localStore[thread\_id].dynins-\/>addBranch(taken,\ target);}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ handleBranchWarming(THREADID\ thread\_id,\ ADDRINT\ eip,\ BOOL\ taken,\ ADDRINT\ target)}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00071\ \ \ \ assert(core);}
+\DoxyCodeLine{00072\ \ \ \ PerformanceModel\ *prfmdl\ =\ core-\/>getPerformanceModel();}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordtype}{bool}\ mispredict\ =\ core-\/>accessBranchPredictor(eip,\ taken,\ target);}
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keywordflow}{if}\ (mispredict)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ prfmdl-\/>handleBranchMispredict();}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{static}\ ADDRINT\ handleMagic(THREADID\ threadIndex,\ ADDRINT\ a,\ ADDRINT\ b,\ ADDRINT\ c)}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \ \ \ \textcolor{keywordflow}{return}\ handleMagicInstruction(localStore[threadIndex].thread-\/>getId(),\ a,\ b,\ c);}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ handleRdtsc(THREADID\ thread\_id,\ PIN\_REGISTER\ *\ gax,\ PIN\_REGISTER\ *\ gdx)}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00087\ \ \ \ assert\ (core);}
+\DoxyCodeLine{00088\ \ \ \ SubsecondTime\ cycles\_fs\ =\ core-\/>getPerformanceModel()-\/>getElapsedTime();}
+\DoxyCodeLine{00089\ \ \ \ \textcolor{comment}{//\ Convert\ SubsecondTime\ to\ cycles\ in\ global\ clock\ domain}}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *dom\_global\ =\ Sim()-\/>getDvfsManager()-\/>getGlobalDomain();}
+\DoxyCodeLine{00091\ \ \ \ UInt64\ cycles\ =\ SubsecondTime::divideRounded(cycles\_fs,\ *dom\_global);}
+\DoxyCodeLine{00092\ \ \ \ \textcolor{comment}{//\ Return\ in\ eax\ and\ edx}}
+\DoxyCodeLine{00093\ \ \ \ gdx-\/>dword[0]\ =\ cycles\ >>\ 32;}
+\DoxyCodeLine{00094\ \ \ \ gax-\/>dword[0]\ =\ cycles\ \&\ 0xffffffff;}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ handleCpuid(THREADID\ thread\_id,\ PIN\_REGISTER\ *\ gax,\ PIN\_REGISTER\ *\ gbx,\ PIN\_REGISTER\ *\ gcx,\ PIN\_REGISTER\ *\ gdx)}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ Core\ *core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00100\ \ \ \ assert\ (core);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ cpuid\_result\_t\ res;}
+\DoxyCodeLine{00103\ \ \ \ core-\/>emulateCpuid(gax-\/>dword[0],\ gcx-\/>dword[0],\ res);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ gax-\/>dword[0]\ =\ res.eax;}
+\DoxyCodeLine{00106\ \ \ \ gbx-\/>dword[0]\ =\ res.ebx;}
+\DoxyCodeLine{00107\ \ \ \ gcx-\/>dword[0]\ =\ res.ecx;}
+\DoxyCodeLine{00108\ \ \ \ gdx-\/>dword[0]\ =\ res.edx;}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ handlePause()}
+\DoxyCodeLine{00112\ \{}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{comment}{//\ Mostly\ used\ Inside\ spinlocks,\ use\ it\ here\ to\ increase\ the\ probability}}
+\DoxyCodeLine{00114\ \ \ \ \textcolor{comment}{//\ that\ another\ processor/thread\ will\ get\ some\ functional\ execution\ time}}
+\DoxyCodeLine{00115\ \ \ \ PIN\_Yield();}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ fillOperandListMemOps(OperandList\ *list,\ INS\ ins)}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsMemoryRead\ (ins)\ ||\ INS\_IsMemoryWrite\ (ins))}
+\DoxyCodeLine{00121\ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{comment}{//\ first\ all\ reads\ (dyninstrinfo\ pushed\ from\ redirectMemOp)}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ INS\_MemoryOperandCount(ins);\ i++)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_MemoryOperandIsRead(ins,\ i))}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ list-\/>push\_back(Operand(Operand::MEMORY,\ 0,\ Operand::READ));}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{comment}{//\ then\ all\ writes\ (dyninstrinfo\ pushed\ from\ completeMemWrite)}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ INS\_MemoryOperandCount(ins);\ i++)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_MemoryOperandIsWritten(ins,\ i))}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ list-\/>push\_back(Operand(Operand::MEMORY,\ 0,\ Operand::WRITE));}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \}}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ fillOperandList(OperandList\ *list,\ INS\ ins)}
+\DoxyCodeLine{00138\ \{}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{comment}{//\ memory}}
+\DoxyCodeLine{00140\ \ \ \ fillOperandListMemOps(list,\ ins);}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \textcolor{comment}{//\ for\ handling\ register\ operands}}
+\DoxyCodeLine{00143\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ max\_read\_regs\ =\ INS\_MaxNumRRegs(ins);}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ max\_write\_regs\ =\ INS\_MaxNumWRegs(ins);}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ max\_read\_regs;\ i++)}
+\DoxyCodeLine{00147\ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ REG\ reg\_i\ =\ INS\_RegR(ins,\ i);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (REG\_valid(reg\_i))}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ list-\/>push\_back(Operand(Operand::REG,\ reg\_i,\ Operand::READ,\ REG\_StringShort(reg\_i).c\_str(),\ INS\_RegRContain(ins,\ reg\_i)));}
+\DoxyCodeLine{00151\ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ max\_write\_regs;\ i++)}
+\DoxyCodeLine{00154\ \ \ \ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ REG\ reg\_i\ =\ INS\_RegW(ins,\ i);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (REG\_valid(reg\_i))}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ list-\/>push\_back(Operand(Operand::REG,\ reg\_i,\ Operand::WRITE,\ REG\_StringShort(reg\_i).c\_str(),\ INS\_RegWContain(ins,\ reg\_i)));}
+\DoxyCodeLine{00158\ \ \ \ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \textcolor{comment}{//\ immediate}}
+\DoxyCodeLine{00161\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ INS\_OperandCount(ins);\ i++)}
+\DoxyCodeLine{00162\ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_OperandIsImmediate(ins,\ i))}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ list-\/>push\_back(Operand(Operand::IMMEDIATE,\ INS\_OperandImmediate(ins,\ i),\ Operand::READ));}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \}}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ std::unordered\_map<ADDRINT,\ const\ std::vector<const\ MicroOp\ *>\ *>\ instruction\_cache;}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ VOID\ InstructionModeling::addInstructionModeling(TRACE\ trace,\ INS\ ins,\ InstMode::inst\_mode\_t\ inst\_mode)}
+\DoxyCodeLine{00173\ \{}
+\DoxyCodeLine{00174\ \ \ \ \textcolor{comment}{//\ Functional\ modeling}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \textcolor{comment}{//\ Simics-\/style\ magic\ instruction:\ xchg\ bx,\ bx}}
+\DoxyCodeLine{00177\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsXchg(ins)\ \&\&\ INS\_OperandReg(ins,\ 0)\ ==\ REG\_BX\ \&\&\ INS\_OperandReg(ins,\ 1)\ ==\ REG\_BX)}
+\DoxyCodeLine{00178\ \ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableSyscallEmulation())}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_BEFORE,\ (AFUNPTR)handleMagic,\ IARG\_THREAD\_ID,\ IARG\_REG\_VALUE,\ REG\_GAX,}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ TARGET\_IA32}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ REG\_GDX,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \#\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ REG\_GBX,}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ REG\_GCX,\ IARG\_RETURN\_REGS,\ REG\_GAX,\ IARG\_END);}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Stop\ the\ trace\ after\ MAGIC\ (Redmine\ \#118),\ which\ has\ potentially\ changed\ the\ instrumentation\ mode,}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so\ execution\ can\ resume\ in\ the\ correct\ instrumentation\ version}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ INS\_InsertDirectJump(ins,\ IPOINT\_AFTER,\ INS\_Address(ins)\ +\ INS\_Size(ins));}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_BEFORE,\ (AFUNPTR)handleMagic,\ IARG\_THREAD\_ID,\ IARG\_REG\_VALUE,\ REG\_GAX,}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ TARGET\_IA32}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ REG\_GDX,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \#\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ REG\_GBX,}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_REG\_VALUE,\ REG\_GCX,\ IARG\_END);}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00202\ \ \ \ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableSyscallEmulation())}
+\DoxyCodeLine{00205\ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsRDTSC(ins))}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_AFTER,\ (AFUNPTR)handleRdtsc,\ IARG\_THREAD\_ID,\ IARG\_REG\_REFERENCE,\ REG\_GAX,\ IARG\_REG\_REFERENCE,\ REG\_GDX,\ IARG\_END);}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (INS\_Opcode(ins)\ ==\ XED\_ICLASS\_CPUID)}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_BEFORE,\ (AFUNPTR)handleCpuid,\ IARG\_THREAD\_ID,\ IARG\_REG\_REFERENCE,\ REG\_GAX,\ IARG\_REG\_REFERENCE,\ REG\_GBX,\ IARG\_REG\_REFERENCE,\ REG\_GCX,\ IARG\_REG\_REFERENCE,\ REG\_GDX,\ IARG\_END);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ INS\_Delete(ins);}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_Opcode(ins)\ ==\ XED\_ICLASS\_PAUSE)}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_AFTER,\ (AFUNPTR)handlePause,\ IARG\_END);}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsSyscall(ins)\ \&\&\ Sim()-\/>getConfig()-\/>getEnableSyscallEmulation())}
+\DoxyCodeLine{00220\ \ \ \ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ INS\_InsertPredicatedCall(ins,\ IPOINT\_BEFORE,}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ AFUNPTR(lite::handleSyscall),}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_CONTEXT,}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00226\ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \textcolor{comment}{//\ Set\ up\ localStore[thread\_id].dynins}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \textcolor{keywordflow}{if}\ (INSTR\_IF\_DETAILED(inst\_mode)\ \&\&\ !INS\_IsSyscall(ins))}
+\DoxyCodeLine{00232\ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ Instruction\ *inst\ =\ InstructionModeling::decodeInstruction(ins);}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ INSTRUMENT(INSTR\_IF\_DETAILED(inst\_mode),\ trace,\ ins,\ IPOINT\_BEFORE,\ AFUNPTR(InstructionModeling::handleInstruction),\ IARG\_THREAD\_ID,\ IARG\_PTR,\ inst,\ IARG\_END);}
+\DoxyCodeLine{00235\ \ \ \ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \textcolor{comment}{//\ Timing\ models,\ will\ add\ dynamic\ information\ to\ localStore[thread\_id].dynins}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsBranch(ins)\ \&\&\ INS\_HasFallThrough(ins))}
+\DoxyCodeLine{00241\ \ \ \ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ warming\ mode,\ warm\ up\ the\ branch\ predictors}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ INSTRUMENT\_PREDICATED(}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_TAKEN\_BRANCH,\ (AFUNPTR)handleBranchWarming,}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ TRUE,}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ IARG\_BRANCH\_TARGET\_ADDR,}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ INSTRUMENT\_PREDICATED(}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ INSTR\_IF\_CACHEONLY(inst\_mode),}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_AFTER,\ (AFUNPTR)handleBranchWarming,}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ FALSE,}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ IARG\_BRANCH\_TARGET\_ADDR,}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ detailed\ mode,\ push\ a\ DynamicInstructionInfo}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ INSTRUMENT\_PREDICATED(}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_TAKEN\_BRANCH,\ (AFUNPTR)handleBranch,}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ TRUE,}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ IARG\_BRANCH\_TARGET\_ADDR,}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ INSTRUMENT\_PREDICATED(}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ INSTR\_IF\_DETAILED(inst\_mode),}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ trace,\ ins,\ IPOINT\_AFTER,\ (AFUNPTR)handleBranch,}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ IARG\_THREAD\_ID,}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ IARG\_ADDRINT,\ INS\_Address(ins),}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ IARG\_BOOL,\ FALSE,}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ IARG\_BRANCH\_TARGET\_ADDR,}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ IARG\_END);}
+\DoxyCodeLine{00279\ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \textcolor{keywordflow}{if}\ (!INS\_IsSyscall(ins))}
+\DoxyCodeLine{00282\ \ \ \ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{comment}{//\ Instrument\ Memory\ Operations}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ lite::addMemoryModeling(trace,\ ins,\ inst\_mode);}
+\DoxyCodeLine{00285\ \ \ \ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \textcolor{comment}{//\ Spin\ loop\ detection}}
+\DoxyCodeLine{00288\ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getEnableSpinLoopDetection())}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ addSpinLoopDetection(trace,\ ins,\ inst\_mode);}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ Instruction*\ InstructionModeling::decodeInstruction(INS\ ins)}
+\DoxyCodeLine{00293\ \{}
+\DoxyCodeLine{00294\ \ \ \ \textcolor{comment}{//\ Timing\ modeling}}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ OperandList\ list;}
+\DoxyCodeLine{00297\ \ \ \ fillOperandList(\&list,\ ins);}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ Instruction\ *inst;}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \textcolor{comment}{//\ branches}}
+\DoxyCodeLine{00302\ \ \ \ \textcolor{keywordflow}{if}\ (INS\_IsBranch(ins)\ \&\&\ INS\_HasFallThrough(ins))}
+\DoxyCodeLine{00303\ \ \ \ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ BranchInstruction(list);}
+\DoxyCodeLine{00305\ \ \ \ \}}
+\DoxyCodeLine{00306\ \ \ \ \textcolor{comment}{//\ Now\ handle\ instructions\ which\ have\ a\ static\ cost}}
+\DoxyCodeLine{00307\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00308\ \ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(INS\_Opcode(ins))}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_DIV:}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ ArithInstruction(INST\_DIV,\ list);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_MUL:}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ ArithInstruction(INST\_MUL,\ list);}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FDIV:}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ ArithInstruction(INST\_FDIV,\ list);}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ XED\_ICLASS\_FMUL:}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ ArithInstruction(INST\_FMUL,\ list);}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ GenericInstruction(list);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ ADDRINT\ addr\ =\ INS\_Address(ins);}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ inst-\/>setAddress(addr);}
+\DoxyCodeLine{00331\ \ \ \ inst-\/>setSize(INS\_Size(ins));}
+\DoxyCodeLine{00332\ \ \ \ inst-\/>setAtomic(INS\_IsAtomicUpdate(ins));}
+\DoxyCodeLine{00333\ \ \ \ inst-\/>setDisassembly(INS\_Disassemble(ins).c\_str());}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \textcolor{keyword}{const}\ std::vector<const\ MicroOp\ *>\ *\ uops\ =\ InstructionDecoder::decode(INS\_Address(ins),\ INS\_XedDec(ins),\ inst);}
+\DoxyCodeLine{00337\ \ \ \ inst-\/>setMicroOps(uops);}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \textcolor{keywordflow}{return}\ inst;}
+\DoxyCodeLine{00340\ \}}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ VOID\ InstructionModeling::countInstructions(THREADID\ thread\_id,\ ADDRINT\ address,\ INT32\ count)}
+\DoxyCodeLine{00343\ \{}
+\DoxyCodeLine{00344\ \ \ \ \textcolor{keywordflow}{if}\ (!Sim()-\/>isRunning())}
+\DoxyCodeLine{00345\ \ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \textcolor{comment}{//\ Main\ thread\ has\ exited,\ but\ we\ still\ seem\ to\ be\ running.}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \textcolor{comment}{//\ Don't\ touch\ any\ more\ simulator\ structure\ as\ they're\ being\ deallocated\ right\ now.}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{comment}{//\ Just\ wait\ here\ until\ the\ whole\ application\ terminates\ us.}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(1)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ sched\_yield();}
+\DoxyCodeLine{00351\ \ \ \ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ Core*\ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00354\ \ \ \ assert(core);}
+\DoxyCodeLine{00355\ \ \ \ \textcolor{keywordtype}{bool}\ check\_rescheduled\ =\ core-\/>countInstructions(address,\ count);}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \ \ \ \textcolor{keywordflow}{if}\ (check\_rescheduled)}
+\DoxyCodeLine{00358\ \ \ \ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ countInstructions\ returns\ true,\ we\ may\ have\ been\ rescheduled\ (using\ the\ fast-\/forward\ performance\ model)}}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ SubsecondTime\ time;}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (localStore[thread\_id].thread-\/>reschedule(time,\ core))}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ core\ =\ localStore[thread\_id].thread-\/>getCore();}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ core-\/>getPerformanceModel()-\/>queuePseudoInstruction(\textcolor{keyword}{new}\ SyncInstruction(time,\ SyncInstruction::UNSCHEDULED));}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00366\ \ \ \ \}}
+\DoxyCodeLine{00367\ \}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ VOID\ InstructionModeling::accessInstructionCacheWarmup(THREADID\ threadid,\ ADDRINT\ address,\ UINT32\ size)}
+\DoxyCodeLine{00370\ \{}
+\DoxyCodeLine{00371\ \ \ \ Core\ *core\ =\ localStore[threadid].thread-\/>getCore();}
+\DoxyCodeLine{00372\ \ \ \ assert(core);}
+\DoxyCodeLine{00373\ \ \ \ core-\/>accessMemoryFast(\textcolor{keyword}{true},\ Core::READ,\ address);}
+\DoxyCodeLine{00374\ \}}
+
+\end{DoxyCode}

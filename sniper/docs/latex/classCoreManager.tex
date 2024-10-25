@@ -1,0 +1,508 @@
+\doxysection{Core\+Manager Class Reference}
+\label{classCoreManager}\index{CoreManager@{CoreManager}}
+
+
+{\ttfamily \#include $<$core\+\_\+manager.\+h$>$}
+
+
+
+Collaboration diagram for Core\+Manager\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=297pt]{classCoreManager__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ Thread\+Type} \{ \textbf{ INVALID}
+, \textbf{ APP\+\_\+\+THREAD}
+, \textbf{ CORE\+\_\+\+THREAD}
+, \textbf{ SIM\+\_\+\+THREAD}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Core\+Manager} ()
+\item 
+\textbf{ $\sim$\+Core\+Manager} ()
+\item 
+void \textbf{ initialize\+Comm\+Id} (\textbf{ SInt32} comm\+\_\+id)
+\item 
+void \textbf{ initialize\+Thread} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\item 
+void \textbf{ terminate\+Thread} ()
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ register\+Sim\+Thread} (\textbf{ Thread\+Type} type)
+\item 
+\textbf{ core\+\_\+id\+\_\+t} \textbf{ get\+Current\+Core\+ID} (int thread\+Index=-\/1)
+\item 
+\textbf{ Core} $\ast$ \textbf{ get\+Current\+Core} (int thread\+Index=-\/1)
+\item 
+\textbf{ Core} $\ast$ \textbf{ get\+Core\+From\+ID} (\textbf{ core\+\_\+id\+\_\+t} core\+\_\+id)
+\item 
+bool \textbf{ ami\+User\+Thread} ()
+\item 
+bool \textbf{ ami\+Core\+Thread} ()
+\item 
+bool \textbf{ ami\+Sim\+Thread} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ UInt32} $\ast$ \textbf{ tid\+\_\+map}
+\item 
+\textbf{ TLS} $\ast$ \textbf{ m\+\_\+core\+\_\+tls}
+\item 
+\textbf{ TLS} $\ast$ \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+registered\+\_\+sim\+\_\+threads}
+\item 
+\textbf{ UInt32} \textbf{ m\+\_\+num\+\_\+registered\+\_\+core\+\_\+threads}
+\item 
+\textbf{ Lock} \textbf{ m\+\_\+num\+\_\+registered\+\_\+threads\+\_\+lock}
+\item 
+std\+::vector$<$ \textbf{ Core} $\ast$ $>$ \textbf{ m\+\_\+cores}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 17} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\index{CoreManager@{CoreManager}!ThreadType@{ThreadType}}
+\index{ThreadType@{ThreadType}!CoreManager@{CoreManager}}
+\doxysubsubsection{ThreadType}
+{\footnotesize\ttfamily \label{classCoreManager_ae1f8d207088d521470b8377c2d6754a9} 
+enum \textbf{ Core\+Manager\+::\+Thread\+Type}}
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INVALID@{INVALID}!CoreManager@{CoreManager}}\index{CoreManager@{CoreManager}!INVALID@{INVALID}}}\label{classCoreManager_ae1f8d207088d521470b8377c2d6754a9} 
+INVALID&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{APP\_THREAD@{APP\_THREAD}!CoreManager@{CoreManager}}\index{CoreManager@{CoreManager}!APP\_THREAD@{APP\_THREAD}}}\label{classCoreManager_ae1f8d207088d521470b8377c2d6754a9} 
+APP\+\_\+\+THREAD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CORE\_THREAD@{CORE\_THREAD}!CoreManager@{CoreManager}}\index{CoreManager@{CoreManager}!CORE\_THREAD@{CORE\_THREAD}}}\label{classCoreManager_ae1f8d207088d521470b8377c2d6754a9} 
+CORE\+\_\+\+THREAD&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SIM\_THREAD@{SIM\_THREAD}!CoreManager@{CoreManager}}\index{CoreManager@{CoreManager}!SIM\_THREAD@{SIM\_THREAD}}}\label{classCoreManager_ae1f8d207088d521470b8377c2d6754a9} 
+SIM\+\_\+\+THREAD&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 23} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{CoreManager@{CoreManager}!CoreManager@{CoreManager}}
+\index{CoreManager@{CoreManager}!CoreManager@{CoreManager}}
+\doxysubsubsection{CoreManager()}
+{\footnotesize\ttfamily \label{classCoreManager_a0147fc3a8a8fca6b1f464d8b1257a304} 
+Core\+Manager\+::\+Core\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 18} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Config\+::get\+Singleton()}, \textbf{ Config\+::get\+Total\+Cores()}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ m\+\_\+cores}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=324pt]{classCoreManager_a0147fc3a8a8fca6b1f464d8b1257a304_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!````~CoreManager@{$\sim$CoreManager}}
+\index{````~CoreManager@{$\sim$CoreManager}!CoreManager@{CoreManager}}
+\doxysubsubsection{$\sim$CoreManager()}
+{\footnotesize\ttfamily \label{classCoreManager_ac3489a741174a8d5e09effe11df18100} 
+Core\+Manager\+::$\sim$\+Core\+Manager (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ m\+\_\+core\+\_\+tls}, \textbf{ m\+\_\+cores}, and \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{CoreManager@{CoreManager}!amiCoreThread@{amiCoreThread}}
+\index{amiCoreThread@{amiCoreThread}!CoreManager@{CoreManager}}
+\doxysubsubsection{amiCoreThread()}
+{\footnotesize\ttfamily \label{classCoreManager_a0c22f1ec3f2766c51f311ff878db106d} 
+bool Core\+Manager\+::ami\+Core\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 120} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CORE\+\_\+\+THREAD}, \textbf{ TLS\+::get\+Int()}, and \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a0c22f1ec3f2766c51f311ff878db106d_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!amiSimThread@{amiSimThread}}
+\index{amiSimThread@{amiSimThread}!CoreManager@{CoreManager}}
+\doxysubsubsection{amiSimThread()}
+{\footnotesize\ttfamily \label{classCoreManager_ac492d5466dc19c56e6c28c25a584798f} 
+bool Core\+Manager\+::ami\+Sim\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 115} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ TLS\+::get\+Int()}, \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}, and \textbf{ SIM\+\_\+\+THREAD}.
+
+
+
+Referenced by \textbf{ Log\+::discover\+Core()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_ac492d5466dc19c56e6c28c25a584798f_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_ac492d5466dc19c56e6c28c25a584798f_icgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!amiUserThread@{amiUserThread}}
+\index{amiUserThread@{amiUserThread}!CoreManager@{CoreManager}}
+\doxysubsubsection{amiUserThread()}
+{\footnotesize\ttfamily \label{classCoreManager_a31b035eb9317637020ad2fbbabc38f90} 
+bool Core\+Manager\+::ami\+User\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 125} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ APP\+\_\+\+THREAD}, \textbf{ TLS\+::get\+Int()}, and \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a31b035eb9317637020ad2fbbabc38f90_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!getCoreFromID@{getCoreFromID}}
+\index{getCoreFromID@{getCoreFromID}!CoreManager@{CoreManager}}
+\doxysubsubsection{getCoreFromID()}
+{\footnotesize\ttfamily \label{classCoreManager_a0a339fdeee8031122bb37fc217f9e574} 
+\textbf{ Core} $\ast$ Core\+Manager\+::get\+Core\+From\+ID (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ Config\+::get\+Singleton()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, and \textbf{ m\+\_\+cores}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=326pt]{classCoreManager_a0a339fdeee8031122bb37fc217f9e574_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!getCurrentCore@{getCurrentCore}}
+\index{getCurrentCore@{getCurrentCore}!CoreManager@{CoreManager}}
+\doxysubsubsection{getCurrentCore()}
+{\footnotesize\ttfamily \label{classCoreManager_a9f35ac1d0956ed8003cdc107e1d1f578} 
+\textbf{ Core} $\ast$ Core\+Manager\+::get\+Current\+Core (\begin{DoxyParamCaption}\item[{int}]{thread\+Index}{ = {\ttfamily -\/1}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 43} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+References \textbf{ TLS\+::get\+Ptr()}, and \textbf{ m\+\_\+core\+\_\+tls}.
+
+
+
+Referenced by \textbf{ get\+Current\+Core\+ID()}, \textbf{ initialize\+Comm\+Id()}, and \textbf{ register\+Sim\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a9f35ac1d0956ed8003cdc107e1d1f578_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a9f35ac1d0956ed8003cdc107e1d1f578_icgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!getCurrentCoreID@{getCurrentCoreID}}
+\index{getCurrentCoreID@{getCurrentCoreID}!CoreManager@{CoreManager}}
+\doxysubsubsection{getCurrentCoreID()}
+{\footnotesize\ttfamily \label{classCoreManager_a4fe22320b9997325a9a2e42ae27d1351} 
+\textbf{ core\+\_\+id\+\_\+t} Core\+Manager\+::get\+Current\+Core\+ID (\begin{DoxyParamCaption}\item[{int}]{thread\+Index}{ = {\ttfamily -\/1}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+References \textbf{ get\+Current\+Core()}, \textbf{ Core\+::get\+Id()}, and \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}.
+
+
+
+Referenced by \textbf{ Log\+::discover\+Core()}, and \textbf{ initialize\+Comm\+Id()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a4fe22320b9997325a9a2e42ae27d1351_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a4fe22320b9997325a9a2e42ae27d1351_icgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!initializeCommId@{initializeCommId}}
+\index{initializeCommId@{initializeCommId}!CoreManager@{CoreManager}}
+\doxysubsubsection{initializeCommId()}
+{\footnotesize\ttfamily \label{classCoreManager_a382513cea78ae924e2cdb5938985c82b} 
+void Core\+Manager\+::initialize\+Comm\+Id (\begin{DoxyParamCaption}\item[{\textbf{ SInt32}}]{comm\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 43} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ get\+Current\+Core()}, \textbf{ get\+Current\+Core\+ID()}, \textbf{ Config\+::get\+Singleton()}, \textbf{ INVALID\+\_\+\+CORE\+\_\+\+ID}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, and \textbf{ Config\+::update\+Comm\+To\+Core\+Map()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a382513cea78ae924e2cdb5938985c82b_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!initializeThread@{initializeThread}}
+\index{initializeThread@{initializeThread}!CoreManager@{CoreManager}}
+\doxysubsubsection{initializeThread()}
+{\footnotesize\ttfamily \label{classCoreManager_ad3869de6b1493ba6f3fb2d8df8659aec} 
+void Core\+Manager\+::initialize\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ core\+\_\+id\+\_\+t}}]{core\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ APP\+\_\+\+THREAD}, \textbf{ TLS\+::get()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT}, \textbf{ m\+\_\+core\+\_\+tls}, \textbf{ m\+\_\+cores}, \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}, \textbf{ TLS\+::set()}, and \textbf{ TLS\+::set\+Int()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_ad3869de6b1493ba6f3fb2d8df8659aec_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!registerSimThread@{registerSimThread}}
+\index{registerSimThread@{registerSimThread}!CoreManager@{CoreManager}}
+\doxysubsubsection{registerSimThread()}
+{\footnotesize\ttfamily \label{classCoreManager_a52620265346749b78fa0cb2e7b2d4683} 
+\textbf{ core\+\_\+id\+\_\+t} Core\+Manager\+::register\+Sim\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ Thread\+Type}}]{type}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 82} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ CORE\+\_\+\+THREAD}, \textbf{ get\+Current\+Core()}, \textbf{ Core\+::get\+Id()}, \textbf{ Config\+::get\+Singleton()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ LOG\+\_\+\+PRINT\+\_\+\+ERROR}, \textbf{ m\+\_\+core\+\_\+tls}, \textbf{ m\+\_\+cores}, \textbf{ m\+\_\+num\+\_\+registered\+\_\+core\+\_\+threads}, \textbf{ m\+\_\+num\+\_\+registered\+\_\+sim\+\_\+threads}, \textbf{ m\+\_\+num\+\_\+registered\+\_\+threads\+\_\+lock}, \textbf{ m\+\_\+thread\+\_\+type\+\_\+tls}, \textbf{ TLS\+::set()}, \textbf{ TLS\+::set\+Int()}, and \textbf{ SIM\+\_\+\+THREAD}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCoreManager_a52620265346749b78fa0cb2e7b2d4683_cgraph}
+\end{center}
+\end{figure}
+\index{CoreManager@{CoreManager}!terminateThread@{terminateThread}}
+\index{terminateThread@{terminateThread}!CoreManager@{CoreManager}}
+\doxysubsubsection{terminateThread()}
+{\footnotesize\ttfamily \label{classCoreManager_a6305bcfc0855647c01f111a3bb373514} 
+void Core\+Manager\+::terminate\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 70} of file \textbf{ core\+\_\+manager.\+cc}.
+
+
+
+References \textbf{ TLS\+::get()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+WARNING}, \textbf{ m\+\_\+core\+\_\+tls}, and \textbf{ TLS\+::set()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=282pt]{classCoreManager_a6305bcfc0855647c01f111a3bb373514_cgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{CoreManager@{CoreManager}!m\_core\_tls@{m\_core\_tls}}
+\index{m\_core\_tls@{m\_core\_tls}!CoreManager@{CoreManager}}
+\doxysubsubsection{m\_core\_tls}
+{\footnotesize\ttfamily \label{classCoreManager_a74fc6822e08ed1591bf5f7020d82561f} 
+\textbf{ TLS}$\ast$ Core\+Manager\+::m\+\_\+core\+\_\+tls\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 56} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ get\+Current\+Core()}, \textbf{ initialize\+Thread()}, \textbf{ register\+Sim\+Thread()}, \textbf{ terminate\+Thread()}, and \textbf{ $\sim$\+Core\+Manager()}.
+
+\index{CoreManager@{CoreManager}!m\_cores@{m\_cores}}
+\index{m\_cores@{m\_cores}!CoreManager@{CoreManager}}
+\doxysubsubsection{m\_cores}
+{\footnotesize\ttfamily \label{classCoreManager_a491e07f1b3db3bdc4469598bcddc606e} 
+std\+::vector$<$\textbf{ Core}$\ast$$>$ Core\+Manager\+::m\+\_\+cores\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 63} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ Core\+Manager()}, \textbf{ get\+Core\+From\+ID()}, \textbf{ initialize\+Thread()}, \textbf{ register\+Sim\+Thread()}, and \textbf{ $\sim$\+Core\+Manager()}.
+
+\index{CoreManager@{CoreManager}!m\_num\_registered\_core\_threads@{m\_num\_registered\_core\_threads}}
+\index{m\_num\_registered\_core\_threads@{m\_num\_registered\_core\_threads}!CoreManager@{CoreManager}}
+\doxysubsubsection{m\_num\_registered\_core\_threads}
+{\footnotesize\ttfamily \label{classCoreManager_af2a50f75046815045cfd9057f0ba0496} 
+\textbf{ UInt32} Core\+Manager\+::m\+\_\+num\+\_\+registered\+\_\+core\+\_\+threads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ register\+Sim\+Thread()}.
+
+\index{CoreManager@{CoreManager}!m\_num\_registered\_sim\_threads@{m\_num\_registered\_sim\_threads}}
+\index{m\_num\_registered\_sim\_threads@{m\_num\_registered\_sim\_threads}!CoreManager@{CoreManager}}
+\doxysubsubsection{m\_num\_registered\_sim\_threads}
+{\footnotesize\ttfamily \label{classCoreManager_a670a05d05cc1f989c676028c4ca5891e} 
+\textbf{ UInt32} Core\+Manager\+::m\+\_\+num\+\_\+registered\+\_\+sim\+\_\+threads\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 59} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ register\+Sim\+Thread()}.
+
+\index{CoreManager@{CoreManager}!m\_num\_registered\_threads\_lock@{m\_num\_registered\_threads\_lock}}
+\index{m\_num\_registered\_threads\_lock@{m\_num\_registered\_threads\_lock}!CoreManager@{CoreManager}}
+\doxysubsubsection{m\_num\_registered\_threads\_lock}
+{\footnotesize\ttfamily \label{classCoreManager_ab259dbd85548778d52e502812db884ab} 
+\textbf{ Lock} Core\+Manager\+::m\+\_\+num\+\_\+registered\+\_\+threads\+\_\+lock\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 61} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ register\+Sim\+Thread()}.
+
+\index{CoreManager@{CoreManager}!m\_thread\_type\_tls@{m\_thread\_type\_tls}}
+\index{m\_thread\_type\_tls@{m\_thread\_type\_tls}!CoreManager@{CoreManager}}
+\doxysubsubsection{m\_thread\_type\_tls}
+{\footnotesize\ttfamily \label{classCoreManager_a78ad33c58bc53c571133a0ed0d7825cc} 
+\textbf{ TLS}$\ast$ Core\+Manager\+::m\+\_\+thread\+\_\+type\+\_\+tls\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 57} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+Referenced by \textbf{ ami\+Core\+Thread()}, \textbf{ ami\+Sim\+Thread()}, \textbf{ ami\+User\+Thread()}, \textbf{ initialize\+Thread()}, \textbf{ register\+Sim\+Thread()}, and \textbf{ $\sim$\+Core\+Manager()}.
+
+\index{CoreManager@{CoreManager}!tid\_map@{tid\_map}}
+\index{tid\_map@{tid\_map}!CoreManager@{CoreManager}}
+\doxysubsubsection{tid\_map}
+{\footnotesize\ttfamily \label{classCoreManager_aeb267ea367f44fd1373c411d07007534} 
+\textbf{ UInt32}$\ast$ Core\+Manager\+::tid\+\_\+map\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ core\+\_\+manager.\+h}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/system/\textbf{ core\+\_\+manager.\+h}\item 
+common/system/\textbf{ core\+\_\+manager.\+cc}\end{DoxyCompactItemize}

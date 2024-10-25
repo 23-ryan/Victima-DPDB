@@ -1,0 +1,300 @@
+\doxysection{contention\+\_\+model.\+cc}
+\label{contention__model_8cc_source}\index{common/performance\_model/contention\_model.cc@{common/performance\_model/contention\_model.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}contention\_model.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ ContentionModel::ContentionModel()}
+\DoxyCodeLine{00007\ \ \ \ :\ m\_num\_outstanding(1)}
+\DoxyCodeLine{00008\ \ \ \ ,\ m\_time(m\_num\_outstanding,\ std::make\_pair(SubsecondTime::Zero(),\ 0))}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_t\_last(SubsecondTime::Zero())}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_proc\_period(NULL)}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_n\_requests(0)}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_n\_barriers(0)}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_n\_outoforder(0)}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_n\_simultaneous(0)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_n\_hasfreefail(0)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_total\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_total\_barrier\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00018\ \{\}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ ContentionModel::ContentionModel(String\ name,\ core\_id\_t\ core\_id,\ UInt32\ num\_outstanding)}
+\DoxyCodeLine{00021\ \ \ \ :\ m\_num\_outstanding(num\_outstanding)}
+\DoxyCodeLine{00022\ \ \ \ ,\ m\_time(m\_num\_outstanding,\ std::make\_pair(SubsecondTime::Zero(),\ 0))}
+\DoxyCodeLine{00023\ \ \ \ ,\ m\_t\_last(SubsecondTime::Zero())}
+\DoxyCodeLine{00024\ \ \ \ ,\ m\_proc\_period(Sim()-\/>getDvfsManager()-\/>getCoreDomain(core\_id))}
+\DoxyCodeLine{00025\ \ \ \ ,\ m\_n\_requests(0)}
+\DoxyCodeLine{00026\ \ \ \ ,\ m\_n\_barriers(0)}
+\DoxyCodeLine{00027\ \ \ \ ,\ m\_n\_outoforder(0)}
+\DoxyCodeLine{00028\ \ \ \ ,\ m\_n\_simultaneous(0)}
+\DoxyCodeLine{00029\ \ \ \ ,\ m\_n\_hasfreefail(0)}
+\DoxyCodeLine{00030\ \ \ \ ,\ m\_total\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00031\ \ \ \ ,\ m\_total\_barrier\_delay(SubsecondTime::Zero())}
+\DoxyCodeLine{00032\ \ \ \ ,\ m\_name(name)}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_outstanding\ >\ 0)}
+\DoxyCodeLine{00036\ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}num-\/requests"{}},\ \&m\_n\_requests);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}num-\/barriers"{}},\ \&m\_n\_barriers);}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}requests-\/out-\/of-\/order"{}},\ \&m\_n\_outoforder);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}requests-\/simultaneous"{}},\ \&m\_n\_simultaneous);}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}no-\/free-\/slots"{}},\ \&m\_n\_hasfreefail);}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}total-\/delay"{}},\ \&m\_total\_delay);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}total-\/barrier-\/delay"{}},\ \&m\_total\_barrier\_delay);}
+\DoxyCodeLine{00044\ \ \ \ \}}
+\DoxyCodeLine{00045\ \}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ ContentionModel::\string~ContentionModel()}
+\DoxyCodeLine{00048\ \{\}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ UInt32}
+\DoxyCodeLine{00051\ ContentionModel::getNumUsed(uint64\_t\ t\_start)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \ SubsecondTimeCycleConverter\ conv(m\_proc\_period);}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keywordflow}{return}\ getNumUsed(conv.cyclesToSubsecondTime(t\_start));}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ UInt32}
+\DoxyCodeLine{00058\ ContentionModel::getNumUsed(SubsecondTime\ t\_start)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ UInt32\ num\_used\ =\ 0;}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00062\ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].first\ >\ t\_start)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ ++num\_used;}
+\DoxyCodeLine{00065\ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \textcolor{keywordflow}{return}\ num\_used;}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ SubsecondTime}
+\DoxyCodeLine{00070\ ContentionModel::getTagCompletionTime(UInt64\ tag)}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00073\ \ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].second\ ==\ tag)}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_time[i].first;}
+\DoxyCodeLine{00076\ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::MaxTime();}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00081\ ContentionModel::hasFreeSlot(uint64\_t\ t\_start,\ UInt64\ tag)}
+\DoxyCodeLine{00082\ \{}
+\DoxyCodeLine{00083\ \ \ \ SubsecondTimeCycleConverter\ conv(m\_proc\_period);}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{return}\ hasFreeSlot(conv.cyclesToSubsecondTime(t\_start),\ tag);}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00088\ ContentionModel::hasFreeSlot(SubsecondTime\ t\_start,\ UInt64\ tag)}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].first\ <=\ t\_start)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{comment}{//\ When\ using\ tags:\ an\ identical\ tag\ that's\ already\ in\ process\ is\ also\ acceptable}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].second\ ==\ tag)}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00098\ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ ++m\_n\_hasfreefail;}
+\DoxyCodeLine{00100\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00104\ ContentionModel::hasTag(UInt64\ tag)}
+\DoxyCodeLine{00105\ \{}
+\DoxyCodeLine{00106\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00107\ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].second\ ==\ tag)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00110\ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ uint64\_t}
+\DoxyCodeLine{00115\ ContentionModel::getBarrierCompletionTime(uint64\_t\ t\_start,\ uint64\_t\ t\_delay,\ UInt64\ tag)}
+\DoxyCodeLine{00116\ \{}
+\DoxyCodeLine{00117\ \ \ \ SubsecondTimeCycleConverter\ conv(m\_proc\_period);}
+\DoxyCodeLine{00118\ \ \ \ SubsecondTime\ result\ =\ getBarrierCompletionTime(conv.cyclesToSubsecondTime(t\_start),}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conv.cyclesToSubsecondTime(t\_delay),}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tag);}
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keywordflow}{return}\ conv.subsecondTimeToCycles(result);}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ SubsecondTime}
+\DoxyCodeLine{00125\ ContentionModel::getBarrierCompletionTime(SubsecondTime\ t\_start,\ SubsecondTime\ t\_delay,\ UInt64\ tag)}
+\DoxyCodeLine{00126\ \{}
+\DoxyCodeLine{00127\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_outstanding\ ==\ 0)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_start\ +\ t\_delay;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ SubsecondTime\ max\_time\ =\ t\_start;}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00132\ \ \ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].first\ >\ max\_time)}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ max\_time\ =\ m\_time[i].first;}
+\DoxyCodeLine{00135\ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00138\ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ m\_time[i].first\ =\ max\_time\ +\ t\_delay;}
+\DoxyCodeLine{00140\ \ \ \ \ m\_time[i].second\ =\ tag;}
+\DoxyCodeLine{00141\ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ m\_total\_barrier\_delay\ +=\ max\_time\ -\/\ t\_start;}
+\DoxyCodeLine{00144\ \ \ ++m\_n\_barriers;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \textcolor{keywordflow}{return}\ max\_time\ +\ t\_delay;}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ uint64\_t}
+\DoxyCodeLine{00150\ ContentionModel::getCompletionTime(uint64\_t\ t\_start,\ uint64\_t\ t\_delay,\ UInt64\ tag)}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ \ SubsecondTimeCycleConverter\ conv(m\_proc\_period);}
+\DoxyCodeLine{00153\ \ \ \ SubsecondTime\ result\ =\ getCompletionTime(conv.cyclesToSubsecondTime(t\_start),}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conv.cyclesToSubsecondTime(t\_delay),}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tag);}
+\DoxyCodeLine{00156\ \ \ \ \textcolor{keywordflow}{return}\ conv.subsecondTimeToCycles(result);}
+\DoxyCodeLine{00157\ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{comment}{/*\ Model\ utilization.\ In:\ start\ time\ and\ utilization\ time.\ Out:\ completion\ time\ */}}
+\DoxyCodeLine{00160\ SubsecondTime}
+\DoxyCodeLine{00161\ ContentionModel::getCompletionTime(SubsecondTime\ t\_start,\ SubsecondTime\ t\_delay,\ UInt64\ tag)}
+\DoxyCodeLine{00162\ \{}
+\DoxyCodeLine{00163\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_outstanding\ ==\ 0)}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_start\ +\ t\_delay;}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ SubsecondTime\ t\_end;}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordflow}{if}\ (t\_start\ ==\ SubsecondTime::Zero())}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ t\_end\ =\ t\_delay;}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (t\_start\ <\ m\_t\_last)}
+\DoxyCodeLine{00172\ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ (m\_name\ ==\ "{}ptw.mshr"{})\{}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ std::cout\ <<\ "{}Out\ of\ order\ PTW\ so:\ reset\ "{}\ <<\ std::endl;}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{comment}{/*\ Out\ of\ order\ packet.\ Assume\ no\ congestion,\ only\ transfer\ latency.\ */}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ t\_end\ =\ t\_start\ +\ t\_delay;}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ ++m\_n\_outoforder;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\ \ \ \ \ \ \#if\ 1}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \textcolor{comment}{/*\ Update\ time\ of\ last\ seen\ item\ */}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ m\_t\_last\ =\ t\_start;}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \textcolor{comment}{/*\ Reset\ all\ counters\ to\ start\ again\ from\ now\ */}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ m\_time[0].first\ =\ t\_end;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ m\_time[0].second\ =\ tag;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 1;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ m\_time[i].first\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ m\_time[i].second\ =\ 0;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00197\ \ \ \ \{}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ (m\_name\ ==\ "{}ptw.mshr"{})\{}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ std::cout\ <<\ "{}In\ order\ PTW\ so:\ reset\ "{}\ <<\ std::endl;}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_start\ ==\ m\_t\_last)}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ m\_n\_simultaneous\ ++;}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \ \ UInt64\ unit\ =\ 0;}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \textcolor{comment}{/*\ Find\ first\ free\ entry\ */}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].first\ <=\ t\_start)}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ This\ one\ is\ free\ now\ */}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ unit\ =\ i;}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_time[i].first\ <\ m\_time[unit].first)}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Unit\ i\ is\ the\ first\ one\ free\ */}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ unit\ =\ i;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ SubsecondTime\ t\_begin;}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_start\ <\ m\_time[unit].first)}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Delay\ until\ the\ time\ the\ first\ unit\ becomes\ free\ */}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ t\_begin\ =\ m\_time[unit].first;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ We\ only\ arrive\ after\ this\ unit\ became\ free\ */}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ t\_begin\ =\ t\_start;}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{comment}{/*\ Compute\ end\ of\ packet\ sending\ time\ */}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ t\_end\ =\ t\_begin\ +\ t\_delay;}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ m\_time[unit].first\ =\ t\_end;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ m\_time[unit].second\ =\ tag;}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{comment}{/*\ Update\ statistics\ */}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ m\_total\_delay\ +=\ t\_begin\ -\/\ t\_start;}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \textcolor{comment}{/*\ Update\ time\ of\ last\ seen\ item\ */}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ m\_t\_last\ =\ t\_start;}
+\DoxyCodeLine{00241\ \ \ \ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ ++m\_n\_requests;}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \textcolor{keywordflow}{return}\ t\_end;}
+\DoxyCodeLine{00246\ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ uint64\_t}
+\DoxyCodeLine{00249\ ContentionModel::getStartTime(uint64\_t\ t\_start)}
+\DoxyCodeLine{00250\ \{}
+\DoxyCodeLine{00251\ \ \ \ SubsecondTimeCycleConverter\ conv(m\_proc\_period);}
+\DoxyCodeLine{00252\ \ \ \ SubsecondTime\ result\ =\ getStartTime(conv.cyclesToSubsecondTime(t\_start));}
+\DoxyCodeLine{00253\ \ \ \ \textcolor{keywordflow}{return}\ conv.subsecondTimeToCycles(result);}
+\DoxyCodeLine{00254\ \}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ SubsecondTime}
+\DoxyCodeLine{00257\ ContentionModel::getStartTime(SubsecondTime\ t\_start)}
+\DoxyCodeLine{00258\ \{}
+\DoxyCodeLine{00259\ \ \ \ \textcolor{comment}{/*\ Peek\ start\ time\ for\ a\ new\ request\ */}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_outstanding\ ==\ 0)}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_start;}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \textcolor{keywordflow}{if}\ (t\_start\ <\ m\_t\_last)}
+\DoxyCodeLine{00265\ \ \ \ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \textcolor{comment}{//\ Out-\/of-\/order:\ start\ time\ will\ be\ instantly}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_start;}
+\DoxyCodeLine{00268\ \ \ \ \}}
+\DoxyCodeLine{00269\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00270\ \ \ \ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ UInt64\ unit\ =\ 0;}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \textcolor{comment}{/*\ Find\ first\ free\ entry\ */}}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ i\ =\ 0;\ i\ <\ m\_num\_outstanding;\ ++i)}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_time[i].first\ <=\ t\_start)}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ This\ one\ is\ free\ now\ */}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_start;}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_time[i].first\ <\ m\_time[unit].first)}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Unit\ i\ is\ the\ first\ one\ free\ */}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ unit\ =\ i;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_start\ <\ m\_time[unit].first)}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Delay\ until\ the\ time\ the\ first\ unit\ becomes\ free\ */}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_time[unit].first;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ We\ only\ arrive\ after\ this\ unit\ became\ free\ */}}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ t\_start;}
+\DoxyCodeLine{00293\ \ \ \ \}}
+\DoxyCodeLine{00294\ \}}
+
+\end{DoxyCode}

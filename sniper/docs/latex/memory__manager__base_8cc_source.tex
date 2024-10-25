@@ -1,0 +1,187 @@
+\doxysection{memory\+\_\+manager\+\_\+base.\+cc}
+\label{memory__manager__base_8cc_source}\index{common/core/memory\_subsystem/memory\_manager\_base.cc@{common/core/memory\_subsystem/memory\_manager\_base.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}memory\_manager\_base.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}parametric\_dram\_directory\_msi/memory\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}fast\_nehalem/memory\_manager.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ MemoryManagerBase*}
+\DoxyCodeLine{00010\ MemoryManagerBase::createMMU(String\ protocol\_type,}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ Core*\ core,\ Network*\ network,\ ShmemPerfModel*\ shmem\_perf\_model)}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ \ CachingProtocol\_t\ caching\_protocol\ =\ parseProtocolType(protocol\_type);}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keywordflow}{switch}\ (caching\_protocol)}
+\DoxyCodeLine{00016\ \ \ \ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PARAMETRIC\_DRAM\_DIRECTORY\_MSI:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ ParametricDramDirectoryMSI::MemoryManager(core,\ network,\ shmem\_perf\_model);}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FAST\_NEHALEM:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ FastNehalem::MemoryManager(core,\ network,\ shmem\_perf\_model);}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unsupported\ Caching\ Protocol\ (\%u)"{}},\ caching\_protocol);}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NULL;}
+\DoxyCodeLine{00026\ \ \ \ \}}
+\DoxyCodeLine{00027\ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ MemoryManagerBase::CachingProtocol\_t}
+\DoxyCodeLine{00030\ MemoryManagerBase::parseProtocolType(String\&\ protocol\_type)}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \ \ \ \textcolor{keywordflow}{if}\ (protocol\_type\ ==\ \textcolor{stringliteral}{"{}parametric\_dram\_directory\_msi"{}})}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PARAMETRIC\_DRAM\_DIRECTORY\_MSI;}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (protocol\_type\ ==\ \textcolor{stringliteral}{"{}fast\_nehalem"{}})}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ FAST\_NEHALEM;}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NUM\_CACHING\_PROTOCOL\_TYPES;}
+\DoxyCodeLine{00038\ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keywordtype}{void}\ MemoryManagerNetworkCallback(\textcolor{keywordtype}{void}*\ obj,\ NetPacket\ packet)}
+\DoxyCodeLine{00041\ \{}
+\DoxyCodeLine{00042\ \ \ \ MemoryManagerBase\ *mm\ =\ (MemoryManagerBase*)\ obj;}
+\DoxyCodeLine{00043\ \ \ \ assert(mm\ !=\ NULL);}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \textcolor{keywordflow}{switch}\ (packet.type)}
+\DoxyCodeLine{00046\ \ \ \ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SHARED\_MEM\_1:}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ mm-\/>handleMsgFromNetwork(packet);}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Got\ unrecognized\ packet\ type(\%u)"{}},\ packet.type);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00054\ \ \ \ \}}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ std::vector<core\_id\_t>}
+\DoxyCodeLine{00058\ MemoryManagerBase::getCoreListWithMemoryControllers()}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ SInt32\ num\_memory\_controllers\ =\ -\/1;}
+\DoxyCodeLine{00061\ \ \ \ SInt32\ memory\_controllers\_interleaving\ =\ 0;}
+\DoxyCodeLine{00062\ \ \ \ String\ memory\_controller\_positions\_from\_cfg\_file\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ SInt32\ core\_count;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ core\_count\ =\ Config::getSingleton()-\/>getApplicationCores();}
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00068\ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ num\_memory\_controllers\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/num\_controllers"{}});}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ UInt32\ smt\_cores\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/core/logical\_cpus"{}});}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ memory\_controllers\_interleaving\ =\ Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/dram/controllers\_interleaving"{}})\ *\ smt\_cores;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ memory\_controller\_positions\_from\_cfg\_file\ =\ Sim()-\/>getCfg()-\/>getString(\textcolor{stringliteral}{"{}perf\_model/dram/controller\_positions"{}});}
+\DoxyCodeLine{00073\ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00075\ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Error\ reading\ number\ of\ memory\ controllers\ or\ controller\ positions"{}});}
+\DoxyCodeLine{00077\ \ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ LOG\_ASSERT\_ERROR(num\_memory\_controllers\ <=\ core\_count,\ \textcolor{stringliteral}{"{}Num\ Memory\ Controllers(\%i),\ Num\ Cores(\%i)"{}},}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ num\_memory\_controllers,\ core\_count);}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{if}\ (num\_memory\_controllers\ !=\ -\/1)}
+\DoxyCodeLine{00083\ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ std::vector<core\_id\_t>\ core\_list\_from\_cfg\_file;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ parseMemoryControllerList(memory\_controller\_positions\_from\_cfg\_file,\ core\_list\_from\_cfg\_file,\ core\_count);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR((core\_list\_from\_cfg\_file.size()\ ==\ 0)\ ||\ (core\_list\_from\_cfg\_file.size()\ ==\ (\textcolor{keywordtype}{size\_t})\ num\_memory\_controllers),}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}num\_memory\_controllers(\%i),\ num\_controller\_positions\ specified(\%i)"{}},}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ num\_memory\_controllers,\ core\_list\_from\_cfg\_file.size());}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (core\_list\_from\_cfg\_file.size()\ >\ 0)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Return\ what\ we\ read\ from\ the\ config\ file}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_list\_from\_cfg\_file;}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ UInt32\ l\_models\_memory\_1\ =\ 0;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ config::Config\ *cfg\ =\ Sim()-\/>getCfg();}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ l\_models\_memory\_1\ =\ NetworkModel::parseNetworkType(cfg-\/>getString(\textcolor{stringliteral}{"{}network/memory\_model\_1"{}}));}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{catch}\ (...)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Exception\ while\ reading\ network\ model\ types."{}});}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ std::pair<bool,\ std::vector<core\_id\_t>\ >\ core\_list\_with\_memory\_controllers\_1\ =\ NetworkModel::computeMemoryControllerPositions(l\_models\_memory\_1,\ num\_memory\_controllers,\ core\_count);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_list\_with\_memory\_controllers\_1.second;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00114\ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ std::vector<core\_id\_t>\ core\_list\_with\_memory\_controllers;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memory\_controllers\_interleaving)}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ num\_memory\_controllers\ =\ (core\_count\ +\ memory\_controllers\_interleaving\ -\/\ 1)\ /\ memory\_controllers\_interleaving;\ \textcolor{comment}{//\ Round\ up}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ num\_memory\_controllers;\ i++)}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ assert((i*memory\_controllers\_interleaving)\ <\ core\_count);}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ core\_list\_with\_memory\_controllers.push\_back(i\ *\ memory\_controllers\_interleaving);}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ All\ cores\ have\ memory\ controllers}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (core\_id\_t\ i\ =\ 0;\ i\ <\ core\_count;\ i++)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ core\_list\_with\_memory\_controllers.push\_back(i);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ core\_list\_with\_memory\_controllers;}
+\DoxyCodeLine{00134\ \ \ \ \}}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00138\ MemoryManagerBase::parseMemoryControllerList(String\&\ memory\_controller\_positions,\ std::vector<core\_id\_t>\&\ core\_list\_from\_cfg\_file,\ SInt32\ core\_count)}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \ \textcolor{keywordflow}{if}\ (memory\_controller\_positions\ ==\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \textcolor{keywordtype}{size\_t}\ i\ =\ 0;}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keywordtype}{bool}\ end\_reached\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keywordflow}{while}(!end\_reached)}
+\DoxyCodeLine{00147\ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ position\ =\ memory\_controller\_positions.find(\textcolor{charliteral}{','},\ i);}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ core\_id\_t\ core\_num;}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (position\ !=\ String::npos)}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ end\ of\ the\ string\ has\ not\ been\ reached}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ String\ core\_num\_str\ =\ memory\_controller\_positions.substr(i,\ position-\/i);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ core\_num\ =\ atoi(core\_num\_str.c\_str());}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ end\ of\ the\ string\ has\ been\ reached}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ String\ core\_num\_str\ =\ memory\_controller\_positions.substr(i);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ core\_num\ =\ atoi(core\_num\_str.c\_str());}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ end\_reached\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(core\_num\ <\ core\_count,\ \textcolor{stringliteral}{"{}core\_num(\%i),\ num\_cores(\%i)"{}},\ core\_num,\ core\_count);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ core\_list\_from\_cfg\_file.push\_back(core\_num);}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \ \ i\ =\ position\ +\ 1;}
+\DoxyCodeLine{00169\ \ \ \ \}}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00173\ MemoryManagerBase::printCoreListWithMemoryControllers(std::vector<core\_id\_t>\&\ core\_list\_with\_memory\_controllers)}
+\DoxyCodeLine{00174\ \{}
+\DoxyCodeLine{00175\ \ \ \ std::ostringstream\ core\_list;}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<core\_id\_t>::iterator\ it\ =\ core\_list\_with\_memory\_controllers.begin();\ it\ !=\ core\_list\_with\_memory\_controllers.end();\ it++)}
+\DoxyCodeLine{00177\ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ core\_list\ <<\ *it\ <<\ \textcolor{stringliteral}{"{}\ "{}};}
+\DoxyCodeLine{00179\ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Core\ IDs'\ with\ memory\ controllers\ =\ (\%s)\(\backslash\)n"{}},\ (core\_list.str()).c\_str());}
+\DoxyCodeLine{00181\ \}}
+
+\end{DoxyCode}

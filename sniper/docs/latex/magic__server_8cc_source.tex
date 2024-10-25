@@ -1,0 +1,269 @@
+\doxysection{magic\+\_\+server.\+cc}
+\label{magic__server_8cc_source}\index{common/system/magic\_server.cc@{common/system/magic\_server.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}magic\_server.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}sim\_api.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}logmem.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}performance\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}fastforward\_performance\_model.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}dvfs\_manager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}hooks\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}thread.h"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ MagicServer::MagicServer()}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ :\ m\_performance\_enabled(false)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ MagicServer::\string~MagicServer()}
+\DoxyCodeLine{00023\ \{\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ UInt64\ MagicServer::Magic(thread\_id\_t\ thread\_id,\ core\_id\_t\ core\_id,\ UInt64\ cmd,\ UInt64\ arg0,\ UInt64\ arg1)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ ScopedLock\ sl(Sim()-\/>getThreadManager()-\/>getLock());}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{keywordflow}{return}\ Magic\_unlocked(thread\_id,\ core\_id,\ cmd,\ arg0,\ arg1);}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ UInt64\ MagicServer::Magic\_unlocked(thread\_id\_t\ thread\_id,\ core\_id\_t\ core\_id,\ UInt64\ cmd,\ UInt64\ arg0,\ UInt64\ arg1)}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{switch}(cmd)}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_ROI\_TOGGLE:}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getSimulationROI()\ ==\ Config::ROI\_MAGIC)}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ setPerformance(!\ m\_performance\_enabled);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_ROI\_START:}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_APPLICATION\_ROI\_BEGIN,\ 0);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getSimulationROI()\ ==\ Config::ROI\_MAGIC)}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ setPerformance(\textcolor{keyword}{true});}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_ROI\_END:}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_APPLICATION\_ROI\_END,\ 0);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Sim()-\/>getConfig()-\/>getSimulationROI()\ ==\ Config::ROI\_MAGIC)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ setPerformance(\textcolor{keyword}{false});}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MHZ\_SET:}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ setFrequency(arg0,\ arg1);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_NAMED\_MARKER:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ str[256];}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::READ,\ arg1,\ str,\ 256,\ Core::MEM\_MODELED\_NONE);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ str[255]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ MagicMarkerType\ args\ =\ \{\ thread\_id:\ thread\_id,\ core\_id:\ core\_id,\ arg0:\ arg0,\ arg1:\ 0,\ str:\ str\ \};}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_MAGIC\_MARKER,\ (UInt64)\&args);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_SET\_THREAD\_NAME:}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ str[256];}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ Core\ *core\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_id);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ core-\/>accessMemory(Core::NONE,\ Core::READ,\ arg0,\ str,\ 256,\ Core::MEM\_MODELED\_NONE);}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ str[255]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ Sim()-\/>getStatsManager()-\/>logEvent(StatsManager::EVENT\_THREAD\_NAME,\ SubsecondTime::MaxTime(),\ core\_id,\ thread\_id,\ 0,\ 0,\ str);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>getThreadFromID(thread\_id)-\/>setName(str);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MALLOC:}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout<<\textcolor{stringliteral}{"{}[kole\ kole]\ Hey,\ we\ are\ in\ malloc\ with\ core\ "{}}<<core\_id<<std::endl;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MARKER:}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ MagicMarkerType\ args\ =\ \{\ thread\_id:\ thread\_id,\ core\_id:\ core\_id,\ arg0:\ arg0,\ arg1:\ arg1,\ str:\ NULL\ \};}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_MAGIC\_MARKER,\ (UInt64)\&args);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_USER:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ MagicMarkerType\ args\ =\ \{\ thread\_id:\ thread\_id,\ core\_id:\ core\_id,\ arg0:\ arg0,\ arg1:\ arg1,\ str:\ NULL\ \};}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_MAGIC\_USER,\ (UInt64)\&args,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ expect\ return\ value\ */});}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_INSTRUMENT\_MODE:}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ setInstrumentationMode(arg0);}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ SIM\_CMD\_MHZ\_GET:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getFrequency(arg0);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Got\ invalid\ Magic\ \%lu,\ arg0(\%lu)\ arg1(\%lu)"{}},\ cmd,\ arg0,\ arg1);}
+\DoxyCodeLine{00110\ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ UInt64\ MagicServer::getGlobalInstructionCount(\textcolor{keywordtype}{void})}
+\DoxyCodeLine{00115\ \{}
+\DoxyCodeLine{00116\ \ \ \ UInt64\ ninstrs\ =\ 0;}
+\DoxyCodeLine{00117\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ Sim()-\/>getConfig()-\/>getApplicationCores();\ i++)}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ ninstrs\ +=\ Sim()-\/>getCoreManager()-\/>getCoreFromID(i)-\/>getInstructionCount();}
+\DoxyCodeLine{00119\ \ \ \ \textcolor{keywordflow}{return}\ ninstrs;}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{static}\ Timer\ t\_start;}
+\DoxyCodeLine{00123\ UInt64\ ninstrs\_start;}
+\DoxyCodeLine{00124\ \_\_attribute\_\_((weak))\ \textcolor{keywordtype}{void}\ PinDetach(\textcolor{keywordtype}{void})\ \{\}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keywordtype}{void}\ MagicServer::enablePerformance()}
+\DoxyCodeLine{00127\ \{}
+\DoxyCodeLine{00128\ \ \ \ Sim()-\/>getStatsManager()-\/>recordStats(\textcolor{stringliteral}{"{}roi-\/begin"{}});}
+\DoxyCodeLine{00129\ \ \ \ ninstrs\_start\ =\ getGlobalInstructionCount();}
+\DoxyCodeLine{00130\ \ \ \ t\_start.start();}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ Simulator::enablePerformanceModels();}
+\DoxyCodeLine{00133\ \ \ \ Sim()-\/>setInstrumentationMode(InstMode::inst\_mode\_roi,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ update\_barrier\ */});}
+\DoxyCodeLine{00134\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keywordtype}{void}\ MagicServer::disablePerformance()}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ \ Simulator::disablePerformanceModels();}
+\DoxyCodeLine{00139\ \ \ \ Sim()-\/>getStatsManager()-\/>recordStats(\textcolor{stringliteral}{"{}roi-\/end"{}});}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \textcolor{keywordtype}{float}\ seconds\ =\ t\_start.getTime()\ /\ 1e9;}
+\DoxyCodeLine{00142\ \ \ \ UInt64\ ninstrs\ =\ getGlobalInstructionCount()\ -\/\ ninstrs\_start;}
+\DoxyCodeLine{00143\ \ \ \ UInt64\ cycles\ =\ SubsecondTime::divideRounded(Sim()-\/>getClockSkewMinimizationServer()-\/>getGlobalTime(),}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>getCoreFromID(0)-\/>getDvfsDomain()-\/>getPeriod());}
+\DoxyCodeLine{00145\ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Simulated\ \%.1fM\ instructions,\ \%.1fM\ cycles,\ \%.2f\ IPC\(\backslash\)n"{}},}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ ninstrs\ /\ 1e6,}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ cycles\ /\ 1e6,}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{keywordtype}{float}(ninstrs)\ /\ (cycles\ ?\ cycles\ :\ 1));}
+\DoxyCodeLine{00149\ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Simulation\ speed\ \%.1f\ KIPS\ (\%.1f\ KIPS\ /\ target\ core\ -\/\ \%.1fns/instr)\(\backslash\)n"{}},}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ ninstrs\ /\ seconds\ /\ 1e3,}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ ninstrs\ /\ seconds\ /\ 1e3\ /\ Sim()-\/>getConfig()-\/>getApplicationCores(),}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ seconds\ *\ 1e9\ /\ (\textcolor{keywordtype}{float}(ninstrs\ ?\ ninstrs\ :\ 1.)\ /\ Sim()-\/>getConfig()-\/>getApplicationCores()));}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ PerformanceModel\ *perf\ =\ Sim()-\/>getCoreManager()-\/>getCoreFromID(0)-\/>getPerformanceModel();}
+\DoxyCodeLine{00155\ \ \ \ \textcolor{keywordflow}{if}\ (perf-\/>getFastforwardPerformanceModel()-\/>getFastforwardedTime()\ >\ SubsecondTime::Zero())}
+\DoxyCodeLine{00156\ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ Prints\ out\ the\ non-\/idle\ ratio\ for\ core\ 0\ only,\ but\ it's\ just\ indicative\ anyway}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ ff\_ratio\ =\ double(perf-\/>getFastforwardPerformanceModel()-\/>getFastforwardedTime().getNS())}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ /\ double(perf-\/>getNonIdleElapsedTime().getNS());}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ percent\_detailed\ =\ 100.\ *\ (1.\ -\/\ ff\_ratio);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Sampling:\ executed\ \%.2f\%\%\ of\ simulated\ time\ in\ detailed\ mode\(\backslash\)n"{}},\ percent\_detailed);}
+\DoxyCodeLine{00162\ \ \ \ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ fflush(NULL);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ Sim()-\/>setInstrumentationMode(InstMode::inst\_mode\_end,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ update\_barrier\ */});}
+\DoxyCodeLine{00167\ \ \ \ PinDetach();}
+\DoxyCodeLine{00168\ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{keywordtype}{void}\ print\_allocations();}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ UInt64\ MagicServer::setPerformance(\textcolor{keywordtype}{bool}\ enabled)}
+\DoxyCodeLine{00173\ \{}
+\DoxyCodeLine{00174\ \ \ \ \textcolor{keywordflow}{if}\ (m\_performance\_enabled\ ==\ enabled)}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ m\_performance\_enabled\ =\ enabled;}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \textcolor{comment}{//static\ bool\ enabled\ =\ false;}}
+\DoxyCodeLine{00180\ \ \ \ \textcolor{keyword}{static}\ Timer\ t\_start;}
+\DoxyCodeLine{00181\ \ \ \ \textcolor{comment}{//ScopedLock\ sl(l\_alloc);}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \textcolor{keywordflow}{if}\ (m\_performance\_enabled)}
+\DoxyCodeLine{00184\ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Enabling\ performance\ models\(\backslash\)n"{}});}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ fflush(NULL);}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ t\_start.start();}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ logmem\_enable(\textcolor{keyword}{true});}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_ROI\_BEGIN,\ 0);}
+\DoxyCodeLine{00190\ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00192\ \ \ \ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_ROI\_END,\ 0);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Disabling\ performance\ models\(\backslash\)n"{}});}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ seconds\ =\ t\_start.getTime()\ /\ 1e9;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Leaving\ ROI\ after\ \%.2f\ seconds\(\backslash\)n"{}},\ seconds);}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ fflush(NULL);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ logmem\_enable(\textcolor{keyword}{false});}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ logmem\_write\_allocations();}
+\DoxyCodeLine{00200\ \ \ \ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \textcolor{keywordflow}{if}\ (enabled)}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ enablePerformance();}
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ disablePerformance();}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00208\ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ UInt64\ MagicServer::setFrequency(UInt64\ core\_number,\ UInt64\ freq\_in\_mhz)}
+\DoxyCodeLine{00211\ \{}
+\DoxyCodeLine{00212\ \ \ \ UInt32\ num\_cores\ =\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00213\ \ \ \ UInt64\ freq\_in\_hz;}
+\DoxyCodeLine{00214\ \ \ \ \textcolor{keywordflow}{if}\ (core\_number\ >=\ num\_cores)}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00216\ \ \ \ freq\_in\_hz\ =\ 1000000\ *\ freq\_in\_mhz;}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ printf(\textcolor{stringliteral}{"{}[SNIPER]\ Setting\ frequency\ for\ core\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ in\ DVFS\ domain\ \%d\ to\ \%"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ MHz\(\backslash\)n"{}},\ core\_number,\ Sim()-\/>getDvfsManager()-\/>getCoreDomainId(core\_number),\ freq\_in\_mhz);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \textcolor{keywordflow}{if}\ (freq\_in\_hz\ >\ 0)}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ Sim()-\/>getDvfsManager()-\/>setCoreDomain(core\_number,\ ComponentPeriod::fromFreqHz(freq\_in\_hz));}
+\DoxyCodeLine{00222\ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ Sim()-\/>getThreadManager()-\/>stallThread\_async(core\_number,\ ThreadManager::STALL\_BROKEN,\ SubsecondTime::MaxTime());}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ Sim()-\/>getCoreManager()-\/>getCoreFromID(core\_number)-\/>setState(Core::BROKEN);}
+\DoxyCodeLine{00225\ \ \ \ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \textcolor{comment}{//\ First\ set\ frequency,\ then\ call\ hooks\ so\ hook\ script\ can\ find\ the\ new\ frequency\ by\ querying\ the\ DVFS\ manager}}
+\DoxyCodeLine{00228\ \ \ \ Sim()-\/>getHooksManager()-\/>callHooks(HookType::HOOK\_CPUFREQ\_CHANGE,\ core\_number);}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00231\ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ UInt64\ MagicServer::getFrequency(UInt64\ core\_number)}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \ \ \ UInt32\ num\_cores\ =\ Sim()-\/>getConfig()-\/>getApplicationCores();}
+\DoxyCodeLine{00236\ \ \ \ \textcolor{keywordflow}{if}\ (core\_number\ >=\ num\_cores)}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ UINT64\_MAX;}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *per\ =\ Sim()-\/>getDvfsManager()-\/>getCoreDomain(core\_number);}
+\DoxyCodeLine{00240\ \ \ \ \textcolor{keywordflow}{return}\ per-\/>getPeriodInFreqMHz();}
+\DoxyCodeLine{00241\ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ UInt64\ MagicServer::setInstrumentationMode(UInt64\ sim\_api\_opt)}
+\DoxyCodeLine{00244\ \{}
+\DoxyCodeLine{00245\ \ \ \ InstMode::inst\_mode\_t\ inst\_mode;}
+\DoxyCodeLine{00246\ \ \ \ \textcolor{keywordflow}{switch}\ (sim\_api\_opt)}
+\DoxyCodeLine{00247\ \ \ \ \{}
+\DoxyCodeLine{00248\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_OPT\_INSTRUMENT\_DETAILED:}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ inst\_mode\ =\ InstMode::DETAILED;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00251\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_OPT\_INSTRUMENT\_WARMUP:}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ inst\_mode\ =\ InstMode::CACHE\_ONLY;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00254\ \ \ \ \textcolor{keywordflow}{case}\ SIM\_OPT\_INSTRUMENT\_FASTFORWARD:}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ inst\_mode\ =\ InstMode::FAST\_FORWARD;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00257\ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Unexpected\ magic\ instrument\ opt\ type:\ \%lx."{}},\ sim\_api\_opt);}
+\DoxyCodeLine{00259\ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \ Sim()-\/>setInstrumentationMode(inst\_mode,\ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ update\_barrier\ */});}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00263\ \}}
+
+\end{DoxyCode}

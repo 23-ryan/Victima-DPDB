@@ -1,0 +1,134 @@
+\doxysection{core\+\_\+manager.\+cc}
+\label{core__manager_8cc_source}\index{common/system/core\_manager.cc@{common/system/core\_manager.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <sched.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <linux/unistd.h>}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <sys/types.h>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <sys/syscall.h>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <limits.h>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}core\_manager.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}network.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}config.h"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ CoreManager::CoreManager()}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ :\ m\_core\_tls(TLS::create())}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ ,\ m\_thread\_type\_tls(TLS::create())}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ ,\ m\_num\_registered\_sim\_threads(0)}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ ,\ m\_num\_registered\_core\_threads(0)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Starting\ CoreManager\ Constructor."{}});}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{for}\ (UInt32\ i\ =\ 0;\ i\ <\ Config::getSingleton()-\/>getTotalCores();\ i++)}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ m\_cores.push\_back(\textcolor{keyword}{new}\ Core(i));}
+\DoxyCodeLine{00029\ \ \ \ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Finished\ CoreManager\ Constructor."{}});}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ CoreManager::\string~CoreManager()}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<Core\ *>::iterator\ i\ =\ m\_cores.begin();\ i\ !=\ m\_cores.end();\ i++)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ *i;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keyword}{delete}\ m\_core\_tls;}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keyword}{delete}\ m\_thread\_type\_tls;}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keywordtype}{void}\ CoreManager::initializeCommId(SInt32\ comm\_id)}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}initializeCommId\ -\/\ current\ core\ (id)\ =\ \%p\ (\%d)"{}},\ getCurrentCore(),\ getCurrentCoreID());}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ core\_id\_t\ core\_id\ =\ getCurrentCoreID();}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ LOG\_ASSERT\_ERROR(core\_id\ !=\ INVALID\_CORE\_ID,\ \textcolor{stringliteral}{"{}Unexpected\ invalid\ core\ id\ :\ \%d"{}},\ core\_id);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Initializing\ comm\_id:\ \%d\ to\ core\_id:\ \%d"{}},\ comm\_id,\ core\_id);}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \textcolor{comment}{//\ Broadcast\ this\ update\ to\ other\ processes}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ Config::getSingleton()-\/>updateCommToCoreMap(comm\_id,\ core\_id);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Finished."{}});}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keywordtype}{void}\ CoreManager::initializeThread(core\_id\_t\ core\_id)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \ m\_core\_tls-\/>set(m\_cores.at(core\_id));}
+\DoxyCodeLine{00063\ \ \ \ m\_thread\_type\_tls-\/>setInt(APP\_THREAD);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ LOG\_PRINT(\textcolor{stringliteral}{"{}Initialize\ thread\ for\ core\ \%p\ (\%d)"{}},\ m\_cores.at(core\_id),\ m\_cores.at(core\_id)-\/>getId());}
+\DoxyCodeLine{00066\ \ \ \ LOG\_ASSERT\_ERROR(m\_core\_tls-\/>get()\ ==\ (\textcolor{keywordtype}{void}*)(m\_cores.at(core\_id)),}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}TLS\ appears\ to\ be\ broken.\ \%p\ !=\ \%p"{}},\ m\_core\_tls-\/>get(),\ (\textcolor{keywordtype}{void}*)(m\_cores.at(core\_id)));}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keywordtype}{void}\ CoreManager::terminateThread()}
+\DoxyCodeLine{00071\ \{}
+\DoxyCodeLine{00072\ \ \ \ LOG\_ASSERT\_WARNING(m\_core\_tls-\/>get()\ !=\ NULL,\ \textcolor{stringliteral}{"{}Thread\ not\ initialized\ while\ terminating."{}});}
+\DoxyCodeLine{00073\ \ \ \ m\_core\_tls-\/>set(NULL);}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ Core\ *CoreManager::getCoreFromID(core\_id\_t\ \textcolor{keywordtype}{id})}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keywordtype}{id}\ <\ (core\_id\_t)Config::getSingleton()-\/>getTotalCores(),\ \textcolor{stringliteral}{"{}Illegal\ index\ in\ getCoreFromID!"{}});}
+\DoxyCodeLine{00079\ \ \ \ \textcolor{keywordflow}{return}\ m\_cores.at(\textcolor{keywordtype}{id});}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ core\_id\_t\ CoreManager::registerSimThread(ThreadType\ type)}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{if}\ (getCurrentCore()\ !=\ NULL)}
+\DoxyCodeLine{00085\ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}registerSimMemThread\ -\/\ Initialized\ thread\ twice"{}});}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ getCurrentCore()-\/>getId();}
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ ScopedLock\ sl(m\_num\_registered\_threads\_lock);}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ UInt32\ *num\_registered\_threads\ =\ NULL;}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (type\ ==\ SIM\_THREAD)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ num\_registered\_threads\ =\ \&m\_num\_registered\_sim\_threads;}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (type\ ==\ CORE\_THREAD)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ num\_registered\_threads\ =\ \&m\_num\_registered\_core\_threads;}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Unknown\ thread\ type\ \%d"{}},\ type);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ LOG\_ASSERT\_ERROR(*num\_registered\_threads\ <\ Config::getSingleton()-\/>getTotalCores(),}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}All\ sim\ threads\ already\ registered.\ \%d\ >\ \%d"{}},}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *num\_registered\_threads+1,\ Config::getSingleton()-\/>getTotalCores());}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ Core\ *core\ =\ m\_cores.at(*num\_registered\_threads);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ m\_core\_tls-\/>set(core);}
+\DoxyCodeLine{00108\ \ \ \ \ m\_thread\_type\_tls-\/>setInt(type);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ ++(*num\_registered\_threads);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordflow}{return}\ core-\/>getId();}
+\DoxyCodeLine{00113\ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{keywordtype}{bool}\ CoreManager::amiSimThread()}
+\DoxyCodeLine{00116\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_thread\_type\_tls-\/>getInt()\ ==\ SIM\_THREAD;}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keywordtype}{bool}\ CoreManager::amiCoreThread()}
+\DoxyCodeLine{00121\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_thread\_type\_tls-\/>getInt()\ ==\ CORE\_THREAD;}
+\DoxyCodeLine{00123\ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{keywordtype}{bool}\ CoreManager::amiUserThread()}
+\DoxyCodeLine{00126\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_thread\_type\_tls-\/>getInt()\ ==\ APP\_THREAD;}
+\DoxyCodeLine{00128\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,838 @@
+\doxysection{Thread Class Reference}
+\label{classThread}\index{Thread@{Thread}}
+
+
+{\ttfamily \#include $<$thread.\+h$>$}
+
+
+
+Collaboration diagram for Thread\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef \textbf{ UInt64}($\ast$) \textbf{ va2pa\+\_\+func\+\_\+t}(\textbf{ UInt64} arg, \textbf{ UInt64} va)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ Thread} (\textbf{ thread\+\_\+id\+\_\+t} thread\+\_\+id, \textbf{ app\+\_\+id\+\_\+t} app\+\_\+id)
+\item 
+\textbf{ $\sim$\+Thread} ()
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ get\+Id} () const
+\item 
+\textbf{ app\+\_\+id\+\_\+t} \textbf{ get\+App\+Id} () const
+\item 
+String \textbf{ get\+Name} () const
+\item 
+void \textbf{ set\+Name} (String name)
+\item 
+\textbf{ Sync\+Client} $\ast$ \textbf{ get\+Sync\+Client} () const
+\item 
+\textbf{ Routine\+Tracer\+Thread} $\ast$ \textbf{ get\+Routine\+Tracer} () const
+\item 
+void \textbf{ set\+Va2pa\+Func} (\textbf{ va2pa\+\_\+func\+\_\+t} va2pa\+\_\+func, \textbf{ UInt64} \textbf{ m\+\_\+va2pa\+\_\+arg})
+\item 
+\textbf{ UInt64} \textbf{ va2pa} (\textbf{ UInt64} logical\+\_\+address) const
+\item 
+\textbf{ Subsecond\+Time} \textbf{ wait} (\textbf{ Lock} \&lock)
+\item 
+void \textbf{ signal} (\textbf{ Subsecond\+Time} time, void $\ast$msg=NULL)
+\item 
+\textbf{ Subsecond\+Time} \textbf{ get\+Wakeup\+Time} () const
+\item 
+void $\ast$ \textbf{ get\+Wakeup\+Msg} () const
+\item 
+\textbf{ Core} $\ast$ \textbf{ get\+Core} () const
+\item 
+void \textbf{ set\+Core} (\textbf{ Core} $\ast$core)
+\item 
+bool \textbf{ reschedule} (\textbf{ Subsecond\+Time} \&time, \textbf{ Core} $\ast$current\+\_\+core)
+\item 
+bool \textbf{ update\+Core\+TLS} (int thread\+Index=-\/1)
+\item 
+\textbf{ Syscall\+Mdl} $\ast$ \textbf{ get\+Syscall\+Mdl} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+struct \{\\
+\>pid\_t \textbf{ tid}\\
+\>\textbf{ IntPtr} \textbf{ tid\_ptr}\\
+\>bool \textbf{ clear\_tid}\\
+\} \textbf{ m\_os\_info}\\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\doxysubsubsection*{Private Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ thread\+\_\+id\+\_\+t} \textbf{ m\+\_\+thread\+\_\+id}
+\item 
+\textbf{ app\+\_\+id\+\_\+t} \textbf{ m\+\_\+app\+\_\+id}
+\item 
+String \textbf{ m\+\_\+name}
+\item 
+\textbf{ Condition\+Variable} \textbf{ m\+\_\+cond}
+\item 
+\textbf{ Subsecond\+Time} \textbf{ m\+\_\+wakeup\+\_\+time}
+\item 
+void $\ast$ \textbf{ m\+\_\+wakeup\+\_\+msg}
+\item 
+\textbf{ Core} $\ast$ \textbf{ m\+\_\+core}
+\item 
+\textbf{ Syscall\+Mdl} $\ast$ \textbf{ m\+\_\+syscall\+\_\+model}
+\item 
+\textbf{ Sync\+Client} $\ast$ \textbf{ m\+\_\+sync\+\_\+client}
+\item 
+\textbf{ Routine\+Tracer\+Thread} $\ast$ \textbf{ m\+\_\+rtn\+\_\+tracer}
+\item 
+\textbf{ va2pa\+\_\+func\+\_\+t} \textbf{ m\+\_\+va2pa\+\_\+func}
+\item 
+\textbf{ UInt64} \textbf{ m\+\_\+va2pa\+\_\+arg}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line \textbf{ 12} of file \textbf{ thread.\+h}.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\index{Thread@{Thread}!va2pa\_func\_t@{va2pa\_func\_t}}
+\index{va2pa\_func\_t@{va2pa\_func\_t}!Thread@{Thread}}
+\doxysubsubsection{va2pa\_func\_t}
+{\footnotesize\ttfamily \label{classThread_a2c0f67cbc972dac0ab37acb25903deb5} 
+\textbf{ UInt64}($\ast$) Thread\+::va2pa\+\_\+func\+\_\+t(\textbf{ UInt64} arg, \textbf{ UInt64} va)}
+
+
+
+Definition at line \textbf{ 15} of file \textbf{ thread.\+h}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\index{Thread@{Thread}!Thread@{Thread}}
+\index{Thread@{Thread}!Thread@{Thread}}
+\doxysubsubsection{Thread()}
+{\footnotesize\ttfamily \label{classThread_a99a0b44574d12e86cefc1723741eda81} 
+Thread\+::\+Thread (\begin{DoxyParamCaption}\item[{\textbf{ thread\+\_\+id\+\_\+t}}]{thread\+\_\+id}{, }\item[{\textbf{ app\+\_\+id\+\_\+t}}]{app\+\_\+id}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 12} of file \textbf{ thread.\+cc}.
+
+
+
+References \textbf{ get\+Routine\+Tracer()}, \textbf{ m\+\_\+os\+\_\+info}, \textbf{ m\+\_\+rtn\+\_\+tracer}, \textbf{ m\+\_\+sync\+\_\+client}, and \textbf{ m\+\_\+syscall\+\_\+model}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=285pt]{classThread_a99a0b44574d12e86cefc1723741eda81_cgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!````~Thread@{$\sim$Thread}}
+\index{````~Thread@{$\sim$Thread}!Thread@{Thread}}
+\doxysubsubsection{$\sim$Thread()}
+{\footnotesize\ttfamily \label{classThread_a37d9edd3a1a776cbc27dedff949c9726} 
+Thread\+::$\sim$\+Thread (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ thread.\+cc}.
+
+
+
+References \textbf{ m\+\_\+rtn\+\_\+tracer}, \textbf{ m\+\_\+sync\+\_\+client}, and \textbf{ m\+\_\+syscall\+\_\+model}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\index{Thread@{Thread}!getAppId@{getAppId}}
+\index{getAppId@{getAppId}!Thread@{Thread}}
+\doxysubsubsection{getAppId()}
+{\footnotesize\ttfamily \label{classThread_abff3597d5edf18ba54e07751a5379589} 
+\textbf{ app\+\_\+id\+\_\+t} Thread\+::get\+App\+Id (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 43} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+app\+\_\+id}.
+
+
+
+Referenced by \textbf{ Trace\+Manager\+::end\+Application()}, \textbf{ get\+Thread\+Appid()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}, \textbf{ Trace\+Manager\+::signal\+Done()}, and \textbf{ Trace\+Thread\+::va2pa()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_abff3597d5edf18ba54e07751a5379589_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getCore@{getCore}}
+\index{getCore@{getCore}!Thread@{Thread}}
+\doxysubsubsection{getCore()}
+{\footnotesize\ttfamily \label{classThread_af5708dba1cc9aa5184dc1e9f10bb2aaa} 
+\textbf{ Core} $\ast$ Thread\+::get\+Core (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 75} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+core}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}, \textbf{ Trace\+Manager\+::access\+Memory()}, \textbf{ Sync\+Client\+::barrier\+Wait()}, \textbf{ Spin\+Loop\+Detector\+::commit\+BCT()}, \textbf{ Sync\+Client\+::cond\+Broadcast()}, \textbf{ Sync\+Client\+::cond\+Signal()}, \textbf{ Sync\+Client\+::cond\+Wait()}, \textbf{ Syscall\+Server\+::futex\+Wake\+Op()}, \textbf{ Trace\+Thread\+::get\+Current\+Time()}, \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ Trace\+Thread\+::handle\+Cache\+Only\+Func()}, \textbf{ handle\+Check\+Scheduled()}, \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}, \textbf{ Syscall\+Mdl\+::handle\+Futex\+Call()}, \textbf{ Instruction\+Modeling\+::handle\+Instruction()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ handle\+Magic()}, \textbf{ Trace\+Thread\+::handle\+Syscall\+Func()}, \textbf{ Thread\+Manager\+::join\+Thread()}, \textbf{ Thread\+Manager\+::move\+Thread()}, \textbf{ Sync\+Client\+::mutex\+Unlock()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}, \textbf{ Trace\+Thread\+::run()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, \textbf{ Thread\+Manager\+::spawn\+Thread()}, \textbf{ Trace\+Thread\+::unblock()}, and \textbf{ Trace\+Thread\+::va2pa()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_af5708dba1cc9aa5184dc1e9f10bb2aaa_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getId@{getId}}
+\index{getId@{getId}!Thread@{Thread}}
+\doxysubsubsection{getId()}
+{\footnotesize\ttfamily \label{classThread_a29cc337f2e4bedcbfed1b7f1054e96c5} 
+\textbf{ thread\+\_\+id\+\_\+t} Thread\+::get\+Id (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 42} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+thread\+\_\+id}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}, \textbf{ Smt\+Timer\+::barrier()}, \textbf{ Sync\+Client\+::barrier\+Init()}, \textbf{ Sync\+Client\+::barrier\+Wait()}, \textbf{ Routine\+Tracer\+Function\+Stats\+::\+Rtn\+Master\+::ce\+\_\+get\+\_\+owner()}, \textbf{ Sync\+Client\+::cond\+Broadcast()}, \textbf{ Sync\+Client\+::cond\+Init()}, \textbf{ Sync\+Client\+::cond\+Signal()}, \textbf{ Sync\+Client\+::cond\+Wait()}, \textbf{ Thread\+Manager\+::create\+Thread\+\_\+unlocked()}, \textbf{ Fast\+Forward\+Performance\+Manager\+::disable()}, \textbf{ Routine\+Tracer\+Function\+Stats\+::\+Rtn\+Master\+::get\+Thread\+Handler()}, \textbf{ Trace\+Thread\+::handle\+Fork\+Func()}, \textbf{ Syscall\+Mdl\+::handle\+Futex\+Call()}, \textbf{ Trace\+Thread\+::handle\+Join\+Func()}, \textbf{ Trace\+Thread\+::handle\+Magic\+Func()}, \textbf{ Trace\+Thread\+::handle\+New\+Thread\+Func()}, \textbf{ Trace\+Thread\+::handle\+Output\+Func()}, \textbf{ Barrier\+Sync\+Server\+::is\+Core\+Running()}, \textbf{ Sync\+Client\+::mutex\+Init()}, \textbf{ Sync\+Client\+::mutex\+Unlock()}, \textbf{ Trace\+Manager\+::new\+Thread()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}, \textbf{ reschedule()}, \textbf{ Trace\+Thread\+::run()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, \textbf{ set\+Core()}, \textbf{ Thread\+Manager\+::spawn\+Thread()}, \textbf{ Barrier\+Sync\+Server\+::synchronize()}, \textbf{ Syscall\+Mdl\+::\+Syscall\+Mdl()}, and \textbf{ Trace\+Thread\+::unblock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=550pt]{classThread_a29cc337f2e4bedcbfed1b7f1054e96c5_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getName@{getName}}
+\index{getName@{getName}!Thread@{Thread}}
+\doxysubsubsection{getName()}
+{\footnotesize\ttfamily \label{classThread_a9e0e30fc9e34f73656d8a7e557a0b236} 
+String Thread\+::get\+Name (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 45} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+name}.
+
+
+
+Referenced by \textbf{ get\+Thread\+Name()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=256pt]{classThread_a9e0e30fc9e34f73656d8a7e557a0b236_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getRoutineTracer@{getRoutineTracer}}
+\index{getRoutineTracer@{getRoutineTracer}!Thread@{Thread}}
+\doxysubsubsection{getRoutineTracer()}
+{\footnotesize\ttfamily \label{classThread_a154fb969de22e3003c423ad3e34c0eee} 
+\textbf{ Routine\+Tracer\+Thread} $\ast$ Thread\+::get\+Routine\+Tracer (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+rtn\+\_\+tracer}.
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::handle\+Routine\+Change\+Func()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Master\+::signal\+Handler()}, and \textbf{ Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=342pt]{classThread_a154fb969de22e3003c423ad3e34c0eee_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getSyncClient@{getSyncClient}}
+\index{getSyncClient@{getSyncClient}!Thread@{Thread}}
+\doxysubsubsection{getSyncClient()}
+{\footnotesize\ttfamily \label{classThread_ac79bc0a431cece622330875fb1617380} 
+\textbf{ Sync\+Client} $\ast$ Thread\+::get\+Sync\+Client (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 48} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+sync\+\_\+client}.
+
+
+
+Referenced by \textbf{ Carbon\+Barrier\+Init()}, \textbf{ Carbon\+Barrier\+Wait()}, \textbf{ Carbon\+Cond\+Broadcast()}, \textbf{ Carbon\+Cond\+Init()}, \textbf{ Carbon\+Cond\+Signal()}, \textbf{ Carbon\+Cond\+Wait()}, \textbf{ Carbon\+Mutex\+Init()}, \textbf{ Carbon\+Mutex\+Lock()}, \textbf{ Carbon\+Mutex\+Trylock()}, and \textbf{ Carbon\+Mutex\+Unlock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_ac79bc0a431cece622330875fb1617380_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getSyscallMdl@{getSyscallMdl}}
+\index{getSyscallMdl@{getSyscallMdl}!Thread@{Thread}}
+\doxysubsubsection{getSyscallMdl()}
+{\footnotesize\ttfamily \label{classThread_a7de10bc675f05b1cc47c3510935790ef} 
+\textbf{ Syscall\+Mdl} $\ast$ Thread\+::get\+Syscall\+Mdl (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 81} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+syscall\+\_\+model}.
+
+
+
+Referenced by \textbf{ lite\+::handle\+Syscall()}, \textbf{ Trace\+Thread\+::handle\+Syscall\+Func()}, \textbf{ Routine\+Tracer\+Ondemand\+::\+Rtn\+Thread\+::print\+Stack()}, \textbf{ lite\+::syscall\+Enter\+Run\+Model()}, \textbf{ lite\+::syscall\+Exit\+Run\+Model()}, and \textbf{ Trace\+Thread\+::unblock()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a7de10bc675f05b1cc47c3510935790ef_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!getWakeupMsg@{getWakeupMsg}}
+\index{getWakeupMsg@{getWakeupMsg}!Thread@{Thread}}
+\doxysubsubsection{getWakeupMsg()}
+{\footnotesize\ttfamily \label{classThread_afb3403b51fbf508b2f4ac63d4487cdf0} 
+void $\ast$ Thread\+::get\+Wakeup\+Msg (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 73} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+wakeup\+\_\+msg}.
+
+\index{Thread@{Thread}!getWakeupTime@{getWakeupTime}}
+\index{getWakeupTime@{getWakeupTime}!Thread@{Thread}}
+\doxysubsubsection{getWakeupTime()}
+{\footnotesize\ttfamily \label{classThread_a0bdd325c6ab9b4c4650a8c092e8a2f8d} 
+\textbf{ Subsecond\+Time} Thread\+::get\+Wakeup\+Time (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 72} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+wakeup\+\_\+time}.
+
+
+
+Referenced by \textbf{ Thread\+Manager\+::stall\+Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a0bdd325c6ab9b4c4650a8c092e8a2f8d_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!reschedule@{reschedule}}
+\index{reschedule@{reschedule}!Thread@{Thread}}
+\doxysubsubsection{reschedule()}
+{\footnotesize\ttfamily \label{classThread_a20d3b00f7e1eaa4d6ba8f2a6958060ed} 
+bool Thread\+::reschedule (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time} \&}]{time}{, }\item[{\textbf{ Core} $\ast$}]{current\+\_\+core}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 55} of file \textbf{ thread.\+cc}.
+
+
+
+References \textbf{ get\+Id()}, \textbf{ Core\+::get\+Performance\+Model()}, \textbf{ m\+\_\+core}, \textbf{ Performance\+Model\+::queue\+Pseudo\+Instruction()}, \textbf{ Thread\+Manager\+::\+STALL\+\_\+\+UNSCHEDULED}, \textbf{ Sync\+Instruction\+::\+UNSCHEDULED}, and \textbf{ update\+Core\+TLS()}.
+
+
+
+Referenced by \textbf{ Sync\+Client\+::\+\_\+\+\_\+mutex\+Lock()}, \textbf{ Sync\+Client\+::barrier\+Wait()}, \textbf{ Sync\+Client\+::cond\+Wait()}, \textbf{ Instruction\+Modeling\+::handle\+Basic\+Block()}, \textbf{ handle\+Check\+Scheduled()}, \textbf{ Syscall\+Mdl\+::handle\+Futex\+Call()}, \textbf{ Trace\+Thread\+::handle\+Instruction\+Count\+Func()}, \textbf{ Thread\+Manager\+::join\+Thread()}, \textbf{ Trace\+Thread\+::run()}, \textbf{ Syscall\+Mdl\+::run\+Enter()}, \textbf{ Syscall\+Mdl\+::run\+Exit()}, and \textbf{ Trace\+Thread\+::unblock()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a20d3b00f7e1eaa4d6ba8f2a6958060ed_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a20d3b00f7e1eaa4d6ba8f2a6958060ed_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!setCore@{setCore}}
+\index{setCore@{setCore}!Thread@{Thread}}
+\doxysubsubsection{setCore()}
+{\footnotesize\ttfamily \label{classThread_afc3a2af9889526763626b72a5f4e5bec} 
+void Thread\+::set\+Core (\begin{DoxyParamCaption}\item[{\textbf{ Core} $\ast$}]{core}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ thread.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Id()}, \textbf{ get\+Id()}, \textbf{ Core\+::get\+Thread()}, \textbf{ LOG\+\_\+\+ASSERT\+\_\+\+ERROR}, \textbf{ m\+\_\+core}, and \textbf{ Core\+::set\+Thread()}.
+
+
+
+Referenced by \textbf{ Thread\+Manager\+::create\+Thread\+\_\+unlocked()}, \textbf{ Thread\+Manager\+::move\+Thread()}, and \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=249pt]{classThread_afc3a2af9889526763626b72a5f4e5bec_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_afc3a2af9889526763626b72a5f4e5bec_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!setName@{setName}}
+\index{setName@{setName}!Thread@{Thread}}
+\doxysubsubsection{setName()}
+{\footnotesize\ttfamily \label{classThread_ab3c6c688fde3416c56fea34b592f7c2d} 
+void Thread\+::set\+Name (\begin{DoxyParamCaption}\item[{String}]{name}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 46} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+name}.
+
+\index{Thread@{Thread}!setVa2paFunc@{setVa2paFunc}}
+\index{setVa2paFunc@{setVa2paFunc}!Thread@{Thread}}
+\doxysubsubsection{setVa2paFunc()}
+{\footnotesize\ttfamily \label{classThread_a23126548fe097de4b6e7282d716c85fd} 
+void Thread\+::set\+Va2pa\+Func (\begin{DoxyParamCaption}\item[{\textbf{ va2pa\+\_\+func\+\_\+t}}]{va2pa\+\_\+func}{, }\item[{\textbf{ UInt64}}]{m\+\_\+va2pa\+\_\+arg}{}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 49} of file \textbf{ thread.\+cc}.
+
+
+
+References \textbf{ m\+\_\+va2pa\+\_\+arg}, and \textbf{ m\+\_\+va2pa\+\_\+func}.
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::\+Trace\+Thread()}.
+
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=324pt]{classThread_a23126548fe097de4b6e7282d716c85fd_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!signal@{signal}}
+\index{signal@{signal}!Thread@{Thread}}
+\doxysubsubsection{signal()}
+{\footnotesize\ttfamily \label{classThread_a7c6b3465ac82b087974b73514986d16c} 
+void Thread\+::signal (\begin{DoxyParamCaption}\item[{\textbf{ Subsecond\+Time}}]{time}{, }\item[{void $\ast$}]{msg}{ = {\ttfamily NULL}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 66} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+cond}, \textbf{ m\+\_\+wakeup\+\_\+msg}, \textbf{ m\+\_\+wakeup\+\_\+time}, and \textbf{ Condition\+Variable\+::signal()}.
+
+
+
+Referenced by \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, and \textbf{ Thread\+Manager\+::resume\+Thread()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a7c6b3465ac82b087974b73514986d16c_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a7c6b3465ac82b087974b73514986d16c_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!updateCoreTLS@{updateCoreTLS}}
+\index{updateCoreTLS@{updateCoreTLS}!Thread@{Thread}}
+\doxysubsubsection{updateCoreTLS()}
+{\footnotesize\ttfamily \label{classThread_ac1428f6610a97b25b72a0f9afc4aba96} 
+bool Thread\+::update\+Core\+TLS (\begin{DoxyParamCaption}\item[{int}]{thread\+Index}{ = {\ttfamily -\/1}}\end{DoxyParamCaption})}
+
+
+
+Definition at line \textbf{ 76} of file \textbf{ thread.\+cc}.
+
+
+
+References \textbf{ Core\+::get\+Id()}, and \textbf{ m\+\_\+core}.
+
+
+
+Referenced by \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ Thread\+Manager\+::on\+Thread\+Start()}, and \textbf{ reschedule()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=261pt]{classThread_ac1428f6610a97b25b72a0f9afc4aba96_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_ac1428f6610a97b25b72a0f9afc4aba96_icgraph}
+\end{center}
+\end{figure}
+\index{Thread@{Thread}!va2pa@{va2pa}}
+\index{va2pa@{va2pa}!Thread@{Thread}}
+\doxysubsubsection{va2pa()}
+{\footnotesize\ttfamily \label{classThread_a407120ce234ad91806fd0ab7ace4edc3} 
+\textbf{ UInt64} Thread\+::va2pa (\begin{DoxyParamCaption}\item[{\textbf{ UInt64}}]{logical\+\_\+address}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 52} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+va2pa\+\_\+arg}, and \textbf{ m\+\_\+va2pa\+\_\+func}.
+
+\index{Thread@{Thread}!wait@{wait}}
+\index{wait@{wait}!Thread@{Thread}}
+\doxysubsubsection{wait()}
+{\footnotesize\ttfamily \label{classThread_a6152b09f2232040008d5a3b8d9d0b358} 
+\textbf{ Subsecond\+Time} Thread\+::wait (\begin{DoxyParamCaption}\item[{\textbf{ Lock} \&}]{lock}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \textbf{ 60} of file \textbf{ thread.\+h}.
+
+
+
+References \textbf{ m\+\_\+cond}, \textbf{ m\+\_\+wakeup\+\_\+msg}, \textbf{ m\+\_\+wakeup\+\_\+time}, and \textbf{ Condition\+Variable\+::wait()}.
+
+
+
+Referenced by \textbf{ Thread\+Manager\+::stall\+Thread()}, and \textbf{ Thread\+Manager\+::wait\+For\+Thread\+Start()}.
+
+Here is the call graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a6152b09f2232040008d5a3b8d9d0b358_cgraph}
+\end{center}
+\end{figure}
+Here is the caller graph for this function\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classThread_a6152b09f2232040008d5a3b8d9d0b358_icgraph}
+\end{center}
+\end{figure}
+
+
+\doxysubsection{Member Data Documentation}
+\index{Thread@{Thread}!clear\_tid@{clear\_tid}}
+\index{clear\_tid@{clear\_tid}!Thread@{Thread}}
+\doxysubsubsection{clear\_tid}
+{\footnotesize\ttfamily \label{classThread_a64ea65be594d35b1ee402030d59b548b} 
+bool Thread\+::clear\+\_\+tid}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ lite\+::handle\+Syscall()}, and \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}.
+
+\index{Thread@{Thread}!m\_app\_id@{m\_app\_id}}
+\index{m\_app\_id@{m\_app\_id}!Thread@{Thread}}
+\doxysubsubsection{m\_app\_id}
+{\footnotesize\ttfamily \label{classThread_a71f47bc501536aba319ed2873293d289} 
+\textbf{ app\+\_\+id\+\_\+t} Thread\+::m\+\_\+app\+\_\+id\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 19} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+App\+Id()}.
+
+\index{Thread@{Thread}!m\_cond@{m\_cond}}
+\index{m\_cond@{m\_cond}!Thread@{Thread}}
+\doxysubsubsection{m\_cond}
+{\footnotesize\ttfamily \label{classThread_a6a53fb227e2c14beca19a35901e40487} 
+\textbf{ Condition\+Variable} Thread\+::m\+\_\+cond\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ signal()}, and \textbf{ wait()}.
+
+\index{Thread@{Thread}!m\_core@{m\_core}}
+\index{m\_core@{m\_core}!Thread@{Thread}}
+\doxysubsubsection{m\_core}
+{\footnotesize\ttfamily \label{classThread_ab6ac6a47cbc151afab949d140f7485dc} 
+\textbf{ Core}$\ast$ Thread\+::m\+\_\+core\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Core()}, \textbf{ reschedule()}, \textbf{ set\+Core()}, and \textbf{ update\+Core\+TLS()}.
+
+\index{Thread@{Thread}!m\_name@{m\_name}}
+\index{m\_name@{m\_name}!Thread@{Thread}}
+\doxysubsubsection{m\_name}
+{\footnotesize\ttfamily \label{classThread_a079fcde162a5e17a527ab2d5f59df9b9} 
+String Thread\+::m\+\_\+name\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 20} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Name()}, and \textbf{ set\+Name()}.
+
+\index{Thread@{Thread}!m\_os\_info@{m\_os\_info}}
+\index{m\_os\_info@{m\_os\_info}!Thread@{Thread}}
+\doxysubsubsection{[struct]}
+{\footnotesize\ttfamily \label{classThread_a404b96bd12ebed8d9d14791dbdbb58f4} 
+struct  \{ ... \}  Thread\+::m\+\_\+os\+\_\+info}
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}, \textbf{ lite\+::handle\+Syscall()}, \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}, \textbf{ lite\+::syscall\+Exit\+Run\+Model()}, and \textbf{ Thread()}.
+
+\index{Thread@{Thread}!m\_rtn\_tracer@{m\_rtn\_tracer}}
+\index{m\_rtn\_tracer@{m\_rtn\_tracer}!Thread@{Thread}}
+\doxysubsubsection{m\_rtn\_tracer}
+{\footnotesize\ttfamily \label{classThread_a98ec239ed62d6aaef6d6b7b29f7096e7} 
+\textbf{ Routine\+Tracer\+Thread}$\ast$ Thread\+::m\+\_\+rtn\+\_\+tracer\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 28} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Routine\+Tracer()}, \textbf{ Thread()}, and \textbf{ $\sim$\+Thread()}.
+
+\index{Thread@{Thread}!m\_sync\_client@{m\_sync\_client}}
+\index{m\_sync\_client@{m\_sync\_client}!Thread@{Thread}}
+\doxysubsubsection{m\_sync\_client}
+{\footnotesize\ttfamily \label{classThread_a9e65d99a96aa776cdaedc7b1d4cc56df} 
+\textbf{ Sync\+Client}$\ast$ Thread\+::m\+\_\+sync\+\_\+client\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Sync\+Client()}, \textbf{ Thread()}, and \textbf{ $\sim$\+Thread()}.
+
+\index{Thread@{Thread}!m\_syscall\_model@{m\_syscall\_model}}
+\index{m\_syscall\_model@{m\_syscall\_model}!Thread@{Thread}}
+\doxysubsubsection{m\_syscall\_model}
+{\footnotesize\ttfamily \label{classThread_a2e04ac3a5f1873620ceee0df78735403} 
+\textbf{ Syscall\+Mdl}$\ast$ Thread\+::m\+\_\+syscall\+\_\+model\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 26} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Syscall\+Mdl()}, \textbf{ Thread()}, and \textbf{ $\sim$\+Thread()}.
+
+\index{Thread@{Thread}!m\_thread\_id@{m\_thread\_id}}
+\index{m\_thread\_id@{m\_thread\_id}!Thread@{Thread}}
+\doxysubsubsection{m\_thread\_id}
+{\footnotesize\ttfamily \label{classThread_a1c482b621f8feb32a31118df03acc7bd} 
+\textbf{ thread\+\_\+id\+\_\+t} Thread\+::m\+\_\+thread\+\_\+id\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 18} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Id()}.
+
+\index{Thread@{Thread}!m\_va2pa\_arg@{m\_va2pa\_arg}}
+\index{m\_va2pa\_arg@{m\_va2pa\_arg}!Thread@{Thread}}
+\doxysubsubsection{m\_va2pa\_arg}
+{\footnotesize\ttfamily \label{classThread_a351ff425a19fccb400a612928a032b97} 
+\textbf{ UInt64} Thread\+::m\+\_\+va2pa\+\_\+arg\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 30} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ set\+Va2pa\+Func()}, and \textbf{ va2pa()}.
+
+\index{Thread@{Thread}!m\_va2pa\_func@{m\_va2pa\_func}}
+\index{m\_va2pa\_func@{m\_va2pa\_func}!Thread@{Thread}}
+\doxysubsubsection{m\_va2pa\_func}
+{\footnotesize\ttfamily \label{classThread_a29354ffcdcd031a768df69d0fa40c907} 
+\textbf{ va2pa\+\_\+func\+\_\+t} Thread\+::m\+\_\+va2pa\+\_\+func\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ set\+Va2pa\+Func()}, and \textbf{ va2pa()}.
+
+\index{Thread@{Thread}!m\_wakeup\_msg@{m\_wakeup\_msg}}
+\index{m\_wakeup\_msg@{m\_wakeup\_msg}!Thread@{Thread}}
+\doxysubsubsection{m\_wakeup\_msg}
+{\footnotesize\ttfamily \label{classThread_a41d4e68329afb4a31e00e7398511534f} 
+void$\ast$ Thread\+::m\+\_\+wakeup\+\_\+msg\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 24} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Wakeup\+Msg()}, \textbf{ signal()}, and \textbf{ wait()}.
+
+\index{Thread@{Thread}!m\_wakeup\_time@{m\_wakeup\_time}}
+\index{m\_wakeup\_time@{m\_wakeup\_time}!Thread@{Thread}}
+\doxysubsubsection{m\_wakeup\_time}
+{\footnotesize\ttfamily \label{classThread_a45c363c0d8a2a7f96ef01db88fcd68bb} 
+\textbf{ Subsecond\+Time} Thread\+::m\+\_\+wakeup\+\_\+time\hspace{0.3cm}{\ttfamily [private]}}
+
+
+
+Definition at line \textbf{ 23} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ get\+Wakeup\+Time()}, \textbf{ signal()}, and \textbf{ wait()}.
+
+\index{Thread@{Thread}!tid@{tid}}
+\index{tid@{tid}!Thread@{Thread}}
+\doxysubsubsection{tid}
+{\footnotesize\ttfamily \label{classThread_a85915c03a5847d0f7c08660c8181a74e} 
+pid\+\_\+t Thread\+::tid}
+
+
+
+Definition at line \textbf{ 37} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ Trace\+Thread\+::handle\+Emu\+Func()}, and \textbf{ lite\+::syscall\+Exit\+Run\+Model()}.
+
+\index{Thread@{Thread}!tid\_ptr@{tid\_ptr}}
+\index{tid\_ptr@{tid\_ptr}!Thread@{Thread}}
+\doxysubsubsection{tid\_ptr}
+{\footnotesize\ttfamily \label{classThread_ae880a29bd406ba649a83a015de457662} 
+\textbf{ Int\+Ptr} Thread\+::tid\+\_\+ptr}
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ thread.\+h}.
+
+
+
+Referenced by \textbf{ lite\+::handle\+Syscall()}, and \textbf{ Thread\+Manager\+::on\+Thread\+Exit()}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+common/core/\textbf{ thread.\+h}\item 
+common/core/\textbf{ thread.\+cc}\end{DoxyCompactItemize}

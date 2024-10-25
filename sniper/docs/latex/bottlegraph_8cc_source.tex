@@ -1,0 +1,51 @@
+\doxysection{bottlegraph.\+cc}
+\label{bottlegraph_8cc_source}\index{common/misc/bottlegraph.cc@{common/misc/bottlegraph.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}bottlegraph.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}thread\_manager.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Implement\ data\ needed\ to\ plot\ bottle\ graphs\ [Du\ Bois,\ OOSPLA\ 2013]}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ BottleGraphManager::BottleGraphManager(\textcolor{keywordtype}{int}\ max\_threads)}
+\DoxyCodeLine{00008\ \ \ \ :\ m\_running(max\_threads,\ false)}
+\DoxyCodeLine{00009\ \ \ \ ,\ m\_contrib(max\_threads,\ SubsecondTime::Zero())}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_runtime(max\_threads,\ SubsecondTime::Zero())}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keywordtype}{void}\ BottleGraphManager::threadStart(thread\_id\_t\ thread\_id)}
+\DoxyCodeLine{00015\ \{}
+\DoxyCodeLine{00016\ \ \ \ m\_contrib[thread\_id]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00017\ \ \ \ m\_runtime[thread\_id]\ =\ SubsecondTime::Zero();}
+\DoxyCodeLine{00018\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ \textcolor{stringliteral}{"{}bottle\_contrib\_time"{}},\ \&m\_contrib[thread\_id]);}
+\DoxyCodeLine{00019\ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}thread"{}},\ thread\_id,\ \textcolor{stringliteral}{"{}bottle\_runtime\_time"{}},\ \&m\_runtime[thread\_id]);}
+\DoxyCodeLine{00020\ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{void}\ BottleGraphManager::update(SubsecondTime\ time,\ thread\_id\_t\ thread\_id,\ \textcolor{keywordtype}{bool}\ running)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \ \textcolor{keywordflow}{if}\ (time\ >\ m\_time\_last)}
+\DoxyCodeLine{00025\ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ UInt64\ n\_running\ =\ 0;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ \_thread\_id\ =\ 0;\ \_thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++\_thread\_id)}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_running[\_thread\_id])}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ ++n\_running;}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ SubsecondTime\ time\_delta\ =\ time\ -\/\ m\_time\_last;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n\_running)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(thread\_id\_t\ \_thread\_id\ =\ 0;\ \_thread\_id\ <\ (thread\_id\_t)Sim()-\/>getThreadManager()-\/>getNumThreads();\ ++\_thread\_id)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_running[\_thread\_id])}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_contrib[\_thread\_id]\ +=\ time\_delta\ /\ n\_running;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_runtime[\_thread\_id]\ +=\ time\_delta;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_time\_last\ =\ time;}
+\DoxyCodeLine{00041\ \ \ \ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{if}\ (thread\_id\ !=\ INVALID\_THREAD\_ID)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ m\_running[thread\_id]\ =\ running;}
+\DoxyCodeLine{00045\ \}}
+
+\end{DoxyCode}

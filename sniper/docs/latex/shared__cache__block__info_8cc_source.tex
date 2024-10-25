@@ -1,0 +1,58 @@
+\doxysection{shared\+\_\+cache\+\_\+block\+\_\+info.\+cc}
+\label{shared__cache__block__info_8cc_source}\index{common/core/memory\_subsystem/cache/shared\_cache\_block\_info.cc@{common/core/memory\_subsystem/cache/shared\_cache\_block\_info.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}shared\_cache\_block\_info.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ PrevCacheIndex}
+\DoxyCodeLine{00007\ SharedCacheBlockInfo::getCachedLoc()}
+\DoxyCodeLine{00008\ \{}
+\DoxyCodeLine{00009\ \ \ \ LOG\_ASSERT\_ERROR(m\_cached\_locs.count()\ ==\ 1,\ \textcolor{stringliteral}{"{}m\_cached\_locs.count()\ ==\ \%u"{}},\ m\_cached\_locs.count());}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \ \ \ \textcolor{keywordflow}{for}(PrevCacheIndex\ idx\ =\ 0;\ idx\ <\ m\_cached\_locs.size();\ ++idx)}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cached\_locs.test(idx))}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ idx;}
+\DoxyCodeLine{00014\ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00015\ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00018\ SharedCacheBlockInfo::setCachedLoc(PrevCacheIndex\ idx)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ LOG\_ASSERT\_ERROR(m\_cached\_locs.test(idx)\ ==\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}location\ \%u\ already\ in\ set"{}},\ idx);}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ m\_cached\_locs.set(idx);}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00026\ SharedCacheBlockInfo::clearCachedLoc(PrevCacheIndex\ idx)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ LOG\_ASSERT\_ERROR(m\_cached\_locs.test(idx)\ ==\ \textcolor{keyword}{true},\ \textcolor{stringliteral}{"{}location\ \%u\ not\ set"{}},\ idx);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ m\_cached\_locs.reset(idx);}
+\DoxyCodeLine{00031\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00036\ SharedCacheBlockInfo::invalidate()}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00039\ \ \ \ \textcolor{keywordflow}{for}(PrevCacheIndex\ idx\ =\ 0;\ idx\ <\ m\_cached\_locs.size();\ ++idx)}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ m\_cached\_locs.reset(idx);}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00042\ \ \ \ CacheBlockInfo::invalidate();}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00046\ SharedCacheBlockInfo::clone(CacheBlockInfo*\ cache\_block\_info)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ \#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00049\ \ \ \ m\_cached\_locs\ =\ ((SharedCacheBlockInfo*)\ cache\_block\_info)-\/>getCachedLocs();}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \#endif}}
+\DoxyCodeLine{00051\ \ \ \ CacheBlockInfo::clone(cache\_block\_info);}
+\DoxyCodeLine{00052\ \}}
+
+\end{DoxyCode}

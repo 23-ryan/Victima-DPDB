@@ -1,0 +1,53 @@
+\doxysection{queue\+\_\+model\+\_\+history\+\_\+list.\+h}
+\label{queue__model__history__list_8h_source}\index{common/performance\_model/queue\_model\_history\_list.h@{common/performance\_model/queue\_model\_history\_list.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_QUEUE\_MODEL\_HISTORY\_LIST\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_QUEUE\_MODEL\_HISTORY\_LIST\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}queue\_model.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}moving\_average.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }QueueModelHistoryList\ :\ \textcolor{keyword}{public}\ QueueModel}
+\DoxyCodeLine{00011\ \{}
+\DoxyCodeLine{00012\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{keyword}{typedef}\ std::list<std::pair<SubsecondTime,SubsecondTime>\ >\ FreeIntervalList;}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \ \ \ QueueModelHistoryList(String\ name,\ UInt32\ \textcolor{keywordtype}{id},\ SubsecondTime\ min\_processing\_time);}
+\DoxyCodeLine{00016\ \ \ \ \string~QueueModelHistoryList();}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ SubsecondTime\ computeQueueDelay(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time,\ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID);}
+\DoxyCodeLine{00019\ \ \ \ SubsecondTime\ computeQueueDelayNoEffect(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time,\ core\_id\_t\ requester\ =\ INVALID\_CORE\_ID);}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordtype}{float}\ getQueueUtilization();}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keywordtype}{float}\ getFracRequestsUsingAnalyticalModel();}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00024\ \ \ \ SubsecondTime\ m\_min\_processing\_time;}
+\DoxyCodeLine{00025\ \ \ \ UInt32\ m\_max\_free\_interval\_list\_size;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ FreeIntervalList\ m\_free\_interval\_list;}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \textcolor{comment}{//\ Tracks\ queue\ utilization}}
+\DoxyCodeLine{00030\ \ \ \ SubsecondTime\ m\_utilized\_time;}
+\DoxyCodeLine{00031\ \ \ \ SubsecondTime\ m\_total\_queue\_delay;}
+\DoxyCodeLine{00032\ \ \ \ MovingAverage<SubsecondTime>*\ m\_average\_delay;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{comment}{//\ Is\ analytical\ model\ used\ ?}}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keywordtype}{bool}\ m\_analytical\_model\_enabled;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \textcolor{comment}{//\ Performance\ Counters}}
+\DoxyCodeLine{00038\ \ \ \ UInt64\ m\_total\_requests;}
+\DoxyCodeLine{00039\ \ \ \ UInt64\ m\_total\_requests\_using\_analytical\_model;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keywordtype}{void}\ updateQueueUtilization(SubsecondTime\ processing\_time);}
+\DoxyCodeLine{00042\ \ \ \ \textcolor{keywordtype}{void}\ updateAverageDelay(SubsecondTime\ queue\_delay);}
+\DoxyCodeLine{00043\ \ \ \ SubsecondTime\ computeUsingHistoryList(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time);}
+\DoxyCodeLine{00044\ \ \ \ SubsecondTime\ computeUsingAnalyticalModel(SubsecondTime\ pkt\_time,\ SubsecondTime\ processing\_time);}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_QUEUE\_MODEL\_HISTORY\_LIST\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

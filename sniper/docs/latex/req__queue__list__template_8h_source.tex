@@ -1,0 +1,179 @@
+\doxysection{req\+\_\+queue\+\_\+list\+\_\+template.\+h}
+\label{req__queue__list__template_8h_source}\index{common/core/memory\_subsystem/cache/req\_queue\_list\_template.h@{common/core/memory\_subsystem/cache/req\_queue\_list\_template.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}log.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Define\ to\ use\ the\ alternate,\ fixed-\/length\ queue\ implementation}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\#define\ ENABLE\_CIRCULAR\_QUEUE}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#ifndef\ ENABLE\_CIRCULAR\_QUEUE}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>\ \textcolor{keyword}{class\ }ReqQueueListTemplate}
+\DoxyCodeLine{00016\ \{}
+\DoxyCodeLine{00017\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ std::map<IntPtr,\ std::queue<T\_Req*>*\ >\ m\_req\_queue\_list;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ ReqQueueListTemplate()\ \{\};}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \string~ReqQueueListTemplate()\ \{\};}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enqueue(IntPtr\ address,\ T\_Req*\ shmem\_req);}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ T\_Req*\ dequeue(IntPtr\ address);}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ T\_Req*\ front(IntPtr\ address);}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ T\_Req*\ back(IntPtr\ address);}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ UInt32\ size(IntPtr\ address);}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ empty(IntPtr\ address);}
+\DoxyCodeLine{00030\ \};}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00034\ ReqQueueListTemplate<T\_Req>::enqueue(IntPtr\ address,\ T\_Req*\ shmem\_req)}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list.count(address)\ ==\ 0)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ m\_req\_queue\_list[address]\ =\ \textcolor{keyword}{new}\ std::queue<T\_Req*>();}
+\DoxyCodeLine{00039\ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ m\_req\_queue\_list[address]-\/>push(shmem\_req);}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00044\ T\_Req*}
+\DoxyCodeLine{00045\ ReqQueueListTemplate<T\_Req>::dequeue(IntPtr\ address)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ LOG\_ASSERT\_ERROR(m\_req\_queue\_list.count(address)\ !=\ 0,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Could\ not\ find\ a\ request\ with\ address(0x\%x)"{}},\ address);}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ T\_Req*\ shmem\_req\ =\ m\_req\_queue\_list[address]-\/>front();}
+\DoxyCodeLine{00051\ \ \ \ m\_req\_queue\_list[address]-\/>pop();}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list[address]-\/>empty())}
+\DoxyCodeLine{00053\ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_req\_queue\_list[address];}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ m\_req\_queue\_list.erase(address);}
+\DoxyCodeLine{00056\ \ \ \ \}}
+\DoxyCodeLine{00057\ \ \ \ \textcolor{keywordflow}{return}\ shmem\_req;}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00061\ T\_Req*}
+\DoxyCodeLine{00062\ ReqQueueListTemplate<T\_Req>::front(IntPtr\ address)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ LOG\_ASSERT\_ERROR(m\_req\_queue\_list.count(address)\ !=\ 0,}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Could\ not\ find\ a\ request\ with\ address(0x\%x)"{}},\ address);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \textcolor{keywordflow}{return}\ m\_req\_queue\_list[address]-\/>front();}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00071\ T\_Req*}
+\DoxyCodeLine{00072\ ReqQueueListTemplate<T\_Req>::back(IntPtr\ address)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \ LOG\_ASSERT\_ERROR(m\_req\_queue\_list.count(address)\ !=\ 0,}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Could\ not\ find\ a\ request\ with\ address(0x\%x)"{}},\ address);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \textcolor{keywordflow}{return}\ m\_req\_queue\_list[address]-\/>back();}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00081\ UInt32}
+\DoxyCodeLine{00082\ ReqQueueListTemplate<T\_Req>::size(IntPtr\ address)}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list.count(address)\ ==\ 0)}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_req\_queue\_list[address]-\/>size();}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00091\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00092\ ReqQueueListTemplate<T\_Req>::empty(IntPtr\ address)}
+\DoxyCodeLine{00093\ \{}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list.count(address)\ ==\ 0)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00096\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00098\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ ENABLE\_CIRCULAR\_QUEUE}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#include\ "{}circular\_queue.h"{}}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>\ \textcolor{keyword}{class\ }ReqQueueListTemplate}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ std::map<IntPtr,\ CircularQueue<T\_Req*>\ >\ m\_req\_queue\_list;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ ReqQueueListTemplate()\ \{\};}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \string~ReqQueueListTemplate()\ \{\};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enqueue(IntPtr\ address,\ T\_Req*\ shmem\_req);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ T\_Req*\ dequeue(IntPtr\ address);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ T\_Req*\ front(IntPtr\ address);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ UInt32\ size(IntPtr\ address);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ empty(IntPtr\ address);}
+\DoxyCodeLine{00120\ \};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00124\ ReqQueueListTemplate<T\_Req>::enqueue(IntPtr\ address,\ T\_Req*\ shmem\_req)}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \ \ \ m\_req\_queue\_list[address].push(shmem\_req);}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00130\ T\_Req*}
+\DoxyCodeLine{00131\ ReqQueueListTemplate<T\_Req>::dequeue(IntPtr\ address)}
+\DoxyCodeLine{00132\ \{}
+\DoxyCodeLine{00133\ \ \ \ LOG\_ASSERT\_ERROR(m\_req\_queue\_list.count(address)\ \&\&\ !\ m\_req\_queue\_list[address].empty(),}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Could\ not\ find\ a\ request\ with\ address(0x\%x)"{}},\ address);}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ T\_Req*\ shmem\_req\ =\ m\_req\_queue\_list[address].pop();}
+\DoxyCodeLine{00137\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list[address].empty())}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ m\_req\_queue\_list.erase(address);}
+\DoxyCodeLine{00139\ \ \ \ \textcolor{keywordflow}{return}\ shmem\_req;}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00143\ T\_Req*}
+\DoxyCodeLine{00144\ ReqQueueListTemplate<T\_Req>::front(IntPtr\ address)}
+\DoxyCodeLine{00145\ \{}
+\DoxyCodeLine{00146\ \ \ \ LOG\_ASSERT\_ERROR(m\_req\_queue\_list.count(address)\ \&\&\ !\ m\_req\_queue\_list[address].empty(),}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Could\ not\ find\ a\ request\ with\ address(0x\%x)"{}},\ address);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keywordflow}{return}\ m\_req\_queue\_list[address].front();}
+\DoxyCodeLine{00150\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00153\ UInt32}
+\DoxyCodeLine{00154\ ReqQueueListTemplate<T\_Req>::size(IntPtr\ address)}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list.count(address)\ ==\ 0)}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00158\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_req\_queue\_list[address].size();}
+\DoxyCodeLine{00160\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T\_Req>}
+\DoxyCodeLine{00163\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00164\ ReqQueueListTemplate<T\_Req>::empty(IntPtr\ address)}
+\DoxyCodeLine{00165\ \{}
+\DoxyCodeLine{00166\ \ \ \ \textcolor{keywordflow}{if}\ (m\_req\_queue\_list.count(address)\ ==\ 0\ ||\ m\_req\_queue\_list[address].empty())}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ ENABLE\_CIRCULAR\_QUEUE}}
+
+\end{DoxyCode}

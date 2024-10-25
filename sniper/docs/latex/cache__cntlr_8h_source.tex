@@ -1,0 +1,438 @@
+\doxysection{cache\+\_\+cntlr.\+h}
+\label{cache__cntlr_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cache\_cntlr.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cache\_cntlr.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}cache.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}prefetcher.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}shared\_cache\_block\_info.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}address\_home\_lookup.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}../pr\_l1\_pr\_l2\_dram\_directory\_msi/shmem\_msg.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}mem\_component.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}semaphore.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}setlock.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf\_model.h"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}contention\_model.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}req\_queue\_list\_template.h"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}shmem\_perf.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}boost/tuple/tuple.hpp"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}utopia\_cache\_template.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{keyword}{class\ }DramCntlrInterface;}
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }ATD;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{comment}{/*\ Enable\ to\ get\ a\ detailed\ count\ of\ state\ transitions\ */}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\#define\ ENABLE\_TRANSITIONS}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{comment}{/*\ Enable\ to\ track\ latency\ by\ HitWhere\ */}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\#define\ TRACK\_LATENCY\_BY\_HITWHERE}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ Forward\ declarations}}
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{class\ }CacheCntlr;}
+\DoxyCodeLine{00035\ \ \ \ \textcolor{keyword}{class\ }MemoryManager;}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ \textcolor{keyword}{class\ }FaultInjector;}
+\DoxyCodeLine{00038\ \textcolor{keyword}{class\ }ShmemPerf;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ Maximum\ size\ of\ the\ list\ of\ addresses\ to\ prefetch}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#define\ PREFETCH\_MAX\_QUEUE\_LENGTH\ 32}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ Time\ between\ prefetches}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#define\ PREFETCH\_INTERVAL\ SubsecondTime::NS(1)}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }ParametricDramDirectoryMSI}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \ \textcolor{keyword}{class\ }Transition}
+\DoxyCodeLine{00048\ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ reason\_t}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ REASON\_FIRST\ =\ 0,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ CORE\_RD\ =\ REASON\_FIRST,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ CORE\_WR,}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ CORE\_RDEX,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ UPGRADE,}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ EVICT,}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ BACK\_INVAL,}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ COHERENCY,}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_REASONS}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00062\ \ \ \ \};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \textcolor{keyword}{class\ }Prefetch}
+\DoxyCodeLine{00065\ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum}\ prefetch\_type\_t}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ NONE,\ \ \ \ \textcolor{comment}{//\ Not\ a\ prefetch}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ OWN,\ \ \ \ \ \textcolor{comment}{//\ Prefetch\ initiated\ locally}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ OTHER\ \ \ \ \textcolor{comment}{//\ Prefetch\ initiated\ by\ a\ higher-\/level\ cache}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00073\ \ \ \ \};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \textcolor{keyword}{class\ }CacheParameters}
+\DoxyCodeLine{00076\ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ String\ configName;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ UInt32\ size;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ UInt32\ num\_sets;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ UInt32\ associativity;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ String\ hash\_function;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ String\ replacement\_policy;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ perfect;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ coherent;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ ComponentLatency\ data\_access\_time;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ ComponentLatency\ tags\_access\_time;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ ComponentLatency\ writeback\_time;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ ComponentBandwidthPerCycle\ next\_level\_read\_bandwidth;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ String\ perf\_model\_type;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ writethrough;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ UInt32\ shared\_cores;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ String\ prefetcher;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ UInt32\ outstanding\_misses;}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ CacheParameters()}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ :\ data\_access\_time(NULL,0)}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ tags\_access\_time(NULL,0)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ writeback\_time(NULL,0)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ CacheParameters(}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ String\ \_configName,\ UInt32\ \_size,\ UInt32\ \_associativity,\ UInt32\ block\_size,}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ String\ \_hash\_function,\ String\ \_replacement\_policy,\ \textcolor{keywordtype}{bool}\ \_perfect,\ \textcolor{keywordtype}{bool}\ \_coherent,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentLatency\&\ \_data\_access\_time,\ \textcolor{keyword}{const}\ ComponentLatency\&\ \_tags\_access\_time,}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentLatency\&\ \_writeback\_time,\ \textcolor{keyword}{const}\ ComponentBandwidthPerCycle\&\ \_next\_level\_read\_bandwidth,}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ String\ \_perf\_model\_type,\ \textcolor{keywordtype}{bool}\ \_writethrough,\ UInt32\ \_shared\_cores,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ String\ \_prefetcher,\ UInt32\ \_outstanding\_misses)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ configName(\_configName),\ size(\_size),\ associativity(\_associativity),}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ hash\_function(\_hash\_function),\ replacement\_policy(\_replacement\_policy),\ perfect(\_perfect),\ coherent(\_coherent),}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ data\_access\_time(\_data\_access\_time),\ tags\_access\_time(\_tags\_access\_time),}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ writeback\_time(\_writeback\_time),\ next\_level\_read\_bandwidth(\_next\_level\_read\_bandwidth),}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ perf\_model\_type(\_perf\_model\_type),\ writethrough(\_writethrough),\ shared\_cores(\_shared\_cores),}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ prefetcher(\_prefetcher),\ outstanding\_misses(\_outstanding\_misses)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ num\_sets\ =\ k\_KILO\ *\ \_size\ /\ (\_associativity\ *\ block\_size);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(k\_KILO\ *\ \_size\ ==\ num\_sets\ *\ associativity\ *\ block\_size,\ \textcolor{stringliteral}{"{}Invalid\ cache\ configuration:\ size(\%d\ Kb)\ !=\ sets(\%d)\ *\ associativity(\%d)\ *\ block\_size(\%d)"{}},\ \_size,\ num\_sets,\ associativity,\ block\_size);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ \ \ \ \};}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{keyword}{class\ }CacheCntlrList\ :\ \textcolor{keyword}{public}\ std::vector<CacheCntlr*>}
+\DoxyCodeLine{00122\ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_TRACK\_SHARING\_PREVCACHES}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ PrevCacheIndex\ find(core\_id\_t\ core\_id,\ MemComponent::component\_t\ mem\_component);}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00127\ \ \ \ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \textcolor{keyword}{class\ }CacheDirectoryWaiter}
+\DoxyCodeLine{00130\ \ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ exclusive;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ block\_type;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isPrefetch;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ CacheCntlr*\ cache\_cntlr;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ SubsecondTime\ t\_issue;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ CacheDirectoryWaiter(\textcolor{keywordtype}{bool}\ \_exclusive,\ CacheBlockInfo::block\_type\_t\ \_block\_type,\textcolor{keywordtype}{bool}\ \_isPrefetch,\ CacheCntlr*\ \_cache\_cntlr,\ SubsecondTime\ \_t\_issue)\ :}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ exclusive(\_exclusive),\ block\_type(\_block\_type),isPrefetch(\_isPrefetch),\ cache\_cntlr(\_cache\_cntlr),\ t\_issue(\_t\_issue)}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00140\ \ \ \ \};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \textcolor{keyword}{typedef}\ ReqQueueListTemplate<CacheDirectoryWaiter>\ CacheDirectoryWaiterMap;}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keyword}{struct\ }MshrEntry\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ SubsecondTime\ t\_issue,\ t\_complete;}
+\DoxyCodeLine{00146\ \ \ \ \};}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keyword}{typedef}\ std::unordered\_map<IntPtr,\ MshrEntry>\ Mshr;}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keyword}{class\ }CacheMasterCntlr}
+\DoxyCodeLine{00150\ \ \ \ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ Cache*\ m\_cache;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ Lock\ m\_cache\_lock;}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ Lock\ m\_smt\_lock;\ \textcolor{comment}{//<\ Only\ used\ in\ L1\ cache,\ to\ protect\ against\ concurrent\ access\ from\ sibling\ SMT\ threads}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ CacheCntlrList\ m\_prev\_cache\_cntlrs;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ Prefetcher*\ m\_prefetcher;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ DramCntlrInterface*\ m\_dram\_cntlr;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ ContentionModel*\ m\_dram\_outstanding\_writebacks;}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ Mshr\ mshr;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ Mshr\ metadata\_mshr;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ ContentionModel\ m\_l1\_mshr;}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ ContentionModel\ m\_l1\_metadata\_mshr;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ ContentionModel\ m\_next\_level\_read\_bandwidth;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ CacheDirectoryWaiterMap\ m\_directory\_waiters;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ IntPtr\ m\_evicting\_address;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ Byte*\ m\_evicting\_buf;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ std::vector<ATD*>\ m\_atds;}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ std::vector<SetLock>\ m\_setlocks;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ UInt32\ m\_log\_blocksize;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ UInt32\ m\_num\_sets;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ std::deque<IntPtr>\ m\_prefetch\_list;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_prefetch\_next;}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createSetLocks(UInt32\ cache\_block\_size,\ UInt32\ num\_sets,\ UInt32\ core\_offset,\ UInt32\ num\_cores);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ SetLock*\ getSetLock(IntPtr\ addr);}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createATDs(String\ name,\ String\ configName,\ core\_id\_t\ core\_id,\ UInt32\ shared\_cores,\ UInt32\ size,\ UInt32\ associativity,\ UInt32\ block\_size,}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ String\ replacement\_policy,\ CacheBase::hash\_t\ hash\_function);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ accessATDs(Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ hit,\ IntPtr\ address,\ UInt32\ core\_num);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ CacheMasterCntlr(String\ name,\ core\_id\_t\ core\_id,\ UInt32\ outstanding\_misses)}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_cache(NULL)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_prefetcher(NULL)}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_dram\_cntlr(NULL)}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_dram\_outstanding\_writebacks(NULL)}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_l1\_mshr(name\ +\ \textcolor{stringliteral}{"{}.mshr"{}},\ core\_id,\ outstanding\_misses)}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_next\_level\_read\_bandwidth(name\ +\ \textcolor{stringliteral}{"{}.next\_read"{}},\ core\_id)}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_evicting\_address(0)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_evicting\_buf(NULL)}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_atds()}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_prefetch\_list()}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ m\_prefetch\_next(SubsecondTime::Zero())}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \string~CacheMasterCntlr();}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }CacheCntlr;}
+\DoxyCodeLine{00202\ \ \ \ \};}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keyword}{class\ }CacheCntlr\ :\ ::CacheCntlr}
+\DoxyCodeLine{00205\ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Data\ Members}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ MemComponent::component\_t\ m\_mem\_component;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ MemoryManager*\ m\_memory\_manager;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ CacheMasterCntlr*\ m\_master;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ CacheCntlr*\ m\_next\_cache\_cntlr;}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ CacheCntlr*\ m\_last\_level;}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ m\_tag\_directory\_home\_lookup;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ std::unordered\_map<IntPtr,\ MemComponent::component\_t>\ m\_shmem\_req\_source\_map;}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_perfect;}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_passthrough;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_coherent;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_prefetch\_on\_prefetch\_hit;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_l1\_mshr;}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_l1\_metadata\_mshr;}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ metadata\_passthrough\_loc;}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ UInt64\ tloads,tstores,tload\_misses,tstore\_misses;}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ loads[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES],\ stores[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES];}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ load\_misses[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES],\ store\_misses[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES];}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ load\_overlapping\_misses[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES],\ store\_overlapping\_misses[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES];}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ loads\_state[CacheState::NUM\_CSTATE\_STATES][CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES],\ stores\_state[CacheState::NUM\_CSTATE\_STATES][CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES];}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ loads\_where[HitWhere::NUM\_HITWHERES],\ stores\_where[HitWhere::NUM\_HITWHERES];}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ loads\_where\_page\_table[HitWhere::NUM\_HITWHERES];}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ loads\_where\_utopia[HitWhere::NUM\_HITWHERES];}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ load\_misses\_state[CacheState::NUM\_CSTATE\_STATES][CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES],\ store\_misses\_state[CacheState::NUM\_CSTATE\_STATES][CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES];}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ loads\_prefetch[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES],\ stores\_prefetch[CacheBlockInfo::block\_type\_t::NUM\_BLOCK\_TYPES];}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ hits\_prefetch,\ \textcolor{comment}{//\ lines\ which\ were\ prefetched\ and\ subsequently\ used\ by\ a\ non-\/prefetch\ access}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ evict\_prefetch,\ \textcolor{comment}{//\ lines\ which\ were\ prefetched\ and\ evicted\ before\ being\ used}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invalidate\_prefetch;\ \textcolor{comment}{//\ lines\ which\ were\ prefetched\ and\ invalidated\ before\ being\ used}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Note:\ hits\_prefetch+evict\_prefetch+invalidate\_prefetch\ will\ not\ account\ for\ all\ prefetched\ lines,}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ some\ may\ still\ be\ in\ the\ cache,\ or\ could\ have\ been\ removed\ for\ some\ other\ reason.}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Also,\ in\ a\ shared\ cache,\ the\ prefetch\ may\ have\ been\ triggered\ by\ another\ core\ than\ the\ one}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ accessing/evicting\ the\ line\ so\ *\_prefetch\ statistics\ should\ be\ summed\ across\ the\ shared\ cache}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ evict[CacheState::NUM\_CSTATE\_STATES];}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ backinval[CacheState::NUM\_CSTATE\_STATES];}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ hits\_warmup,\ evict\_warmup,\ invalidate\_warmup;}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ total\_latency;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ snoop\_latency;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ qbs\_query\_latency;}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ mshr\_latency;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ SubsecondTime\ metadata\_mshr\_latency;}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ prefetches;}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ coherency\_downgrades,\ coherency\_upgrades,\ coherency\_invalidates,\ coherency\_writebacks;}
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \#ifdef\ ENABLE\_TRANSITIONS}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ transitions[CacheState::NUM\_CSTATE\_SPECIAL\_STATES][CacheState::NUM\_CSTATE\_SPECIAL\_STATES];}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ UInt64\ transition\_reasons[Transition::NUM\_REASONS][CacheState::NUM\_CSTATE\_SPECIAL\_STATES][CacheState::NUM\_CSTATE\_SPECIAL\_STATES];}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ std::unordered\_map<IntPtr,\ Transition::reason\_t>\ seen;}
+\DoxyCodeLine{00263\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \}\ stats;}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#ifdef\ TRACK\_LATENCY\_BY\_HITWHERE}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ std::unordered\_map<HitWhere::where\_t,\ StatHist>\ lat\_by\_where;}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateCounters(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ CacheState::cstate\_t\ state,CacheBlockInfo::block\_type\_t\ block\_type,\ Prefetch::prefetch\_type\_t\ isPrefetch);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ cleanupMshr();}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ cleanupMetadataMshr();}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ transition(IntPtr\ address,\ Transition::reason\_t\ reason,\ CacheState::cstate\_t\ old\_state,\ CacheState::cstate\_t\ new\_state);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateUncoreStatistics(HitWhere::where\_t\ hit\_where,\ SubsecondTime\ now);}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ UInt32\ m\_cache\_block\_size;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_cache\_writethrough;}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ ComponentLatency\ m\_writeback\_time;}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ ComponentBandwidthPerCycle\ m\_next\_level\_read\_bandwidth;}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ UInt32\ m\_shared\_cores;\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ core\_id\_t\ m\_core\_id\_master;\ \ \ }
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ Semaphore*\ m\_user\_thread\_sem;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ Semaphore*\ m\_network\_thread\_sem;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{volatile}\ HitWhere::where\_t\ m\_last\_remote\_hit\_where;}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ ShmemPerf*\ m\_shmem\_perf;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ ShmemPerf*\ m\_shmem\_perf\_global;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ SubsecondTime\ m\_shmem\_perf\_totaltime;}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ UInt64\ m\_shmem\_perf\_numrequests;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ ShmemPerf\ m\_dummy\_shmem\_perf;}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ m\_shmem\_perf\_model;}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Core-\/interfacing\ stuff}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ accessCache(}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ ca\_address,\ UInt32\ offset,}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,\ \textcolor{keywordtype}{bool}\ update\_replacement);}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operationPermissibleinCache(}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ address,\ Core::mem\_op\_t\ mem\_op\_type,\ CacheBlockInfo\ **cache\_block\_info\ =\ NULL);}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ copyDataFromNextLevel(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ \textcolor{keywordtype}{bool}\ modeled,\ SubsecondTime\ t\_start,\ CacheBlockInfo::block\_type\_t\ block\_type);}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ trainPrefetcher(IntPtr\ eip,\ IntPtr\ address,\ Core::mem\_op\_t\ mem\_op\_type,\ \ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ SubsecondTime\ t\_issue);}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ Prefetch(IntPtr\ eip,\ SubsecondTime\ t\_start);}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ doPrefetch(IntPtr\ eip,\ IntPtr\ prefetch\_address,\ SubsecondTime\ t\_start);}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Cache\ meta-\/data\ operationsz}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ SharedCacheBlockInfo*\ getCacheBlockInfo(IntPtr\ address);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ CacheBlockInfo::block\_type\_t\ getCacheBlockType(IntPtr\ address);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ CacheState::cstate\_t\ getCacheState(IntPtr\ address);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ CacheState::cstate\_t\ getCacheState(CacheBlockInfo\ *cache\_block\_info);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ SharedCacheBlockInfo*\ setCacheState(IntPtr\ address,\ CacheState::cstate\_t\ cstate);}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Cache\ data\ operations}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ invalidateCacheBlock(IntPtr\ address);}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ retrieveCacheBlock(IntPtr\ address,\ Byte*\ data\_buf,\ ShmemPerfModel::Thread\_t\ thread\_num,\ \textcolor{keywordtype}{bool}\ update\_replacement);}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ CacheBlockInfo::block\_type\_t\ getCacheBlockTypeFromOrigin(Core::mem\_origin\_t\ mem\_origin)\ \{\ \textcolor{keywordflow}{return}\ (mem\_origin\ ==\ Core::mem\_origin\_t::PAGE\_TABLE\_WALK\ ?\ CacheBlockInfo::block\_type\_t::PAGE\_TABLE\ :\ CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE);\ \}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ SharedCacheBlockInfo*\ insertCacheBlock(IntPtr\ address,\ CacheState::cstate\_t\ cstate,\ Byte*\ data\_buf,\ core\_id\_t\ requester,\ ShmemPerfModel::Thread\_t\ thread\_num,\ CacheBlockInfo::block\_type\_t\ btype\ =\ CacheBlockInfo::block\_type\_t::NON\_PAGE\_TABLE);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ std::pair<SubsecondTime,\ bool>\ updateCacheBlock(IntPtr\ address,\ CacheState::cstate\_t\ cstate,\ Transition::reason\_t\ reason,\ Byte*\ out\_buf,\ ShmemPerfModel::Thread\_t\ thread\_num);}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ writeCacheBlock(IntPtr\ address,\ UInt32\ offset,\ Byte*\ data\_buf,\ UInt32\ data\_length,\ ShmemPerfModel::Thread\_t\ thread\_num);}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ Request\ from\ previous\ level\ cache}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ HitWhere::where\_t\ processShmemReqFromPrevCache(IntPtr\ eip,\ CacheCntlr*\ requester,\ Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ \textcolor{keywordtype}{bool}\ modeled,\ \textcolor{keywordtype}{bool}\ count,CacheBlockInfo::block\_type\_t\ block\_type,\ \ Prefetch::prefetch\_type\_t\ isPrefetch,\ SubsecondTime\ t\_issue,\ \textcolor{keywordtype}{bool}\ have\_write\_lock,\ Core::mem\_origin\_t\ mem\_origin);}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Process\ Request\ from\ L1\ Cache}}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ boost::tuple<HitWhere::where\_t,\ SubsecondTime>\ accessDRAM(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ \textcolor{keywordtype}{bool}\ isPrefetch,\ Byte*\ data\_buf,\textcolor{keywordtype}{bool}\ metadata\_request);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ initiateDirectoryAccess(Core::mem\_op\_t\ mem\_op\_type,\ IntPtr\ address,\ CacheBlockInfo::block\_type\_t\ block\_type,\textcolor{keywordtype}{bool}\ isPrefetch,\ SubsecondTime\ t\_issue);}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processExReqToDirectory(IntPtr\ address,CacheBlockInfo::block\_type\_t\ block\_type);}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processShReqToDirectory(IntPtr\ address,CacheBlockInfo::block\_type\_t\ block\_type);}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processUpgradeReqToDirectory(IntPtr\ address,\ ShmemPerf\ *perf,\ ShmemPerfModel::Thread\_t\ thread\_num,CacheBlockInfo::block\_type\_t\ block\_type);}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Process\ Request\ from\ Dram\ Dir}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processExRepFromDramDirectory(core\_id\_t\ sender,\ core\_id\_t\ requester,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processShRepFromDramDirectory(core\_id\_t\ sender,\ core\_id\_t\ requester,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processUpgradeRepFromDramDirectory(core\_id\_t\ sender,\ core\_id\_t\ requester,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processInvReqFromDramDirectory(core\_id\_t\ sender,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processFlushReqFromDramDirectory(core\_id\_t\ sender,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ processWbReqFromDramDirectory(core\_id\_t\ sender,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Cache\ Block\ Size}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ UInt32\ getCacheBlockSize()\ \{\ \textcolor{keywordflow}{return}\ m\_cache\_block\_size;\ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ MemoryManager*\ getMemoryManager()\ \{\ \textcolor{keywordflow}{return}\ m\_memory\_manager;\ \}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ getShmemPerfModel()\ \{\ \textcolor{keywordflow}{return}\ m\_shmem\_perf\_model;\ \}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateUsageBits(IntPtr\ address,\ CacheBlockInfo::BitsUsedType\ used);}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ walkUsageBits();}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ \_\_walkUsageBits(UInt64\ arg0,\ UInt64\ arg1)\ \{\ ((CacheCntlr*)arg0)-\/>walkUsageBits();\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wake\ up\ User\ Thread}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ wakeUpUserThread(Semaphore*\ user\_thread\_sem\ =\ NULL);}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ User\ Thread}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ waitForUserThread(Semaphore*\ network\_thread\_sem\ =\ NULL);}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ Network\ Thread}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ waitForNetworkThread(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wake\ up\ Network\ Thread}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ wakeUpNetworkThread(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ Semaphore*\ getUserThreadSemaphore(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ Semaphore*\ getNetworkThreadSemaphore(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Dram\ Directory\ Home\ Lookup}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ core\_id\_t\ getHome(IntPtr\ address)\ \{\ \textcolor{keywordflow}{return}\ m\_tag\_directory\_home\_lookup-\/>getHome(address);\ \}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ CacheCntlr*\ lastLevelCache(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ CacheCntlr(MemComponent::component\_t\ mem\_component,}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ String\ name,}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ core\_id\_t\ core\_id,}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MemoryManager*\ memory\_manager,}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AddressHomeLookup*\ tag\_directory\_home\_lookup,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Semaphore*\ user\_thread\_sem,}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Semaphore*\ network\_thread\_sem,}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt32\ cache\_block\_size,}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CacheParameters\ \&\ cache\_params,}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ShmemPerfModel*\ shmem\_perf\_model,}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_last\_level\_cache);}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~CacheCntlr();}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ Cache*\ getCache()\ \{\ \textcolor{keywordflow}{return}\ m\_master-\/>m\_cache;\ \}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ Lock\&\ getLock()\ \{\ \textcolor{keywordflow}{return}\ m\_master-\/>m\_cache\_lock;\ \}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setPrevCacheCntlrs(CacheCntlrList\&\ prev\_cache\_cntlrs);}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setNextCacheCntlr(CacheCntlr*\ next\_cache\_cntlr)\ \{\ m\_next\_cache\_cntlr\ =\ next\_cache\_cntlr;\ \}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ createSetLocks(UInt32\ cache\_block\_size,\ UInt32\ num\_sets,\ UInt32\ core\_offset,\ UInt32\ num\_cores)\ \{\ m\_master-\/>createSetLocks(cache\_block\_size,\ num\_sets,\ core\_offset,\ num\_cores);\ \}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ setDRAMDirectAccess(DramCntlrInterface*\ dram\_cntlr,\ UInt64\ num\_outstanding);}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ HitWhere::where\_t\ processMemOpFromCore(}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ eip,}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::lock\_signal\_t\ lock\_signal,}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_op\_t\ mem\_op\_type,}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ ca\_address,\ UInt32\ offset,}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Byte*\ data\_buf,\ UInt32\ data\_length,}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ modeled,}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ count,CacheBlockInfo::block\_type\_t\ block\_type,SubsecondTime\ TLB\_latency,UtopiaCache\ *shadow\_cache\ =\ NULL,}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Core::mem\_origin\_t\ mem\_origin\ =\ Core::mem\_origin\_t::NORMAL);}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ updateHits(Core::mem\_op\_t\ mem\_op\_type,\ UInt64\ hits);}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Notify\ next\ level\ cache\ of\ so\ it\ can\ update\ its\ sharing\ set}}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ notifyPrevLevelInsert(core\_id\_t\ core\_id,\ MemComponent::component\_t\ mem\_component,\ IntPtr\ address);}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ notifyPrevLevelEvict(core\_id\_t\ core\_id,\ MemComponent::component\_t\ mem\_component,\ IntPtr\ address);}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ message\ from\ Dram\ Dir}}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ handleMsgFromDramDirectory(core\_id\_t\ sender,\ PrL1PrL2DramDirectoryMSI::ShmemMsg*\ shmem\_msg);}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Acquiring\ and\ Releasing\ per-\/set\ Locks}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ acquireLock(UInt64\ address);}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ releaseLock(UInt64\ address);}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ acquireStackLock(UInt64\ address,\ \textcolor{keywordtype}{bool}\ this\_is\_locked\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ releaseStackLock(UInt64\ address,\ \textcolor{keywordtype}{bool}\ this\_is\_locked\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isMasterCache(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ m\_core\_id\ ==\ m\_core\_id\_master;\ \}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isFirstLevel(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ m\_master-\/>m\_prev\_cache\_cntlrs.empty();\ \}}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isLastLevel(\textcolor{keywordtype}{void})\ \{\ \textcolor{keywordflow}{return}\ !\ m\_next\_cache\_cntlr;\ \}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isShared(core\_id\_t\ core\_id);\ \textcolor{comment}{//<\ Return\ true\ if\ core\ shares\ this\ cache}}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isInLowerLevelCache(CacheBlockInfo\ *block\_info);}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ incrementQBSLookupCost();}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ enable()\ \{\ m\_master-\/>m\_cache-\/>enable();\ \}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ disable()\ \{\ m\_master-\/>m\_cache-\/>disable();\ \}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }CacheCntlrList;}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }MemoryManager;}
+\DoxyCodeLine{00431\ \ \ \ \};}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \}}
+
+\end{DoxyCode}

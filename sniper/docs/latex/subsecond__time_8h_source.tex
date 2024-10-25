@@ -1,0 +1,649 @@
+\doxysection{subsecond\+\_\+time.\+h}
+\label{subsecond__time_8h_source}\index{common/misc/subsecond\_time.h@{common/misc/subsecond\_time.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ SUBSECOND\_TIME\_H\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ SUBSECOND\_TIME\_H\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ subsecond\_time\_t\ struct\ is\ used\ for\ c-\/linkage\ cases}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}subsecond\_time\_c.h"{}}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ SUBSECOND\_TIME\_SIMPLE\_OSTREAM}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }ComponentTime;}
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }ComponentPeriod;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00019\ \textcolor{keyword}{struct\ }TimeConverter}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ \textcolor{keyword}{static}\ T\ PStoFS(T\ ps)}
+\DoxyCodeLine{00022\ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ps\ *\ T(1000);}
+\DoxyCodeLine{00024\ \ \ \ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ NStoPS(T\ ns)}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ns\ *\ T(1000);}
+\DoxyCodeLine{00029\ \ \ \ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ NStoFS(T\ ns)}
+\DoxyCodeLine{00032\ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PStoFS(\ NStoPS(ns)\ );}
+\DoxyCodeLine{00034\ \ \ \ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ UStoNS(T\ us)}
+\DoxyCodeLine{00037\ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ us\ *\ T(1000);}
+\DoxyCodeLine{00039\ \ \ \ \}}
+\DoxyCodeLine{00040\ \};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{class\ }SubsecondTime;}
+\DoxyCodeLine{00043\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00044\ \textcolor{keyword}{inline}\ SubsecondTime\ operator*(T\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }SubsecondTime}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00049\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ FS(uint64\_t\ fs\ =\ 1)\ \{\ \textcolor{keywordflow}{return}\ fs\ *\ SubsecondTime(FS\_1);\ \}}
+\DoxyCodeLine{00050\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ PS(uint64\_t\ ps\ =\ 1)\ \{\ \textcolor{keywordflow}{return}\ ps\ *\ SubsecondTime(PS\_1);\ \}}
+\DoxyCodeLine{00051\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ NS(uint64\_t\ ns\ =\ 1)\ \{\ \textcolor{keywordflow}{return}\ ns\ *\ SubsecondTime(NS\_1);\ \}}
+\DoxyCodeLine{00052\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ US(uint64\_t\ us\ =\ 1)\ \{\ \textcolor{keywordflow}{return}\ us\ *\ SubsecondTime(US\_1);\ \}}
+\DoxyCodeLine{00053\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ MS(uint64\_t\ ms\ =\ 1)\ \{\ \textcolor{keywordflow}{return}\ ms\ *\ SubsecondTime(MS\_1);\ \}}
+\DoxyCodeLine{00054\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ SEC(uint64\_t\ sec\ =\ 1)\ \{\ \textcolor{keywordflow}{return}\ sec\ *\ SubsecondTime(SEC\_1);\ \}}
+\DoxyCodeLine{00055\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ Zero()\ \{\ \textcolor{keywordflow}{return}\ SubsecondTime();\ \}}
+\DoxyCodeLine{00056\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ MaxTime()\ \{\ \textcolor{keywordflow}{return}\ SubsecondTime(0xffffffffffffffffULL);\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ FSfromFloat(\textcolor{keywordtype}{float}\ fs)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ fs\ *\ SubsecondTime(FS\_1);\ \}}
+\DoxyCodeLine{00059\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ PSfromFloat(\textcolor{keywordtype}{float}\ ps)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ps\ *\ SubsecondTime(PS\_1);\ \}}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ NSfromFloat(\textcolor{keywordtype}{float}\ ns)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ns\ *\ SubsecondTime(NS\_1);\ \}}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ USfromFloat(\textcolor{keywordtype}{float}\ us)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ us\ *\ SubsecondTime(US\_1);\ \}}
+\DoxyCodeLine{00062\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ MSfromFloat(\textcolor{keywordtype}{float}\ ms)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ ms\ *\ SubsecondTime(MS\_1);\ \}}
+\DoxyCodeLine{00063\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SubsecondTime\ SECfromFloat(\textcolor{keywordtype}{float}\ sec)\ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ sec\ *\ SubsecondTime(SEC\_1);\ \}}
+\DoxyCodeLine{00064\ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \textcolor{comment}{//\ Public\ constructors}}
+\DoxyCodeLine{00066\ \ \ \ SubsecondTime()}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ :\ m\_time(0)}
+\DoxyCodeLine{00068\ \ \ \ \{\}}
+\DoxyCodeLine{00069\ \ \ \ SubsecondTime(\textcolor{keyword}{const}\ SubsecondTime\ \&\_time)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ :\ m\_time(\_time.m\_time)}
+\DoxyCodeLine{00071\ \ \ \ \{\}}
+\DoxyCodeLine{00072\ \ \ \ SubsecondTime(uint64\_t\ multiplier,\ \textcolor{keyword}{const}\ SubsecondTime\ \&\_time)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ :\ m\_time(\_time.m\_time\ *\ multiplier)}
+\DoxyCodeLine{00074\ \ \ \ \{\}}
+\DoxyCodeLine{00075\ \ \ \ SubsecondTime(\textcolor{keyword}{const}\ subsecond\_time\_t\ \&sstime)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ :\ m\_time(sstime.m\_time)}
+\DoxyCodeLine{00077\ \ \ \ \{\}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ UInt64\ getFS()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time\ /\ FS\_1;\ \}}
+\DoxyCodeLine{00080\ \ \ \ UInt64\ getPS()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time\ /\ PS\_1;\ \}}
+\DoxyCodeLine{00081\ \ \ \ UInt64\ getNS()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time\ /\ NS\_1;\ \}}
+\DoxyCodeLine{00082\ \ \ \ UInt64\ getUS()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time\ /\ US\_1;\ \}}
+\DoxyCodeLine{00083\ \ \ \ UInt64\ getMS()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time\ /\ MS\_1;\ \}}
+\DoxyCodeLine{00084\ \ \ \ UInt64\ getSEC()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_time\ /\ SEC\_1;\ \}}
+\DoxyCodeLine{00085\ \ \ \ \textcolor{keyword}{static}\ SubsecondTime\ max(\textcolor{keyword}{const}\ SubsecondTime\ \&s1,\textcolor{keyword}{const}\ SubsecondTime\ \&s2);}
+\DoxyCodeLine{00086\ \ \ \ \textcolor{comment}{//\ Public\ operators}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00089\ \ \ \ SubsecondTime\&\ operator+=(\textcolor{keyword}{const}\ SubsecondTime\ \&rhs)}
+\DoxyCodeLine{00090\ \ \ \ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ m\_time\ +=\ rhs.m\_time;}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00093\ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00095\ \ \ \ SubsecondTime\&\ operator-\/=(\textcolor{keyword}{const}\ SubsecondTime\ \&rhs)}
+\DoxyCodeLine{00096\ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ m\_time\ -\/=\ rhs.m\_time;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00099\ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ SubsecondTime\&\ operator<<=(uint64\_t\ rhs)}
+\DoxyCodeLine{00102\ \ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ m\_time\ <<=\ rhs;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00105\ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/1751869}}
+\DoxyCodeLine{00108\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00109\ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00110\ \ \ \ SubsecondTime\&\ operator*=(T\ rhs)}
+\DoxyCodeLine{00111\ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ m\_time\ *=\ rhs;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00114\ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ SubsecondTime\ operator/(\textcolor{keyword}{const}\ uint64\_t\ \&divisor)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00117\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime(m\_time\ /\ divisor);}
+\DoxyCodeLine{00119\ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \textcolor{comment}{//\ Implicit\ conversion\ operator\ from\ SubsecondTime\ to\ subsecond\_time\_t}}
+\DoxyCodeLine{00122\ \ \ \ \textcolor{comment}{//\ \ to\ allow\ operations\ on\ SubsecondTime}}
+\DoxyCodeLine{00123\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00124\ \ \ \ \textcolor{keyword}{operator}\ subsecond\_time\_t()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00125\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ subsecond\_time\_t\ sstime;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ sstime.m\_time\ =\ this-\/>m\_time;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sstime;}
+\DoxyCodeLine{00129\ \ \ \ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \textcolor{comment}{//\ Not\ to\ be\ used\ normally}}
+\DoxyCodeLine{00132\ \ \ \ uint64\_t\ getInternalDataForced(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_time;}
+\DoxyCodeLine{00135\ \ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \textcolor{comment}{//\ Not\ to\ be\ used\ normally}}
+\DoxyCodeLine{00138\ \ \ \ \textcolor{keywordtype}{void}\ setInternalDataForced(uint64\_t\ new\_time)}
+\DoxyCodeLine{00139\ \ \ \ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ m\_time\ =\ new\_time;}
+\DoxyCodeLine{00141\ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \textcolor{comment}{//\ Boolean\ operators}}
+\DoxyCodeLine{00144\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00145\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00146\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00147\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00148\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00149\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs);}
+\DoxyCodeLine{00150\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ atomic\_add\_subsecondtime(SubsecondTime\ \&src\_dest,\ \textcolor{keyword}{const}\ SubsecondTime\ \&src);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \textcolor{comment}{//\ Output\ stream\ operators}}
+\DoxyCodeLine{00153\ \ \ \ \textcolor{keyword}{friend}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ SubsecondTime\ \&time);}
+\DoxyCodeLine{00154\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentTime\ \&time);}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00157\ \ \ \ SubsecondTime\&\ operator*=(\textcolor{keyword}{const}\ SubsecondTime\ \&rhs)}
+\DoxyCodeLine{00158\ \ \ \ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ m\_time\ *=\ rhs.m\_time;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00161\ \ \ \ \}}
+\DoxyCodeLine{00162\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00163\ \ \ \ SubsecondTime\&\ operator/=(\textcolor{keyword}{const}\ SubsecondTime\ \&rhs)}
+\DoxyCodeLine{00164\ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ m\_time\ /=\ rhs.m\_time;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00167\ \ \ \ \}}
+\DoxyCodeLine{00168\ \ \ \ \textcolor{comment}{//\ Normally\ I\ would\ inline\ these\ as\ non-\/member\ functions,\ (http://www.stackoverflow.com/questions/4421706),}}
+\DoxyCodeLine{00169\ \ \ \ \textcolor{comment}{//\ but\ as\ we\ would\ like\ to\ enforce\ protection,\ we\ make\ them\ member\ functions}}
+\DoxyCodeLine{00170\ \ \ \ \textcolor{keyword}{inline}\ SubsecondTime\ operator*(\textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00171\ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ SubsecondTime\ new\_time;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ new\_time.m\_time\ =\ this-\/>m\_time\ *\ rhs.m\_time;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_time;}
+\DoxyCodeLine{00175\ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \ \textcolor{keyword}{inline}\ SubsecondTime\ operator*(\textcolor{keywordtype}{float}\ rhs)}
+\DoxyCodeLine{00177\ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ SubsecondTime\ new\_time;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ new\_time.m\_time\ =\ this-\/>m\_time\ *\ rhs;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_time;}
+\DoxyCodeLine{00181\ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \textcolor{keyword}{inline}\ SubsecondTime\ operator/(\textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00183\ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ SubsecondTime\ new\_time;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ new\_time.m\_time\ =\ this-\/>m\_time\ /\ rhs.m\_time;}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_time;}
+\DoxyCodeLine{00187\ \ \ \ \}}
+\DoxyCodeLine{00188\ \ \ \ \textcolor{keyword}{inline}\ SubsecondTime\ operator\%(\textcolor{keyword}{const}\ SubsecondTime\ \&rhs)}
+\DoxyCodeLine{00189\ \ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ SubsecondTime\ new\_time;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ new\_time.m\_time\ =\ this-\/>m\_time\ \%\ rhs.m\_time;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_time;}
+\DoxyCodeLine{00193\ \ \ \ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ uint64\_t\ divideRounded(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00196\ \ \ \ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (lhs.m\_time\ +\ ((rhs.m\_time/2)\ +\ 1))\ /\ rhs.m\_time;}
+\DoxyCodeLine{00198\ \ \ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00201\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }ComponentPeriod;}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \textcolor{comment}{//\ Not\ to\ be\ used\ normally}}
+\DoxyCodeLine{00204\ \ \ \ \textcolor{keyword}{explicit}\ SubsecondTime(uint64\_t\ \_time)}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ :\ m\_time(\_time)}
+\DoxyCodeLine{00206\ \ \ \ \{\}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \textcolor{comment}{//\ Internally,\ numbers\ are\ calculated\ in\ femtoseconds\ (10\string^(-\/15)s)}}
+\DoxyCodeLine{00209\ \ \ \ \textcolor{comment}{//\ TimeConverter\ can\ only\ be\ used\ when\ constexpr\ is\ supported}}
+\DoxyCodeLine{00210\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ FS\_1\ =\ 1;}
+\DoxyCodeLine{00211\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ PS\_1\ =\ FS\_1\ *\ 1000;}
+\DoxyCodeLine{00212\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ NS\_1\ =\ PS\_1\ *\ 1000;}
+\DoxyCodeLine{00213\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ US\_1\ =\ NS\_1\ *\ 1000;}
+\DoxyCodeLine{00214\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ MS\_1\ =\ US\_1\ *\ 1000;}
+\DoxyCodeLine{00215\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ SEC\_1\ =\ MS\_1\ *\ 1000;}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ uint64\_t\ m\_time;}
+\DoxyCodeLine{00218\ \};}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \textcolor{comment}{//\ Define\ addition\ between\ SubsecondTime\ instances}}
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00222\ \textcolor{keyword}{inline}\ SubsecondTime\ operator+(SubsecondTime\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00223\ \{}
+\DoxyCodeLine{00224\ \ \ \ \textcolor{keywordflow}{return}\ (lhs\ +=\ rhs);}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \textcolor{comment}{//\ Define\ subtraction\ between\ SubsecondTime\ instances}}
+\DoxyCodeLine{00228\ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00229\ \textcolor{keyword}{inline}\ SubsecondTime\ operator-\/(SubsecondTime\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00230\ \{}
+\DoxyCodeLine{00231\ \ \ \ \textcolor{keywordflow}{return}\ (lhs\ -\/=\ rhs);}
+\DoxyCodeLine{00232\ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \textcolor{comment}{//\ Define\ bitshift-\/left\ on\ SubsecondTime\ instances}}
+\DoxyCodeLine{00235\ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00236\ \textcolor{keyword}{inline}\ SubsecondTime\ operator<<(SubsecondTime\ lhs,\ uint64\_t\ rhs)}
+\DoxyCodeLine{00237\ \{}
+\DoxyCodeLine{00238\ \ \ \ \textcolor{keywordflow}{return}\ (lhs\ <<=\ rhs);}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{comment}{//\ Define\ multiplication\ with\ SubsecondTime\ and\ uint64\_t}}
+\DoxyCodeLine{00242\ \textcolor{comment}{//\ http//www.stackoverflow.com/questions/1751869}}
+\DoxyCodeLine{00243\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00244\ \textcolor{keyword}{inline}\ SubsecondTime\ operator*(SubsecondTime\ lhs,\ T\ rhs)}
+\DoxyCodeLine{00245\ \{}
+\DoxyCodeLine{00246\ \ \ \ \textcolor{keywordflow}{return}\ (lhs\ *=\ rhs);}
+\DoxyCodeLine{00247\ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00250\ \textcolor{keyword}{inline}\ SubsecondTime\ operator*(T\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00251\ \{}
+\DoxyCodeLine{00252\ \ \ \ \textcolor{keywordflow}{return}\ (rhs\ *\ lhs);}
+\DoxyCodeLine{00253\ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \textcolor{comment}{//\ Boolean\ operators}}
+\DoxyCodeLine{00256\ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00257\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00258\ \{}
+\DoxyCodeLine{00259\ \ \ \ \textcolor{keywordflow}{return}\ (lhs.m\_time\ ==\ rhs.m\_time);}
+\DoxyCodeLine{00260\ \}}
+\DoxyCodeLine{00261\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00262\ \{}
+\DoxyCodeLine{00263\ \ \ \ \textcolor{keywordflow}{return}\ !operator==(lhs,rhs);}
+\DoxyCodeLine{00264\ \}}
+\DoxyCodeLine{00265\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00266\ \{}
+\DoxyCodeLine{00267\ \ \ \ \textcolor{keywordflow}{return}\ (lhs.m\_time\ <\ rhs.m\_time);}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00270\ \{}
+\DoxyCodeLine{00271\ \ \ \ \textcolor{keywordflow}{return}\ !operator>\ (lhs,rhs);}
+\DoxyCodeLine{00272\ \}}
+\DoxyCodeLine{00273\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00274\ \{}
+\DoxyCodeLine{00275\ \ \ \ \textcolor{keywordflow}{return}\ !operator<\ (lhs,rhs);}
+\DoxyCodeLine{00276\ \}}
+\DoxyCodeLine{00277\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ SubsecondTime\&\ lhs,\ \textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00278\ \{}
+\DoxyCodeLine{00279\ \ \ \ \textcolor{keywordflow}{return}\ \ operator<\ (rhs,lhs);}
+\DoxyCodeLine{00280\ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ atomic\_add\_subsecondtime(SubsecondTime\ \&src\_dest,\ \textcolor{keyword}{const}\ SubsecondTime\ \&src)}
+\DoxyCodeLine{00283\ \{}
+\DoxyCodeLine{00284\ \ \ \ \_\_sync\_fetch\_and\_add(\&src\_dest.m\_time,\ src.m\_time);}
+\DoxyCodeLine{00285\ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \textcolor{comment}{//\ Base\ period\ (frequency)\ of\ a\ component.\ \ This\ class\ is\ normally\ referenced\ as\ a\ pointer\ in\ other\ generating\ classes}}
+\DoxyCodeLine{00288\ \textcolor{comment}{//\ \ below\ as\ it's\ value\ can\ change\ in\ DVFS\ scenarios.}}
+\DoxyCodeLine{00289\ \textcolor{keyword}{class\ }ComponentPeriod}
+\DoxyCodeLine{00290\ \{}
+\DoxyCodeLine{00291\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00292\ \ \ \ \textcolor{comment}{//\ Public\ constructors}}
+\DoxyCodeLine{00293\ \ \ \ ComponentPeriod(\textcolor{keyword}{const}\ ComponentPeriod\ \&\_p)}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ :\ m\_period(\_p.m\_period)}
+\DoxyCodeLine{00295\ \ \ \ \{\}}
+\DoxyCodeLine{00296\ \ \ \ \textcolor{comment}{//\ Only\ construct\ ComponentPeriods\ from\ this\ function}}
+\DoxyCodeLine{00297\ \ \ \ \textcolor{keyword}{static}\ ComponentPeriod\ fromFreqHz(uint64\_t\ freq\_in\_hz)}
+\DoxyCodeLine{00298\ \ \ \ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \textcolor{comment}{//\ All\ integer\ operations}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ SubsecondTime\ new\_period\ =\ SubsecondTime::SEC()\ /\ freq\_in\_hz;}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ComponentPeriod(\ new\_period\ );}
+\DoxyCodeLine{00302\ \ \ \ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \textcolor{keywordtype}{void}\ setPeriodFromFreqHz(uint64\_t\ freq\_in\_hz)}
+\DoxyCodeLine{00305\ \ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ m\_period\ =\ SubsecondTime::SEC()\ /\ freq\_in\_hz;}
+\DoxyCodeLine{00307\ \ \ \ \}}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ SubsecondTime\ getPeriod(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_period;\ \}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ UInt64\ getPeriodInFreqMHz(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00312\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::US\_1\ /\ m\_period.m\_time;}
+\DoxyCodeLine{00314\ \ \ \ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/1751869}}
+\DoxyCodeLine{00317\ \ \ \ ComponentPeriod\&\ operator*=(uint64\_t\ rhs)}
+\DoxyCodeLine{00318\ \ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ m\_period\ *=\ rhs;}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00321\ \ \ \ \}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \textcolor{comment}{//\ Implicit\ conversion\ operator\ from\ ComponentPeriod\ to\ SubsecondTime}}
+\DoxyCodeLine{00324\ \ \ \ \textcolor{comment}{//\ \ to\ allow\ operations\ on\ SubsecondTime}}
+\DoxyCodeLine{00325\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00326\ \ \ \ \textcolor{keyword}{operator}\ SubsecondTime()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00327\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_period;}
+\DoxyCodeLine{00329\ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00332\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentPeriod\ \&period);}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ ComponentPeriod()}
+\DoxyCodeLine{00335\ \ \ \ \{\}}
+\DoxyCodeLine{00336\ \ \ \ ComponentPeriod(uint64\_t\ \_time)}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ :\ m\_period(\_time)}
+\DoxyCodeLine{00338\ \ \ \ \{\}}
+\DoxyCodeLine{00339\ \ \ \ ComponentPeriod(SubsecondTime\ \&\_time)}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ :\ m\_period(\_time)}
+\DoxyCodeLine{00341\ \ \ \ \{\}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ SubsecondTime\ m\_period;}
+\DoxyCodeLine{00344\ \};}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \textcolor{keyword}{inline}\ ComponentPeriod\ operator*(ComponentPeriod\ lhs,\ uint64\_t\ rhs)}
+\DoxyCodeLine{00347\ \{}
+\DoxyCodeLine{00348\ \ \ \ \textcolor{keywordflow}{return}\ (lhs\ *=\ rhs);}
+\DoxyCodeLine{00349\ \}}
+\DoxyCodeLine{00350\ \textcolor{keyword}{inline}\ ComponentPeriod\ operator*(uint64\_t\ lhs,\ \textcolor{keyword}{const}\ ComponentPeriod\&\ rhs)}
+\DoxyCodeLine{00351\ \{}
+\DoxyCodeLine{00352\ \ \ \ \textcolor{keywordflow}{return}\ (rhs\ *\ lhs);}
+\DoxyCodeLine{00353\ \}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentPeriod\ \&period)}
+\DoxyCodeLine{00356\ \{}
+\DoxyCodeLine{00357\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ period.m\_period);}
+\DoxyCodeLine{00358\ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \textcolor{comment}{//\ To\ be\ used\ to\ connect\ legacy\ components\ with\ SubsecondTime}}
+\DoxyCodeLine{00362\ \textcolor{keyword}{class\ }SubsecondTimeCycleConverter\ \{}
+\DoxyCodeLine{00363\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00364\ \ \ \ SubsecondTimeCycleConverter(\textcolor{keyword}{const}\ ComponentPeriod\ *period)}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ :\ m\_period(period)}
+\DoxyCodeLine{00366\ \ \ \ \{\}}
+\DoxyCodeLine{00367\ \ \ \ SubsecondTime\ cyclesToSubsecondTime(UInt64\ cycles)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00368\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }SubsecondTime\textcolor{keyword}{>}(*m\_period)\ *\ cycles);}
+\DoxyCodeLine{00370\ \ \ \ \}}
+\DoxyCodeLine{00371\ \ \ \ UInt64\ subsecondTimeToCycles(SubsecondTime\ time)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00372\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ the\ number\ of\ native\ cycles\ for\ this\ component}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (time\ /\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }SubsecondTime\textcolor{keyword}{>}(*m\_period)).getInternalDataForced();}
+\DoxyCodeLine{00375\ \ \ \ \}}
+\DoxyCodeLine{00376\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00377\ \ \ \ SubsecondTimeCycleConverter()}
+\DoxyCodeLine{00378\ \ \ \ \{\}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *m\_period;}
+\DoxyCodeLine{00381\ \};}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \textcolor{comment}{//\ This\ class\ is\ used\ in\ components\ that\ have\ fixed\ bandwidths}}
+\DoxyCodeLine{00385\ \textcolor{comment}{//\ Internally,\ we\ keep\ track\ of\ BW\ in\ us,\ but\ the\ constructor\ takes\ ns.}}
+\DoxyCodeLine{00386\ \textcolor{keyword}{class\ }ComponentBandwidth}
+\DoxyCodeLine{00387\ \{}
+\DoxyCodeLine{00388\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00389\ \ \ \ ComponentBandwidth(\textcolor{keywordtype}{float}\ bw\_in\_bits\_per\_ns)}
+\DoxyCodeLine{00390\ \ \ \ \ :\ m\_bw\_in\_bits\_per\_us(bw\_in\_bits\_per\_ns\ *\ TimeConverter<float>::UStoNS(1))\ \textcolor{comment}{//\ bits\_per\_ns\ *\ num\_ns\_per\_us\ =\ bits\_per\_us}}
+\DoxyCodeLine{00391\ \ \ \ \{\}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \textcolor{comment}{//\ X\ bits\ *\ microseconds-\/per-\/cycle\ /\ bits/cycle\ =\ microseconds}}
+\DoxyCodeLine{00394\ \ \ \ \textcolor{comment}{//\ Multiply\ by\ the\ time\ unit\ first\ to\ keep\ the\ integer\ result\ above\ zero}}
+\DoxyCodeLine{00395\ \ \ \ SubsecondTime\ getLatency(uint64\_t\ bits\_transmitted)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00396\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ bits\_transmitted\ *\ SubsecondTime::US()\ /\ m\_bw\_in\_bits\_per\_us;}
+\DoxyCodeLine{00398\ \ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \textcolor{comment}{//\ FIXME,\ this\ doesn't\ properly\ round\ at\ the\ moment}}
+\DoxyCodeLine{00401\ \ \ \ SubsecondTime\ getRoundedLatency(uint64\_t\ bits\_transmitted)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00402\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ SubsecondTime\ us\ =\ SubsecondTime::US();}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\ (bits\_transmitted\ *\ us)\ +\ (us/2)\ )\ /\ m\_bw\_in\_bits\_per\_us;}
+\DoxyCodeLine{00405\ \ \ \ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentBandwidth\ \&time);}
+\DoxyCodeLine{00408\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00409\ \ \ \ uint64\_t\ m\_bw\_in\_bits\_per\_us;}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \textcolor{comment}{//\ Default\ constructor\ not\ supposed\ to\ be\ used.\ If\ we\ ever\ get\ rid\ of\ GCC\ 4.3,\ make\ this\ '=\ delete'\ again.}}
+\DoxyCodeLine{00412\ \ \ \ ComponentBandwidth()\ \{\}}
+\DoxyCodeLine{00413\ \};}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentBandwidth\ \&bandwidth)}
+\DoxyCodeLine{00416\ \{}
+\DoxyCodeLine{00417\ \textcolor{preprocessor}{\#ifdef\ SUBSECOND\_TIME\_SIMPLE\_OSTREAM}}
+\DoxyCodeLine{00418\ \ \ \ \textcolor{keywordflow}{return}\ os\ <<\ bandwidth.m\_bw\_in\_bits\_per\_us;}
+\DoxyCodeLine{00419\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00420\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ \textcolor{stringliteral}{"{}CB:"{}}\ <<\ bandwidth.m\_bw\_in\_bits\_per\_us\ <<\ \textcolor{stringliteral}{"{}-\/bits/NS"{}});}
+\DoxyCodeLine{00421\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00422\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{comment}{//\ This\ class\ is\ used\ in\ components\ that\ have\ fixed\ bandwidths\ per\ cycle}}
+\DoxyCodeLine{00425\ \textcolor{keyword}{class\ }ComponentBandwidthPerCycle}
+\DoxyCodeLine{00426\ \{}
+\DoxyCodeLine{00427\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00428\ \ \ \ ComponentBandwidthPerCycle(\textcolor{keyword}{const}\ ComponentPeriod\ *period,\ uint64\_t\ bw\_in\_bits\_per\_cycle)}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ :\ m\_period(period)}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ ,\ m\_bw\_in\_bits\_per\_cycle(bw\_in\_bits\_per\_cycle)}
+\DoxyCodeLine{00431\ \ \ \ \{\}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \textcolor{comment}{//\ This\ should\ be\ deleted\ or\ private,\ but\ to\ prevent\ exceptions\ in\ constructors,\ we'll\ allow\ it}}
+\DoxyCodeLine{00434\ \ \ \ ComponentBandwidthPerCycle()}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ :\ m\_period(static\_cast<const\ ComponentPeriod*>(NULL))}
+\DoxyCodeLine{00436\ \ \ \ \{\}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \ \textcolor{keywordtype}{bool}\ isInfinite()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00439\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_bw\_in\_bits\_per\_cycle\ ==\ 0;}
+\DoxyCodeLine{00441\ \ \ \ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \textcolor{comment}{//\ X\ bits\ *\ femtoseconds-\/per-\/cycle\ /\ bits/cycle\ =\ femtoseconds}}
+\DoxyCodeLine{00444\ \ \ \ \textcolor{comment}{//\ Multiply\ by\ the\ period\ first\ to\ keep\ the\ integer\ result\ above\ zero}}
+\DoxyCodeLine{00445\ \ \ \ SubsecondTime\ getLatency(uint64\_t\ bits\_transmitted)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00446\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ bits\_transmitted\ *\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period)\ /\ m\_bw\_in\_bits\_per\_cycle;}
+\DoxyCodeLine{00448\ \ \ \ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ SubsecondTime\ getRoundedLatency(uint64\_t\ bits\_transmitted)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00451\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ SubsecondTime\ period\ =\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period);}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\ (bits\_transmitted\ *\ period)\ +\ (period/2)\ )\ /\ m\_bw\_in\_bits\_per\_cycle;}
+\DoxyCodeLine{00454\ \ \ \ \}}
+\DoxyCodeLine{00455\ \ \ \ SubsecondTime\ getPeriod(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00456\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period);}
+\DoxyCodeLine{00458\ \ \ \ \}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentBandwidthPerCycle\ \&time);}
+\DoxyCodeLine{00461\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00462\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *m\_period;}
+\DoxyCodeLine{00463\ \ \ \ uint64\_t\ m\_bw\_in\_bits\_per\_cycle;}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \};}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentBandwidthPerCycle\ \&bandwidth)}
+\DoxyCodeLine{00468\ \{}
+\DoxyCodeLine{00469\ \textcolor{preprocessor}{\#ifdef\ SUBSECOND\_TIME\_SIMPLE\_OSTREAM}}
+\DoxyCodeLine{00470\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ bandwidth.m\_bw\_in\_bits\_per\_cycle);}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00472\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ \textcolor{stringliteral}{"{}CBPC:"{}}\ <<\ bandwidth.m\_bw\_in\_bits\_per\_cycle\ <<\ \textcolor{stringliteral}{"{}@"{}}\ <<\ bandwidth.m\_period);}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00474\ \}}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \textcolor{comment}{//\ This\ class\ is\ used\ in\ components\ that\ have\ fixed\ latencies\ that\ can\ be\ consumed\ by\ other\ components}}
+\DoxyCodeLine{00477\ \textcolor{comment}{//\ One\ needs\ to\ generate\ a\ delay\ that\ corresponds\ to\ the\ current\ frequency\ (period)\ of\ the\ connected}}
+\DoxyCodeLine{00478\ \textcolor{comment}{//\ \ component}}
+\DoxyCodeLine{00479\ \textcolor{keyword}{class\ }ComponentLatency}
+\DoxyCodeLine{00480\ \{}
+\DoxyCodeLine{00481\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00482\ \ \ \ ComponentLatency(\textcolor{keyword}{const}\ ComponentPeriod\ *period,\ uint64\_t\ fixed\_cycle\_latency)}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ :\ m\_period(period)}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ ,\ m\_fixed\_cycle\_latency(fixed\_cycle\_latency)}
+\DoxyCodeLine{00485\ \ \ \ \{\}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ SubsecondTime\ getLatency()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00488\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period)\ *\ m\_fixed\_cycle\_latency;}
+\DoxyCodeLine{00490\ \ \ \ \}}
+\DoxyCodeLine{00491\ \ \ \ SubsecondTime\ getPeriod(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00492\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period);}
+\DoxyCodeLine{00494\ \ \ \ \}}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/1751869}}
+\DoxyCodeLine{00497\ \ \ \ ComponentLatency\&\ operator+=(uint64\_t\ rhs)}
+\DoxyCodeLine{00498\ \ \ \ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ m\_fixed\_cycle\_latency\ +=\ rhs;}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00501\ \ \ \ \}}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentLatency\ \&time);}
+\DoxyCodeLine{00504\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00505\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *m\_period;}
+\DoxyCodeLine{00506\ \ \ \ uint64\_t\ m\_fixed\_cycle\_latency;}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ ComponentLatency()}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ :\ m\_period(static\_cast<const\ ComponentPeriod*>(0))}
+\DoxyCodeLine{00510\ \ \ \ \{\}}
+\DoxyCodeLine{00511\ \};}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentLatency\ \&latency)}
+\DoxyCodeLine{00514\ \{}
+\DoxyCodeLine{00515\ \textcolor{preprocessor}{\#ifdef\ SUBSECOND\_TIME\_SIMPLE\_OSTREAM}}
+\DoxyCodeLine{00516\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ latency.m\_fixed\_cycle\_latency);}
+\DoxyCodeLine{00517\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00518\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ \textcolor{stringliteral}{"{}CL:"{}}\ <<\ latency.m\_fixed\_cycle\_latency\ <<\ \textcolor{stringliteral}{"{}@"{}}\ <<\ latency.m\_period);}
+\DoxyCodeLine{00519\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00520\ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \textcolor{comment}{//\ This\ class\ is\ used\ in\ components\ like\ the\ CPU\ and\ Shared\ Memory\ subsystems\ where\ both\ time\ and}}
+\DoxyCodeLine{00523\ \textcolor{comment}{//\ \ numbers\ of\ cycles\ in\ latency\ need\ to\ be\ added\ to\ the\ core\ time}}
+\DoxyCodeLine{00524\ \textcolor{comment}{//\ Additionally,\ through\ getLatencyGenerator(),\ a\ temporary\ cost\ variable\ can\ be\ created\ that\ can}}
+\DoxyCodeLine{00525\ \textcolor{comment}{//\ \ eventually\ be\ re-\/merged\ into\ this\ one.\ \ This\ is\ helpful\ if\ you\ would\ like\ to\ add\ cycle\ latencies}}
+\DoxyCodeLine{00526\ \textcolor{comment}{//\ \ but\ aren't\ sure\ if\ you'd\ like\ to\ commit\ them\ directly\ to\ this\ component\ yet.}}
+\DoxyCodeLine{00527\ \textcolor{keyword}{class\ }ComponentTime}
+\DoxyCodeLine{00528\ \{}
+\DoxyCodeLine{00529\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00530\ \ \ \ \textcolor{comment}{//\ For\ adding\ cycles\ to\ this\ component}}
+\DoxyCodeLine{00531\ \ \ \ \textcolor{comment}{//\ The\ resulting\ amount\ of\ time\ will\ depend\ on\ the\ current\ frequency}}
+\DoxyCodeLine{00532\ \ \ \ \textcolor{comment}{//\ \ this\ component\ is\ set\ to}}
+\DoxyCodeLine{00533\ \ \ \ \textcolor{keywordtype}{void}\ addCycleLatency(uint64\_t\ num\_cycles)}
+\DoxyCodeLine{00534\ \ \ \ \{}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ m\_time\ +=\ (\textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period)\ *\ num\_cycles);}
+\DoxyCodeLine{00536\ \ \ \ \}}
+\DoxyCodeLine{00537\ \ \ \ \textcolor{comment}{//\ This\ is\ for\ adding\ time\ that\ is\ not\ necessarily\ measured\ by\ the\ base\ component\ frequency}}
+\DoxyCodeLine{00538\ \ \ \ \textcolor{keywordtype}{void}\ addLatency(SubsecondTime\ time\_to\_add)}
+\DoxyCodeLine{00539\ \ \ \ \{}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ m\_time\ +=\ time\_to\_add;}
+\DoxyCodeLine{00541\ \ \ \ \}}
+\DoxyCodeLine{00542\ \ \ \ \textcolor{keywordtype}{void}\ addLatency(\textcolor{keyword}{const}\ ComponentTime\&\ time\_to\_add)}
+\DoxyCodeLine{00543\ \ \ \ \{}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ assert(time\_to\_add.m\_period\ ==\ this-\/>m\_period);}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ m\_time\ +=\ time\_to\_add.m\_time;}
+\DoxyCodeLine{00546\ \ \ \ \}}
+\DoxyCodeLine{00547\ \ \ \ \textcolor{comment}{//\ We\ can\ skip\ the\ function\ names\ and\ use\ operators\ because\ this\ is\ the\ default}}
+\DoxyCodeLine{00548\ \ \ \ \textcolor{comment}{//\ and\ expected\ case.\ \ The\ time\ scale\ bases\ should\ be\ verified\ to\ be\ the\ same}}
+\DoxyCodeLine{00549\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/1751869}}
+\DoxyCodeLine{00550\ \ \ \ ComponentTime\&\ operator+=(\textcolor{keyword}{const}\ ComponentTime\&\ rhs)}
+\DoxyCodeLine{00551\ \ \ \ \{}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ assert(rhs.m\_period\ ==\ this-\/>m\_period);}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ m\_time\ +=\ rhs.m\_time;}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00555\ \ \ \ \}}
+\DoxyCodeLine{00556\ \ \ \ ComponentTime\&\ operator+=(\textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00557\ \ \ \ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ m\_time\ +=\ rhs;}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00560\ \ \ \ \}}
+\DoxyCodeLine{00561\ \ \ \ ComponentTime\ operator+(\textcolor{keyword}{const}\ SubsecondTime\&\ rhs)}
+\DoxyCodeLine{00562\ \ \ \ \{}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ ComponentTime\ result(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ result.addLatency(rhs);}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00566\ \ \ \ \}}
+\DoxyCodeLine{00567\ \ \ \ ComponentTime\ operator+(uint64\_t\ rhs)}
+\DoxyCodeLine{00568\ \ \ \ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ ComponentTime\ result(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ result.addCycleLatency(rhs);}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00572\ \ \ \ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ \textcolor{keywordtype}{void}\ reset()}
+\DoxyCodeLine{00575\ \ \ \ \{}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ m\_time\ =\ SubsecondTime();}
+\DoxyCodeLine{00577\ \ \ \ \}}
+\DoxyCodeLine{00578\ }
+\DoxyCodeLine{00579\ \ \ \ ComponentTime\ getLatencyGenerator(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00580\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ComponentTime(m\_period);}
+\DoxyCodeLine{00582\ \ \ \ \}}
+\DoxyCodeLine{00583\ \ \ \ SubsecondTime\ getElapsedTime(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00584\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_time;}
+\DoxyCodeLine{00586\ \ \ \ \}}
+\DoxyCodeLine{00587\ \ \ \ UInt64\ getCycleCount(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00588\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ SubsecondTime::divideRounded(m\_time,\ *m\_period);}
+\DoxyCodeLine{00590\ \ \ \ \}}
+\DoxyCodeLine{00591\ \ \ \ SubsecondTime\ getPeriod(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00592\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}SubsecondTime\textcolor{keyword}{>}(*m\_period);}
+\DoxyCodeLine{00594\ \ \ \ \}}
+\DoxyCodeLine{00595\ \ \ \ \textcolor{keywordtype}{void}\ setElapsedTime(SubsecondTime\ new\_time)}
+\DoxyCodeLine{00596\ \ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ m\_time\ =\ new\_time;}
+\DoxyCodeLine{00598\ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \ \textcolor{comment}{//\ Always\ construct\ ComponentTime\ via\ this\ constructor}}
+\DoxyCodeLine{00600\ \ \ \ \textcolor{comment}{//\ A\ valid\ ComponentPeriod\ is\ needed\ to\ add\ cycles}}
+\DoxyCodeLine{00601\ \ \ \ ComponentTime(\textcolor{keyword}{const}\ ComponentPeriod\ *\_base\_period)}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ :\ m\_period(\_base\_period)}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ ,\ m\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00604\ \ \ \ \{\}}
+\DoxyCodeLine{00605\ \ \ \ \textcolor{comment}{//\ Implicit\ conversion\ operator\ from\ ComponentTime\ to\ ComponentPeriod}}
+\DoxyCodeLine{00606\ \ \ \ \textcolor{comment}{//\ \ to\ allow\ operations\ on\ ComponentPeriod}}
+\DoxyCodeLine{00607\ \ \ \ \textcolor{comment}{//\ From\ http://www.stackoverflow.com/questions/4421706}}
+\DoxyCodeLine{00608\ \ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{const}\ ComponentPeriod*()\ \textcolor{keyword}{const}}
+\DoxyCodeLine{00609\ \ \ \ \{}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_period;}
+\DoxyCodeLine{00611\ \ \ \ \}}
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ \ \ \ \textcolor{comment}{//\ Implicit\ conversion\ operator\ from\ ComponentTime\ to\ SubsecondTime}}
+\DoxyCodeLine{00614\ \ \ \ \textcolor{comment}{//\ \ to\ allow\ comparisons\ between\ them}}
+\DoxyCodeLine{00615\ \ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{const}\ SubsecondTime()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00616\ \textcolor{keyword}{\ \ \ }\{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_time;}
+\DoxyCodeLine{00618\ \ \ \ \}}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentTime\ \&time);}
+\DoxyCodeLine{00621\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00622\ \ \ \ \textcolor{keyword}{const}\ ComponentPeriod\ *m\_period;}
+\DoxyCodeLine{00623\ \ \ \ SubsecondTime\ m\_time;}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00625\ \ \ \ ComponentTime()}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ :\ m\_period(static\_cast<const\ ComponentPeriod*>(0))}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ ,\ m\_time(SubsecondTime::Zero())}
+\DoxyCodeLine{00628\ \ \ \ \{\}}
+\DoxyCodeLine{00629\ \};}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00631\ \textcolor{keyword}{inline}\ std::ostream\ \&operator<<(std::ostream\ \&os,\ \textcolor{keyword}{const}\ ComponentTime\ \&time)}
+\DoxyCodeLine{00632\ \{}
+\DoxyCodeLine{00633\ \textcolor{preprocessor}{\#ifdef\ SUBSECOND\_TIME\_SIMPLE\_OSTREAM}}
+\DoxyCodeLine{00634\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ time.m\_time);}
+\DoxyCodeLine{00635\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00636\ \ \ \ SubsecondTime\ cur\_time\ =\ time.m\_time;}
+\DoxyCodeLine{00637\ \ \ \ ComponentPeriod\ cur\_period\ =\ *(time.m\_period);}
+\DoxyCodeLine{00638\ \ \ \ SubsecondTime\ cur\_cycle\ =\ cur\_time\ /\ cur\_period.getPeriod();}
+\DoxyCodeLine{00639\ \ \ \ \textcolor{keywordflow}{return}\ (os\ <<\ cur\_time\ <<\ \textcolor{stringliteral}{"{}("{}}\ <<\ cur\_cycle\ <<\ \textcolor{stringliteral}{"{}@"{}}\ <<\ cur\_period\ <<\ \textcolor{stringliteral}{"{})"{}});}
+\DoxyCodeLine{00640\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00641\ \}}
+\DoxyCodeLine{00642\ }
+\DoxyCodeLine{00643\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ SUBSECOND\_TIME\_H\_\_\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

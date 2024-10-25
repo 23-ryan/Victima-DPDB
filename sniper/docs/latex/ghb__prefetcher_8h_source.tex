@@ -1,0 +1,56 @@
+\doxysection{ghb\+\_\+prefetcher.\+h}
+\label{ghb__prefetcher_8h_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ghb\_prefetcher.h@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ghb\_prefetcher.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_GHB\_PREFETCHER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_GHB\_PREFETCHER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}prefetcher.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }GhbPrefetcher\ :\ \textcolor{keyword}{public}\ Prefetcher}
+\DoxyCodeLine{00007\ \{}
+\DoxyCodeLine{00008\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ GhbPrefetcher(String\ configName,\ core\_id\_t\ core\_id);}
+\DoxyCodeLine{00010\ \ \ \ \ \ \ std::vector<IntPtr>\ getNextAddress(IntPtr\ currentAddress,\ core\_id\_t\ core\_id,Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ IntPtr\ eip);}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \string~GhbPrefetcher();}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ SInt64\ INVALID\_DELTA\ =\ INT64\_MAX;}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt32\ INVALID\_INDEX\ =\ UINT32\_MAX;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }GHBEntry}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ UInt32\ nextIndex;\ \textcolor{comment}{//index\ of\ the\ next\ entry\ belonging\ to\ the\ same\ list}}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ SInt64\ delta;\ \textcolor{comment}{//delta\ between\ last\ address\ and\ current\ address}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ UInt32\ generation;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \ GHBEntry()\ :\ nextIndex(INVALID\_INDEX),\ delta(INVALID\_DELTA),\ generation(0)\ \{\}}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{struct\ }TableEntry}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ UInt32\ ghbIndex;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ SInt64\ delta;}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ UInt32\ generation;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ TableEntry()\ :\ ghbIndex(INVALID\_INDEX),\ delta(INVALID\_DELTA),\ generation(0)\ \{\}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \ \ UInt32\ m\_prefetchWidth;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ UInt32\ m\_prefetchDepth;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \ \ IntPtr\ m\_lastAddress;}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{comment}{//circular\ global\ history\ buffer}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ UInt32\ m\_ghbSize;}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ UInt32\ m\_ghbHead;}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ UInt32\ m\_generation;}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ std::vector<GHBEntry>\ m\_ghb;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ UInt32\ m\_tableSize;}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ UInt32\ m\_tableHead;\ \textcolor{comment}{//next\ table\ position\ to\ be\ overwritten\ (in\ lack\ of\ a\ better\ replacement\ policy\ at\ the\ moment)}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ std::vector<TableEntry>\ m\_ghbTable;}
+\DoxyCodeLine{00048\ \};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_GHB\_PREFETCHER\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,54 @@
+\doxysection{loop\+\_\+tracer.\+h}
+\label{loop__tracer_8h_source}\index{common/performance\_model/instruction\_tracers/loop\_tracer.h@{common/performance\_model/instruction\_tracers/loop\_tracer.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_LOOP\_TRACER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_LOOP\_TRACER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }Core;}
+\DoxyCodeLine{00009\ \textcolor{keyword}{class\ }Instruction;}
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }MicroOp;}
+\DoxyCodeLine{00011\ \textcolor{keyword}{class\ }DynamicMicroOp;}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{class\ }LoopTracer\ :\ \textcolor{keyword}{public}\ InstructionTracer}
+\DoxyCodeLine{00014\ \{}
+\DoxyCodeLine{00015\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Core\ *m\_core;}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keyword}{const}\ IntPtr\ m\_address\_base;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SInt64\ m\_iter\_start;}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SInt64\ m\_iter\_count;}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_active;}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ SInt64\ m\_iter\_current;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ UInt64\ m\_iter\_instr;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ UInt8\ m\_instr\_uop;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ uint64\_t\ m\_cycle\_min;}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ uint64\_t\ m\_cycle\_max;}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ uint64\_t\ m\_disas\_max;}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \textcolor{keyword}{class\ }Instr\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ Instr()\ \{\}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ Instr(\textcolor{keyword}{const}\ Instruction\ *instruction,\ UInt8\ uop\_num)\ :\ instruction(instruction),\ uop\_num(uop\_num),\ issued()\ \{\}}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Instruction\ *instruction;}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ UInt8\ uop\_num;}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ std::map<uint64\_t,\ int64\_t>\ issued;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::map<std::pair<IntPtr,\ UInt8>,\ Instr>\ Instructions;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ Instructions\ m\_instructions;}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ LoopTracer(\textcolor{keyword}{const}\ Core\ *core);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \string~LoopTracer();}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ traceInstruction(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop,\ uop\_times\_t\ *times);}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_LOOP\_TRACER\_H}}
+
+\end{DoxyCode}

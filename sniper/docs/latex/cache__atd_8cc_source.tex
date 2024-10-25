@@ -1,0 +1,141 @@
+\doxysection{cache\+\_\+atd.\+cc}
+\label{cache__atd_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cache\_atd.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/cache\_atd.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}cache\_atd.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}cache\_set.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}pr\_l1\_cache\_block\_info.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}rng.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ ATD::ATD(String\ name,\ String\ configName,\ core\_id\_t\ core\_id,\ UInt32\ num\_sets,\ UInt32\ associativity,}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ \ UInt32\ cache\_block\_size,\ String\ replacement\_policy,\ CacheBase::hash\_t\ hash\_function)}
+\DoxyCodeLine{00010\ \ \ \ :\ m\_cache\_base(name,\ num\_sets,\ associativity,\ cache\_block\_size,\ hash\_function)}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_sets()}
+\DoxyCodeLine{00012\ \ \ \ ,\ loads(0)}
+\DoxyCodeLine{00013\ \ \ \ ,\ stores(0)}
+\DoxyCodeLine{00014\ \ \ \ ,\ load\_misses(0)}
+\DoxyCodeLine{00015\ \ \ \ ,\ store\_misses(0)}
+\DoxyCodeLine{00016\ \ \ \ ,\ loads\_constructive(0)}
+\DoxyCodeLine{00017\ \ \ \ ,\ stores\_constructive(0)}
+\DoxyCodeLine{00018\ \ \ \ ,\ loads\_destructive(0)}
+\DoxyCodeLine{00019\ \ \ \ ,\ stores\_destructive(0)}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \ m\_set\_info\ =\ CacheSet::createCacheSetInfo(name,\ configName,\ core\_id,\ replacement\_policy,\ associativity);}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}loads"{}},\ \&loads);}
+\DoxyCodeLine{00024\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}stores"{}},\ \&stores);}
+\DoxyCodeLine{00025\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}load-\/misses"{}},\ \&load\_misses);}
+\DoxyCodeLine{00026\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}store-\/misses"{}},\ \&store\_misses);}
+\DoxyCodeLine{00027\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}loads-\/constructive"{}},\ \&loads\_constructive);}
+\DoxyCodeLine{00028\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}loads-\/destructive"{}},\ \&loads\_destructive);}
+\DoxyCodeLine{00029\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}stores-\/constructive"{}},\ \&stores\_constructive);}
+\DoxyCodeLine{00030\ \ \ \ registerStatsMetric(name,\ core\_id,\ \textcolor{stringliteral}{"{}stores-\/destructive"{}},\ \&stores\_destructive);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ String\ sampling\ =\ Sim()-\/>getCfg()-\/>getStringArray(configName\ +\ \textcolor{stringliteral}{"{}/atd/sampling"{}},\ core\_id);}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{if}\ (sampling\ ==\ \textcolor{stringliteral}{"{}full"{}})}
+\DoxyCodeLine{00034\ \ \ \ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt64\ set\_index\ =\ 0;\ set\_index\ <\ num\_sets;\ ++set\_index)}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ m\_sets[set\_index]\ =\ CacheSet::createCacheSet(name,\ core\_id,\ replacement\_policy,\ CacheBase::PR\_L1\_CACHE,\ associativity,\ 0,\ m\_set\_info);}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \ \}}
+\DoxyCodeLine{00040\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sampling\ ==\ \textcolor{stringliteral}{"{}2\string^n+1"{}})}
+\DoxyCodeLine{00041\ \ \ \ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{comment}{//\ Sample\ sets\ at\ indexes\ 2\string^N+1}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt64\ set\_index\ =\ 1;\ set\_index\ <\ num\_sets\ -\/\ 1;\ set\_index\ <<=\ 1)}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ m\_sets[set\_index+1]\ =\ CacheSet::createCacheSet(name,\ core\_id,\ replacement\_policy,\ CacheBase::PR\_L1\_CACHE,\ associativity,\ 0,\ m\_set\_info);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00047\ \ \ \ \}}
+\DoxyCodeLine{00048\ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sampling\ ==\ \textcolor{stringliteral}{"{}random"{}})}
+\DoxyCodeLine{00049\ \ \ \ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{comment}{//\ Sample\ sets\ at\ random\ positions}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ UInt64\ state\ =\ rng\_seed(Sim()-\/>getCfg()-\/>getIntArray(configName\ +\ \textcolor{stringliteral}{"{}/atd/sampling/random/seed"{}},\ core\_id));}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ UInt64\ num\_atds\ =\ Sim()-\/>getCfg()-\/>getIntArray(configName\ +\ \textcolor{stringliteral}{"{}/atd/sampling/random/count"{}},\ core\_id);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ UInt64\ num\_attempts\ =\ 0;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(num\_atds\ <=\ num\_sets,\ \textcolor{stringliteral}{"{}Cannot\ sample\ more\ sets\ (\%d)\ than\ the\ total\ number\ of\ sets\ (\%d)"{}},\ num\_atds,\ num\_sets);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(num\_atds)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ UInt64\ set\_index\ =\ rng\_next(state)\ \%\ num\_sets;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sets.count(set\_index)\ ==\ 0)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ m\_sets[set\_index]\ =\ CacheSet::createCacheSet(name,\ core\_id,\ replacement\_policy,\ CacheBase::PR\_L1\_CACHE,\ associativity,\ 0,\ m\_set\_info);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/num\_atds;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ LOG\_ASSERT\_ERROR(++num\_attempts\ <\ 10\ *\ num\_sets,\ \textcolor{stringliteral}{"{}Cound\ not\ find\ unique\ ATD\ sets\ even\ after\ many\ attempts"{}});}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00069\ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ LOG\_PRINT\_ERROR(\textcolor{stringliteral}{"{}Invalid\ ATD\ sampling\ method\ \%s"{}},\ sampling.c\_str());}
+\DoxyCodeLine{00071\ \ \ \ \}}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ ATD::\string~ATD()}
+\DoxyCodeLine{00075\ \{}
+\DoxyCodeLine{00076\ \ \ \ \textcolor{keywordflow}{if}\ (m\_set\_info)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_set\_info;}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{bool}\ ATD::isSampledSet(UInt32\ set\_index)}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ \ \textcolor{keywordflow}{return}\ m\_sets.count(set\_index);}
+\DoxyCodeLine{00083\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{void}\ ATD::access(Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ IntPtr\ address)}
+\DoxyCodeLine{00086\ \{}
+\DoxyCodeLine{00087\ \ \ \ IntPtr\ tag;\ UInt32\ set\_index;}
+\DoxyCodeLine{00088\ \ \ \ m\_cache\_base.splitAddress(address,\ tag,\ set\_index);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{if}\ (isSampledSet(set\_index))}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ UInt32\ line\_index\ =\ -\/1;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ atd\_hit\ =\ m\_sets[set\_index]-\/>find(tag,\ \&line\_index);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (atd\_hit)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ m\_sets[set\_index]-\/>updateReplacementIndex(line\_index);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ PrL1CacheBlockInfo*\ cache\_block\_info\ =\ \textcolor{keyword}{new}\ PrL1CacheBlockInfo(tag,\ CacheState::MODIFIED);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ eviction;\ PrL1CacheBlockInfo\ evict\_block\_info;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ m\_sets[set\_index]-\/>insert(cache\_block\_info,\ NULL,\ \&eviction,\ \&evict\_block\_info,\ NULL);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ cache\_block\_info;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ ++stores;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!atd\_hit)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ ++store\_misses;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ ++loads;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!atd\_hit)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ ++load\_misses;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cache\_hit\ \&\&\ !atd\_hit)}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ ++stores\_constructive;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ ++loads\_constructive;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!cache\_hit\ \&\&\ atd\_hit)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mem\_op\_type\ ==\ Core::WRITE)}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ ++stores\_destructive;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ ++loads\_destructive;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \}}
+\DoxyCodeLine{00135\ \}}
+
+\end{DoxyCode}

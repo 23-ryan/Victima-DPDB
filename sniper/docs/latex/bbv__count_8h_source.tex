@@ -1,0 +1,52 @@
+\doxysection{bbv\+\_\+count.\+h}
+\label{bbv__count_8h_source}\index{common/core/bbv\_count.h@{common/core/bbv\_count.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ BBV\_COUNT\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ BBV\_COUNT\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{keyword}{class\ }BbvCount}
+\DoxyCodeLine{00009\ \{}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00011\ \ \ \ \ \ \ \textcolor{keyword}{const}\ core\_id\_t\ m\_core\_id;}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \textcolor{comment}{//\ Running\ count\ (never\ reset)}}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ UInt64\ m\_instrs\_abs;}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ std::vector<UInt64>\ m\_bbv\_counts\_abs;}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \textcolor{comment}{//\ Value\ of\ icount/BBV\ at\ last\ reset}}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ UInt64\ m\_instrs\_reset;}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ std::vector<UInt64>\ m\_bbv\_reset;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{comment}{//\ Relative\ BBV\ ending\ at\ last\ reset}}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ std::vector<UInt64>\ m\_bbv\_previous;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ UInt64\ m\_sample\_period;}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ UInt64\ m\_sample\_seed;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ UInt64\ m\_sample;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ sampleReset();}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ dimensions\ to\ project\ BBVs\ to}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ this\ remains\ a\ multiple\ of\ four,\ or\ update\ the\ unrolled\ loop\ in\ BbvCount::count}}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ NUM\_BBV\ =\ 16;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \ \ BbvCount(core\_id\_t\ core\_id);}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \string~BbvCount();}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ sample();}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ count(UInt64\ address,\ UInt64\ count);}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ reset(\textcolor{keywordtype}{bool}\ save\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ UInt64\ getDiff();}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ UInt64\ getDimension(\textcolor{keywordtype}{int}\ dim)\ \{\ \textcolor{keywordflow}{return}\ m\_bbv\_counts\_abs.at(dim)\ -\/\ m\_bbv\_reset.at(dim);\ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ UInt64\ getInstructionCount(\textcolor{keywordtype}{void})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_instrs\_abs\ -\/\ m\_instrs\_reset;\ \}}
+\DoxyCodeLine{00044\ \};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ BBV\_COUNT\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,120 @@
+\doxysection{loop\+\_\+tracer.\+cc}
+\label{loop__tracer_8cc_source}\index{common/performance\_model/instruction\_tracers/loop\_tracer.cc@{common/performance\_model/instruction\_tracers/loop\_tracer.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}loop\_tracer.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ LoopTracer::LoopTracer(\textcolor{keyword}{const}\ Core\ *core)}
+\DoxyCodeLine{00009\ \ \ \ :\ m\_core(core)}
+\DoxyCodeLine{00010\ \ \ \ ,\ m\_address\_base(strtol(Sim()-\/>getCfg()-\/>getStringArray(\textcolor{stringliteral}{"{}loop\_tracer/base\_address"{}},\ core-\/>getId()).c\_str(),\ NULL,\ 16))}
+\DoxyCodeLine{00011\ \ \ \ ,\ m\_iter\_start(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}loop\_tracer/iter\_start"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00012\ \ \ \ ,\ m\_iter\_count(Sim()-\/>getCfg()-\/>getIntArray(\textcolor{stringliteral}{"{}loop\_tracer/iter\_count"{}},\ core-\/>getId()))}
+\DoxyCodeLine{00013\ \ \ \ ,\ m\_active(false)}
+\DoxyCodeLine{00014\ \ \ \ ,\ m\_iter\_current(-\/1)}
+\DoxyCodeLine{00015\ \ \ \ ,\ m\_iter\_instr(0)}
+\DoxyCodeLine{00016\ \ \ \ ,\ m\_instr\_uop(0)}
+\DoxyCodeLine{00017\ \ \ \ ,\ m\_cycle\_min(UINT64\_MAX)}
+\DoxyCodeLine{00018\ \ \ \ ,\ m\_cycle\_max(0)}
+\DoxyCodeLine{00019\ \ \ \ ,\ m\_disas\_max(0)}
+\DoxyCodeLine{00020\ \ \ \ ,\ m\_instructions()}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ LOG\_ASSERT\_ERROR(m\_iter\_count\ <=\ 36,\ \textcolor{stringliteral}{"{}Can\ track\ only\ up\ to\ 36\ iterations"{}});}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ LoopTracer::\string~LoopTracer()}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ uint64\_t\ num\_cycles\ =\ std::min(uint64\_t(1000),\ m\_cycle\_max\ -\/\ m\_cycle\_min\ +\ 1);\ \ \ \textcolor{comment}{//\ show\ at\ most\ 1000\ cycles}}
+\DoxyCodeLine{00028\ \ \ \ m\_disas\_max\ =\ std::max(uint64\_t(20),\ m\_disas\_max);\ \ \ \ \textcolor{comment}{//\ make\ disassembly\ column\ at\ least\ 20\ characters\ wide}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \textcolor{comment}{//\ print\ header:\ major\ tick\ every\ ten\ cycles,\ last\ digit\ every\ cycle}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ printf(\textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \%s"{}},\ String(m\_disas\_max,\ \textcolor{charliteral}{'\ '}).c\_str());}
+\DoxyCodeLine{00033\ \ \ \ \textcolor{keywordflow}{for}(uint64\_t\ i\ =\ 0;\ i\ <\ num\_cycles;\ i\ +=\ 10)}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%-\/5"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}},\ i);}
+\DoxyCodeLine{00035\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ printf(\textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \%s"{}},\ String(m\_disas\_max,\ \textcolor{charliteral}{'\ '}).c\_str());}
+\DoxyCodeLine{00038\ \ \ \ \textcolor{keywordflow}{for}(uint64\_t\ i\ =\ 0;\ i\ <\ num\_cycles;\ ++i)}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%"{}}\ PRIu64\ \textcolor{stringliteral}{"{}\ "{}},\ i\ \%\ 10);}
+\DoxyCodeLine{00040\ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \textcolor{comment}{//\ print\ per-\/instruction\ schedule}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \textcolor{keywordflow}{for}(Instructions::iterator\ it\ =\ m\_instructions.begin();\ it\ !=\ m\_instructions.end();\ ++it)}
+\DoxyCodeLine{00045\ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}[\%8"{}}\ PRIxPTR\ \textcolor{stringliteral}{"{}]\ \%-\/*s\ (\%u)\ \ \ \ "{}},\ it-\/>second.instruction-\/>getAddress(),\ \textcolor{keywordtype}{int}(m\_disas\_max),\ it-\/>second.instruction-\/>getDisassembly().c\_str(),\ it-\/>second.uop\_num);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ std::vector<char>\ line(num\_cycles,\ \textcolor{charliteral}{'\ '});}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(std::map<uint64\_t,\ int64\_t>::iterator\ jt\ =\ it-\/>second.issued.begin();\ jt\ !=\ it-\/>second.issued.end();\ ++jt)}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (jt-\/>second\ -\/\ m\_cycle\_min\ <\ num\_cycles\ \&\&\ jt-\/>first\ <\ 36)}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ line[jt-\/>second\ -\/\ m\_cycle\_min]\ =\ jt-\/>first\ <\ 10\ ?\ \textcolor{charliteral}{'0'}+jt-\/>first\ :\ \textcolor{charliteral}{'a'}+jt-\/>first-\/10;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(std::vector<char>::iterator\ jt\ =\ line.begin();\ jt\ !=\ line.end();\ ++jt)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\%c\ "{}},\ *jt);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00054\ \ \ \ \}}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00058\ LoopTracer::traceInstruction(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop,\ uop\_times\_t\ *times)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \ \textcolor{comment}{//\ Ignore\ dynamic\ (fake)\ instructions}}
+\DoxyCodeLine{00061\ \ \ \ \textcolor{keywordflow}{if}\ (!uop-\/>getMicroOp()-\/>getInstruction())}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ uint64\_t\ cycle\_issue\ =\ 0;}
+\DoxyCodeLine{00065\ \ \ \ \textcolor{keywordflow}{if}\ (times)}
+\DoxyCodeLine{00066\ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ cycle\_issue\ =\ SubsecondTime::divideRounded(times-\/>issue,\ m\_core-\/>getDvfsDomain()-\/>getPeriod());}
+\DoxyCodeLine{00068\ \ \ \ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ Instruction\ *inst\ =\ uop-\/>getMicroOp()-\/>getInstruction();}
+\DoxyCodeLine{00071\ \ \ \ IntPtr\ address\ =\ inst-\/>getAddress();}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \textcolor{comment}{//\ Start\ of\ a\ new\ loop\ iteration?}}
+\DoxyCodeLine{00074\ \ \ \ \textcolor{keywordflow}{if}\ (address\ ==\ m\_address\_base\ \&\&\ uop-\/>isFirst())}
+\DoxyCodeLine{00075\ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ ++m\_iter\_current;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ m\_iter\_instr\ =\ 0;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ m\_instr\_uop\ =\ 0;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_iter\_current\ >=\ m\_iter\_start\ \&\&\ m\_iter\_current\ <\ m\_iter\_start\ +\ m\_iter\_count)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ m\_active\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ m\_active\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (address\ <\ m\_address\_base)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ jumped\ backwards}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ m\_active\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \textcolor{keywordflow}{if}\ (m\_active)}
+\DoxyCodeLine{00091\ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ std::pair<IntPtr,\ UInt8>\ opid(address,\ m\_instr\_uop);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_instructions.count(opid)\ ==\ 0)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ m\_instructions[opid]\ =\ Instr(inst,\ m\_instr\_uop);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ m\_disas\_max\ =\ std::max(m\_disas\_max,\ (uint64\_t)inst-\/>getDisassembly().length());}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ m\_instructions[opid].issued[m\_iter\_current\ -\/\ m\_iter\_start]\ =\ cycle\_issue;}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ m\_cycle\_min\ =\ std::min(m\_cycle\_min,\ cycle\_issue);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ m\_cycle\_max\ =\ std::max(m\_cycle\_max,\ cycle\_issue);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \ \ ++m\_instr\_uop;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isLast())}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ ++m\_iter\_instr;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ m\_instr\_uop\ =\ 0;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ only\ up\ to\ 100\ instructions}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_iter\_instr\ >\ 100)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ m\_active\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00113\ \ \ \ \}}
+\DoxyCodeLine{00114\ \}}
+
+\end{DoxyCode}

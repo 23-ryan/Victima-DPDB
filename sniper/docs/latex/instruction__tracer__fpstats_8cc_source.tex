@@ -1,0 +1,57 @@
+\doxysection{instruction\+\_\+tracer\+\_\+fpstats.\+cc}
+\label{instruction__tracer__fpstats_8cc_source}\index{common/performance\_model/instruction\_tracers/instruction\_tracer\_fpstats.cc@{common/performance\_model/instruction\_tracers/instruction\_tracer\_fpstats.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}instruction\_tracer\_fpstats.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}thread\_stats\_manager.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}instruction.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}micro\_op.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}dynamic\_micro\_op.h"{}}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \textcolor{keyword}{const}\ fp\_iclasses[]\ =\ \{}
+\DoxyCodeLine{00010\ \ \ \ \textcolor{stringliteral}{"{}ADDPD"{}},\ \textcolor{stringliteral}{"{}ADDSD"{}},\ \textcolor{stringliteral}{"{}ADDSS"{}},\ \textcolor{stringliteral}{"{}ADDPS"{}},}
+\DoxyCodeLine{00011\ \ \ \ \textcolor{stringliteral}{"{}SUBPD"{}},\ \textcolor{stringliteral}{"{}SUBSD"{}},\ \textcolor{stringliteral}{"{}SUBSS"{}},\ \textcolor{stringliteral}{"{}SUBPS"{}},}
+\DoxyCodeLine{00012\ \ \ \ \textcolor{stringliteral}{"{}MULPD"{}},\ \textcolor{stringliteral}{"{}MULSD"{}},\ \textcolor{stringliteral}{"{}MULSS"{}},\ \textcolor{stringliteral}{"{}MULPS"{}},}
+\DoxyCodeLine{00013\ \ \ \ \textcolor{stringliteral}{"{}DIVPD"{}},\ \textcolor{stringliteral}{"{}DIVSD"{}},\ \textcolor{stringliteral}{"{}DIVSS"{}},\ \textcolor{stringliteral}{"{}DIVPS"{}},}
+\DoxyCodeLine{00014\ \};}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ InstructionTracerFPStats::InstructionTracerFPStats(\textcolor{keyword}{const}\ Core\ *core)}
+\DoxyCodeLine{00017\ \ \ \ :\ m\_core(core)}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \ \ \ std::unordered\_map<int,\ int>\ iclass2index;}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ (\textcolor{keyword}{sizeof}(fp\_iclasses)\ /\ \textcolor{keyword}{sizeof}(fp\_iclasses[0]));\ i++)}
+\DoxyCodeLine{00021\ \ \ \ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iclass\_int\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(str2xed\_iclass\_enum\_t(fp\_iclasses[i]));}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ m\_iclasses[iclass\_int]\ =\ 0;}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ iclass2index[iclass\_int]\ =\ i;}
+\DoxyCodeLine{00025\ \ \ \ \}}
+\DoxyCodeLine{00026\ \ \ \ \textcolor{keywordflow}{for}\ (std::unordered\_map<int,\ uint64\_t>::iterator\ iclass\ =\ m\_iclasses.begin()\ ;\ iclass\ !=\ m\_iclasses.end()\ ;\ ++iclass)}
+\DoxyCodeLine{00027\ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}instruction\_tracer"{}},\ core-\/>getId(),\ fp\_iclasses[iclass2index[iclass-\/>first]],\ \&(iclass-\/>second));}
+\DoxyCodeLine{00029\ \ \ \ \}}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ InstructionTracerFPStats::init()}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ (\textcolor{keyword}{sizeof}(fp\_iclasses)\ /\ \textcolor{keyword}{sizeof}(fp\_iclasses[0]));\ i++)}
+\DoxyCodeLine{00035\ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \textcolor{comment}{//\ registerStat\ requires\ static\ const\ names}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ ThreadStatNamedStat::registerStat(fp\_iclasses[i],\ \textcolor{stringliteral}{"{}instruction\_tracer"{}},\ fp\_iclasses[i]);}
+\DoxyCodeLine{00038\ \ \ \ \}}
+\DoxyCodeLine{00039\ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keywordtype}{void}\ InstructionTracerFPStats::traceInstruction(\textcolor{keyword}{const}\ DynamicMicroOp\ *uop,\ uop\_times\_t\ *times)}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \ \textcolor{keywordflow}{if}\ (uop-\/>getMicroOp()-\/>isFirst())}
+\DoxyCodeLine{00044\ \ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iclass\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(uop-\/>getMicroOp()-\/>getInstructionOpcode());}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_iclasses.count(iclass))}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ m\_iclasses[iclass]++;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \}}
+\DoxyCodeLine{00051\ \}}
+
+\end{DoxyCode}

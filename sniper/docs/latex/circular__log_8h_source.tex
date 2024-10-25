@@ -1,0 +1,67 @@
+\doxysection{circular\+\_\+log.\+h}
+\label{circular__log_8h_source}\index{common/misc/circular\_log.h@{common/misc/circular\_log.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_CIRCULAR\_LOG\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_CIRCULAR\_LOG\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}fixed\_types.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}lock.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}timer.h"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Fast\ circular\ log\ to\ trace\ generic\ events}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Events\ consist\ of\ a\ printf-\/style\ format\ string\ and\ up\ to\ 6\ arguments.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ To\ reduce\ overhead,\ printf\ itself\ is\ not\ called\ during\ logging;}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ instead\ the\ format\ string\ and\ all\ arguments\ are\ stored\ in\ a\ circular\ buffer.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ On\ simulation\ end\ or\ abort,\ the\ last\ 1M\ entries\ are\ formatted\ and\ written\ to\ sim.clog.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ This\ means\ the\ arguments\ must\ remain\ valid\ until\ simulation\ end,\ which\ is\ fine}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ for\ integers\ and\ const\ char*.\ Pointers\ into\ dynamically\ allocated\ memory\ will\ be}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ invalid\ by\ the\ time\ they\ are\ dereferenced\ and\ should\ thus\ not\ be\ used.}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }CircularLog}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ init(String\ filename);}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ enableCallbacks();}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ fini();}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ dump();}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \textcolor{keyword}{static}\ CircularLog\ *g\_singleton;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ CircularLog(String\ filename);}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \string~CircularLog();}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ insert(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ ...)\ \_\_attribute\_\_\ ((format(printf,\ 3,\ 4)));}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ UInt64\ getTime()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ rdtsc()\ -\/\ m\_time\_zero;\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ UInt64\ time;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ type;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ UInt64\ args[6];}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \}\ event\_t;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \textcolor{keyword}{static}\ SInt64\ hook\_sigusr1(UInt64,\ UInt64)\ \{\ dump();\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ writeLog();}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ writeEntry(FILE\ *fp,\ \textcolor{keywordtype}{int}\ idx);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UInt64\ BUFFER\_SIZE\ =\ 1024*1024;}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \textcolor{keyword}{const}\ String\ m\_filename;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ event\_t*\ \textcolor{keyword}{const}\ m\_buffer;}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ Lock\ m\_lock;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ UInt64\ m\_eventnum;}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ UInt64\ m\_time\_zero;}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#define\ CLOG(type,\ ...)\ do\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ \ \ \ if\ (CircularLog::g\_singleton)\ \(\backslash\)}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ CircularLog::g\_singleton-\/>insert(type,\ \_\_VA\_ARGS\_\_);\ \(\backslash\)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \}\ while(0)}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_CIRCULAR\_LOG\_H}}
+
+\end{DoxyCode}

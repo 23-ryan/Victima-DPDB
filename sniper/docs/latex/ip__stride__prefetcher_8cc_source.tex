@@ -1,0 +1,207 @@
+\doxysection{ip\+\_\+stride\+\_\+prefetcher.\+cc}
+\label{ip__stride__prefetcher_8cc_source}\index{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ip\_stride\_prefetcher.cc@{common/core/memory\_subsystem/parametric\_dram\_directory\_msi/ip\_stride\_prefetcher.cc}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ "{}ip\_stride\_prefetcher.h"{}}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}simulator.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}config.hpp"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}stats.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{keyword}{const}\ IntPtr\ PAGE\_SIZE\ =\ 4096;}
+\DoxyCodeLine{00008\ \textcolor{keyword}{const}\ IntPtr\ CACHE\_BLOCK\_SIZE\ =\ 64;}
+\DoxyCodeLine{00009\ \textcolor{keyword}{const}\ IntPtr\ LOG2\_PAGE\_SIZE\ =\ log2(PAGE\_SIZE);}
+\DoxyCodeLine{00010\ \textcolor{keyword}{const}\ IntPtr\ LOG2\_CACHE\_BLOCK\_SIZE\ =\ log2(CACHE\_BLOCK\_SIZE);}
+\DoxyCodeLine{00011\ \textcolor{keyword}{const}\ IntPtr\ CACHE\_BLOCK\_MASK\ =\ (CACHE\_BLOCK\_SIZE-\/1);}
+\DoxyCodeLine{00012\ \textcolor{keyword}{const}\ IntPtr\ NUM\_CACHE\_BLOCKS\_IN\_PAGE\ =\ (PAGE\_SIZE/CACHE\_BLOCK\_SIZE);}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ IPStridePrefetcher::IPStridePrefetcher(String\ configName,\ core\_id\_t\ \_core\_id)}
+\DoxyCodeLine{00015\ \ \ \ \ \ \ \ \ :\ m\_core\_id(\_core\_id)}
+\DoxyCodeLine{00016\ \ \ \ \ \ \ \ \ ,\ m\_allocate\_on\_miss(Sim()-\/>getCfg()-\/>getBoolDefault(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ip\_stride/allocate\_on\_miss"{}},\ false))}
+\DoxyCodeLine{00017\ \ \ \ \ \ \ \ \ ,\ m\_num\_prefetches(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ip\_stride/num\_prefetches"{}}))}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ ,\ m\_num\_streams(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ip\_stride/num\_streams"{}}))}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ ,\ m\_stop\_at\_page(Sim()-\/>getCfg()-\/>getBoolDefault(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ip\_stride/stop\_at\_page\_boundary"{}},\ true))}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ ,\ m\_lookahead(Sim()-\/>getCfg()-\/>getInt(\textcolor{stringliteral}{"{}perf\_model/"{}}\ +\ configName\ +\ \textcolor{stringliteral}{"{}/prefetcher/ip\_stride/lookahead"{}}))}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ m\_rpt.resize(m\_num\_streams,\ NULL);}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt32\ index\ =\ 0;\ index\ <\ m\_rpt.size();\ ++index)}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_rpt[index]\ =\ \textcolor{keyword}{new}\ RPTEntry();}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ bzero(\&stats,\ \textcolor{keyword}{sizeof}(stats));}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}pref\_called"{}},\ \&stats.pref\_called);}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}rpt\_hit"{}},\ \&stats.rpt\_hit);}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}non\_zero\_curr\_stride"{}},\ \&stats.non\_zero\_curr\_stride);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}curr\_stride\_correct"{}},\ \&stats.curr\_stride\_correct);}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}steady"{}},\ \&stats.steady);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}rpt\_replacement"{}},\ \&stats.rpt\_replacement);}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ registerStatsMetric(\textcolor{stringliteral}{"{}ip\_stride"{}},\ m\_core\_id,\ \textcolor{stringliteral}{"{}gen\_prefetch"{}},\ \&stats.gen\_prefetch);}
+\DoxyCodeLine{00036\ \}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ IPStridePrefetcher::\string~IPStridePrefetcher()}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ std::vector<IntPtr>}
+\DoxyCodeLine{00046\ IPStridePrefetcher::getNextAddress(IntPtr\ current\_address,\ core\_id\_t\ \_core\_id,\ Core::mem\_op\_t\ mem\_op\_type,\ \textcolor{keywordtype}{bool}\ cache\_hit,\ \textcolor{keywordtype}{bool}\ prefetch\_hit,\ IntPtr\ eip)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ IntPtr\ current\_page\ =\ current\_address\ >>\ LOG2\_PAGE\_SIZE;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ IntPtr\ current\_offset\ =\ (current\_address\ >>\ LOG2\_CACHE\_BLOCK\_SIZE)\ \&\ CACHE\_BLOCK\_MASK;}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}eip:\ "{}\ <<\ std::hex\ <<\ eip\ <<\ std::dec}}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}\ current\_address:\ "{}\ <<\ std::hex\ <<\ current\_address\ <<\ std::dec}}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}\ current\_page:\ "{}\ <<\ std::hex\ <<\ current\_page\ <<\ std::dec}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}\ current\_offset:\ "{}\ <<\ current\_offset\ <<\ std::endl;}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ std::vector<IntPtr>\ pref\_addr;}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(mem\_op\_type\ ==\ Core::WRITE)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ pref\_addr;}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ stats.pref\_called++;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ int32\_t\ index\ =\ find(eip);}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(index\ !=\ -\/1)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.rpt\_hit++;}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RPTEntry\ *rpt\_entry\ =\ m\_rpt[index];}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ curr\_stride\ =\ (current\_offset\ -\/\ rpt\_entry-\/>prev\_offset);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(curr\_stride)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}match"{}\ <<\ std::endl;}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.non\_zero\_curr\_stride++;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(curr\_stride\ ==\ rpt\_entry-\/>stride)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.curr\_stride\_correct++;}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(rpt\_entry-\/>state\ ==\ INIT\ ||\ rpt\_entry-\/>state\ ==\ TRANSIENT\ ||\ rpt\_entry-\/>state\ ==\ STEADY)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>state\ =\ STEADY;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(rpt\_entry-\/>state\ ==\ NO\_PRED)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>state\ =\ TRANSIENT;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(rpt\_entry-\/>state\ ==\ INIT)}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>state\ =\ TRANSIENT;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(rpt\_entry-\/>state\ ==\ STEADY)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>state\ =\ INIT;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(rpt\_entry-\/>state\ ==\ TRANSIENT\ ||\ rpt\_entry-\/>state\ ==\ NO\_PRED)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>state\ =\ NO\_PRED;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>prev\_offset\ =\ current\_offset;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>stride\ =\ curr\_stride;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ update\_age(index);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ prefetch\ generation\ */}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(rpt\_entry-\/>state\ ==\ STEADY)}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.steady++;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pref\_addr\ =\ generatePrefetchAddress(rpt\_entry,\ current\_page,\ current\_offset);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_allocate\_on\_miss\ ||\ !cache\_hit)}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.rpt\_replacement++;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ index\ =\ find\_replacement();}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RPTEntry\ *rpt\_entry\ =\ m\_rpt[index];}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>valid\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>eip\ =\ eip;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>prev\_offset\ =\ current\_offset;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>stride\ =\ 0;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rpt\_entry-\/>state\ =\ INIT;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ update\_age(index);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ pref\_addr;}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ int32\_t\ IPStridePrefetcher::find(IntPtr\ eip)}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ full\ IP\ search\ */}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ index\ =\ 0;\ index\ <\ m\_rpt.size();\ ++index)}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_rpt[index]-\/>valid\ \&\&\ m\_rpt[index]-\/>eip\ ==\ eip)}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ index;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keywordtype}{void}\ IPStridePrefetcher::update\_age(int32\_t\ current)}
+\DoxyCodeLine{00147\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ index\ =\ 0;\ index\ <\ m\_rpt.size();\ ++index)}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((int32\_t)index\ ==\ current)}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_rpt[index]-\/>lru\ =\ 0;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_rpt[index]-\/>lru++;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ int32\_t\ IPStridePrefetcher::find\_replacement()}
+\DoxyCodeLine{00162\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ uint32\_t\ max\_lru\ =\ 0;}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ int32\_t\ replacement\_index\ =\ -\/1;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(uint32\_t\ index\ =\ 0;\ index\ <\ m\_rpt.size();\ ++index)}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_rpt[index]-\/>valid)}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int32\_t)index;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(m\_rpt[index]-\/>lru\ >=\ max\_lru)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max\_lru\ =\ m\_rpt[index]-\/>lru;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ replacement\_index\ =\ index;}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ replacement\_index;}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ std::vector<IntPtr>\ IPStridePrefetcher::generatePrefetchAddress(RPTEntry\ *rpt\_entry,\ IntPtr\ current\_page,\ IntPtr\ current\_offset)}
+\DoxyCodeLine{00182\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}curr\_addr:\ "{}\ <<\ std::hex\ <<\ ((current\_page\ <<\ LOG2\_PAGE\_SIZE)\ +\ (current\_offset\ <<\ LOG2\_CACHE\_BLOCK\_SIZE))\ <<\ std::dec\ }}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}\ stride:\ "{}\ <<\ rpt\_entry-\/>stride}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}\ pref\_addr:"{};}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ std::vector<IntPtr>\ addresses;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ index\ =\ 1;\ index\ <=\ m\_num\_prefetches;\ ++index)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ prefetch\_offset\ =\ current\_offset\ +\ (m\_lookahead\ +\ index\ )\ *\ rpt\_entry-\/>stride;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ But\ stay\ within\ the\ page\ if\ requested}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_stop\_at\_page\ ||\ (prefetch\_offset\ >=\ 0\ \&\&\ prefetch\_offset\ <\ (int32\_t)NUM\_CACHE\_BLOCKS\_IN\_PAGE))}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IntPtr\ prefetch\_address\ =\ (current\_page\ <<\ LOG2\_PAGE\_SIZE)\ +\ ((IntPtr)prefetch\_offset\ <<\ LOG2\_CACHE\_BLOCK\_SIZE);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}\ "{}\ <<\ std::hex\ <<\ prefetch\_address\ <<\ std::dec\ <<\ "{},"{};}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ addresses.push\_back(prefetch\_address);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stats.gen\_prefetch++;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::cout\ <<\ std::endl;}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ addresses;}
+\DoxyCodeLine{00201\ \}}
+
+\end{DoxyCode}
