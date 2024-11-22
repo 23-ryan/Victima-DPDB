@@ -43,6 +43,10 @@ class CacheBlockInfo
       int m_num_sub_blocks; //@kanellok for TLB: hold number of sub blocks for each cache block
 
       IntPtr m_tag;
+	  // ARYAN
+	  bool m_deadbit;
+	  bool m_accessedbit;
+	  // ARYAN
       CacheState::cstate_t m_cstate;
       UInt64 m_owner;
       BitsUsedType m_used;
@@ -64,6 +68,18 @@ class CacheBlockInfo
       virtual void clone(CacheBlockInfo* cache_block_info);
 
       bool isValid() const { return (m_tag != ((IntPtr) ~0)); }
+	
+	  // ARYAN
+      /* dead bit utilities. */
+      bool getDead() { return m_deadbit;}
+	  void setDead() { m_deadbit = true; }
+	  void resetDead() { m_deadbit = false; }
+
+	  /* accessed bit utilities. */
+	  bool getAccessed() { return m_accessedbit;}
+	  void setAccessed() { m_accessedbit = true; }
+	  void resetAccessed() { m_accessedbit = false; }
+	  // ARYAN
       
       // IntPtr* getTagArrayTLB() const { return m_sub_tag_array_tlb; }
       // IntPtr getTagSublockTLB(int index) const { return m_sub_tag_array_tlb[index]; }

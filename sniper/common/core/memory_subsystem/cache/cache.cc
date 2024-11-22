@@ -56,7 +56,8 @@ Cache::Cache(
    sum_metadata_reuse(0),
    number_of_metadata_reuse(0),
    metadata_passthrough_loc(Sim()->getCfg()->getInt("perf_model/metadata/passthrough_loc")),
-   potm_enabled(Sim()->getCfg()->getBool("perf_model/tlb/potm_enabled"))
+   potm_enabled(Sim()->getCfg()->getBool("perf_model/tlb/potm_enabled")),
+   dpp_dbp_enabled(Sim()->getCfg()->getBool("perf_model/victima/dead_page_dead_block_predictor"))
 {
    reuse_levels[0]=5;
    reuse_levels[1]=10;
@@ -214,13 +215,19 @@ Cache::accessSingleLine(IntPtr addr, access_t access_type,
    if(tlb_entry && !(cache_block_info->isTLBBlock())) 
       return NULL;
    
-
+   // At this point either READ or WRITE operation would surely happen
+   // ARYAN
+   if(dpp_dbp_enabled && m_name == "L2" && cache_block_info->getDead()){
+	   cache_block_info->setAccessed();
+   }
+   // ARYAN
+  
    if (access_type == LOAD)
    {
       // NOTE: assumes error occurs in memory. If we want to model bus errors, insert the error into buff instead
       if (m_fault_injector)
          m_fault_injector->preRead(addr, set_index * m_associativity + line_index, bytes, (Byte*)m_sets[set_index]->getDataPtr(line_index, block_offset), now);
-
+	  
       set->read_line(line_index, block_offset, buff, bytes, update_replacement);
    }
    else
@@ -387,6 +394,12 @@ Cache::accessSingleLineTLB(IntPtr addr, access_t access_type,
 
       found_cache_block = true; 
 
+	  // ARYAN
+	  if(dpp_dbp_enabled && m_name == "L2" && cache_block_info->getDead()){
+		  cache_block_info->setAccessed();
+	  }
+	  // ARYAN
+	 
       if (access_type == LOAD)
       {
          // NOTE: assumes error occurs in memory. If we want to model bus errors, insert the error into buff instead

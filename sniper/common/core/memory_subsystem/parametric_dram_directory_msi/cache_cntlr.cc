@@ -35,6 +35,14 @@ Lock iolock;
 namespace ParametricDramDirectoryMSI
 {
 
+// ARYAN
+// bHIST table - <hash(block addresses), conf_counter>
+#define bHIST_SIZE 4096
+UInt64 bHIST[bHIST_SIZE];
+
+extern std::deque<IntPtr> recentPFN;
+// ARYAN
+
 char CStateString(CacheState::cstate_t cstate) {
    switch(cstate)
    {
@@ -180,7 +188,11 @@ CacheCntlr::CacheCntlr(MemComponent::component_t mem_component,
                     "perf_model/perfect_llc is deprecated, use perf_model/lX_cache/perfect instead");
    if (is_last_level_cache)
       LOG_ASSERT_ERROR(m_passthrough == false, "Cache pass-through not supported on last-level cache");
-
+	
+   // ARYAN
+   // Dead Block and Dead Page Predictor Parameters
+   m_dpp_dbp_enabled = Sim()->getCfg()->getBool("perf_model/victima/dead_page_dead_block_predictor");
+   // ARYAN
    if (isMasterCache())
    {
       /* Master cache */
@@ -1645,8 +1657,10 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
 
    
    bool eviction;
+   bool bypass = false;
    IntPtr evict_address;
    SharedCacheBlockInfo evict_block_info;
+   SharedCacheBlockInfo* cache_block_info = NULL;
    Byte evict_buf[getCacheBlockSize()];
    // if(metadata_request && (metadata_passthrough_loc > 2 )){
    //       return NULL;
@@ -1654,12 +1668,46 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
 
    LOG_ASSERT_ERROR(getCacheState(address) == CacheState::INVALID, "we already have this line, can't add it again");
    //printf("Inserting in %s with eviction = %d and cache state = %c \n", getCache()->getName().c_str(), eviction, CStateString(cstate));
-   m_master->m_cache->insertSingleLine(address, data_buf,
-         &eviction, &evict_address, &evict_block_info, evict_buf,
-         getShmemPerfModel()->getElapsedTime(thread_num), this, block_type);
-      
+	
+   // ARYAN
+   bool exist_in_PFQ = false;
+
+   if(m_dpp_dbp_enabled){
+	   if(std::find(recentPFN.begin(), recentPFN.end(), address) != recentPFN.end()){
+		   exist_in_PFQ = true;
+	   }
+   }
+
+   if(m_dpp_dbp_enabled && m_master->m_cache->getName() == "L2" && exist_in_PFQ){
+	   IntPtr hash_block_addr;
+	   m_master->m_cache->getCBPredHistTableHash(address >> floorLog2(getCacheBlockSize()), hash_block_addr);
+	   if(bHIST[hash_block_addr] < 4){
+
+		   m_master->m_cache->insertSingleLine(address, data_buf,
+				   &eviction, &evict_address, &evict_block_info, evict_buf,
+				   getShmemPerfModel()->getElapsedTime(thread_num), this, block_type);
+
+		   cache_block_info = getCacheBlockInfo(address);
+
+		   assert(cache_block_info);
+		   cache_block_info->resetAccessed();
+		   cache_block_info->setDead();
+	   }
+	   else{
+		   // cache_block_info being NULL could cause problems -- check it.
+		   eviction = false;
+		   bypass = true;
+	   }
+   }
+   else{
+	   m_master->m_cache->insertSingleLine(address, data_buf,
+			   &eviction, &evict_address, &evict_block_info, evict_buf,
+			   getShmemPerfModel()->getElapsedTime(thread_num), this, block_type);
+
+	   cache_block_info = setCacheState(address, cstate);
+   }
+   // ARYAN
    
-   SharedCacheBlockInfo* cache_block_info = setCacheState(address, cstate);
    
    if (Sim()->getInstrumentationMode() == InstMode::CACHE_ONLY)
       cache_block_info->setOption(CacheBlockInfo::WARMUP);
@@ -1667,14 +1715,29 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
    // if (Sim()->getConfig()->hasCacheEfficiencyCallbacks())
    //    cache_block_info->setOwner(Sim()->getConfig()->getCacheEfficiencyCallbacks().call_get_owner(requester, address));
 
-   if (m_next_cache_cntlr && !m_perfect)
+   if (m_next_cache_cntlr && !m_perfect && !bypass)
       m_next_cache_cntlr->notifyPrevLevelInsert(m_core_id_master, m_mem_component, address);
    MYLOG("insertCacheBlock l%d local done", m_mem_component);
 
 
    if (eviction)
    {
+	   // ARYAN
+	   bool deadbit = evict_block_info.getDead();
+	   if(m_dpp_dbp_enabled && m_master->m_cache->getName() == "L2" && deadbit){
 
+		   bool accessedbit = evict_block_info.getAccessed();
+		   IntPtr hash_block_addr;
+		   m_master->m_cache->getCBPredHistTableHash(evict_address >> floorLog2(getCacheBlockSize()), hash_block_addr);
+
+		   if(accessedbit){
+			   bHIST[hash_block_addr] = 0;
+		   }
+		   else{
+			   bHIST[hash_block_addr]++;
+		   }
+	 }
+	 // ARYAN
       
       MYLOG("evicting @%lx", evict_address);
 
@@ -2647,4 +2710,3 @@ CacheCntlr::getNetworkThreadSemaphore()
 }
 
 }
-   

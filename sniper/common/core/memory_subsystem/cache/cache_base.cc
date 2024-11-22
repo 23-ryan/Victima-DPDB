@@ -192,8 +192,20 @@ CacheBase::tagToAddress(const IntPtr tag)
 {
    return tag << m_log_blocksize;
 }
+
 IntPtr
 CacheBase::tagToAddressTLB(const IntPtr tag, int pagesize)
 {
    return tag << pagesize;
+}
+
+void 
+CacheBase::getCBPredHistTableHash(IntPtr block_addr, IntPtr& hash_block_addr){
+	IntPtr mask = 0xfff;
+	hash_block_addr = 0;
+	while(block_addr > 0){
+		IntPtr curr_bits = mask ^ block_addr;
+		hash_block_addr = hash_block_addr ^ curr_bits;
+		block_addr = block_addr >> 12;
+	}
 }

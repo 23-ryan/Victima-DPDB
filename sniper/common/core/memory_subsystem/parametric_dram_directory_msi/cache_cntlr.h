@@ -220,6 +220,10 @@ namespace ParametricDramDirectoryMSI
          bool m_l1_mshr;
          bool m_l1_metadata_mshr;
 
+		 // ARYAN
+		 bool m_dpp_dbp_enabled; // dead page and dead block predictor
+		 // ARYAN
+
          int metadata_passthrough_loc;
 
 

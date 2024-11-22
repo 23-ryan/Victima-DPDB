@@ -38,6 +38,9 @@ class Cache : public CacheBase
       
       int metadata_passthrough_loc;
       bool potm_enabled;
+	  // ARYAN
+	  bool dpp_dbp_enabled; // dead page and dead block predictor.
+	  // ARYAN
 
 
       float average_data_reuse;

@@ -1030,7 +1030,7 @@ TranslationResult MemoryManager::performAddressTranslation(
 TranslationResult MemoryManager::accessTLBSubsystem(IntPtr eip, TLB * tlb, IntPtr address, bool isIfetch,bool modeled, bool count, Core::lock_signal_t lock_signal, Byte* data_buf, UInt32 data_length)
 {
    
-   TLB::where_t hit = tlb->lookup(address, getShmemPerfModel()->getElapsedTime(ShmemPerfModel::_USER_THREAD), true, 1, count, lock_signal);
+   TLB::where_t hit = tlb->lookup(address, getShmemPerfModel()->getElapsedTime(ShmemPerfModel::_USER_THREAD), true, 1, count, lock_signal, isIfetch);
    
    TranslationResult result;
    result.hitwhere = TranslationHitWhere::TLB_MISS;

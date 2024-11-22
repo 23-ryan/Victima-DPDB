@@ -46,8 +46,10 @@ CacheSet::read_line(UInt32 line_index, UInt32 offset, Byte *out_buff, UInt32 byt
    assert(offset + bytes <= m_blocksize);
    //assert((out_buff == NULL) == (bytes == 0));
 
-   if (out_buff != NULL && m_blocks != NULL)
+   if (out_buff != NULL && m_blocks != NULL){
       memcpy((void*) out_buff, &m_blocks[line_index * m_blocksize + offset], bytes);
+	  m_cache_block_info_array[line_index]->setAccessed();
+   }
 
    if (update_replacement)
       updateReplacementIndex(line_index);
@@ -59,8 +61,10 @@ CacheSet::write_line(UInt32 line_index, UInt32 offset, Byte *in_buff, UInt32 byt
    assert(offset + bytes <= m_blocksize);
    //assert((in_buff == NULL) == (bytes == 0));
 
-   if (in_buff != NULL && m_blocks != NULL)
+   if (in_buff != NULL && m_blocks != NULL){
       memcpy(&m_blocks[line_index * m_blocksize + offset], (void*) in_buff, bytes);
+	  m_cache_block_info_array[line_index]->setAccessed();
+   }
 
    if (update_replacement)
       updateReplacementIndex(line_index);
@@ -144,8 +148,10 @@ CacheSet::insert(CacheBlockInfo* cache_block_info, Byte* fill_buff, bool* evicti
    //          std::cout << "L2 Set with index " << i << " has tag " <<  m_cache_block_info_array[index]->getTag() << std::endl;
    // }
 
-   if (fill_buff != NULL && m_blocks != NULL)
+   if (fill_buff != NULL && m_blocks != NULL){
       memcpy(&m_blocks[index * m_blocksize], (void*) fill_buff, m_blocksize);
+	  m_cache_block_info_array[index]->resetAccessed();
+   }
    
    inserts++;
 }

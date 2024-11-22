@@ -87,6 +87,7 @@ class CacheBase
       void splitAddressTLB(const IntPtr addr, IntPtr& tag, UInt32& set_index, int page_size) const;
       void splitAddress(const IntPtr addr, IntPtr& tag, UInt32& set_index, UInt32& block_offset) const;
       void splitAddressTLB(const IntPtr addr, IntPtr& tag, UInt32& set_index, UInt32& block_offset, int page_size) const;
+	  void getCBPredHistTableHash(const IntPtr addr, IntPtr& hash_block_addr);
       IntPtr tagToAddress(const IntPtr tag);
       IntPtr tagToAddressTLB(const IntPtr tag, int page_size);
       String getName(void) { return m_name; }

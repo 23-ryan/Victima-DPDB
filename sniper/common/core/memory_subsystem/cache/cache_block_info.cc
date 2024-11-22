@@ -30,7 +30,9 @@ CacheBlockInfo::CacheBlockInfo(IntPtr tag, CacheState::cstate_t cstate, UInt64 o
    m_options(options),
    m_page_size(0),
    m_reuse(0),
-   m_block_type(NON_PAGE_TABLE)
+   m_block_type(NON_PAGE_TABLE),
+   m_deadbit(0),
+   m_accessedbit(0)
 {
 
 }
@@ -68,6 +70,8 @@ CacheBlockInfo::invalidate()
 void
 CacheBlockInfo::clone(CacheBlockInfo* cache_block_info)
 {
+   m_deadbit = cache_block_info->getDead();
+   m_accessedbit = cache_block_info->getAccessed();
    m_tag = cache_block_info->getTag();
    m_cstate = cache_block_info->getCState();
    m_owner = cache_block_info->m_owner;
