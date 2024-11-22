@@ -42,55 +42,22 @@ docker_command = "docker run --rm -v "+args.path + \
 
 baseline = " -c /app/sniper/config/virtual_memory_configs/radix.cfg "
 victima = " -c /app/sniper/config/virtual_memory_configs/victima.cfg "
+victima_dpp_cbp = " -c /app/sniper/config/virtual_memory_configs/victima_dpp_dbp.cfg "
 potm = " -c /app/sniper/config/virtual_memory_configs/potm.cfg "
 virtu = " -c /app/sniper/config/virtual_memory_configs/virtualized.cfg "
 
 configs = [
 
-    ("tlb_base_ideal", baseline +
-     " -g --perf_model/stlb/size=1536 -g --perf_model/stlb/associativity=12 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_2x_ideal", baseline+" -g --perf_model/stlb/size=2048 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_4x_ideal", baseline+" -g --perf_model/stlb/size=4096 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_8x_ideal", baseline+" -g --perf_model/stlb/size=8192 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_16x_ideal", baseline+" -g --perf_model/stlb/size=16384 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_32x_ideal", baseline+" -g --perf_model/stlb/size=32768 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_64x_ideal", baseline+" -g --perf_model/stlb/size=65536 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
-    ("tlb_128x_ideal", baseline +
-     " -g --perf_model/stlb/size=131072 -g --perf_model/stlb/associativity=16 -g --perf_model/tlb/l2_access_penalty=12"),
+    ("victima_ptw_1MBL2", victima+" -g --perf_model/l2_cache/cache_size=1024 -g --perf_model/l2_cache/data_access_time=12 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=false"),
+    ("victima_ptw_2MBL2", victima+" -g --perf_model/l2_cache/cache_size=2048 -g --perf_model/l2_cache/data_access_time=16 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=false"),
+    ("victima_ptw_4MBL2", victima+" -g --perf_model/l2_cache/cache_size=4096 -g --perf_model/l2_cache/data_access_time=22 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=false"),
+    ("victima_ptw_8MBL2", victima+" -g --perf_model/l2_cache/cache_size=8192 -g --perf_model/l2_cache/data_access_time=30 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=false"),
 
-    ("baseline_radix_1MB", baseline +
-     "-g --perf_model/l2_cache/cache_size=1024 -g --perf_model/l2_cache/data_access_time=12"),
-    ("baseline_radix_2MB", baseline +
-     "-g --perf_model/l2_cache/cache_size=2048 -g --perf_model/l2_cache/data_access_time=16"),
-    ("baseline_radix_4MB", baseline +
-     "-g --perf_model/l2_cache/cache_size=4096 -g --perf_model/l2_cache/data_access_time=22"),
-    ("baseline_radix_8MB", baseline +
-     "-g --perf_model/l2_cache/cache_size=8192 -g --perf_model/l2_cache/data_access_time=30"),
 
-    ("L3TLB_ideal_15", potm +
-     " -g --perf_model/potm_tlb/size=65536  -g --perf_model/potm_tlb/latency=15"),
-    ("L3TLB_ideal_20", potm +
-     " -g --perf_model/potm_tlb/size=65536  -g --perf_model/potm_tlb/latency=20"),
-    ("L3TLB_ideal_25", potm +
-     " -g --perf_model/potm_tlb/size=65536  -g --perf_model/potm_tlb/latency=25"),
-    ("L3TLB_ideal_30", potm +
-     " -g --perf_model/potm_tlb/size=65536  -g --perf_model/potm_tlb/latency=30"),
-    ("L3TLB_ideal_35", potm +
-     " -g --perf_model/potm_tlb/size=65536  -g --perf_model/potm_tlb/latency=35"),
-    ("L3TLB_ideal_40", potm +
-     " -g --perf_model/potm_tlb/size=65536  -g --perf_model/potm_tlb/latency=40"),
-
-    ("pomtlb_64K", potm+" -g --perf_model/potm_tlb/size=65536"),
-
-    ("victima_ptw_1MBL2", victima+" -g --perf_model/l2_cache/cache_size=1024 -g --perf_model/l2_cache/data_access_time=12 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true"),
-    ("victima_ptw_2MBL2", victima+" -g --perf_model/l2_cache/cache_size=2048 -g --perf_model/l2_cache/data_access_time=16 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true"),
-    ("victima_ptw_4MBL2", victima+" -g --perf_model/l2_cache/cache_size=4096 -g --perf_model/l2_cache/data_access_time=22 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true"),
-    ("victima_ptw_8MBL2", victima+" -g --perf_model/l2_cache/cache_size=8192 -g --perf_model/l2_cache/data_access_time=30 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true"),
-
-    ("baseline_radix_virtualized", virtu),
-    ("victima_virtualized", victima +
-     " -g --perf_model/ptw/enabled=false  -g --perf_model/ptw/virtualized=true  -g --perf_model/victima/victimize_on_ptw=true"),
-    ("potm_virtualized", potm+" -g --perf_model/potm_tlb/size=65536 -g --perf_model/ptw/enabled=false  -g --perf_model/ptw/virtualized=true")
+    ("victima_dpp_dbp_ptw_1MBL2", victima_dpp_cbp+" -g --perf_model/l2_cache/cache_size=1024 -g --perf_model/l2_cache/data_access_time=12 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=true"),
+    ("victima_dpp_dbp_ptw_2MBL2", victima_dpp_dbp+" -g --perf_model/l2_cache/cache_size=2048 -g --perf_model/l2_cache/data_access_time=16 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=true"),
+    ("victima_dpp_dbp_ptw_4MBL2", victima_dpp_cbp+" -g --perf_model/l2_cache/cache_size=4096 -g --perf_model/l2_cache/data_access_time=22 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=true"),
+    ("victima_dpp_dbp_ptw_8MBL2", victima_dpp_cbp+" -g --perf_model/l2_cache/cache_size=8192 -g --perf_model/l2_cache/data_access_time=30 -g --perf_model/victima/victimize_on_ptw=true -g --perf_model/l2_cache/srrip/tlb_enabled=true -g --perf_model/victima/dead_page_dead_block_predictor=true")
 ]
 
 
