@@ -27,6 +27,7 @@ namespace ParametricDramDirectoryMSI
     bool victima_enabled;
     bool victimize_on_ptw;
     bool potm_enabled;
+	bool dpp_dbp_enabled; // dead page and dead block predictor.
     
     PageTableWalker *ptw;
     bool ptw_enabled;
@@ -37,8 +38,11 @@ namespace ParametricDramDirectoryMSI
     UInt32 m_num_entries;
     
     Cache m_cache;
-
-    UInt64 m_access, m_miss, m_eviction;
+	
+	// ARYAN
+    UInt64 m_access, m_miss, m_eviction, m_alloc, m_bypass;
+	UInt64 m_conf_counter = 2;
+	// ARYAN
     UInt64 l1_tlb_cache_hit, l2_tlb_cache_hit, nuca_tlb_cache_hit, victima_alloc_on_eviction, victima_alloc_on_ptw;
     SubsecondTime total_potm_latency;
 
@@ -128,10 +132,13 @@ namespace ParametricDramDirectoryMSI
         UTR_HIT,
         MISS
       };
-
-    
-    TLB(String name, String cfgname, core_id_t core_id, ShmemPerfModel* m_shmem_perf_model, UInt32 num_entries,UInt32 pagesize, UInt32 associativity, TLB *next_level, bool _utopia_enableds,bool track_misses, bool track_accesses, int* page_size_list, int page_sizes, PageTableWalker* ptw);
-    TLB::where_t lookup(IntPtr address, SubsecondTime now, bool allocate_on_miss, int level , bool model_count, Core::lock_signal_t lock);
+	
+	// ARYAN
+	std::map<IntPtr, std::map<IntPtr, uint64_t> > hitCounter;
+	std::map<IntPtr, uint64_t> curHit;
+    TLB(String name, String cfgname, core_id_t core_id, ShmemPerfModel* m_shmem_perf_model, UInt32 num_entries,UInt32 pagesize, UInt32 associativity, TLB *next_level, bool _utopia_enableds,bool track_misses, bool track_accesses, int* page_size_list, int page_sizes, PageTableWalker* ptw, UInt32 conf_count = 2);
+	// ARYAN
+    TLB::where_t lookup(IntPtr address, SubsecondTime now, bool allocate_on_miss, int level , bool model_count, Core::lock_signal_t lock, bool isIfetch = false);
     void allocate(IntPtr address, SubsecondTime now,int level, Core::lock_signal_t locksss);
     void setMemManager(ParametricDramDirectoryMSI::MemoryManager* _m_manager){ TLB::m_manager = _m_manager;}
     std::unordered_map<IntPtr,UInt64> access_per_page;
@@ -145,6 +152,13 @@ namespace ParametricDramDirectoryMSI
       software_tlb = (char*) malloc(num_entries*(8+8)); // 8 bytes for VPN and 8 bytes for PPN
     }
     SubsecondTime getPOTMlookupTime(){ return final_potm_latency; }
+
+	// ARYAN
+	IntPtr findHash (IntPtr ev_vpn, uint64_t bits);
+	void addRecentPFN(IntPtr addr);
+	bool shadow_table_search (IntPtr vpn);
+	void shadow_table_insert (IntPtr vpn);
+	// ARYAN
 
    
     static const UInt64 ADDRESS_REQUEST_VEC_MAX = 10000000;

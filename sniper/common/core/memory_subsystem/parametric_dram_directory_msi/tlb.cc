@@ -30,8 +30,18 @@ namespace ParametricDramDirectoryMSI
   ParametricDramDirectoryMSI::MemoryManager *TLB::m_manager = NULL;
 
   
+// ARYAN
+std::deque<IntPtr> recentPFN;
 
-  TLB::TLB(String name, String cfgname, core_id_t core_id, ShmemPerfModel* _m_shmem_perf_model, UInt32 num_entries,UInt32 pagesize, UInt32 associativity, TLB *next_level, bool _utopia_enabled, bool _track_misses, bool _track_accesses, int* page_size_list, int page_sizes, PageTableWalker*  _ptw)
+IntPtr lastPC;
+
+std::deque<IntPtr> shadow_table;
+uint64_t shadow_table_size = 2;
+
+std::map<IntPtr, IntPtr> insert_pc;
+
+  TLB::TLB(String name, String cfgname, core_id_t core_id, ShmemPerfModel* _m_shmem_perf_model, UInt32 num_entries,UInt32 pagesize, UInt32 associativity, TLB *next_level, bool _utopia_enabled, bool _track_misses, bool _track_accesses, int* page_size_list, int page_sizes, PageTableWalker*  _ptw, UInt32 conf_count)
+// ARYAN
     : m_size(num_entries)
     , m_core_id(core_id)
     , m_associativity(associativity)
@@ -46,6 +56,9 @@ namespace ParametricDramDirectoryMSI
     , m_shmem_perf_model(_m_shmem_perf_model)
     , m_access(0)
     , m_miss(0)
+	, m_alloc(0)
+	, m_bypass(0)
+	, m_conf_counter(conf_count)
     , l1_tlb_cache_hit(0)
     , l2_tlb_cache_hit(0) 
     , victima_alloc_on_eviction(0)
@@ -76,6 +89,9 @@ namespace ParametricDramDirectoryMSI
     //Victima Parameters
     victima_enabled = Sim()->getCfg()->getBool("perf_model/tlb/victima") ;
     victimize_on_ptw = Sim()->getCfg()->getBool("perf_model/victima/victimize_on_ptw");
+
+	// Dead Block and Dead Page Predictor Parameters
+	dpp_dbp_enabled = Sim()->getCfg()->getBool("perf_model/victima/dead_page_dead_block_predictor");
 
     //Part of Memory TLB [ISCA 2017] 
     potm_enabled = Sim()->getCfg()->getBool("perf_model/tlb/potm_enabled");
@@ -109,7 +125,7 @@ namespace ParametricDramDirectoryMSI
     
   }
 
-  TLB::where_t TLB::lookup(IntPtr address, SubsecondTime now, bool allocate_on_miss, int level, bool model_count, Core::lock_signal_t lock_signal)
+  TLB::where_t TLB::lookup(IntPtr address, SubsecondTime now, bool allocate_on_miss, int level, bool model_count, Core::lock_signal_t lock_signal, bool isIfetch)
   {
 
     // @kanellok UTOPIA related code segment
@@ -162,10 +178,23 @@ namespace ParametricDramDirectoryMSI
       if(!hit)      std::cout << " Miss at level: " << level  <<  std::endl;
 
     #endif
+	
+	// ARYAN
+	if(dpp_dbp_enabled && isIfetch) {
+		lastPC = address;
+	}
+	// ARYAN
 
     if (hit){
        if      (is_dtlb || is_nested || is_itlb) return where_t::L1;
-       else if (is_stlb) return where_t::L2;
+       else if (is_stlb){
+		   // ARYAN
+		   if(dpp_dbp_enabled){
+			   curHit[vpn]++;
+		   }
+		   // ARYAN
+		   return where_t::L2;
+	   }
        else if (is_potm) return where_t::POTM;
     }
 
@@ -175,6 +204,40 @@ namespace ParametricDramDirectoryMSI
     TLB::where_t where_next = TLB::MISS;
    
     bool l2tlb_miss = true;
+	
+	// ARYAN
+	if(dpp_dbp_enabled && is_stlb) {
+	   IntPtr temp_hash_vpn = findHash (vpn, 4);
+	   IntPtr temp_hash_pc =  findHash (lastPC, 6);
+	   ++m_alloc;
+
+       bool shadow_table_hit = shadow_table_search (vpn);
+       if (shadow_table_hit == true)
+       {
+           for (int i = 0;i < 64;i++)
+           {
+               hitCounter[temp_hash_vpn][i]= 0;
+           }
+
+		   bool eviction;
+		   IntPtr evict_addr;
+		   CacheBlockInfo evict_block_info;
+
+		   m_cache.insertSingleLineTLB(address, NULL, &eviction, &evict_addr, &evict_block_info, NULL, now, NULL,CacheBlockInfo::block_type_t::NON_PAGE_TABLE,page_size);
+
+			IntPtr ev_vpn_hash = findHash ((evict_addr >> page_size), 4);
+			IntPtr ev_pc_hash = findHash ((insert_pc[(evict_addr >> page_size)]), 6);
+			if (!curHit[evict_addr >> page_size]) {
+					hitCounter[ev_vpn_hash][ev_pc_hash]++;
+			} else {
+					hitCounter[ev_vpn_hash][ev_pc_hash] = 0;
+			}
+
+		   return TLB::L2;
+	   }
+	}
+	// ARYAN
+
     
     if (m_next_level) // is there a second level TLB?
     {
@@ -435,10 +498,29 @@ namespace ParametricDramDirectoryMSI
   void TLB::allocate(IntPtr address, SubsecondTime now, int level, Core::lock_signal_t lock_signal)
   {
 
-    
-
     int page_size = ptw->init_walk_functional(address);
     IntPtr vpn = address >> page_size;
+	
+	if(!m_next_level)
+		insert_pc[vpn] = lastPC;
+
+   IntPtr temp_hash_vpn = findHash (vpn, 4);
+   IntPtr temp_hash_pc =  findHash (lastPC, 6);
+   ++m_alloc;
+
+   if(!m_next_level){
+
+	   if(hitCounter[temp_hash_vpn][temp_hash_pc] > 6){
+			++m_bypass;
+			shadow_table_insert(vpn);
+			addRecentPFN(vpn);
+			return;
+	   }
+	   else{
+			curHit[vpn] = 0;
+	   }
+
+	}
 
     bool eviction = false;
     IntPtr evict_addr;
@@ -594,7 +676,55 @@ namespace ParametricDramDirectoryMSI
 
   }
 
+// ARYAN
+IntPtr
+TLB::findHash (IntPtr ev_vpn, uint64_t bits)
+{
+   IntPtr last_part = ev_vpn;
+   IntPtr lph = 0;
+   int max_iter = 32 / bits;
+   for (int i = 0; i < max_iter; ++i) {
+        lph ^= (last_part % (1 << bits));
+        last_part >>= bits;
+   }
+   return lph;
+}
 
+void
+TLB::addRecentPFN(IntPtr addr) {
+	addr >>= 17;
+	if (recentPFN.size() < 8) {
+		recentPFN.push_back(addr);
+	} else {
+		recentPFN.pop_front();
+		recentPFN.push_back(addr);
+	}
+}
+
+bool
+TLB::shadow_table_search (IntPtr vpn)
+{
+    bool res = false;
+    for (uint64_t i = 0; i < shadow_table.size(); i++)
+    {
+        if (shadow_table[i] == vpn)
+        {
+            return true;
+        }
+    }
+    return res;
+}
+
+void
+TLB::shadow_table_insert (IntPtr vpn)
+{
+    if (shadow_table.size() == shadow_table_size)
+    {
+        shadow_table.pop_front();
+    }
+    shadow_table.push_back(vpn);
+}
+// ARYAN
 
 }
 
