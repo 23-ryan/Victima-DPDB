@@ -137,7 +137,7 @@ class Cache : public CacheBase
       void measureStats();
       void markMetadata(IntPtr address, CacheBlockInfo::block_type_t blocktype);
 	  // ARYAN
-	  void incrementBypassCount() { m_bypass_count++; }
+	  void increaseBypassCount() { m_bypass_count++; }
 	  // ARYAN
 };
 
