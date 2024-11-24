@@ -39,6 +39,7 @@ class Cache : public CacheBase
       int metadata_passthrough_loc;
       bool potm_enabled;
 	  // ARYAN
+	  UInt64 m_bypass_count; // Number of blocks bypasses from L2 cache.
 	  bool dpp_dbp_enabled; // dead page and dead block predictor.
 	  // ARYAN
 
@@ -135,6 +136,9 @@ class Cache : public CacheBase
 
       void measureStats();
       void markMetadata(IntPtr address, CacheBlockInfo::block_type_t blocktype);
+	  // ARYAN
+	  void incrementBypassCount() { m_bypass_count++; }
+	  // ARYAN
 };
 
 template <class T>

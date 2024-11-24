@@ -289,6 +289,140 @@ plt.ylim(0, 100)
 plt.savefig('./plots/figure21.png')
 
 
+print_separator()
+print("Plotting Figure 19: L2 Cache TLB Reuse with Victima 2MB")
+print_separator()
+
+selected_experiments = [
+    'victima_ptw_2MBL2'
+]
+
+selected_metrics = [
+    "L2.tlb-reuse-0",
+    "L2.tlb-reuse-1",
+    "L2.tlb-reuse-2",
+    "L2.tlb-reuse-3",
+    "L2.tlb-reuse-4",
+]
+
+df_selected = df[df['Exp'].isin(selected_experiments)]
+
+pivot_table_fig19 = df_selected.pivot_table(
+    index='Trace', columns='Exp', values=selected_metrics)
+
+pivot_table_fig19 = pivot_table_fig19.div(
+    pivot_table_fig19.sum(axis=1), axis=0) * 100
+pivot_table_fig19 = pivot_table_fig19.reindex(desired_order_labels)
+
+pivot_table_fig19.loc['GMEAN'] = pivot_table_fig19.mean()
+print(pivot_table_fig19)
+
+
+ax = pivot_table_fig19.plot(kind='bar', stacked=True, figsize=(12, 6))
+
+ax.set_xticklabels(desired_order_labels_gmean)
+new_legend_labels = ['Reuse 0',
+                     '1-5', '5-10', '10-20', '>20']
+
+plt.title('Figure 19: L2 Cache TLB Reuse with Victima')
+plt.xlabel('Traces')
+plt.ylabel('Breakdown of L2 TLB Reuse (%)')
+plt.legend(new_legend_labels, loc='upper right',
+           title='Reuse', bbox_to_anchor=(1.1, 1))
+
+plt.tight_layout()
+plt.ylim(0, 100)
+
+# Replace 'output_path.png' with the desired file path and name for the saved image
+plt.savefig('./plots/figure22.png')
+
+print_separator()
+print("Plotting Figure 23: L2 TLB mapping bypass count")
+print_separator()
+
+
+# Create a pivot table of the data
+selected_experiments = ['victima_dpp_dbp_ptw_1MBL2',
+                        'victima_dpp_dbp_ptw_2MBL2']
+
+df_selected = df[df['Exp'].isin(selected_experiments)]
+
+# Create the pivot table with the selected experiments and GMEAN
+geometric_mean = df_selected.groupby('Exp')['stlb.bypass_count'].apply(
+    lambda x: np.prod(x) ** (1 / len(x)))
+
+
+pivot_table_fig2 = df_selected.pivot_table(
+    index='Trace', columns='Exp', values='stlb.bypass_count')
+pivot_table_fig2 = pivot_table_fig2.reindex(desired_order_labels)
+pivot_table_fig2.loc['GMEAN'] = geometric_mean.values
+print(pivot_table_fig2)
+
+# Sort the columns based on the 'selected_experiments' list
+pivot_table_fig2 = pivot_table_fig2[selected_experiments]
+
+ax = pivot_table_fig2.plot(kind='bar', figsize=(12, 3))
+ax.set_xticklabels(desired_order_labels_gmean)
+
+# Modify this list as per your requirements
+new_legend_labels = ['Victima DPP DBP 1MB', 'Victima DPP DBP 2MB']
+# ax.legend(new_legend_labels, title='Configuration',
+#           bbox_to_anchor=(1.05, 1), loc='upper left')
+
+plt.xlabel('Trace')
+plt.ylabel('L2 TLB Bypass Count')
+plt.title('Figure 2: L2 TLB Bypass Count for different Victima DPDB configurations')
+plt.legend(new_legend_labels, title='Configuration',
+           bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+
+# Replace 'output_path.png' with the desired file path and name for the saved image
+plt.savefig('./plots/figure23.png')
+
+print_separator()
+print("Plotting Figure 24: L2 Cache block bypass count")
+print_separator()
+
+
+# Create a pivot table of the data
+selected_experiments = ['victima_dpp_dbp_ptw_1MBL2',
+                        'victima_dpp_dbp_ptw_2MBL2']
+
+df_selected = df[df['Exp'].isin(selected_experiments)]
+
+# Create the pivot table with the selected experiments and GMEAN
+geometric_mean = df_selected.groupby('Exp')['L2.bypass_count'].apply(
+    lambda x: np.prod(x) ** (1 / len(x)))
+
+
+pivot_table_fig2 = df_selected.pivot_table(
+    index='Trace', columns='Exp', values='L2.bypass_count')
+pivot_table_fig2 = pivot_table_fig2.reindex(desired_order_labels)
+pivot_table_fig2.loc['GMEAN'] = geometric_mean.values
+print(pivot_table_fig2)
+
+# Sort the columns based on the 'selected_experiments' list
+pivot_table_fig2 = pivot_table_fig2[selected_experiments]
+
+ax = pivot_table_fig2.plot(kind='bar', figsize=(12, 3))
+ax.set_xticklabels(desired_order_labels_gmean)
+
+# Modify this list as per your requirements
+new_legend_labels = ['Victima DPP DBP 1MB', 'Victima DPP DBP 2MB']
+# ax.legend(new_legend_labels, title='Configuration',
+#           bbox_to_anchor=(1.05, 1), loc='upper left')
+
+plt.xlabel('Trace')
+plt.ylabel('L2 Cache Bypass Count')
+plt.title('Figure 2: L2 Cache Bypass Count for different Victima DPDB configurations')
+plt.legend(new_legend_labels, title='Configuration',
+           bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+
+# Replace 'output_path.png' with the desired file path and name for the saved image
+plt.savefig('./plots/figure24.png')
+
+
 #print_separator()
 #print("Plotting Figure 20: PTW Reduction across different L2 Cache Sizes")
 #print_separator()

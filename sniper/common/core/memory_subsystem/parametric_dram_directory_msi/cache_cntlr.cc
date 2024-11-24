@@ -1697,6 +1697,7 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
 		   // cache_block_info being NULL could cause problems -- check it.
 		   eviction = false;
 		   bypass = true;
+		   m_master->m_cache->increaseBypassCount();
 	   }
    }
    else{
@@ -1727,6 +1728,9 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
 	   if(m_dpp_dbp_enabled && m_master->m_cache->getName() == "L2" && deadbit){
 
 		   bool accessedbit = evict_block_info.getAccessed();
+		   if(accessedbit){
+			   assert(evict_block_info.getReuse != 0);
+		   }
 		   IntPtr hash_block_addr;
 		   m_master->m_cache->getCBPredHistTableHash(evict_address >> floorLog2(getCacheBlockSize()), hash_block_addr);
 

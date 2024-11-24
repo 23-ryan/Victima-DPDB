@@ -75,6 +75,7 @@ std::map<IntPtr, IntPtr> insert_pc;
     registerStatsMetric(name, core_id, "access", &m_access);
     registerStatsMetric(name, core_id, "eviction", &m_eviction);
     registerStatsMetric(name, core_id, "miss", &m_miss);
+    registerStatsMetric(name, core_id, "bypass_count", &m_bypass);
 
     is_dtlb = (name == "dtlb");
     is_nested = (name == "nested_tlb");
@@ -501,14 +502,16 @@ std::map<IntPtr, IntPtr> insert_pc;
     int page_size = ptw->init_walk_functional(address);
     IntPtr vpn = address >> page_size;
 	
-	if(!m_next_level)
+	// ARYAN
+	if(dpp_dbp_enabled && is_stlb) {
 		insert_pc[vpn] = lastPC;
+	}
+	
+   if(dpp_dbp_enabled && is_stlb) {
 
-   IntPtr temp_hash_vpn = findHash (vpn, 4);
-   IntPtr temp_hash_pc =  findHash (lastPC, 6);
-   ++m_alloc;
-
-   if(!m_next_level){
+	   IntPtr temp_hash_vpn = findHash (vpn, 4);
+	   IntPtr temp_hash_pc =  findHash (lastPC, 6);
+	   ++m_alloc;
 
 	   if(hitCounter[temp_hash_vpn][temp_hash_pc] > 6){
 			++m_bypass;
@@ -521,6 +524,7 @@ std::map<IntPtr, IntPtr> insert_pc;
 	   }
 
 	}
+    // ARYAN
 
     bool eviction = false;
     IntPtr evict_addr;
