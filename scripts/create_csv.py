@@ -218,8 +218,8 @@ stats = {
     "mmu.migrations_delay": None,
     # ARYAN
     # ARYAN
-    "L2.bypass_count": None,
-    "stlb.bypass_count": None,
+    "L2.l2_bypass_count": None,
+    "stlb.l2_tlb_bypass_count": None,
 }
 
 # Create a CSV with all these headers

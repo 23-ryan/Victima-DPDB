@@ -348,12 +348,12 @@ selected_experiments = ['victima_dpp_dbp_ptw_1MBL2',
 df_selected = df[df['Exp'].isin(selected_experiments)]
 
 # Create the pivot table with the selected experiments and GMEAN
-geometric_mean = df_selected.groupby('Exp')['stlb.bypass_count'].apply(
+geometric_mean = df_selected.groupby('Exp')['stlb.l2_tlb_bypass_count'].apply(
     lambda x: np.prod(x) ** (1 / len(x)))
 
 
 pivot_table_fig2 = df_selected.pivot_table(
-    index='Trace', columns='Exp', values='stlb.bypass_count')
+    index='Trace', columns='Exp', values='stlb.l2_tlb_bypass_count')
 pivot_table_fig2 = pivot_table_fig2.reindex(desired_order_labels)
 pivot_table_fig2.loc['GMEAN'] = geometric_mean.values
 print(pivot_table_fig2)
@@ -391,12 +391,12 @@ selected_experiments = ['victima_dpp_dbp_ptw_1MBL2',
 df_selected = df[df['Exp'].isin(selected_experiments)]
 
 # Create the pivot table with the selected experiments and GMEAN
-geometric_mean = df_selected.groupby('Exp')['L2.bypass_count'].apply(
+geometric_mean = df_selected.groupby('Exp')['L2.l2_bypass_count'].apply(
     lambda x: np.prod(x) ** (1 / len(x)))
 
 
 pivot_table_fig2 = df_selected.pivot_table(
-    index='Trace', columns='Exp', values='L2.bypass_count')
+    index='Trace', columns='Exp', values='L2.l2_bypass_count')
 pivot_table_fig2 = pivot_table_fig2.reindex(desired_order_labels)
 pivot_table_fig2.loc['GMEAN'] = geometric_mean.values
 print(pivot_table_fig2)
