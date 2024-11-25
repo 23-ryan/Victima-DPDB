@@ -75,7 +75,7 @@ std::map<IntPtr, IntPtr> insert_pc;
     registerStatsMetric(name, core_id, "access", &m_access);
     registerStatsMetric(name, core_id, "eviction", &m_eviction);
     registerStatsMetric(name, core_id, "miss", &m_miss);
-    registerStatsMetric(name, core_id, "bypass_count", &m_bypass);
+    registerStatsMetric(name, core_id, "l2_tlb_bypass_count", &m_bypass);
 
     is_dtlb = (name == "dtlb");
     is_nested = (name == "nested_tlb");
@@ -215,6 +215,7 @@ std::map<IntPtr, IntPtr> insert_pc;
        bool shadow_table_hit = shadow_table_search (vpn);
        if (shadow_table_hit == true)
        {
+		   //std::cout << "Shadow Table Hit" << std::endl;
            for (int i = 0;i < 64;i++)
            {
                hitCounter[temp_hash_vpn][i]= 0;
@@ -514,6 +515,9 @@ std::map<IntPtr, IntPtr> insert_pc;
 	   ++m_alloc;
 
 	   if(hitCounter[temp_hash_vpn][temp_hash_pc] > 6){
+		   //std::cout << "============= TLB Bypass =============" << std::endl;
+		   //std::cout << "temp_hash_vpn: " << temp_hash_vpn << " temp_hash_pc: " << temp_hash_pc << " CONF: " << hitCounter[temp_hash_vpn][temp_hash_pc] << std::endl;
+		   //std::cout << "============= TLB Bypass =============" << std::endl;
 			++m_bypass;
 			shadow_table_insert(vpn);
 			addRecentPFN(vpn);
@@ -580,12 +584,23 @@ std::map<IntPtr, IntPtr> insert_pc;
     if(eviction  && !(m_next_level)) // Eviction from L2 TLB or Nested TLB
      {
 
+		 // ARYAN
+		 if(dpp_dbp_enabled && is_stlb) {
+			 IntPtr ev_vpn_hash = findHash ((evict_addr >> page_size), 4);
+			 IntPtr ev_pc_hash = findHash ((insert_pc[(evict_addr >> page_size)]), 6);
+			 if (!curHit[evict_addr >> page_size]) {
+				 hitCounter[ev_vpn_hash][ev_pc_hash]++;
+			 } else {
+				 hitCounter[ev_vpn_hash][ev_pc_hash] = 0;
+			 }
+		 }
+		 // ARYAN
+
       int page_size_evicted = evict_block_info.getPageSize();
       IntPtr evict_addr_vpn = evict_addr >> (page_size_evicted-3); // 8 blocks in the cache line (64B) and 3 bits for the offset
 
       if(victima_enabled) // @kanellok if TLB caching is enabled, insert the evicted translation in the L1/L2 cache
       {
-
         
           bool victima_miss = false;
 

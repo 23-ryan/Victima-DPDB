@@ -1674,6 +1674,7 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
 
    if(m_dpp_dbp_enabled){
 	   if(std::find(recentPFN.begin(), recentPFN.end(), address) != recentPFN.end()){
+		   std::cout << "Hit in PFQ" << std::endl;
 		   exist_in_PFQ = true;
 	   }
    }
@@ -1695,6 +1696,9 @@ CacheCntlr::insertCacheBlock(IntPtr address, CacheState::cstate_t cstate, Byte* 
 	   }
 	   else{
 		   // cache_block_info being NULL could cause problems -- check it.
+		   std::cout << "======== BYPASS =========" << std::endl;
+		   std::cout << "hash_block_addr: " << hash_block_addr << " conf: " << bHIST[hash_block_addr] << std::endl;
+		   std::cout << "======== BYPASS =========" << std::endl;
 		   eviction = false;
 		   bypass = true;
 		   m_master->m_cache->increaseBypassCount();

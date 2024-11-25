@@ -56,7 +56,7 @@ Cache::Cache(
    sum_metadata_reuse(0),
    number_of_metadata_reuse(0),
    // ARYAN
-   m_bypass_count(0),
+   m_l2_bypass_count(0),
    // ARYAN
    metadata_passthrough_loc(Sim()->getCfg()->getInt("perf_model/metadata/passthrough_loc")),
    potm_enabled(Sim()->getCfg()->getBool("perf_model/tlb/potm_enabled")),
@@ -126,9 +126,8 @@ Cache::Cache(
    registerStatsMetric(name, core_id, String("average_data_reuse"), &average_data_reuse);
    registerStatsMetric(name, core_id, String("average_metadata_reuse"), &average_metadata_reuse);
    registerStatsMetric(name, core_id, String("average_tlb_reuse"), &average_tlb_reuse);
-   registerStatsMetric(name, core_id, String("average_tlb_reuse"), &average_tlb_reuse);
    // ARYAN
-   registerStatsMetric(name, core_id, String("bypass_count"), &m_bypass_count);
+   registerStatsMetric(name, core_id, String("l2_bypass_count"), &m_l2_bypass_count);
    // ARYAN
 
 }
